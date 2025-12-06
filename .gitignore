@@ -144,3 +144,7 @@ vite.config.ts.timestamp-*
 # Claude (local)
 .claude/*
 !.claude/settings.json
+
+# Github
+.github/*
+!.github/copilot-instructions.md
