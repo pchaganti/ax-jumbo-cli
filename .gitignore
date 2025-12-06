@@ -142,5 +142,5 @@ vite.config.ts.timestamp-*
 .jumbo/
 
 # Claude (local)
-.claude\agents
-.claude\settings.local.json
+.claude/*
+!.claude/settings.json
