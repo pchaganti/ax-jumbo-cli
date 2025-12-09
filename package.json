@@ -37,7 +37,8 @@
   ],
   "scripts": {
     "generate:commands": "node build/generate-command-registry.mjs",
-    "prebuild": "npm run generate:commands",
+    "generate:version": "node build/generate-version.mjs",
+    "prebuild": "npm run generate:commands && npm run generate:version",
     "build": "tsc && npm run copy:migrations",
     "copy:migrations": "node build/copy-migrations.mjs",
     "dev": "tsc --watch",
