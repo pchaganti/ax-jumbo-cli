@@ -55,7 +55,6 @@ export interface ProjectContextView {
   readonly projectId: string;
   readonly name: string;
   readonly problem: string;
-  readonly solution: string;
 }
 
 /**

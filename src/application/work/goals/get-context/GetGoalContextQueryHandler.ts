@@ -245,7 +245,6 @@ export class GetGoalContextQueryHandler {
       projectId: project.projectId,
       name: project.name,
       problem: project.purpose || "No purpose defined",
-      solution: project.tagline || "No tagline defined",
     };
   }
 

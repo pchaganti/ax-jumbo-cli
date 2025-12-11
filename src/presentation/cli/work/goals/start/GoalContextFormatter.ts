@@ -103,7 +103,6 @@ export class GoalContextFormatter {
       goalContext.goalContext.project = {
         name: context.project.name,
         problem: context.project.problem,
-        solution: context.project.solution,
       };
     }
 

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **Removed `tagline` from Project**: The `--tagline` option has been removed from
+  `project init` and `project update` commands. Remove this option from any scripts
+  or automation. The database column remains for backward compatibility but is no
+  longer used.
+
+### Removed
+
+- `--tagline` option from `jumbo project init`
+- `--tagline` option from `jumbo project update`
+
 ## [1.0.0-alpha.7] - 2025-12-11
 
 ### Breaking Changes
