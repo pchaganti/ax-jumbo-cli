@@ -33,7 +33,7 @@ Run `jumbo --help` to see all available commands and learn what can be tracked.
 
 For detailed information about Jumbo's capabilities and workflow, run:
 ```bash
-jumbo capabilities
+> jumbo capabilities
 ```
 
 ### Next step:

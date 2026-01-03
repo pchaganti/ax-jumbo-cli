@@ -1,5 +1,5 @@
 <p style="width:100%; background-color:#F4D078; padding:9px 9px" align="center">
-  This project is in beta. Non-backward compatible changes could be introduced. Please post issues if you discover anything and contributions are welcome.
+  Jumbo is in beta. Non-backward compatible changes could be introduced. Please post issues if you discover anything and contributions are welcome.
 </p>
 
 <p align="center">
@@ -96,88 +96,22 @@ Optimized context packets delivered to your AI agents.
 npm install -g jumbo-cli
 
 # Initialize in your project
-jumbo project init
+jumbo init
 ```
 
-That's it. Fire up your coding agent. Work flows. Memories stick. Momentum builds.
+That's it. Jumbo will guide you through the rest. Fire up your coding agent next and they'll use Jumbo automatically.
 
 ---
 
-## Initializing a Project
+## Documentation
 
-Run `jumbo init` in your project root. This creates a `.jumbo/` directory with:
-
-- **Event store** — Append-only log of all project-knowledge
-- **FSDB** — Read-optimized views for fast querying
-- **Hook configuration** — Integration points for your AI tools
-
-### Hook Integration
-
-Hooks for popular AI agents are configured for session start, your agent receives a tiny project status—recently completed, active, and planned goals. When you start a goal, a comprehensive context packet is delivered with the details necessary for your agent to execute the implementation.
-
----
-
-## Usage
-
-Jumbo organizes knowledge into a few key concepts:
-
-### Goals
-
-Track what you're working on:
-
-```bash
-jumbo goal add --objective "Implement user auth"
-jumbo goal start --goal-id <id>
-jumbo goal complete --goal-id <id>
-```
-
-### Decisions
-
-Capture architectural decisions your agent must respect:
-
-```bash
-jumbo decision add --title "CQRS for all data access" --rationale "Separate read/write models for scalability and clarity"
-```
-
-### Invariants
-
-Define non-negotiable rules—the lines your agent cannot cross:
-
-```bash
-jumbo invariant add --category "Architecture" --description "Common Closure Principle: classes that change together live together. No scattering related logic across modules."
-```
-
-### Components
-
-Track system components:
-
-```bash
-jumbo component add --name "AuthService" --description "Handles user authentication"
-```
-
-### Full Command Reference
-
-```
-PROJECT
-  audience add/remove/update    Manage target audiences
-  project init/update           Initialize and configure
-  value add/remove/update       Value propositions
-
-WORK
-  goal add/start/complete       Track goals and progress
-  goal block/unblock            Handle blockers
-  session start/end/pause       Manage work sessions
-
-SOLUTION
-  architecture define/update    System architecture
-  component add/update/remove   System components
-  decision add/reverse          Architectural decisions
-  dependency add/remove         Component dependencies
-  guideline add/remove          Execution guidelines
-  invariant add/remove          Non-negotiable rules
-```
-
-Run `jumbo --help` for the complete list.
+| Resource | Description |
+|----------|-------------|
+| [Quickstart](docs/getting-started/quickstart.md) | Get running in 5 minutes |
+| [Installation](docs/getting-started/installation.md) | Prerequisites and setup |
+| [Concepts](docs/getting-started/concepts.md) | Understand sessions, goals, and context |
+| [Goal Management](docs/guides/goal-management.md) | Complete guide to tracking work |
+| [Command Reference](docs/reference/) | Full command documentation |
 
 ---
 
@@ -230,10 +164,6 @@ Not at all. Jumbo prescribes an opinionated workflow that you can always bypass.
 
 Jumbo goes beyond static markdown files. It's an immutable event stream—capturing your entire project history, always current and auditable. You stay in your flow, never repeat yourself—only add new information when you need to. Markdown is a snapshot in time, Jumbo is your project's living memory.
 
-**Is there documentation?**
-It's on it's way...  
-In the meantime, the CLI will guide you in getting started. In addition, the help command <code>jumbo --help</code> provides a comprehensive overview of all available commands and options with examples.
-
 **Can I share context across a team?**
 
 Not yet. A teams version is coming soon.
@@ -244,10 +174,6 @@ If you're feeling bold, you can try committing `.jumbo/` directory to your repos
 
 You can do that, but the amount of context window consumed while your agent crawls your repo for background information leaves little context budget for executing the task precisely. You risk auto-compression and the agent going awry. gure out how to execute a given task, leaves little   They also don't capture vital lessons learned in the context of your 'conversations'  Jumbo is dynamic—it knows what you're working on *right now* and surfaces relevant context automatically. Jumbo let's you focus on what you want to achieve, the background just comes automatically.
 
-**Does this replace documentation?**
-
-Yes. Jumbo makes documentation obsolete. Jumbo captures working memories: project knowledge, architecture details, coding patterns, invariant, decisions, goals, blockers, session data and relations between all of it. It's richer than documentation, never outdated, served up to the your coding agent when it needs it, and available to you when you want it. -->
-
 ---
 
 ## License
@@ -257,5 +183,5 @@ Yes. Jumbo makes documentation obsolete. Jumbo captures working memories: projec
 ---
 
 <p align="center">
-  Built for developers who are tired of repeating themselves.
+  Built with 🪄 in Copenhagen for devs who are tired of repeating themselves, by devs who are tired of the same.
 </p>
