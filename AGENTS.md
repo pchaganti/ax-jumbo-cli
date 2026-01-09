@@ -1,6 +1,6 @@
 # Agents.md
 
-## Jumbo Instructions
+## Instructions for Jumbo
 
 **IMPORTANT: This project uses Jumbo CLI for agent orchestration and context management.**
 
