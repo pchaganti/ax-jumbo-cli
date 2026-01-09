@@ -21,6 +21,7 @@ import { goalStart, metadata as goalStartMeta } from '../../work/goals/start/goa
 import { goalUnblock, metadata as goalUnblockMeta } from '../../work/goals/unblock/goal.unblock.js';
 import { goalUpdate, metadata as goalUpdateMeta } from '../../work/goals/update/goal.update.js';
 import { sessionEnd, metadata as sessionEndMeta } from '../../work/sessions/end/session.end.js';
+import { sessionsList, metadata as sessionsListMeta } from '../../work/sessions/list/sessions.list.js';
 import { sessionPause, metadata as sessionPauseMeta } from '../../work/sessions/pause/session.pause.js';
 import { sessionResume, metadata as sessionResumeMeta } from '../../work/sessions/resume/session.resume.js';
 import { sessionStart, metadata as sessionStartMeta } from '../../work/sessions/start/session.start.js';
@@ -28,33 +29,42 @@ import { architectureDefine, metadata as architectureDefineMeta } from '../../so
 import { architectureUpdate, metadata as architectureUpdateMeta } from '../../solution/architecture/update/architecture.update.js';
 import { componentAdd, metadata as componentAddMeta } from '../../solution/components/add/component.add.js';
 import { componentDeprecate, metadata as componentDeprecateMeta } from '../../solution/components/deprecate/component.deprecate.js';
+import { componentsList, metadata as componentsListMeta } from '../../solution/components/list/components.list.js';
 import { componentRemove, metadata as componentRemoveMeta } from '../../solution/components/remove/component.remove.js';
 import { componentUpdate, metadata as componentUpdateMeta } from '../../solution/components/update/component.update.js';
 import { decisionAdd, metadata as decisionAddMeta } from '../../solution/decisions/add/decision.add.js';
+import { decisionsList, metadata as decisionsListMeta } from '../../solution/decisions/list/decisions.list.js';
 import { decisionReverse, metadata as decisionReverseMeta } from '../../solution/decisions/reverse/decision.reverse.js';
 import { decisionSupersede, metadata as decisionSupersedeMeta } from '../../solution/decisions/supersede/decision.supersede.js';
 import { decisionUpdate, metadata as decisionUpdateMeta } from '../../solution/decisions/update/decision.update.js';
 import { dependencyAdd, metadata as dependencyAddMeta } from '../../solution/dependencies/add/dependency.add.js';
+import { dependenciesList, metadata as dependenciesListMeta } from '../../solution/dependencies/list/dependencies.list.js';
 import { dependencyRemove, metadata as dependencyRemoveMeta } from '../../solution/dependencies/remove/dependency.remove.js';
 import { dependencyUpdate, metadata as dependencyUpdateMeta } from '../../solution/dependencies/update/dependency.update.js';
 import { guidelineAdd, metadata as guidelineAddMeta } from '../../solution/guidelines/add/guideline.add.js';
+import { guidelinesList, metadata as guidelinesListMeta } from '../../solution/guidelines/list/guidelines.list.js';
 import { guidelineRemove, metadata as guidelineRemoveMeta } from '../../solution/guidelines/remove/guideline.remove.js';
 import { guidelineUpdate, metadata as guidelineUpdateMeta } from '../../solution/guidelines/update/guideline.update.js';
 import { invariantAdd, metadata as invariantAddMeta } from '../../solution/invariants/add/invariant.add.js';
+import { invariantsList, metadata as invariantsListMeta } from '../../solution/invariants/list/invariants.list.js';
 import { invariantRemove, metadata as invariantRemoveMeta } from '../../solution/invariants/remove/invariant.remove.js';
 import { invariantUpdate, metadata as invariantUpdateMeta } from '../../solution/invariants/update/invariant.update.js';
 import { audiencePainAdd, metadata as audiencePainAddMeta } from '../../project-knowledge/audience-pains/add/audiencePain.add.js';
+import { audiencePainsList, metadata as audiencePainsListMeta } from '../../project-knowledge/audience-pains/list/audiencePains.list.js';
 import { audiencePainResolve, metadata as audiencePainResolveMeta } from '../../project-knowledge/audience-pains/resolve/audiencePain.resolve.js';
 import { audiencePainUpdate, metadata as audiencePainUpdateMeta } from '../../project-knowledge/audience-pains/update/audiencePain.update.js';
 import { audienceAdd, metadata as audienceAddMeta } from '../../project-knowledge/audiences/add/audience.add.js';
+import { audiencesList, metadata as audiencesListMeta } from '../../project-knowledge/audiences/list/audiences.list.js';
 import { audienceRemove, metadata as audienceRemoveMeta } from '../../project-knowledge/audiences/remove/audience.remove.js';
 import { audienceUpdate, metadata as audienceUpdateMeta } from '../../project-knowledge/audiences/update/audience.update.js';
 import { projectInit, metadata as projectInitMeta } from '../../project-knowledge/project/init/project.init.js';
 import { projectUpdate, metadata as projectUpdateMeta } from '../../project-knowledge/project/update/project.update.js';
 import { valueAdd, metadata as valueAddMeta } from '../../project-knowledge/value-propositions/add/value.add.js';
+import { valuesList, metadata as valuesListMeta } from '../../project-knowledge/value-propositions/list/values.list.js';
 import { valueRemove, metadata as valueRemoveMeta } from '../../project-knowledge/value-propositions/remove/value.remove.js';
 import { valueUpdate, metadata as valueUpdateMeta } from '../../project-knowledge/value-propositions/update/value.update.js';
 import { relationAdd, metadata as relationAddMeta } from '../../relations/add/relation.add.js';
+import { relationsList, metadata as relationsListMeta } from '../../relations/list/relations.list.js';
 import { relationRemove, metadata as relationRemoveMeta } from '../../relations/remove/relation.remove.js';
 import { dbRebuild, metadata as dbRebuildMeta } from '../../maintenance/db/rebuild/db.rebuild.js';
 
@@ -120,6 +130,11 @@ export const commands: RegisteredCommand[] = [
     handler: sessionEnd
   },
   {
+    path: 'sessions list',
+    metadata: sessionsListMeta,
+    handler: sessionsList
+  },
+  {
     path: 'session pause',
     metadata: sessionPauseMeta,
     handler: sessionPause
@@ -155,6 +170,11 @@ export const commands: RegisteredCommand[] = [
     handler: componentDeprecate
   },
   {
+    path: 'components list',
+    metadata: componentsListMeta,
+    handler: componentsList
+  },
+  {
     path: 'component remove',
     metadata: componentRemoveMeta,
     handler: componentRemove
@@ -168,6 +188,11 @@ export const commands: RegisteredCommand[] = [
     path: 'decision add',
     metadata: decisionAddMeta,
     handler: decisionAdd
+  },
+  {
+    path: 'decisions list',
+    metadata: decisionsListMeta,
+    handler: decisionsList
   },
   {
     path: 'decision reverse',
@@ -190,6 +215,11 @@ export const commands: RegisteredCommand[] = [
     handler: dependencyAdd
   },
   {
+    path: 'dependencies list',
+    metadata: dependenciesListMeta,
+    handler: dependenciesList
+  },
+  {
     path: 'dependency remove',
     metadata: dependencyRemoveMeta,
     handler: dependencyRemove
@@ -203,6 +233,11 @@ export const commands: RegisteredCommand[] = [
     path: 'guideline add',
     metadata: guidelineAddMeta,
     handler: guidelineAdd
+  },
+  {
+    path: 'guidelines list',
+    metadata: guidelinesListMeta,
+    handler: guidelinesList
   },
   {
     path: 'guideline remove',
@@ -220,6 +255,11 @@ export const commands: RegisteredCommand[] = [
     handler: invariantAdd
   },
   {
+    path: 'invariants list',
+    metadata: invariantsListMeta,
+    handler: invariantsList
+  },
+  {
     path: 'invariant remove',
     metadata: invariantRemoveMeta,
     handler: invariantRemove
@@ -235,6 +275,11 @@ export const commands: RegisteredCommand[] = [
     handler: audiencePainAdd
   },
   {
+    path: 'audiencePains list',
+    metadata: audiencePainsListMeta,
+    handler: audiencePainsList
+  },
+  {
     path: 'audiencePain resolve',
     metadata: audiencePainResolveMeta,
     handler: audiencePainResolve
@@ -248,6 +293,11 @@ export const commands: RegisteredCommand[] = [
     path: 'audience add',
     metadata: audienceAddMeta,
     handler: audienceAdd
+  },
+  {
+    path: 'audiences list',
+    metadata: audiencesListMeta,
+    handler: audiencesList
   },
   {
     path: 'audience remove',
@@ -275,6 +325,11 @@ export const commands: RegisteredCommand[] = [
     handler: valueAdd
   },
   {
+    path: 'values list',
+    metadata: valuesListMeta,
+    handler: valuesList
+  },
+  {
     path: 'value remove',
     metadata: valueRemoveMeta,
     handler: valueRemove
@@ -288,6 +343,11 @@ export const commands: RegisteredCommand[] = [
     path: 'relation add',
     metadata: relationAddMeta,
     handler: relationAdd
+  },
+  {
+    path: 'relations list',
+    metadata: relationsListMeta,
+    handler: relationsList
   },
   {
     path: 'relation remove',
