@@ -20,19 +20,7 @@ export class CompleteGoalPromptService {
       "  1. Verify each criterion is met, guideline followed, and invariant upheld",
       "  2. If any criterion is not met, guideline not followed, or invariant not upheld, then fix the issues immediately",
       `  3. Only run 'jumbo goal complete --goal-id ${goalId} --commit' after ALL criteria, guidelines, and invariants are satisfied`,
-      "",
-      `You have ${remainingTurns} QA turn(s) remaining.`,
     ];
-
-    if (remainingTurns === 0) {
-      lines.push(
-        "TURN LIMIT REACHED: The goal will be auto-completed on the next 'jumbo goal complete' command."
-      );
-    } else if (remainingTurns === 1) {
-      lines.push(
-        "WARNING: This is your last QA turn. The goal will be auto-completed if you run this command again."
-      );
-    }
 
     lines.push("");
     lines.push(

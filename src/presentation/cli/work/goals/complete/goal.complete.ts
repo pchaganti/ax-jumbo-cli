@@ -9,9 +9,10 @@
 import { CommandMetadata } from "../../../shared/registry/CommandMetadata.js";
 import { ApplicationContainer } from "../../../composition/bootstrap.js";
 import { Renderer } from "../../../shared/rendering/Renderer.js";
-import { CompleteGoalController } from "../../../../../application/work/goals/complete/CompleteGoalController.js";
 import { CompleteGoalRequest } from "../../../../../application/work/goals/complete/CompleteGoalRequest.js";
+import { CompleteGoalResponse } from "../../../../../application/work/goals/complete/CompleteGoalResponse.js";
 import { GoalContextFormatter } from "../start/GoalContextFormatter.js";
+import { GoalStatus } from "../../../../../domain/work/goals/Constants.js";
 
 /**
  * Command metadata for auto-registration
@@ -25,20 +26,10 @@ export const metadata: CommandMetadata = {
       description: "ID of the goal to complete"
     }
   ],
-  options: [
-    {
-      flags: "--commit",
-      description: "Commit the completion (without this flag, triggers Quality Assurance check)"
-    }
-  ],
   examples: [
     {
       command: "jumbo goal complete --goal-id goal_abc123",
       description: "Verify work against goal criteria"
-    },
-    {
-      command: "jumbo goal complete --goal-id goal_abc123 --commit",
-      description: "Complete the goal after QA verification"
     }
   ],
   related: ["goal add", "goal start", "goal block"]
@@ -69,58 +60,135 @@ export async function goalComplete(
 
     // 4. Render response
 
-    // Show auto-commit warning if applicable
-    if (response.autoCommittedDueToTurnLimit) {
-      renderer.info("⚠️  Turn limit reached - Goal auto-completed");
-      renderer.info("The QA turn limit has been reached. The goal has been automatically completed.\n");
-    }
-
-    // Render criteria if present (QA mode)
-    if (response.criteria) {
-      const formatter = new GoalContextFormatter();
-      const contextYaml = formatter.format(response.criteria);
-      renderer.info("\n" + contextYaml);
-    }
-
     // Render LLM prompt
-    renderer.info("---\n");
     renderer.info(response.llmPrompt + "\n");
+    renderer.info("\n---\n");
 
-    // Show remaining turns if in QA mode
-    if (response.remainingTurns !== undefined) {
-      if (response.remainingTurns === 0) {
-        renderer.info(`⚠️  QA turns remaining: ${response.remainingTurns} (limit will be reached on next attempt)`);
-      } else if (response.remainingTurns === 1) {
-        renderer.info(`⚠️  QA turns remaining: ${response.remainingTurns} (last turn before auto-complete)`);
-      } else {
-        renderer.info(`QA turns remaining: ${response.remainingTurns}`);
-      }
-      renderer.info("");
+ 
+    switch (response.status) {
+      case GoalStatus.DOING:
+      case GoalStatus.INREVIEW:
+        renderQualityAssuranceContext(renderer, response);
+        break;
+      case GoalStatus.COMPLETED:
+        renderCommittedContext(renderer, response);
+        break;
+      default:
+        break;
     }
 
-    // Render goal status
-    const statusMessage = response.criteria ? "Goal verification ready" : "Goal completed";
-    renderer.success(statusMessage, {
-      goalId: response.goalId,
-      objective: response.objective,
-      status: response.status,
-    });
-
-    // Render next goal if present
-    if (response.nextGoal) {
-      renderer.info("\n---\n");
-      renderer.info("Next goal in chain:");
-      renderer.success("Suggested next goal", {
-        goalId: response.nextGoal.goalId,
-        objective: response.nextGoal.objective,
-        status: response.nextGoal.status,
-      });
-      renderer.info("\nTo start this goal, run:");
-      renderer.info(`  jumbo goal start --goal-id ${response.nextGoal.goalId}`);
-    }
   } catch (error) {
     renderer.error("Failed to process goal completion", error instanceof Error ? error : String(error));
     process.exit(1);
   }
-  // NO CLEANUP - infrastructure manages itself!
+}
+
+function renderCommittedContext(
+  renderer: Renderer,
+  response: CompleteGoalResponse
+){
+  // Render capture learning prompt
+  // If next goal in chain
+    if (response.nextGoal) {
+    // Render next goal if present
+      renderer.success("Next goal in chain:", {
+        goalId: response.nextGoal.goalId,
+        objective: response.nextGoal.objective,
+        status: response.nextGoal.status,
+      });
+      renderer.info("\nStart this goal. Run:");
+      renderer.info(`  jumbo goal start --goal-id ${response.nextGoal.goalId}`);
+    }
+
+}
+
+function renderQualityAssuranceContext(
+  renderer: Renderer,
+  response: CompleteGoalResponse
+){
+  // Render goal details
+  renderer.headline("## Goal Details");
+  renderer.data({ goalId: response.goalId, objective: response.objective, status: response.status });
+ 
+  renderer.headline("## Success Criteria");
+
+  // Render goal criteria
+  let criteria = response.criteria
+  if (criteria) {
+    // Render criteria
+    if (criteria.goal.successCriteria){
+      renderer.headline("### Ensure your work fulfills these explicit criteria:");
+      criteria.goal.successCriteria.forEach((element, i) => {
+        renderer.data({ [`${i}`] : element});
+      });
+    }
+    // Render files to be changed
+    if (criteria.goal.filesToBeChanged){
+      renderer.headline("### Ensure your work has changed only these files:");
+      criteria.goal.filesToBeChanged.forEach((element, i) => {
+        renderer.data({ [`${i}`] : element});
+      });
+    }
+    // Render files to be created
+    if (criteria.goal.filesToBeCreated){
+      renderer.headline("### Ensure your work has created only these files:");
+      criteria.goal.filesToBeCreated.forEach((element, i) => {
+        renderer.data({ [`${i}`] : element});
+      });
+    }
+    // Render boundaries
+    if (criteria.goal.boundaries.length > 0){
+      renderer.headline("### Ensure your work has not exceeded these boundaries:");
+      criteria.goal.boundaries.forEach((element, i) => {
+        renderer.data({ [`${i}`] : element});
+      });
+    }
+    // Render relevant guidelines
+    if (criteria.guidelines){
+      renderer.headline("### Ensure your work has followed these guidelines:");
+      criteria.guidelines.forEach((element, i) => {
+        renderer.data({ [`${i}`] : element.description});
+      });
+    }
+    // Render relevant invariants
+    if (criteria.invariants){
+      renderer.headline("### Ensure your work does not deviate from these invariants:");
+      criteria.invariants.forEach((element, i) => {
+        renderer.data({ [`${i}`] : element.description});
+      });
+    }
+    // Render architecture
+    if (criteria.goal.architecture && criteria.goal.architecture.description){
+          renderer.headline("### Ensure your work fits these architectural details:");
+          renderer.data({ 
+            description: criteria.goal.architecture.description,
+            organization: criteria.goal.architecture.organization, 
+
+          });
+          renderer.headline("### Ensure your work follows these architectural patterns:");
+          criteria.goal.architecture.patterns?.forEach((element, i) => {
+  
+            renderer.data({ [`${i}`] : element});
+          });
+          renderer.headline("### Ensure your work matches these development principles:");
+          criteria.goal.architecture.principles?.forEach((element, i) => {
+  
+            renderer.data({ [`${i}`] : element});
+          });
+    }
+    // Render relevant dependencies
+    if (criteria.dependencies.length > 0){
+      renderer.headline("### Ensure your work is consistent with these dependencies:");
+      criteria.dependencies.forEach(dependency => {
+        renderer.data({[`${dependency.name}`] : `Version: ${dependency.version}, Purpose: ${dependency.purpose}.`});
+      });
+    }
+    // Render relevant components
+    if (criteria.components.length > 0){
+      renderer.headline("### Ensure your work aligns with these components:");
+      criteria.components.forEach(component => {
+        renderer.data({[`${component.name}`] : `Description: ${component.description}.`});
+      });
+    }
+  }
 }

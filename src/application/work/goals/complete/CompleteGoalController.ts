@@ -18,7 +18,6 @@ import { Goal } from "../../../../domain/work/goals/Goal.js";
  *
  * - QA Mode (commit=false): Returns criteria and QA prompt for verification, records QA attempt
  * - Commit Mode (commit=true): Delegates to CompleteGoalCommandHandler and returns learnings prompt
- * - Auto-Commit: When turn limit reached, automatically commits regardless of commit flag
  */
 export class CompleteGoalController {
   constructor(
@@ -38,7 +37,7 @@ export class CompleteGoalController {
     const effectiveCommit = request.commit || shouldAutoCommit;
 
     if (effectiveCommit) {
-      return this.handleCommit(request.goalId, shouldAutoCommit);
+      return this.handleCommit(request.goalId);
     } else {
       return this.handleQA(request.goalId);
     }
@@ -82,18 +81,15 @@ export class CompleteGoalController {
       status: goalView.status,
       llmPrompt,
       criteria: goalContext,
-      remainingTurns,
     };
   }
 
   /**
    * Handle Commit mode: Delegate to CompleteGoalCommandHandler and return learnings prompt
    * @param goalId - The goal ID to complete
-   * @param autoCommitted - True if this was auto-committed due to turn limit
    */
   private async handleCommit(
-    goalId: string,
-    autoCommitted: boolean = false
+    goalId: string
   ): Promise<CompleteGoalResponse> {
     // Delegate to command handler (state change)
     await this.completeGoalCommandHandler.execute({ goalId });
@@ -127,7 +123,6 @@ export class CompleteGoalController {
       llmPrompt,
       // No criteria in commit mode (token optimization)
       nextGoal,
-      autoCommittedDueToTurnLimit: autoCommitted || undefined,
     };
   }
 }

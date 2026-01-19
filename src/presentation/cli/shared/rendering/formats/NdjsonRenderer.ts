@@ -45,6 +45,11 @@ export class NdjsonRenderer implements IFormatRenderer {
     this.writeLine({ type: "section", title });
   }
 
+  headline(title: string): void {
+    // Headlines can be represented as events in NDJSON
+    this.writeLine({ type: "headline", title });
+  }
+
   banner(_lines: string[]): void {
     // Banners are not relevant in NDJSON output; ignored
   }

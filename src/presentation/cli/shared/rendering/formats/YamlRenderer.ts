@@ -44,6 +44,10 @@ export class YamlRenderer implements IFormatRenderer {
     // Sections are not relevant in YAML output; ignored
   }
 
+  headline(_title: string): void {
+    // Headlines are not relevant in YAML output; ignored
+  }
+
   banner(_lines: string[]): void {
     // Banners are not relevant in YAML output; ignored
   }
