@@ -54,6 +54,10 @@ export class NdjsonRenderer implements IFormatRenderer {
     // Banners are not relevant in NDJSON output; ignored
   }
 
+  divider(): void {
+    // Dividers are not relevant in NDJSON output; ignored
+  }
+
   /**
    * Write a single line of JSON
    */

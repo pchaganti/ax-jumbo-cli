@@ -51,6 +51,10 @@ export class JsonRenderer implements IFormatRenderer {
     // Banners are not relevant in JSON output; ignored
   }
 
+  divider(): void {
+    // Dividers are not relevant in JSON output; ignored
+  }
+
   /**
    * Write JSON to stdout or stderr
    */

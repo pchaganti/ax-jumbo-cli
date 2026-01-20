@@ -94,6 +94,23 @@ export class TextRenderer implements IFormatRenderer {
     lines.forEach(line => console.log(line));
   }
 
+  divider(): void {
+    if (this.verbosity === "quiet") {
+      return; // No divider in quiet mode
+    }
+
+    const width = Math.max(
+      1,
+      typeof process.stdout.columns === "number" && process.stdout.columns > 0
+        ? process.stdout.columns
+        : Layout.maxWidth,
+    );
+    console.log("\n");
+    console.log(Colors.dim("─".repeat(width)));
+    console.log("\n");
+
+  }
+
   /**
    * Render data object in verbose format (multi-line, detailed)
    */

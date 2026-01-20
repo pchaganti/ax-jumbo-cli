@@ -11,7 +11,6 @@ export interface CompleteGoalResponse {
   readonly goalId: string;
   readonly objective: string;
   readonly status: string;
-  readonly llmPrompt: string;
   readonly criteria?: GoalContextView; // Present in QA mode only (token optimization)
   readonly nextGoal?: {
     readonly goalId: string;

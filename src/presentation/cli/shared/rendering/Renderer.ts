@@ -122,6 +122,10 @@ export class Renderer {
     this.renderer.banner(lines);
   }
 
+  divider(): void {
+    this.renderer.divider();
+  }
+
   /**
    * Get current configuration (for debugging/testing)
    */

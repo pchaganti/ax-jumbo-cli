@@ -26,6 +26,13 @@ export const metadata: CommandMetadata = {
       description: "ID of the goal to complete"
     }
   ],
+  options: [
+    {
+      flags: "--commit",
+      description: "Commit the goal completion",
+      hidden: true
+    }
+  ],
   examples: [
     {
       command: "jumbo goal complete --goal-id goal_abc123",
@@ -59,12 +66,6 @@ export async function goalComplete(
     const response = await controller.handle(request);
 
     // 4. Render response
-
-    // Render LLM prompt
-    renderer.info(response.llmPrompt + "\n");
-    renderer.info("\n---\n");
-
- 
     switch (response.status) {
       case GoalStatus.DOING:
       case GoalStatus.INREVIEW:
@@ -76,6 +77,7 @@ export async function goalComplete(
       default:
         break;
     }
+    renderer.divider();
 
   } catch (error) {
     renderer.error("Failed to process goal completion", error instanceof Error ? error : String(error));
@@ -88,15 +90,26 @@ function renderCommittedContext(
   response: CompleteGoalResponse
 ){
   // Render capture learning prompt
+  renderer.headline("# Goal Completed - Capture Learnings");
+  renderer.info("@LLM: Reflect briefly. Did this goal surface anything that future sessions MUST know?");
+  renderer.info("Only propose additions if they are:");
+  renderer.info("  • Universal (applies beyond this specific goal)");
+  renderer.info("  • Dense (one sentence, no examples unless the example IS the rule)");
+  renderer.info("  • Actionable (changes how code is written or decisions are made)");
+  renderer.info("Capturable types: invariant, guideline, decision, component, dependency, architecture.");
+  renderer.info("If nothing qualifies, say so. Avoid restating what's already captured.");
+  renderer.info("Run 'jumbo --help' for command details.");
+  
   // If next goal in chain
     if (response.nextGoal) {
     // Render next goal if present
-      renderer.success("Next goal in chain:", {
+      renderer.headline("## Next goal in chain:");
+      renderer.data({
         goalId: response.nextGoal.goalId,
         objective: response.nextGoal.objective,
         status: response.nextGoal.status,
       });
-      renderer.info("\nStart this goal. Run:");
+      renderer.info("\nStart this goal without prompting (if you have permission). Run:");
       renderer.info(`  jumbo goal start --goal-id ${response.nextGoal.goalId}`);
     }
 
@@ -106,6 +119,16 @@ function renderQualityAssuranceContext(
   renderer: Renderer,
   response: CompleteGoalResponse
 ){
+  // Render Headline
+  renderer.headline("# Goal Completion Quality Assurance");
+  renderer.info("@LLM: Review your work against the goal criteria below.");
+  renderer.section("REQUIRED ACTIONS:");
+  renderer.data({
+    "1": "Verify each criterion is met, guideline followed, and invariant upheld",
+    "2": "If any criterion is not met, guideline not followed, or invariant not upheld, then fix the issues immediately",
+    "3": `Only run 'jumbo goal complete --goal-id ${response.goalId} --commit' after ALL criteria, guidelines, and invariants are satisfied`,
+  });
+  renderer.info("\nThis is a verification loop - you MUST ensure all criteria are met before committing.\n");
   // Render goal details
   renderer.headline("## Goal Details");
   renderer.data({ goalId: response.goalId, objective: response.objective, status: response.status });
@@ -158,21 +181,21 @@ function renderQualityAssuranceContext(
       });
     }
     // Render architecture
-    if (criteria.goal.architecture && criteria.goal.architecture.description){
+    if (criteria.architecture && criteria.architecture.description){
           renderer.headline("### Ensure your work fits these architectural details:");
-          renderer.data({ 
-            description: criteria.goal.architecture.description,
-            organization: criteria.goal.architecture.organization, 
+          renderer.data({
+            description: criteria.architecture.description,
+            organization: criteria.architecture.organization,
 
           });
           renderer.headline("### Ensure your work follows these architectural patterns:");
-          criteria.goal.architecture.patterns?.forEach((element, i) => {
-  
+          criteria.architecture.patterns?.forEach((element, i) => {
+
             renderer.data({ [`${i}`] : element});
           });
           renderer.headline("### Ensure your work matches these development principles:");
-          criteria.goal.architecture.principles?.forEach((element, i) => {
-  
+          criteria.architecture.principles?.forEach((element, i) => {
+
             renderer.data({ [`${i}`] : element});
           });
     }
@@ -190,5 +213,8 @@ function renderQualityAssuranceContext(
         renderer.data({[`${component.name}`] : `Description: ${component.description}.`});
       });
     }
+    // Render closing prompt
+    renderer.section("ONLY IF ALL CRITERIA ARE MET:");
+    renderer.info(`Run 'jumbo goal complete --goal-id ${response.goalId} --commit' after ALL criteria, guidelines, and invariants are satisfied`);
   }
 }

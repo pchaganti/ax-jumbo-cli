@@ -52,6 +52,10 @@ export class YamlRenderer implements IFormatRenderer {
     // Banners are not relevant in YAML output; ignored
   }
 
+  divider(): void {
+    // Dividers are not relevant in YAML output; ignored
+  }
+
   /**
    * Write YAML to stdout or stderr
    */
