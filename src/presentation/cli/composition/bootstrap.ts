@@ -287,6 +287,7 @@ import { IArchitectureDefineReader } from "../../../application/solution/archite
 import { IArchitectureUpdatedProjector } from "../../../application/solution/architecture/update/IArchitectureUpdatedProjector.js";
 import { IArchitectureUpdateReader } from "../../../application/solution/architecture/update/IArchitectureUpdateReader.js";
 import { IArchitectureReader } from "../../../application/solution/architecture/IArchitectureReader.js";
+import { IArchitectureViewer } from "../../../application/solution/architecture/view/IArchitectureViewer.js";
 import { IComponentAddedProjector } from "../../../application/solution/components/add/IComponentAddedProjector.js";
 import { IComponentAddReader } from "../../../application/solution/components/add/IComponentAddReader.js";
 import { IComponentUpdatedProjector } from "../../../application/solution/components/update/IComponentUpdatedProjector.js";
@@ -524,6 +525,7 @@ export interface ApplicationContainer {
   architectureDefinedProjector: IArchitectureDefinedProjector & IArchitectureDefineReader;
   architectureUpdatedProjector: IArchitectureUpdatedProjector & IArchitectureUpdateReader;
   architectureReader: IArchitectureReader;
+  architectureViewer: IArchitectureViewer;
   // Component Projection Stores - decomposed by use case
   componentAddedProjector: IComponentAddedProjector & IComponentAddReader;
   componentUpdatedProjector: IComponentUpdatedProjector & IComponentUpdateReader;
@@ -753,6 +755,7 @@ export async function bootstrap(jumboRoot: string): Promise<ApplicationContainer
   const architectureDefinedProjector = new SqliteArchitectureDefinedProjector(db);
   const architectureUpdatedProjector = new SqliteArchitectureUpdatedProjector(db);
   const architectureReader = new SqliteArchitectureReader(db);
+  const architectureViewer = architectureReader;
   // Component Projection Stores - decomposed by use case
   const componentAddedProjector = new SqliteComponentAddedProjector(db);
   const componentUpdatedProjector = new SqliteComponentUpdatedProjector(db);
@@ -1088,6 +1091,7 @@ export async function bootstrap(jumboRoot: string): Promise<ApplicationContainer
     architectureDefinedProjector,
     architectureUpdatedProjector,
     architectureReader,
+    architectureViewer,
     // Component Projection Stores - decomposed by use case
     componentAddedProjector,
     componentUpdatedProjector,
