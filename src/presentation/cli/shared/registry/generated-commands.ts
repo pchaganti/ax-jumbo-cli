@@ -25,7 +25,9 @@ import { sessionEnd, metadata as sessionEndMeta } from '../../work/sessions/end/
 import { sessionsList, metadata as sessionsListMeta } from '../../work/sessions/list/sessions.list.js';
 import { sessionStart, metadata as sessionStartMeta } from '../../work/sessions/start/session.start.js';
 import { architectureDefine, metadata as architectureDefineMeta } from '../../solution/architecture/define/architecture.define.js';
+import { architectureShow, metadata as architectureShowMeta } from '../../solution/architecture/show/architecture.show.js';
 import { architectureUpdate, metadata as architectureUpdateMeta } from '../../solution/architecture/update/architecture.update.js';
+import { architectureView, metadata as architectureViewMeta } from '../../solution/architecture/view/architecture.view.js';
 import { componentAdd, metadata as componentAddMeta } from '../../solution/components/add/component.add.js';
 import { componentDeprecate, metadata as componentDeprecateMeta } from '../../solution/components/deprecate/component.deprecate.js';
 import { componentsList, metadata as componentsListMeta } from '../../solution/components/list/components.list.js';
@@ -149,9 +151,19 @@ export const commands: RegisteredCommand[] = [
     handler: architectureDefine
   },
   {
+    path: 'architecture show',
+    metadata: architectureShowMeta,
+    handler: architectureShow
+  },
+  {
     path: 'architecture update',
     metadata: architectureUpdateMeta,
     handler: architectureUpdate
+  },
+  {
+    path: 'architecture view',
+    metadata: architectureViewMeta,
+    handler: architectureView
   },
   {
     path: 'component add',

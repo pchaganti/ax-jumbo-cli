@@ -6,9 +6,10 @@
 
 import { Database } from "better-sqlite3";
 import { IArchitectureReader } from "../../../application/solution/architecture/IArchitectureReader.js";
+import { IArchitectureViewer } from "../../../application/solution/architecture/view/IArchitectureViewer.js";
 import { ArchitectureView } from "../../../application/solution/architecture/ArchitectureView.js";
 
-export class SqliteArchitectureReader implements IArchitectureReader {
+export class SqliteArchitectureReader implements IArchitectureReader, IArchitectureViewer {
   constructor(private readonly db: Database) {}
 
   async find(): Promise<ArchitectureView | null> {
@@ -33,5 +34,9 @@ export class SqliteArchitectureReader implements IArchitectureReader {
       createdAt: r.createdAt as string,
       updatedAt: r.updatedAt as string,
     };
+  }
+
+  async view(): Promise<ArchitectureView | null> {
+    return this.find();
   }
 }
