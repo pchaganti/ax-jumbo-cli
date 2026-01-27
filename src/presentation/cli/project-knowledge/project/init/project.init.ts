@@ -8,7 +8,7 @@
 
 import inquirer from "inquirer";
 import { CommandMetadata } from "../../../shared/registry/CommandMetadata.js";
-import { ApplicationContainer } from "../../../composition/bootstrap.js";
+import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { InitializeProjectCommand } from "../../../../../application/project-knowledge/project/init/InitializeProjectCommand.js";
 import { InitializeProjectCommandHandler } from "../../../../../application/project-knowledge/project/init/InitializeProjectCommandHandler.js";
 import { Renderer } from "../../../shared/rendering/Renderer.js";
@@ -129,7 +129,7 @@ export async function projectInit(
     boundary?: string[];
     nonInteractive?: boolean;
   },
-  container: ApplicationContainer
+  container: IApplicationContainer
 ) {
   // Configure renderer for onboarding (always flashy/human-friendly)
   const renderer = Renderer.configure({ forceHuman: true });

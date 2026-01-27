@@ -6,7 +6,7 @@
  */
 
 import { CommandMetadata } from "../../../shared/registry/CommandMetadata.js";
-import { ApplicationContainer } from "../../../composition/bootstrap.js";
+import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../shared/rendering/Renderer.js";
 
 /**
@@ -54,7 +54,7 @@ function formatStatus(status: string): string {
  */
 export async function goalShow(
   options: { goalId: string },
-  container: ApplicationContainer
+  container: IApplicationContainer
 ) {
   const renderer = Renderer.getInstance();
 
