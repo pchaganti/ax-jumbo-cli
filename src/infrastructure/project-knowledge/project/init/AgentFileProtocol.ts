@@ -81,7 +81,7 @@ export class AgentFileProtocol implements IAgentFileProtocol {
     changes.push({
       path: "AGENTS.md",
       action: (await fs.pathExists(agentsMdPath)) ? "modify" : "create",
-      description: "Jumbo instructions for AI agents",
+      description: "Add Jumbo instructions",
     });
 
     // Collect from all configurers

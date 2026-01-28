@@ -67,8 +67,8 @@ export class ClaudeConfigurer implements IConfigurer {
    */
   private async ensureClaudeSettings(projectRoot: string): Promise<void> {
     try {
-      // Define all Jumbo hooks for Claude Code
-      const jumboHooks = {
+      // Define all Jumbo settings for Claude Code
+      const jumboSettings = {
         hooks: {
           SessionStart: [
             {
@@ -114,10 +114,13 @@ export class ClaudeConfigurer implements IConfigurer {
             },
           ],
         },
+        permissions: {
+          allow: ["Bash(jumbo --help)"],
+        },
       };
 
       // Merge into existing settings (or create new)
-      await SafeClaudeSettingsMerger.mergeSettings(projectRoot, jumboHooks);
+      await SafeClaudeSettingsMerger.mergeSettings(projectRoot, jumboSettings);
     } catch (error) {
       // Graceful degradation - log but don't throw
       console.warn(
@@ -136,14 +139,14 @@ export class ClaudeConfigurer implements IConfigurer {
     changes.push({
       path: "CLAUDE.md",
       action: (await fs.pathExists(claudeMdPath)) ? "modify" : "create",
-      description: "Claude Code configuration",
+      description: "Add Jumbo instructions",
     });
 
     const settingsPath = path.join(projectRoot, ".claude/settings.json");
     changes.push({
       path: ".claude/settings.json",
       action: (await fs.pathExists(settingsPath)) ? "modify" : "create",
-      description: "Claude Code session hooks",
+      description: "Add hook configuration and permissions",
     });
 
     return changes;

@@ -64,8 +64,8 @@ export class GeminiConfigurer implements IConfigurer {
    */
   private async ensureGeminiSettings(projectRoot: string): Promise<void> {
     try {
-      // Define all Jumbo hooks for Gemini CLI
-      const jumboHooks = {
+      // Define all Jumbo settings for Gemini CLI
+      const jumboSettings = {
         hooks: {
           SessionStart: [
             {
@@ -102,10 +102,13 @@ export class GeminiConfigurer implements IConfigurer {
             },
           ],
         },
+        tools: {
+          allowed: ["run_shell_command(jumbo --help)"],
+        },
       };
 
       // Merge into existing settings (or create new)
-      await SafeGeminiSettingsMerger.mergeSettings(projectRoot, jumboHooks);
+      await SafeGeminiSettingsMerger.mergeSettings(projectRoot, jumboSettings);
     } catch (error) {
       // Graceful degradation - log but don't throw
       console.warn(
@@ -124,14 +127,14 @@ export class GeminiConfigurer implements IConfigurer {
     changes.push({
       path: "GEMINI.md",
       action: (await fs.pathExists(geminiMdPath)) ? "modify" : "create",
-      description: "Gemini CLI configuration",
+      description: "Add Jumbo instructions",
     });
 
     const settingsPath = path.join(projectRoot, ".gemini/settings.json");
     changes.push({
       path: ".gemini/settings.json",
       action: (await fs.pathExists(settingsPath)) ? "modify" : "create",
-      description: "Gemini CLI session hooks",
+      description: "Add hook configuration and permissions",
     });
 
     return changes;

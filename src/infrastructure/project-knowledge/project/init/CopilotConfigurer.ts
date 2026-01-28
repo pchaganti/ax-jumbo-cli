@@ -85,7 +85,7 @@ export class CopilotConfigurer implements IConfigurer {
       {
         path: ".github/copilot-instructions.md",
         action: (await fs.pathExists(copilotInstructionsPath)) ? "modify" : "create",
-        description: "GitHub Copilot instructions",
+        description: "Add Jumbo instructions",
       },
     ];
   }
