@@ -22,9 +22,13 @@ import { goalShow, metadata as goalShowMeta } from '../../work/goals/show/goal.s
 import { goalStart, metadata as goalStartMeta } from '../../work/goals/start/goal.start.js';
 import { goalUnblock, metadata as goalUnblockMeta } from '../../work/goals/unblock/goal.unblock.js';
 import { goalUpdate, metadata as goalUpdateMeta } from '../../work/goals/update/goal.update.js';
+import { goalUpdateProgress, metadata as goalUpdateProgressMeta } from '../../work/goals/update-progress/goal.updateProgress.js';
+import { sessionCompact, metadata as sessionCompactMeta } from '../../work/sessions/compact/session.compact.js';
 import { sessionEnd, metadata as sessionEndMeta } from '../../work/sessions/end/session.end.js';
 import { sessionsList, metadata as sessionsListMeta } from '../../work/sessions/list/sessions.list.js';
 import { sessionStart, metadata as sessionStartMeta } from '../../work/sessions/start/session.start.js';
+import { workPause, metadata as workPauseMeta } from '../../work/work/pause/work.pause.js';
+import { workResume, metadata as workResumeMeta } from '../../work/work/resume/work.resume.js';
 import { architectureDefine, metadata as architectureDefineMeta } from '../../solution/architecture/define/architecture.define.js';
 import { architectureShow, metadata as architectureShowMeta } from '../../solution/architecture/show/architecture.show.js';
 import { architectureUpdate, metadata as architectureUpdateMeta } from '../../solution/architecture/update/architecture.update.js';
@@ -137,6 +141,16 @@ export const commands: RegisteredCommand[] = [
     handler: goalUpdate
   },
   {
+    path: 'goal updateProgress',
+    metadata: goalUpdateProgressMeta,
+    handler: goalUpdateProgress
+  },
+  {
+    path: 'session compact',
+    metadata: sessionCompactMeta,
+    handler: sessionCompact
+  },
+  {
     path: 'session end',
     metadata: sessionEndMeta,
     handler: sessionEnd
@@ -150,6 +164,16 @@ export const commands: RegisteredCommand[] = [
     path: 'session start',
     metadata: sessionStartMeta,
     handler: sessionStart
+  },
+  {
+    path: 'work pause',
+    metadata: workPauseMeta,
+    handler: workPause
+  },
+  {
+    path: 'work resume',
+    metadata: workResumeMeta,
+    handler: workResume
   },
   {
     path: 'architecture define',
