@@ -1,16 +1,16 @@
 import { ResumeWorkCommand } from "./ResumeWorkCommand.js";
-import { IWorkerIdentityReader } from "../../../host/workers/IWorkerIdentityReader.js";
-import { IGoalStatusReader } from "../../goals/IGoalStatusReader.js";
-import { IGoalResumedEventWriter } from "../../goals/resume/IGoalResumedEventWriter.js";
-import { IGoalResumedEventReader } from "../../goals/resume/IGoalResumedEventReader.js";
-import { IGoalReader } from "../../goals/resume/IGoalReader.js";
-import { IEventBus } from "../../../shared/messaging/IEventBus.js";
-import { ResumeGoalCommandHandler } from "../../goals/resume/ResumeGoalCommandHandler.js";
-import { ResumeGoalCommand } from "../../goals/resume/ResumeGoalCommand.js";
-import { GoalClaimPolicy } from "../../goals/claims/GoalClaimPolicy.js";
-import { ISettingsReader } from "../../../shared/settings/ISettingsReader.js";
-import { GoalStatus } from "../../../../domain/work/goals/Constants.js";
-import { GoalView } from "../../goals/GoalView.js";
+import { IWorkerIdentityReader } from "../../host/workers/IWorkerIdentityReader.js";
+import { IGoalStatusReader } from "../goals/IGoalStatusReader.js";
+import { IGoalResumedEventWriter } from "../goals/resume/IGoalResumedEventWriter.js";
+import { IGoalResumedEventReader } from "../goals/resume/IGoalResumedEventReader.js";
+import { IGoalReader } from "../goals/resume/IGoalReader.js";
+import { IEventBus } from "../../shared/messaging/IEventBus.js";
+import { ResumeGoalCommandHandler } from "../goals/resume/ResumeGoalCommandHandler.js";
+import { ResumeGoalCommand } from "../goals/resume/ResumeGoalCommand.js";
+import { GoalClaimPolicy } from "../goals/claims/GoalClaimPolicy.js";
+import { ISettingsReader } from "../../shared/settings/ISettingsReader.js";
+import { GoalStatus } from "../../../domain/work/goals/Constants.js";
+import { GoalView } from "../goals/GoalView.js";
 
 /**
  * Result of resuming work.

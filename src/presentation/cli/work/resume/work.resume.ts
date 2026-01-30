@@ -6,12 +6,12 @@
  * Returns full goal context with continuation prompt for the LLM.
  */
 
-import { CommandMetadata } from "../../../shared/registry/CommandMetadata.js";
-import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
-import { Renderer } from "../../../shared/rendering/Renderer.js";
-import { ResumeWorkCommandHandler } from "../../../../../application/work/work/resume/ResumeWorkCommandHandler.js";
-import { GetGoalContextQueryHandler } from "../../../../../application/work/goals/get-context/GetGoalContextQueryHandler.js";
-import { GoalContextFormatter } from "../../goals/start/GoalContextFormatter.js";
+import { CommandMetadata } from "../../shared/registry/CommandMetadata.js";
+import { IApplicationContainer } from "../../../../application/host/IApplicationContainer.js";
+import { Renderer } from "../../shared/rendering/Renderer.js";
+import { ResumeWorkCommandHandler } from "../../../../application/work/resume/ResumeWorkCommandHandler.js";
+import { GetGoalContextQueryHandler } from "../../../../application/work/goals/get-context/GetGoalContextQueryHandler.js";
+import { GoalContextFormatter } from "../goals/start/GoalContextFormatter.js";
 
 /**
  * Command metadata for auto-registration

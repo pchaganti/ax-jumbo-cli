@@ -5,10 +5,10 @@
  * This is a parameterless command that automatically identifies the worker's active goal.
  */
 
-import { CommandMetadata } from "../../../shared/registry/CommandMetadata.js";
-import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
-import { Renderer } from "../../../shared/rendering/Renderer.js";
-import { PauseWorkCommandHandler } from "../../../../../application/work/work/pause/PauseWorkCommandHandler.js";
+import { CommandMetadata } from "../../shared/registry/CommandMetadata.js";
+import { IApplicationContainer } from "../../../../application/host/IApplicationContainer.js";
+import { Renderer } from "../../shared/rendering/Renderer.js";
+import { PauseWorkCommandHandler } from "../../../../application/work/pause/PauseWorkCommandHandler.js";
 
 /**
  * Command metadata for auto-registration

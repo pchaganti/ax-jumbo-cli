@@ -2,7 +2,7 @@
  * Tests for ResumeWorkCommandHandler (work-level command handler)
  */
 
-import { ResumeWorkCommandHandler } from "../../../../../src/application/work/work/resume/ResumeWorkCommandHandler";
+import { ResumeWorkCommandHandler } from "../../../../../src/application/work/resume/ResumeWorkCommandHandler";
 import { IWorkerIdentityReader } from "../../../../../src/application/host/workers/IWorkerIdentityReader";
 import { IGoalStatusReader } from "../../../../../src/application/work/goals/IGoalStatusReader";
 import { IGoalResumedEventWriter } from "../../../../../src/application/work/goals/resume/IGoalResumedEventWriter";

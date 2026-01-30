@@ -2,7 +2,7 @@
  * Tests for PauseWorkCommandHandler (work-level command handler)
  */
 
-import { PauseWorkCommandHandler } from "../../../../../src/application/work/work/pause/PauseWorkCommandHandler";
+import { PauseWorkCommandHandler } from "../../../../../src/application/work/pause/PauseWorkCommandHandler";
 import { IWorkerIdentityReader } from "../../../../../src/application/host/workers/IWorkerIdentityReader";
 import { IGoalStatusReader } from "../../../../../src/application/work/goals/IGoalStatusReader";
 import { IGoalPausedEventWriter } from "../../../../../src/application/work/goals/pause/IGoalPausedEventWriter";
