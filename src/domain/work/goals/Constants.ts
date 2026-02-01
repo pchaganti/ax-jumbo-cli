@@ -16,7 +16,9 @@ export const GoalEventType = {
   RESET: 'GoalResetEvent',
   REMOVED: 'GoalRemovedEvent',
   REVIEWED: 'GoalReviewedEvent',
-  PROGRESS_UPDATED: 'GoalProgressUpdatedEvent'
+  PROGRESS_UPDATED: 'GoalProgressUpdatedEvent',
+  SUBMITTED_FOR_REVIEW: 'GoalSubmittedForReviewEvent',
+  QUALIFIED: 'GoalQualifiedEvent'
 } as const;
 
 export type GoalEventTypeValue = typeof GoalEventType[keyof typeof GoalEventType];
@@ -29,6 +31,7 @@ export const GoalStatus = {
   PAUSED: 'paused',
   COMPLETED: 'completed',
   INREVIEW: 'in-review',
+  QUALIFIED: 'qualified',
 } as const;
 
 export type GoalStatusType = typeof GoalStatus[keyof typeof GoalStatus];
@@ -64,6 +67,9 @@ export const GoalErrorMessages = {
   FILE_PATH_TOO_LONG: 'File path must be less than {max} characters',
   // Claim-related errors
   GOAL_CLAIMED_BY_ANOTHER_WORKER: 'Goal is claimed by another worker. Claim expires at {expiresAt}.',
+  // Review and qualification state transition errors
+  CANNOT_SUBMIT_FOR_REVIEW_IN_STATUS: 'Cannot submit goal for review in {status} status. Goal must be in doing status.',
+  CANNOT_QUALIFY_IN_STATUS: 'Cannot qualify goal in {status} status. Goal must be in-review.',
 } as const;
 
 // Numeric limits
