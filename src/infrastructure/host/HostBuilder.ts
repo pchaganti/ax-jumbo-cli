@@ -250,6 +250,13 @@ import { RelationRemovedEventHandler } from "../../application/relations/remove/
 import { CompleteGoalController } from "../../application/work/goals/complete/CompleteGoalController.js";
 import { CompleteGoalCommandHandler } from "../../application/work/goals/complete/CompleteGoalCommandHandler.js";
 import { GetGoalContextQueryHandler } from "../../application/work/goals/get-context/GetGoalContextQueryHandler.js";
+import { ReviewGoalController } from "../../application/work/goals/review/ReviewGoalController.js";
+import { SubmitGoalForReviewCommandHandler } from "../../application/work/goals/review/SubmitGoalForReviewCommandHandler.js";
+import { ReviewTurnTracker } from "../../application/work/goals/complete/ReviewTurnTracker.js";
+import { FsGoalSubmittedForReviewEventStore } from "../work/goals/review/FsGoalSubmittedForReviewEventStore.js";
+import { QualifyGoalController } from "../../application/work/goals/qualify/QualifyGoalController.js";
+import { QualifyGoalCommandHandler } from "../../application/work/goals/qualify/QualifyGoalCommandHandler.js";
+import { FsGoalQualifiedEventStore } from "../work/goals/qualify/FsGoalQualifiedEventStore.js";
 
 // Solution Context
 import { UnprimedBrownfieldQualifier } from "../../application/solution/UnprimedBrownfieldQualifier.js";
@@ -335,6 +342,8 @@ export class HostBuilder {
     const goalResetEventStore = new FsGoalResetEventStore(this.rootDir);
     const goalRemovedEventStore = new FsGoalRemovedEventStore(this.rootDir);
     const goalProgressUpdatedEventStore = new FsGoalProgressUpdatedEventStore(this.rootDir);
+    const goalSubmittedForReviewEventStore = new FsGoalSubmittedForReviewEventStore(this.rootDir);
+    const goalQualifiedEventStore = new FsGoalQualifiedEventStore(this.rootDir);
 
     // Solution Category
     // Architecture Event Stores - decomposed by use case
@@ -507,6 +516,42 @@ export class HostBuilder {
     const completeGoalController = new CompleteGoalController(
       completeGoalCommandHandler,
       goalCompletedProjector,
+      goalClaimPolicy,
+      workerIdentityReader
+    );
+    // ReviewGoalController dependencies
+    const submitGoalForReviewCommandHandler = new SubmitGoalForReviewCommandHandler(
+      goalSubmittedForReviewEventStore,
+      goalSubmittedForReviewEventStore,
+      goalContextReader,
+      eventBus,
+      goalClaimPolicy,
+      workerIdentityReader
+    );
+    const reviewTurnTracker = new ReviewTurnTracker(
+      goalReviewedEventStore,
+      settingsReader
+    );
+    const reviewGoalController = new ReviewGoalController(
+      submitGoalForReviewCommandHandler,
+      getGoalContextQueryHandler,
+      goalContextReader,
+      reviewTurnTracker,
+      goalClaimPolicy,
+      workerIdentityReader
+    );
+    // QualifyGoalController dependencies
+    const qualifyGoalCommandHandler = new QualifyGoalCommandHandler(
+      goalQualifiedEventStore,
+      goalQualifiedEventStore,
+      goalContextReader,
+      eventBus,
+      goalClaimPolicy,
+      workerIdentityReader
+    );
+    const qualifyGoalController = new QualifyGoalController(
+      qualifyGoalCommandHandler,
+      goalContextReader,
       goalClaimPolicy,
       workerIdentityReader
     );
@@ -716,6 +761,8 @@ export class HostBuilder {
       goalResetEventStore,
       goalRemovedEventStore,
       goalProgressUpdatedEventStore,
+      goalSubmittedForReviewEventStore,
+      goalQualifiedEventStore,
       // Session Projection Stores - decomposed by use case
       sessionStartedProjector,
       sessionEndedProjector,
@@ -739,6 +786,8 @@ export class HostBuilder {
       goalStatusReader,
       // Goal Controllers
       completeGoalController,
+      reviewGoalController,
+      qualifyGoalController,
 
       // Solution Category
       // Architecture Event Stores - decomposed by use case

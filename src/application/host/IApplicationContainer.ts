@@ -52,8 +52,14 @@ import { IGoalStatusReader } from "../work/goals/IGoalStatusReader.js";
 import { IGoalReadForSessionSummary } from "../work/sessions/get-context/IGoalReadForSessionSummary.js";
 // Goal Controllers
 import { CompleteGoalController } from "../work/goals/complete/CompleteGoalController.js";
+import { ReviewGoalController } from "../work/goals/review/ReviewGoalController.js";
 import { IGoalReviewedEventWriter } from "../work/goals/complete/IGoalReviewedEventWriter.js";
 import { IGoalReviewedEventReader } from "../work/goals/complete/IGoalReviewedEventReader.js";
+import { IGoalSubmittedForReviewEventWriter } from "../work/goals/review/IGoalSubmittedForReviewEventWriter.js";
+import { IGoalSubmittedForReviewEventReader } from "../work/goals/review/IGoalSubmittedForReviewEventReader.js";
+import { QualifyGoalController } from "../work/goals/qualify/QualifyGoalController.js";
+import { IGoalQualifiedEventWriter } from "../work/goals/qualify/IGoalQualifiedEventWriter.js";
+import { IGoalQualifiedEventReader } from "../work/goals/qualify/IGoalQualifiedEventReader.js";
 
 import { IDecisionAddedProjector } from "../solution/decisions/add/IDecisionAddedProjector.js";
 import { IDecisionUpdatedProjector } from "../solution/decisions/update/IDecisionUpdatedProjector.js";
@@ -268,6 +274,8 @@ export interface IApplicationContainer {
   goalResetEventStore: IGoalResetEventWriter & IGoalResetEventReader;
   goalRemovedEventStore: IGoalRemovedEventWriter & IGoalRemovedEventReader;
   goalProgressUpdatedEventStore: IGoalProgressUpdatedEventWriter & IGoalProgressUpdatedEventReader;
+  goalSubmittedForReviewEventStore: IGoalSubmittedForReviewEventWriter & IGoalSubmittedForReviewEventReader;
+  goalQualifiedEventStore: IGoalQualifiedEventWriter & IGoalQualifiedEventReader;
 
   // Work Category - Session Projection Stores - decomposed by use case
   sessionStartedProjector: ISessionStartedProjector;
@@ -292,6 +300,8 @@ export interface IApplicationContainer {
   goalStatusReader: IGoalStatusReader & IGoalReadForSessionSummary;
   // Goal Controllers
   completeGoalController: CompleteGoalController;
+  reviewGoalController: ReviewGoalController;
+  qualifyGoalController: QualifyGoalController;
 
   // Solution Category - Event Stores
   // Architecture Event Stores - decomposed by use case
