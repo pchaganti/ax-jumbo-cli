@@ -71,9 +71,12 @@ function renderCompletedContext(
 ){
   // Render capture learning prompt
   renderer.headline("# Goal Completed - Capture Learnings");
-  renderer.info("@LLM: Reflect briefly. Did this goal surface anything that future sessions MUST know?");
+  renderer.info("@LLM: Reflect:");
+  renderer.info("Did your interaction with the user while implementing this goal surface uncaptured invariants, guidelines, decisions, components, dependencies, or architectural patterns?");
+  renderer.info("Were you corrected in any way that highlights a missing invariant, guideline, decision, component, dependency, or architectural pattern that should be captured?");
+  renderer.info("If you answer 'yes' to any of these questions, propose additions to the knowledge base.");
   renderer.info("Only propose additions if they are:");
-  renderer.info("  - Universal (applies beyond this specific goal)");
+  renderer.info("  - Universal (applicable beyond this specific goal)");
   renderer.info("  - Dense (one sentence, no examples unless the example IS the rule)");
   renderer.info("  - Actionable (changes how code is written or decisions are made)");
   renderer.info("Capturable types: invariant, guideline, decision, component, dependency, architecture.");
@@ -89,7 +92,7 @@ function renderCompletedContext(
       objective: response.nextGoal.objective,
       status: response.nextGoal.status,
     });
-    renderer.info("\nStart this goal without prompting (if you have permission). Run:");
+    renderer.info("Start the next goal immediately. Run:");
     renderer.info(`  jumbo goal start --goal-id ${response.nextGoal.goalId}`);
   }
 }
