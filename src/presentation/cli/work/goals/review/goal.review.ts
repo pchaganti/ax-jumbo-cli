@@ -10,7 +10,6 @@ import { IApplicationContainer } from "../../../../../application/host/IApplicat
 import { Renderer } from "../../../shared/rendering/Renderer.js";
 import { ReviewGoalRequest } from "../../../../../application/work/goals/review/ReviewGoalRequest.js";
 import { ReviewGoalResponse } from "../../../../../application/work/goals/review/ReviewGoalResponse.js";
-import { GoalContextRenderer } from "./GoalContextRenderer.js";
 
 /**
  * Command metadata for auto-registration
@@ -116,6 +115,7 @@ function renderReviewContext(
       });
       renderer.info("\n" + "VERIFY: These files were changed.");
       renderer.info("INSTRUCTION: If any files are missing or not changed as expected, then update them and re-run 'jumbo goal review --goal-id " + response.goalId + "' again.");
+    }
 
     if(goal.scopeIn && goal.scopeIn.length > 0){
       renderer.headline("#### In Scope");
@@ -162,6 +162,7 @@ function renderReviewContext(
       renderer.info("New patterns MUST not conflict with existing patterns. For example, if the solution uses a layered architecture pattern, then you MUST NOT introduce a microservices pattern.");
       renderer.info("INSTRUCTION: If any architectural patterns were not leveraged or new patterns conflict with existing ones, then adjust the implementation and re-run 'jumbo goal review --goal-id " + response.goalId + "' again.");
     }
+
     if(criteria.architecture!.principles && criteria.architecture!.principles.length > 0){
       renderer.headline("#### Principles:");
       criteria.architecture!.principles.forEach((principle) => {
@@ -230,12 +231,11 @@ function renderReviewContext(
 }
 
 function isScoped(response: ReviewGoalResponse): boolean {
-    return (
-      (Array.isArray(response.criteria.goal.scopeIn) && response.criteria.goal.scopeIn.length > 0) ||
-      (Array.isArray(response.criteria.goal.scopeOut) && response.criteria.goal.scopeOut.length > 0) ||
-      (Array.isArray(response.criteria.goal.boundaries) && response.criteria.goal.boundaries.length > 0) ||
-      (Array.isArray(response.criteria.goal.filesToBeCreated) && response.criteria.goal.filesToBeCreated.length > 0) ||
-      (Array.isArray(response.criteria.goal.filesToBeChanged) && response.criteria.goal.filesToBeChanged.length > 0)
-    );
-  }
-
+  return (
+    (Array.isArray(response.criteria.goal.scopeIn) && response.criteria.goal.scopeIn.length > 0) ||
+    (Array.isArray(response.criteria.goal.scopeOut) && response.criteria.goal.scopeOut.length > 0) ||
+    (Array.isArray(response.criteria.goal.boundaries) && response.criteria.goal.boundaries.length > 0) ||
+    (Array.isArray(response.criteria.goal.filesToBeCreated) && response.criteria.goal.filesToBeCreated.length > 0) ||
+    (Array.isArray(response.criteria.goal.filesToBeChanged) && response.criteria.goal.filesToBeChanged.length > 0)
+  );
+}
