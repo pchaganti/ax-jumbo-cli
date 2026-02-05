@@ -85,7 +85,7 @@ export class ClaudeConfigurer implements IConfigurer {
               hooks: [
                 {
                   type: "command" as const,
-                  command: "jumbo goal resume --goal-id {current-goal-id}",
+                  command: "jumbo work resume",
                 },
               ],
             },
@@ -95,9 +95,8 @@ export class ClaudeConfigurer implements IConfigurer {
               matcher: "auto" as const,
               hooks: [
                 {
-                  type: "prompt" as const,
-                  prompt:
-                    "When you are finished compactin context then run 'jumbo goal resume --goal-id <GOAL_ID>'with the goal of the current goal id, to get the required context to complete the goal.",
+                  type: "command" as const,
+                  command: "jumbo work pause",
                 },
               ],
             },

@@ -82,9 +82,14 @@ export async function goalStart(options: { goalId: string }, container: IApplica
     const additionalLlmInstructions = [
       "@LLM: Goal context loaded. Work within scope and boundaries.",
       "Track your progress by documenting completed sub-tasks with 'jumbo goal update-progress --goal-id " + options.goalId + " --task-description <description>'.",
-      "Run 'jumbo goal review --goal-id " + options.goalId + "' when you are finished to submit the goal for review.",
     ];
     renderer.info(additionalLlmInstructions.join("\n") + "\n");
+
+    // Prominent Review Instructions
+    renderer.divider();
+    renderer.headline("🚀 IMPORTANT NEXT STEP");
+    renderer.info(`Run: jumbo goal review --goal-id ${options.goalId}`);
+    renderer.divider();
 
   } catch (error) {
     renderer.error("Failed to start goal", error instanceof Error ? error : String(error));

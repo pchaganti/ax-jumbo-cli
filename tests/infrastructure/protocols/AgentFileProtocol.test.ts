@@ -237,6 +237,35 @@ describe("AgentFileProtocol", () => {
       const copilotPath = path.join(tmpDir, ".github", "copilot-instructions.md");
       const copilotExists = await fs.pathExists(copilotPath);
       expect(copilotExists).toBe(true);
+
+      // Assert - .github/hooks/hooks.json created
+      const hooksPath = path.join(tmpDir, ".github", "hooks", "hooks.json");
+      const hooksExists = await fs.pathExists(hooksPath);
+      expect(hooksExists).toBe(true);
+    });
+
+    it("should create .github/hooks/hooks.json with SessionStart hook", async () => {
+      // Act
+      await protocol.ensureAgentConfigurations(tmpDir);
+
+      // Assert - .github/hooks/hooks.json created
+      const hooksPath = path.join(tmpDir, ".github", "hooks", "hooks.json");
+      const exists = await fs.pathExists(hooksPath);
+      expect(exists).toBe(true);
+
+      const content = await fs.readFile(hooksPath, "utf-8");
+      const hooks = JSON.parse(content);
+      
+      // Assert structure
+      expect(hooks.version).toBe(1);
+      expect(hooks.hooks).toBeDefined();
+      expect(hooks.hooks.sessionStart).toBeDefined();
+      expect(hooks.hooks.sessionStart.length).toBeGreaterThan(0);
+      
+      // Assert jumbo session start hook
+      const sessionStartHook = hooks.hooks.sessionStart[0];
+      expect(sessionStartHook.type).toBe("command");
+      expect(sessionStartHook.bash).toBe("jumbo session start");
     });
   });
 

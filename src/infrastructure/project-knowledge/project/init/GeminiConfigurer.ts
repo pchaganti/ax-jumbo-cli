@@ -77,15 +77,23 @@ export class GeminiConfigurer implements IConfigurer {
                 },
               ],
             },
+            {
+              matcher: "compress" as const,
+              hooks: [
+                {
+                  type: "command" as const,
+                  command: "jumbo work resume",
+                },
+              ],
+            },
           ],
           PreCompress: [
             {
               matcher: "auto" as const,
               hooks: [
                 {
-                  type: "prompt" as const,
-                  prompt:
-                    "When you are finished compressing context then run 'jumbo goal resume --goal-id <GOAL_ID>'with the goal of the current goal id, to get the required context to complete the goal.",
+                  type: "command" as const,
+                  command: "jumbo work pause",
                 },
               ],
             },

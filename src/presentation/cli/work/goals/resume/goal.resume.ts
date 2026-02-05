@@ -130,9 +130,14 @@ export async function goalResume(options: { goalId: string; note?: string }, con
     // LLM Guidance
     const additionalLlmInstructions = [
       "@LLM: Goal context loaded. Work within scope and boundaries.",
-      "Run 'jumbo goal review --goal-id " + options.goalId + "' when you are finished to submit the goal for review.",
     ];
     renderer.info(additionalLlmInstructions.join("\n") + "\n");
+
+    // Prominent Review Instructions
+    renderer.divider();
+    renderer.headline("🚀 IMPORTANT NEXT STEP");
+    renderer.info(`Run: jumbo goal review --goal-id ${options.goalId}`);
+    renderer.divider();
 
   } catch (error) {
     renderer.error("Failed to resume goal", error instanceof Error ? error : String(error));

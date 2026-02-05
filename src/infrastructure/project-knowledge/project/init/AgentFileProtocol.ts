@@ -22,12 +22,14 @@ import { IConfigurer } from "./IConfigurer.js";
 import { ClaudeConfigurer } from "./ClaudeConfigurer.js";
 import { GeminiConfigurer } from "./GeminiConfigurer.js";
 import { CopilotConfigurer } from "./CopilotConfigurer.js";
+import { GitHubHooksConfigurer } from "./GitHubHooksConfigurer.js";
 
 export class AgentFileProtocol implements IAgentFileProtocol {
   private readonly configurers: IConfigurer[] = [
     new ClaudeConfigurer(),
     new GeminiConfigurer(),
     new CopilotConfigurer(),
+    new GitHubHooksConfigurer(),
   ];
 
   /**
