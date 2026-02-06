@@ -1,5 +1,5 @@
 /**
- * Tests for SessionSummaryFormatter
+ * Tests for SessionStartTextRenderer session summary output
  *
  * Verifies YAML output structure for session summary including:
  * - Goal lifecycle events (started, paused, resumed)
@@ -8,14 +8,14 @@
  */
 
 import { describe, it, expect, beforeEach } from "@jest/globals";
-import { SessionSummaryFormatter } from "../../../../../../src/presentation/cli/work/sessions/start/SessionSummaryFormatter.js";
+import { SessionStartTextRenderer } from "../../../../../../src/presentation/cli/work/sessions/start/SessionStartTextRenderer.js";
 import { SessionSummaryProjection } from "../../../../../../src/application/work/sessions/SessionSummaryView.js";
 
-describe("SessionSummaryFormatter", () => {
-  let formatter: SessionSummaryFormatter;
+describe("SessionStartTextRenderer", () => {
+  let renderer: SessionStartTextRenderer;
 
   beforeEach(() => {
-    formatter = new SessionSummaryFormatter();
+    renderer = new SessionStartTextRenderer();
   });
 
   /**
@@ -59,7 +59,7 @@ describe("SessionSummaryFormatter", () => {
         ],
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).toContain("goalsStarted:");
       expect(result).toContain("goalId: goal_123");
@@ -74,7 +74,7 @@ describe("SessionSummaryFormatter", () => {
         goalsStarted: [],
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).not.toContain("goalsStarted:");
     });
@@ -92,7 +92,7 @@ describe("SessionSummaryFormatter", () => {
         ],
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).toContain("goalsPaused:");
       expect(result).toContain("goalId: goal_789");
@@ -114,7 +114,7 @@ describe("SessionSummaryFormatter", () => {
         ],
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).toContain("goalsPaused:");
       expect(result).toContain("goalId: goal_abc");
@@ -134,7 +134,7 @@ describe("SessionSummaryFormatter", () => {
         ],
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).toContain("goalsResumed:");
       expect(result).toContain("goalId: goal_def");
@@ -154,7 +154,7 @@ describe("SessionSummaryFormatter", () => {
         ],
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).toContain("goalsResumed:");
       expect(result).toContain("goalId: goal_ghi");
@@ -175,7 +175,7 @@ describe("SessionSummaryFormatter", () => {
         ],
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).toContain("@LLM:");
       expect(result).toContain("Goals were paused in this session");
@@ -194,7 +194,7 @@ describe("SessionSummaryFormatter", () => {
         ],
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).not.toContain("@LLM:");
       expect(result).not.toContain("resume");
@@ -236,7 +236,7 @@ describe("SessionSummaryFormatter", () => {
         ],
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).toContain("completedGoals:");
       expect(result).toContain("goalsStarted:");
@@ -251,7 +251,7 @@ describe("SessionSummaryFormatter", () => {
         status: "active",
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).toContain("status: active");
     });
@@ -261,7 +261,7 @@ describe("SessionSummaryFormatter", () => {
         status: "paused",
       });
 
-      const result = formatter.format(summary, true);
+      const result = renderer.renderSessionSummary(summary, true);
 
       expect(result).toContain("status: paused");
     });
@@ -269,7 +269,7 @@ describe("SessionSummaryFormatter", () => {
 
   describe("brownfield project handling", () => {
     it("should return brownfield instructions when no solution context exists", () => {
-      const result = formatter.format(null, false);
+      const result = renderer.renderSessionSummary(null, false);
 
       expect(result).toContain("BROWNFIELD PROJECT");
       expect(result).toContain("@LLM:");
@@ -279,7 +279,7 @@ describe("SessionSummaryFormatter", () => {
 
   describe("null summary handling", () => {
     it("should return appropriate message when summary is null but solution context exists", () => {
-      const result = formatter.format(null, true);
+      const result = renderer.renderSessionSummary(null, true);
 
       expect(result).toContain("No previous session context available");
       expect(result).not.toContain("BROWNFIELD");

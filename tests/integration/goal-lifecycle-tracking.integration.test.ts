@@ -17,7 +17,7 @@ import path from "path";
 import { Host } from "../../src/infrastructure/host/Host.js";
 import { IApplicationContainer } from "../../src/application/host/IApplicationContainer.js";
 import { GetLatestSessionSummaryQueryHandler } from "../../src/application/work/sessions/get-context/GetLatestSessionSummaryQueryHandler.js";
-import { SessionSummaryFormatter } from "../../src/presentation/cli/work/sessions/start/SessionSummaryFormatter.js";
+import { SessionStartTextRenderer } from "../../src/presentation/cli/work/sessions/start/SessionStartTextRenderer.js";
 
 describe("Integration: Goal Lifecycle Tracking", () => {
   const testRoot = path.join(process.cwd(), ".jumbo-goal-lifecycle-test");
@@ -456,8 +456,8 @@ describe("Integration: Goal Lifecycle Tracking", () => {
     );
     const latestSessionSummary = await getLatestSessionSummary.execute();
 
-    const formatter = new SessionSummaryFormatter();
-    const formattedOutput = formatter.format(latestSessionSummary, true);
+    const textRenderer = new SessionStartTextRenderer();
+    const formattedOutput = textRenderer.renderSessionSummary(latestSessionSummary, true);
 
     // Verify formatter includes resume prompt
     expect(formattedOutput).toContain("@LLM:");

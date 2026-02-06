@@ -9,11 +9,9 @@ import { StartSessionCommandHandler } from "../../../../../application/work/sess
 import { StartSessionCommand } from "../../../../../application/work/sessions/start/StartSessionCommand.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../shared/rendering/Renderer.js";
-import { GetSessionStartContextQueryHandler } from "../../../../../application/work/sessions/get-context/GetSessionStartContextQueryHandler.js";
-import { SessionSummaryFormatter } from "./SessionSummaryFormatter.js";
-import { PlannedGoalsFormatter } from "./PlannedGoalsFormatter.js";
-import { InProgressGoalsFormatter } from "./InProgressGoalsFormatter.js";
-import { ProjectContextFormatter } from "./ProjectContextFormatter.js";
+import { SessionStartContextQueryHandler } from "../../../../../application/work/sessions/get-context/SessionStartContextQueryHandler.js";
+import { SessionStartTextRenderer } from "./SessionStartTextRenderer.js";
+import { SessionStartContext } from "../../../../../application/work/sessions/get-context/SessionStartContext.js";
 
 /**
  * Command metadata for auto-registration
@@ -49,10 +47,15 @@ export async function sessionStart(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. QUERY: Get assembled context from application layer
-    renderer.info("Loading orientation context...\n");
+    const config = renderer.getConfig();
+    const isTextOutput = config.format === "text";
 
-    const getSessionStartContext = new GetSessionStartContextQueryHandler(
+    if (isTextOutput) {
+      renderer.info("Loading orientation context...\n");
+    }
+
+    // 1. QUERY: Get assembled context from application layer
+    const getSessionStartContext = new SessionStartContextQueryHandler(
       container.sessionSummaryProjectionStore,
       container.goalStatusReader,
       container.projectContextReader,
@@ -62,51 +65,20 @@ export async function sessionStart(
     );
     const sessionContext = await getSessionStartContext.execute();
 
-    // 2. RENDER: Create formatters and display context
-    const projectContextFormatter = new ProjectContextFormatter();
-    const sessionSummaryFormatter = new SessionSummaryFormatter();
-    const inProgressGoalsFormatter = new InProgressGoalsFormatter();
-    const plannedGoalsFormatter = new PlannedGoalsFormatter();
+    // 2. RENDER: Display context
+    if (isTextOutput) {
+      const textRenderer = new SessionStartTextRenderer();
+      const textOutput = textRenderer.render(sessionContext);
 
-    // Render project context (name, purpose, audiences, pains)
-    const projectContextYaml = projectContextFormatter.format(
-      sessionContext.project,
-      sessionContext.audiences,
-      sessionContext.audiencePains
-    );
-    if (projectContextYaml) {
-      renderer.info(projectContextYaml);
+      for (const block of textOutput.blocks) {
+        if (block) {
+          renderer.info(block);
+        }
+      }
+
+      renderer.info("---\n");
+      renderer.info(textOutput.llmInstruction);
     }
-
-    // Render historical context (previous session)
-    const sessionContextMarkdown = sessionSummaryFormatter.format(
-      sessionContext.latestSessionSummary,
-      sessionContext.hasSolutionContext
-    );
-    renderer.info(sessionContextMarkdown);
-
-    // Render current active work (in-progress goals)
-    const inProgressGoalsMarkdown = inProgressGoalsFormatter.format(
-      sessionContext.inProgressGoals
-    );
-    renderer.info(inProgressGoalsMarkdown);
-
-    // Render current state (available goals)
-    const plannedGoalsMarkdown = plannedGoalsFormatter.format(
-      sessionContext.plannedGoals
-    );
-    renderer.info(plannedGoalsMarkdown);
-
-    renderer.info("---\n");
-
-    const llmInstruction = [
-      "@LLM: Prompt the user for input about what goal to start. ",
-      "For example, \"I can see we've recently worked on X, Y, Z. ",
-      "Everything was completed without blockers. Goals A, B, and N ",
-      "are planned. Do you want to start with A, or something else?\"",
-      "IMPORTANT: Run 'jumbo goal start --goal-id <id>' before doing any work!",
-    ];
-    renderer.info(llmInstruction.join("\n"));
 
     // 3. COMMAND: Execute session start
     const commandHandler = new StartSessionCommandHandler(
@@ -118,12 +90,31 @@ export async function sessionStart(
     const result = await commandHandler.execute(command);
 
     // 4. OUTPUT: Render success
-    renderer.success("Session started", {
-      sessionId: result.sessionId,
-    });
+    if (isTextOutput) {
+      renderer.success("Session started", {
+        sessionId: result.sessionId,
+      });
+    } else {
+      renderer.data(buildStructuredSessionStartOutput(sessionContext, result.sessionId));
+    }
   } catch (error) {
     renderer.error("Failed to start session", error instanceof Error ? error : String(error));
     process.exit(1);
   }
   // NO CLEANUP - infrastructure manages itself!
+}
+
+function buildStructuredSessionStartOutput(
+  sessionContext: SessionStartContext,
+  sessionId: string
+) {
+  const textRenderer = new SessionStartTextRenderer();
+  const structuredContext = textRenderer.buildStructuredContext(sessionContext);
+
+  return {
+    ...structuredContext,
+    sessionStart: {
+      sessionId,
+    },
+  };
 }

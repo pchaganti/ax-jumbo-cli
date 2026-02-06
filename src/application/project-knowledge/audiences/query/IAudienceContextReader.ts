@@ -1,6 +1,6 @@
 /**
  * Port interface for reading audiences in query contexts.
- * Used by GetSessionStartContextQueryHandler for session orientation.
+ * Used by SessionStartContextQueryHandler for session orientation.
  */
 
 import { AudienceView } from "../AudienceView.js";
