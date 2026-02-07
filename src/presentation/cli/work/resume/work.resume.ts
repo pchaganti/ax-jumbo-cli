@@ -3,15 +3,15 @@
  *
  * Resumes the current worker's paused goal (transitions status from 'paused' to 'doing').
  * This is a parameterless command that automatically identifies the worker's paused goal.
- * Returns full goal context with continuation prompt for the LLM.
+ * Returns session orientation context with resume-specific LLM instructions.
  */
 
 import { CommandMetadata } from "../../shared/registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../shared/rendering/Renderer.js";
-import { ResumeWorkCommandHandler } from "../../../../application/work/resume/ResumeWorkCommandHandler.js";
-import { GetGoalContextQueryHandler } from "../../../../application/work/goals/get-context/GetGoalContextQueryHandler.js";
-import { GoalContextRenderer } from "../goals/start/GoalContextRenderer.js";
+import { ResumeWorkCommandHandler, ResumeWorkResult } from "../../../../application/work/resume/ResumeWorkCommandHandler.js";
+import { SessionStartTextRenderer } from "../sessions/start/SessionStartTextRenderer.js";
+import { SessionContextView } from "../../../../application/work/sessions/get-context/SessionContext.js";
 
 /**
  * Command metadata for auto-registration
@@ -33,6 +33,11 @@ export const metadata: CommandMetadata = {
 /**
  * Command handler
  * Called by Commander with parsed options
+ *
+ * Responsibilities (presentation layer only):
+ * - Execute resume command (which also assembles session context)
+ * - Render session context for display
+ * - Map resume-specific instruction signals to LLM text
  */
 export async function workResume(
   _options: Record<string, never>,
@@ -41,7 +46,14 @@ export async function workResume(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler with dependencies from container
+    const config = renderer.getConfig();
+    const isTextOutput = config.format === "text";
+
+    if (isTextOutput) {
+      renderer.info("Loading orientation context...\n");
+    }
+
+    // 1. COMMAND + QUERY: Resume work and get enriched session context
     const commandHandler = new ResumeWorkCommandHandler(
       container.workerIdentityReader,
       container.goalStatusReader,
@@ -50,48 +62,85 @@ export async function workResume(
       container.goalResumedProjector,
       container.eventBus,
       container.goalClaimPolicy,
-      container.settingsReader
+      container.settingsReader,
+      container.sessionSummaryProjectionStore,
+      container.projectContextReader,
+      container.audienceContextReader,
+      container.audiencePainContextReader,
+      container.unprimedBrownfieldQualifier
     );
 
-    // 2. Execute command
     const result = await commandHandler.execute({});
 
-    // 3. Query and render goal context (like goal.start does)
-    const getGoalContext = new GetGoalContextQueryHandler(
-      container.goalContextReader,
-      container.componentContextReader,
-      container.dependencyContextReader,
-      container.decisionContextReader,
-      container.invariantContextReader,
-      container.guidelineContextReader,
-      container.architectureReader,
-      container.relationRemovedProjector
-    );
-    const goalContextRenderer = new GoalContextRenderer(renderer);
+    // 2. RENDER: Display session context
+    if (isTextOutput) {
+      const textRenderer = new SessionStartTextRenderer();
+      const textOutput = textRenderer.render(result.sessionContext);
 
-    const goalContext = await getGoalContext.execute(result.goalId);
+      for (const block of textOutput.blocks) {
+        if (block) {
+          renderer.info(block);
+        }
+      }
 
-    goalContextRenderer.render(goalContext);
+      renderer.info("---\n");
+      renderer.info(renderResumeInstruction(result.sessionContext));
+    }
 
-    renderer.info("---\n");
-
-    // 5. LLM Guidance - continuation prompt
-    const llmInstruction = [
-      "INSTRUCTION: You're work was previously interrupted. Continue working on this goal.",
-      "Determine where you left off based on the registered progress and resume from there.",
-      "Register completed sub-tasks via 'jumbo goal update-progress --help'.",
-    ];
-    
-    renderer.info(llmInstruction.join("\n") + "\n");
-
-    // 6. Success output
-    renderer.success("Work resumed", {
-      goalId: result.goalId,
-      objective: result.objective,
-      status: "doing"
-    });
+    // 3. OUTPUT: Render success
+    if (isTextOutput) {
+      renderer.success("Work resumed", {
+        goalId: result.goalId,
+        objective: result.objective,
+        status: "doing",
+      });
+    } else {
+      renderer.data(buildStructuredResumeOutput(result));
+    }
   } catch (error) {
     renderer.error("Failed to resume work", error instanceof Error ? error : String(error));
     process.exit(1);
   }
+}
+
+/**
+ * Maps resume instruction signals to LLM-facing text.
+ * Presentation layer owns copy; application layer owns instruction signals.
+ */
+function renderResumeInstruction(sessionContext: SessionContextView): string {
+  const lines: string[] = [];
+
+  if (sessionContext.instructions.includes("resume-continuation-prompt")) {
+    lines.push(
+      "@LLM: Your work was previously interrupted. Continue working on the resumed goal.",
+      "Determine where you left off based on the registered progress and resume from there.",
+      "Register completed sub-tasks via 'jumbo goal update-progress --help'."
+    );
+  }
+
+  if (sessionContext.instructions.includes("paused-goals-context")) {
+    lines.push(
+      "IMPORTANT: There are paused goals. Run 'jumbo goal resume --goal-id <id>' to resume a specific goal."
+    );
+  }
+
+  return lines.join("\n") + "\n";
+}
+
+function buildStructuredResumeOutput(result: ResumeWorkResult) {
+  const textRenderer = new SessionStartTextRenderer();
+  const structuredContext = textRenderer.buildStructuredContext(result.sessionContext);
+
+  return {
+    ...structuredContext,
+    llmInstructions: {
+      ...structuredContext.llmInstructions,
+      workResume: renderResumeInstruction(result.sessionContext).trim(),
+    },
+    workResume: {
+      goalId: result.goalId,
+      objective: result.objective,
+      status: "doing",
+    },
+  };
 }

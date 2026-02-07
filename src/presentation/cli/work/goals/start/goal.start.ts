@@ -87,7 +87,7 @@ export async function goalStart(options: { goalId: string }, container: IApplica
 
     // Prominent Review Instructions
     renderer.divider();
-    renderer.headline("🚀 IMPORTANT NEXT STEP");
+    renderer.headline("🚀 WHEN YOU'RE FINISHED IMPLEMENTING THEN THE NEXT STEP IS:");
     renderer.info(`Run: jumbo goal review --goal-id ${options.goalId}`);
     renderer.divider();
 

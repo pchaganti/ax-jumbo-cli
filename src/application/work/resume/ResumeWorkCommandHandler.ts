@@ -11,6 +11,14 @@ import { GoalClaimPolicy } from "../goals/claims/GoalClaimPolicy.js";
 import { ISettingsReader } from "../../shared/settings/ISettingsReader.js";
 import { GoalStatus } from "../../../domain/work/goals/Constants.js";
 import { GoalView } from "../goals/GoalView.js";
+import { SessionContextQueryHandler } from "../sessions/get-context/SessionContextQueryHandler.js";
+import { SessionResumeContextEnricher } from "../sessions/get-context/SessionResumeContextEnricher.js";
+import { SessionContextView } from "../sessions/get-context/SessionContext.js";
+import { ISessionSummaryReader } from "../sessions/get-context/ISessionSummaryReader.js";
+import { IProjectContextReader } from "../../project-knowledge/project/query/IProjectContextReader.js";
+import { IAudienceContextReader } from "../../project-knowledge/audiences/query/IAudienceContextReader.js";
+import { IAudiencePainContextReader } from "../../project-knowledge/audience-pains/query/IAudiencePainContextReader.js";
+import { UnprimedBrownfieldQualifier } from "../../solution/UnprimedBrownfieldQualifier.js";
 
 /**
  * Result of resuming work.
@@ -18,14 +26,18 @@ import { GoalView } from "../goals/GoalView.js";
 export interface ResumeWorkResult {
   readonly goalId: string;
   readonly objective: string;
+  readonly sessionContext: SessionContextView;
 }
 
 /**
  * Handles resuming the current worker's paused goal.
  * Queries for the goal in PAUSED status claimed by the current worker,
- * then delegates to ResumeGoalCommandHandler.
+ * then delegates to ResumeGoalCommandHandler and assembles session context.
  */
 export class ResumeWorkCommandHandler {
+  private readonly sessionContextQueryHandler: SessionContextQueryHandler;
+  private readonly enricher: SessionResumeContextEnricher;
+
   constructor(
     private readonly workerIdentityReader: IWorkerIdentityReader,
     private readonly goalStatusReader: IGoalStatusReader,
@@ -34,8 +46,23 @@ export class ResumeWorkCommandHandler {
     private readonly goalReader: IGoalReader,
     private readonly eventBus: IEventBus,
     private readonly claimPolicy: GoalClaimPolicy,
-    private readonly settingsReader: ISettingsReader
-  ) {}
+    private readonly settingsReader: ISettingsReader,
+    sessionSummaryReader: ISessionSummaryReader,
+    projectContextReader?: IProjectContextReader,
+    audienceContextReader?: IAudienceContextReader,
+    audiencePainContextReader?: IAudiencePainContextReader,
+    unprimedBrownfieldQualifier?: UnprimedBrownfieldQualifier
+  ) {
+    this.sessionContextQueryHandler = new SessionContextQueryHandler(
+      sessionSummaryReader,
+      goalStatusReader,
+      projectContextReader,
+      audienceContextReader,
+      audiencePainContextReader,
+      unprimedBrownfieldQualifier
+    );
+    this.enricher = new SessionResumeContextEnricher();
+  }
 
   async execute(_command: ResumeWorkCommand): Promise<ResumeWorkResult> {
     // 1. Get current worker's identity
@@ -71,9 +98,14 @@ export class ResumeWorkCommandHandler {
 
     await resumeGoalCommandHandler.execute(resumeCommand);
 
+    // 6. Assemble session context with resume-specific enrichment
+    const baseContext = await this.sessionContextQueryHandler.execute();
+    const sessionContext = this.enricher.enrich(baseContext);
+
     return {
       goalId: pausedGoal.goalId,
-      objective: pausedGoal.objective
+      objective: pausedGoal.objective,
+      sessionContext,
     };
   }
 }

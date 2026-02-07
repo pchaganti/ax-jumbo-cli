@@ -34,11 +34,11 @@ export const metadata: CommandMetadata = {
  * Called by Commander with parsed options
  *
  * Responsibilities (presentation layer only):
- * - Call application query to get assembled context data
+ * - Call SessionStartContextQueryHandler to get assembled context data
  * - Render the data for display
  * - Execute command and render result
  *
- * Data assembly is delegated to GetSessionStartContext query in the application layer.
+ * Data assembly is delegated to SessionStartContextQueryHandler in the application layer.
  */
 export async function sessionStart(
   options: Record<string, never>,

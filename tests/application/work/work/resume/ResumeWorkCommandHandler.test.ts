@@ -11,6 +11,7 @@ import { IGoalReader } from "../../../../../src/application/work/goals/resume/IG
 import { IEventBus } from "../../../../../src/application/shared/messaging/IEventBus";
 import { GoalClaimPolicy } from "../../../../../src/application/work/goals/claims/GoalClaimPolicy";
 import { ISettingsReader } from "../../../../../src/application/shared/settings/ISettingsReader";
+import { ISessionSummaryReader } from "../../../../../src/application/work/sessions/get-context/ISessionSummaryReader";
 import { GoalEventType, GoalStatus } from "../../../../../src/domain/work/goals/Constants";
 import { GoalPausedReasons } from "../../../../../src/domain/work/goals/GoalPausedReasons";
 import { GoalView } from "../../../../../src/application/work/goals/GoalView";
@@ -25,9 +26,22 @@ describe("ResumeWorkCommandHandler", () => {
   let eventBus: IEventBus;
   let claimPolicy: GoalClaimPolicy;
   let settingsReader: ISettingsReader;
+  let sessionSummaryReader: ISessionSummaryReader;
   let handler: ResumeWorkCommandHandler;
 
   const workerId = createWorkerId("worker_123");
+
+  function mockFindByStatus(pausedGoals: GoalView[]) {
+    (goalStatusReader.findByStatus as jest.Mock).mockImplementation(
+      (status: string) => {
+        if (status === GoalStatus.PAUSED) return Promise.resolve(pausedGoals);
+        if (status === GoalStatus.DOING) return Promise.resolve([]);
+        if (status === GoalStatus.BLOCKED) return Promise.resolve([]);
+        if (status === GoalStatus.TODO) return Promise.resolve([]);
+        return Promise.resolve([]);
+      }
+    );
+  }
 
   beforeEach(() => {
     // Mock worker identity reader
@@ -81,6 +95,11 @@ describe("ResumeWorkCommandHandler", () => {
       }),
     } as unknown as ISettingsReader;
 
+    // Mock session summary reader
+    sessionSummaryReader = {
+      findLatest: jest.fn().mockResolvedValue(null),
+    };
+
     handler = new ResumeWorkCommandHandler(
       workerIdentityReader,
       goalStatusReader,
@@ -89,7 +108,8 @@ describe("ResumeWorkCommandHandler", () => {
       goalReader,
       eventBus,
       claimPolicy,
-      settingsReader
+      settingsReader,
+      sessionSummaryReader
     );
   });
 
@@ -110,7 +130,7 @@ describe("ResumeWorkCommandHandler", () => {
       progress: [],
     };
 
-    (goalStatusReader.findByStatus as jest.Mock).mockResolvedValue([pausedGoal]);
+    mockFindByStatus([pausedGoal]);
     (goalReader.findById as jest.Mock).mockResolvedValue(pausedGoal);
 
     // Mock event history for ResumeGoalCommandHandler
@@ -165,9 +185,70 @@ describe("ResumeWorkCommandHandler", () => {
     expect(appendedEvent.payload.status).toBe(GoalStatus.DOING);
   });
 
+  it("should return enriched session context with work-resume scope", async () => {
+    // Arrange
+    const pausedGoal: GoalView = {
+      goalId: "goal_123",
+      objective: "Implement feature",
+      successCriteria: ["Feature works"],
+      scopeIn: [],
+      scopeOut: [],
+      boundaries: [],
+      status: GoalStatus.PAUSED,
+      version: 3,
+      createdAt: "2025-01-01T00:00:00Z",
+      updatedAt: "2025-01-01T00:00:00Z",
+      claimedBy: workerId,
+      progress: [],
+    };
+
+    mockFindByStatus([pausedGoal]);
+    (goalReader.findById as jest.Mock).mockResolvedValue(pausedGoal);
+
+    const mockHistory = [
+      {
+        type: GoalEventType.ADDED,
+        aggregateId: "goal_123",
+        version: 1,
+        timestamp: "2025-01-01T00:00:00Z",
+        payload: {
+          objective: "Implement feature",
+          successCriteria: ["Feature works"],
+          scopeIn: [],
+          scopeOut: [],
+          boundaries: [],
+          status: GoalStatus.TODO,
+        },
+      },
+      {
+        type: GoalEventType.STARTED,
+        aggregateId: "goal_123",
+        version: 2,
+        timestamp: "2025-01-01T01:00:00Z",
+        payload: { status: GoalStatus.DOING },
+      },
+      {
+        type: GoalEventType.PAUSED,
+        aggregateId: "goal_123",
+        version: 3,
+        timestamp: "2025-01-01T02:00:00Z",
+        payload: { status: GoalStatus.PAUSED, reason: GoalPausedReasons.WorkPaused },
+      },
+    ];
+    (goalResumedEventReader.readStream as jest.Mock).mockResolvedValue(mockHistory);
+
+    // Act
+    const result = await handler.execute({});
+
+    // Assert
+    expect(result.sessionContext).toBeDefined();
+    expect(result.sessionContext.scope).toBe("work-resume");
+    expect(result.sessionContext.instructions).toContain("resume-continuation-prompt");
+  });
+
   it("should throw error when no paused goal found for worker", async () => {
     // Arrange - no goals in paused status
-    (goalStatusReader.findByStatus as jest.Mock).mockResolvedValue([]);
+    mockFindByStatus([]);
 
     // Act & Assert
     await expect(handler.execute({})).rejects.toThrow(
@@ -192,7 +273,7 @@ describe("ResumeWorkCommandHandler", () => {
       progress: [],
     };
 
-    (goalStatusReader.findByStatus as jest.Mock).mockResolvedValue([otherWorkerGoal]);
+    mockFindByStatus([otherWorkerGoal]);
 
     // Act & Assert
     await expect(handler.execute({})).rejects.toThrow(
@@ -232,7 +313,7 @@ describe("ResumeWorkCommandHandler", () => {
       progress: [],
     };
 
-    (goalStatusReader.findByStatus as jest.Mock).mockResolvedValue([otherWorkerGoal, myGoal]);
+    mockFindByStatus([otherWorkerGoal, myGoal]);
     (goalReader.findById as jest.Mock).mockResolvedValue(myGoal);
 
     // Mock event history
@@ -298,7 +379,7 @@ describe("ResumeWorkCommandHandler", () => {
       progress: [],
     };
 
-    (goalStatusReader.findByStatus as jest.Mock).mockResolvedValue([pausedGoal]);
+    mockFindByStatus([pausedGoal]);
     (goalReader.findById as jest.Mock).mockResolvedValue(pausedGoal);
 
     // Mock event history
@@ -365,7 +446,7 @@ describe("ResumeWorkCommandHandler", () => {
       progress: [],
     };
 
-    (goalStatusReader.findByStatus as jest.Mock).mockResolvedValue([pausedGoal]);
+    mockFindByStatus([pausedGoal]);
     (goalReader.findById as jest.Mock).mockResolvedValue(pausedGoal);
 
     // Mock event history
