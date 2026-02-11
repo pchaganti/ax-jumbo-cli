@@ -53,7 +53,6 @@ export class SqliteGoalStartedProjector
       successCriteria: JSON.parse(row.successCriteria || "[]"),
       scopeIn: JSON.parse(row.scopeIn || "[]"),
       scopeOut: JSON.parse(row.scopeOut || "[]"),
-      boundaries: JSON.parse(row.boundaries || "[]"),
       status: row.status,
       version: row.version,
       createdAt: row.createdAt,

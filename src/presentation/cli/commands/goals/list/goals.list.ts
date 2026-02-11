@@ -39,8 +39,14 @@ function formatStatus(status: string): string {
       return "[BLOCKED]";
     case "to-do":
       return "[TO-DO]  ";
+    case "refined":
+      return "[REFINED]";
     case "paused":
       return "[PAUSED] ";
+    case "in-review":
+      return "[IN-REVIEW]";
+    case "qualified":
+      return "[QUALIFIED]";
     default:
       return `[${status.toUpperCase()}]`;
   }
@@ -58,8 +64,8 @@ export async function goalsList(
     // Fetch all goals
     const allGoals = await container.goalStatusReader.findAll();
 
-    // Filter to non-completed goals (to-do, doing, blocked, paused)
-    const nonCompletedStatuses = ["to-do", "doing", "blocked", "paused"];
+    // Filter to non-completed goals (to-do, doing, blocked, paused, refined, in-review, qualified)
+    const nonCompletedStatuses = ["to-do", "doing", "blocked", "paused", "refined", "in-review", "qualified"];
     const activeGoals = allGoals.filter((goal: GoalView) =>
       nonCompletedStatuses.includes(goal.status)
     );
@@ -69,12 +75,15 @@ export async function goalsList(
       return;
     }
 
-    // Sort: first paused, then doing, then blocked, then to-do, then paused, then by createdAt
+    // Sort: first qualified, then in-review, then paused, then doing, then blocked, then refined, then to-do, then by createdAt
     const statusOrder: Record<string, number> = {
-      "paused": 0,
-      "doing": 1,
-      "blocked": 2,
-      "to-do": 3
+      "qualified": 0,
+      "in-review": 1,
+      "paused": 2,
+      "doing": 3,
+      "blocked": 4,
+      "refined": 5,
+      "to-do": 6
     };
 
     activeGoals.sort((a: GoalView, b: GoalView) => {

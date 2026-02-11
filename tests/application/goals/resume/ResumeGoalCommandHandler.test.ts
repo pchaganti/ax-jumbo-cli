@@ -105,7 +105,7 @@ describe("ResumeGoalCommandHandler", () => {
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -126,7 +126,7 @@ describe("ResumeGoalCommandHandler", () => {
           successCriteria: ["Users can log in"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -187,7 +187,7 @@ describe("ResumeGoalCommandHandler", () => {
       successCriteria: ["Bug resolved"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -208,7 +208,7 @@ describe("ResumeGoalCommandHandler", () => {
           successCriteria: ["Bug resolved"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -271,7 +271,7 @@ describe("ResumeGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -292,7 +292,7 @@ describe("ResumeGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -327,7 +327,7 @@ describe("ResumeGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -348,7 +348,7 @@ describe("ResumeGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -396,7 +396,7 @@ describe("ResumeGoalCommandHandler", () => {
       successCriteria: ["Claim verified"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -417,7 +417,7 @@ describe("ResumeGoalCommandHandler", () => {
           successCriteria: ["Claim verified"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },

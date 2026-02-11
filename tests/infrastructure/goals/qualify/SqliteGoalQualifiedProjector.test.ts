@@ -25,7 +25,6 @@ describe("SqliteGoalQualifiedProjector", () => {
         successCriteria TEXT NOT NULL,
         scopeIn TEXT NOT NULL,
         scopeOut TEXT NOT NULL,
-        boundaries TEXT NOT NULL,
         status TEXT NOT NULL,
         version INTEGER NOT NULL,
         createdAt TEXT NOT NULL,
@@ -61,13 +60,12 @@ describe("SqliteGoalQualifiedProjector", () => {
     beforeEach(() => {
       db.prepare(`
         INSERT INTO goal_views (
-          goalId, objective, successCriteria, scopeIn, scopeOut, boundaries,
+          goalId, objective, successCriteria, scopeIn, scopeOut,
           status, version, createdAt, updatedAt, progress, claimedBy, claimedAt, claimExpiresAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         "goal_test-1",
         "Test objective",
-        "[]",
         "[]",
         "[]",
         "[]",
@@ -166,16 +164,15 @@ describe("SqliteGoalQualifiedProjector", () => {
     it("returns goal view for existing goal", async () => {
       db.prepare(`
         INSERT INTO goal_views (
-          goalId, objective, successCriteria, scopeIn, scopeOut, boundaries,
+          goalId, objective, successCriteria, scopeIn, scopeOut,
           status, version, createdAt, updatedAt, progress
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         "goal_test-1",
         "Test objective",
         '["criterion 1"]',
         '["in scope"]',
         '["out of scope"]',
-        '["boundary 1"]',
         GoalStatus.QUALIFIED,
         3,
         "2026-02-01T10:00:00.000Z",
@@ -192,22 +189,20 @@ describe("SqliteGoalQualifiedProjector", () => {
       expect(result!.successCriteria).toEqual(["criterion 1"]);
       expect(result!.scopeIn).toEqual(["in scope"]);
       expect(result!.scopeOut).toEqual(["out of scope"]);
-      expect(result!.boundaries).toEqual(["boundary 1"]);
     });
 
     it("parses JSON fields correctly", async () => {
       db.prepare(`
         INSERT INTO goal_views (
-          goalId, objective, successCriteria, scopeIn, scopeOut, boundaries,
+          goalId, objective, successCriteria, scopeIn, scopeOut,
           status, version, createdAt, updatedAt, progress
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         "goal_test-1",
         "Test objective",
         '["a","b","c"]',
         '["x"]',
         '["y"]',
-        '[]',
         GoalStatus.TODO,
         1,
         "2026-02-01T10:00:00.000Z",
@@ -220,21 +215,19 @@ describe("SqliteGoalQualifiedProjector", () => {
       expect(result!.successCriteria).toEqual(["a", "b", "c"]);
       expect(result!.scopeIn).toEqual(["x"]);
       expect(result!.scopeOut).toEqual(["y"]);
-      expect(result!.boundaries).toEqual([]);
       expect(result!.progress).toEqual(["done task 1"]);
     });
 
     it("handles optional claim fields", async () => {
       db.prepare(`
         INSERT INTO goal_views (
-          goalId, objective, successCriteria, scopeIn, scopeOut, boundaries,
+          goalId, objective, successCriteria, scopeIn, scopeOut,
           status, version, createdAt, updatedAt, progress,
           claimedBy, claimedAt, claimExpiresAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         "goal_test-1",
         "Test objective",
-        "[]",
         "[]",
         "[]",
         "[]",
@@ -258,13 +251,12 @@ describe("SqliteGoalQualifiedProjector", () => {
     it("returns undefined for null optional fields", async () => {
       db.prepare(`
         INSERT INTO goal_views (
-          goalId, objective, successCriteria, scopeIn, scopeOut, boundaries,
+          goalId, objective, successCriteria, scopeIn, scopeOut,
           status, version, createdAt, updatedAt, progress
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         "goal_test-1",
         "Test objective",
-        "[]",
         "[]",
         "[]",
         "[]",

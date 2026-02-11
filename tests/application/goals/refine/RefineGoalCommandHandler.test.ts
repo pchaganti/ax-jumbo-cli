@@ -56,7 +56,7 @@ describe("RefineGoalCommandHandler", () => {
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.TODO,
       version: 1,
       createdAt: "2025-01-01T00:00:00Z",
@@ -77,7 +77,7 @@ describe("RefineGoalCommandHandler", () => {
           successCriteria: ["Users can log in"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -134,7 +134,7 @@ describe("RefineGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.REFINED,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -155,7 +155,7 @@ describe("RefineGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -191,7 +191,7 @@ describe("RefineGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -212,7 +212,7 @@ describe("RefineGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -257,7 +257,7 @@ describe("RefineGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.COMPLETED,
       version: 5,
       createdAt: "2025-01-01T00:00:00Z",
@@ -278,7 +278,7 @@ describe("RefineGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -341,7 +341,7 @@ describe("RefineGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.TODO,
       version: 1,
       createdAt: "2025-01-01T00:00:00Z",
@@ -362,7 +362,7 @@ describe("RefineGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },

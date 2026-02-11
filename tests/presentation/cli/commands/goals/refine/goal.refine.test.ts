@@ -99,7 +99,7 @@ describe("goal.refine command", () => {
     successCriteria: ["Users can log in", "Sessions are persisted"],
     scopeIn: ["Login form", "Session management"],
     scopeOut: ["Password reset", "Social login"],
-    boundaries: [],
+    
     status: GoalStatus.TODO,
     version: 1,
     createdAt: "2025-01-01T10:00:00Z",
@@ -137,7 +137,7 @@ describe("goal.refine command", () => {
           successCriteria: ["Users can log in", "Sessions are persisted"],
           scopeIn: ["Login form", "Session management"],
           scopeOut: ["Password reset", "Social login"],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },

@@ -50,7 +50,10 @@ import { IGoalResetReader } from "../goals/reset/IGoalResetReader.js";
 import { IGoalRemovedProjector } from "../goals/remove/IGoalRemovedProjector.js";
 import { IGoalRemoveReader } from "../goals/remove/IGoalRemoveReader.js";
 import { IGoalContextReader } from "../goals/get-context/IGoalContextReader.js";
+import { IGoalContextAssembler } from "../context/IGoalContextAssembler.js";
 import { IGoalStatusReader } from "../goals/IGoalStatusReader.js";
+import { GoalContextQueryHandler } from "../context/GoalContextQueryHandler.js";
+import { GetGoalContextQueryHandler } from "../goals/get-context/GetGoalContextQueryHandler.js";
 import { IGoalReadForSessionSummary } from "../sessions/get-context/IGoalReadForSessionSummary.js";
 // Goal Controllers
 import { CompleteGoalController } from "../goals/complete/CompleteGoalController.js";
@@ -300,6 +303,9 @@ export interface IApplicationContainer {
   goalRemovedProjector: IGoalRemovedProjector & IGoalRemoveReader;
   goalProgressUpdatedProjector: IGoalProgressUpdatedProjector & IGoalProgressUpdateReader;
   goalContextReader: IGoalContextReader;
+  goalContextAssembler: IGoalContextAssembler;
+  goalContextQueryHandler: GoalContextQueryHandler;
+  getGoalContextQueryHandler: GetGoalContextQueryHandler;
   goalStatusReader: IGoalStatusReader & IGoalReadForSessionSummary;
   // Goal Controllers
   completeGoalController: CompleteGoalController;

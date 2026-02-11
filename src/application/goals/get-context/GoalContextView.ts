@@ -1,5 +1,33 @@
 import { GoalView } from "../GoalView.js";
-import { EmbeddedArchitecture } from "../../../domain/goals/EmbeddedContextTypes.js";
+
+/**
+ * @deprecated This file is part of the legacy embedded context approach.
+ *
+ * It will be replaced by the relation-based context aggregation system
+ * being built in the context/ namespace (Phase 7 of namespace remodel).
+ *
+ * DO NOT use this file as a pattern for new code. It remains only to support
+ * the strangler fig migration pattern - keeping the old implementation working
+ * while building the new system in parallel.
+ */
+
+/**
+ * ArchitectureContextView - Architecture information for goal context
+ *
+ * NOTE: This type is defined here temporarily during the strangler fig migration.
+ * It was moved from EmbeddedContextTypes.ts (which was deleted) to eliminate
+ * embedded context from the Goal domain model.
+ *
+ * This is NOT a valid pattern to follow - context view types should be defined
+ * in their own namespace, not alongside deprecated code. This exception exists
+ * only to keep the build working during the migration.
+ */
+export interface ArchitectureContextView {
+  readonly description: string;
+  readonly organization: string;
+  readonly patterns?: string[];
+  readonly principles?: string[];
+}
 
 /**
  * ComponentContextView - Component information for goal context
@@ -79,7 +107,7 @@ export interface GoalContextView {
   readonly components: ComponentContextView[];
   readonly dependencies: DependencyContextView[];
   readonly decisions: DecisionContextView[];
-  readonly architecture?: EmbeddedArchitecture;
+  readonly architecture?: ArchitectureContextView;
 
   // Category 3: Invariants (boundaries already in goal.boundaries)
   readonly invariants: InvariantContextView[];

@@ -33,41 +33,19 @@ export class UpdateGoalCommandHandler {
     const history = await this.eventReader.readStream(command.goalId);
     const goal = Goal.rehydrate(command.goalId, history as any);
 
-    // 3. Build embedded context object if any embedded fields provided
-    const embeddedContext = (
-      command.relevantInvariants !== undefined ||
-      command.relevantGuidelines !== undefined ||
-      command.relevantDependencies !== undefined ||
-      command.relevantComponents !== undefined ||
-      command.architecture !== undefined ||
-      command.filesToBeCreated !== undefined ||
-      command.filesToBeChanged !== undefined ||
-      command.nextGoalId !== undefined
-    ) ? {
-      relevantInvariants: command.relevantInvariants,
-      relevantGuidelines: command.relevantGuidelines,
-      relevantDependencies: command.relevantDependencies,
-      relevantComponents: command.relevantComponents,
-      architecture: command.architecture,
-      filesToBeCreated: command.filesToBeCreated,
-      filesToBeChanged: command.filesToBeChanged,
-      nextGoalId: command.nextGoalId,
-    } : undefined;
-
-    // 4. Domain logic produces event
+    // 3. Domain logic produces event
     const event = goal.update(
       command.objective,
       command.successCriteria,
       command.scopeIn,
       command.scopeOut,
-      command.boundaries,
-      embeddedContext
+      command.nextGoalId
     );
 
-    // 5. Persist event to file store
+    // 4. Persist event to file store
     await this.eventWriter.append(event);
 
-    // 6. Publish event to bus (projections update asynchronously)
+    // 5. Publish event to bus (projections update asynchronously)
     await this.eventBus.publish(event);
 
     return { goalId: command.goalId };

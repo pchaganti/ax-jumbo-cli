@@ -22,7 +22,6 @@ describe("Goal Aggregate", () => {
       expect(event.payload.successCriteria).toEqual(["Users can log in"]);
       expect(event.payload.scopeIn).toEqual([]);
       expect(event.payload.scopeOut).toEqual([]);
-      expect(event.payload.boundaries).toEqual([]);
       expect(event.payload.status).toBe(GoalStatus.TODO);
       expect(event.timestamp).toBeDefined();
     });
@@ -36,8 +35,7 @@ describe("Goal Aggregate", () => {
         "Implement JWT authentication",
         ["Token generation on login", "Middleware validates tokens"],
         ["UserController", "AuthMiddleware"],
-        ["Admin routes"],
-        ["Keep existing API contract"]
+        ["Admin routes"]
       );
 
       // Assert
@@ -48,7 +46,6 @@ describe("Goal Aggregate", () => {
       ]);
       expect(event.payload.scopeIn).toEqual(["UserController", "AuthMiddleware"]);
       expect(event.payload.scopeOut).toEqual(["Admin routes"]);
-      expect(event.payload.boundaries).toEqual(["Keep existing API contract"]);
     });
 
     it("should throw error if goal is already defined", () => {
@@ -146,8 +143,7 @@ describe("Goal Aggregate", () => {
         "Implement authentication",
         ["Users can log in", "Tokens are validated"],
         ["AuthController"],
-        ["AdminPanel"],
-        ["No breaking changes"]
+        ["AdminPanel"]
       );
 
       // Assert
@@ -156,80 +152,10 @@ describe("Goal Aggregate", () => {
       expect(snapshot.successCriteria).toEqual(["Users can log in", "Tokens are validated"]);
       expect(snapshot.scopeIn).toEqual(["AuthController"]);
       expect(snapshot.scopeOut).toEqual(["AdminPanel"]);
-      expect(snapshot.boundaries).toEqual(["No breaking changes"]);
       expect(snapshot.status).toBe(GoalStatus.TODO);
       expect(snapshot.version).toBe(1);
     });
 
-    it("should create GoalAddedEvent with embedded context fields", () => {
-      // Arrange
-      const goal = Goal.create("goal_123");
-      const embeddedContext = {
-        relevantInvariants: [{ title: "Single Responsibility", description: "One reason to change" }],
-        relevantGuidelines: [{ title: "Use TypeScript", description: "All code in TS", examples: ["const x: string"] }],
-        relevantDependencies: [{ consumer: "AuthController", provider: "UserService" }],
-        relevantComponents: [{ name: "AuthController", responsibility: "Handle auth requests" }],
-        architecture: { description: "Layered", organization: "By feature", patterns: ["CQRS"] },
-        filesToBeCreated: ["src/auth/AuthController.ts"],
-        filesToBeChanged: ["src/app.ts"],
-      };
-
-      // Act
-      const event = goal.add(
-        "Implement authentication",
-        ["Users can log in"],
-        ["AuthController"],
-        [],
-        [],
-        embeddedContext
-      );
-
-      // Assert
-      expect(event.payload.relevantInvariants).toEqual(embeddedContext.relevantInvariants);
-      expect(event.payload.relevantGuidelines).toEqual(embeddedContext.relevantGuidelines);
-      expect(event.payload.relevantDependencies).toEqual(embeddedContext.relevantDependencies);
-      expect(event.payload.relevantComponents).toEqual(embeddedContext.relevantComponents);
-      expect(event.payload.architecture).toEqual(embeddedContext.architecture);
-      expect(event.payload.filesToBeCreated).toEqual(embeddedContext.filesToBeCreated);
-      expect(event.payload.filesToBeChanged).toEqual(embeddedContext.filesToBeChanged);
-    });
-
-    it("should update aggregate state with embedded context fields", () => {
-      // Arrange
-      const goal = Goal.create("goal_123");
-      const embeddedContext = {
-        relevantInvariants: [{ title: "DRY", description: "Don't repeat yourself" }],
-        filesToBeCreated: ["src/utils/helper.ts"],
-      };
-
-      // Act
-      goal.add("Add utility", ["Helper exists"], [], [], [], embeddedContext);
-
-      // Assert
-      const snapshot = goal.snapshot;
-      expect(snapshot.relevantInvariants).toEqual(embeddedContext.relevantInvariants);
-      expect(snapshot.filesToBeCreated).toEqual(embeddedContext.filesToBeCreated);
-      // Fields not provided should be undefined
-      expect(snapshot.relevantGuidelines).toBeUndefined();
-      expect(snapshot.architecture).toBeUndefined();
-    });
-
-    it("should create GoalAddedEvent without embedded context when not provided", () => {
-      // Arrange
-      const goal = Goal.create("goal_123");
-
-      // Act
-      const event = goal.add("Simple goal", ["Done"]);
-
-      // Assert - embedded context fields should be undefined
-      expect(event.payload.relevantInvariants).toBeUndefined();
-      expect(event.payload.relevantGuidelines).toBeUndefined();
-      expect(event.payload.relevantDependencies).toBeUndefined();
-      expect(event.payload.relevantComponents).toBeUndefined();
-      expect(event.payload.architecture).toBeUndefined();
-      expect(event.payload.filesToBeCreated).toBeUndefined();
-      expect(event.payload.filesToBeChanged).toBeUndefined();
-    });
   });
 
   describe("refine()", () => {
@@ -374,7 +300,7 @@ describe("Goal Aggregate", () => {
             successCriteria: ["Users can log in"],
             scopeIn: [],
             scopeOut: [],
-            boundaries: [],
+            
             status: GoalStatus.TODO,
           },
         },
@@ -451,7 +377,6 @@ describe("Goal Aggregate", () => {
       expect(event.payload.successCriteria).toBeUndefined();
       expect(event.payload.scopeIn).toBeUndefined();
       expect(event.payload.scopeOut).toBeUndefined();
-      expect(event.payload.boundaries).toBeUndefined();
       expect(event.timestamp).toBeDefined();
     });
 
@@ -479,8 +404,7 @@ describe("Goal Aggregate", () => {
         "Updated objective",
         ["Updated criterion"],
         ["In scope"],
-        ["Out of scope"],
-        ["Boundary 1"]
+        ["Out of scope"]
       );
 
       // Assert
@@ -488,7 +412,6 @@ describe("Goal Aggregate", () => {
       expect(event.payload.successCriteria).toEqual(["Updated criterion"]);
       expect(event.payload.scopeIn).toEqual(["In scope"]);
       expect(event.payload.scopeOut).toEqual(["Out of scope"]);
-      expect(event.payload.boundaries).toEqual(["Boundary 1"]);
     });
 
     it("should update aggregate state with partial fields", () => {
@@ -787,7 +710,7 @@ describe("Goal Aggregate", () => {
             successCriteria: ["Users can log in"],
             scopeIn: [],
             scopeOut: [],
-            boundaries: [],
+            
             status: GoalStatus.TODO,
           },
         },
@@ -895,7 +818,7 @@ describe("Goal Aggregate", () => {
             successCriteria: ["Users can log in"],
             scopeIn: [],
             scopeOut: [],
-            boundaries: [],
+            
             status: GoalStatus.TODO,
           },
         },
@@ -969,7 +892,7 @@ describe("Goal Aggregate", () => {
             successCriteria: ["Users can log in"],
             scopeIn: [],
             scopeOut: [],
-            boundaries: [],
+            
             status: GoalStatus.TODO,
           },
         },
@@ -1375,7 +1298,7 @@ describe("Goal Aggregate", () => {
             successCriteria: ["Users can log in"],
             scopeIn: [],
             scopeOut: [],
-            boundaries: [],
+            
             status: GoalStatus.TODO,
           },
         },
@@ -1440,7 +1363,7 @@ describe("Goal Aggregate", () => {
             successCriteria: ["Users can log in"],
             scopeIn: [],
             scopeOut: [],
-            boundaries: [],
+            
             status: GoalStatus.TODO,
           },
         },
@@ -1620,7 +1543,7 @@ describe("Goal Aggregate", () => {
             successCriteria: ["Users can log in"],
             scopeIn: [],
             scopeOut: [],
-            boundaries: [],
+            
             status: GoalStatus.TODO,
           },
         },

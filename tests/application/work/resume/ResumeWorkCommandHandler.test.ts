@@ -121,7 +121,7 @@ describe("ResumeWorkCommandHandler", () => {
       successCriteria: ["Feature works"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -145,7 +145,7 @@ describe("ResumeWorkCommandHandler", () => {
           successCriteria: ["Feature works"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -193,7 +193,7 @@ describe("ResumeWorkCommandHandler", () => {
       successCriteria: ["Feature works"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -216,7 +216,7 @@ describe("ResumeWorkCommandHandler", () => {
           successCriteria: ["Feature works"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -264,7 +264,7 @@ describe("ResumeWorkCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -289,7 +289,7 @@ describe("ResumeWorkCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -304,7 +304,7 @@ describe("ResumeWorkCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -328,7 +328,7 @@ describe("ResumeWorkCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -370,7 +370,7 @@ describe("ResumeWorkCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -394,7 +394,7 @@ describe("ResumeWorkCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -437,7 +437,7 @@ describe("ResumeWorkCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -461,7 +461,7 @@ describe("ResumeWorkCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },

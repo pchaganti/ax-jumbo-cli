@@ -8,11 +8,15 @@ import { GoalErrorMessages, formatErrorMessage } from "../../../domain/goals/Con
 import { GoalClaimPolicy } from "../claims/GoalClaimPolicy.js";
 import { IWorkerIdentityReader } from "../../host/workers/IWorkerIdentityReader.js";
 import { ISettingsReader } from "../../settings/ISettingsReader.js";
+import { GoalContextQueryHandler } from "../../context/GoalContextQueryHandler.js";
+import { GoalContextViewMapper } from "../../context/GoalContextViewMapper.js";
+import { GoalContextView } from "../../context/GoalContextView.js";
 
 /**
  * Handles starting of a defined goal.
  * Loads aggregate from event history, calls domain logic, persists event.
  * Validates and manages goal claims to prevent concurrent work.
+ * Returns enriched goal context view for presentation layer.
  */
 export class StartGoalCommandHandler {
   constructor(
@@ -22,10 +26,12 @@ export class StartGoalCommandHandler {
     private readonly eventBus: IEventBus,
     private readonly claimPolicy: GoalClaimPolicy,
     private readonly workerIdentityReader: IWorkerIdentityReader,
-    private readonly settingsReader: ISettingsReader
+    private readonly settingsReader: ISettingsReader,
+    private readonly goalContextQueryHandler: GoalContextQueryHandler,
+    private readonly goalContextViewMapper: GoalContextViewMapper
   ) {}
 
-  async execute(command: StartGoalCommand): Promise<{ goalId: string }> {
+  async execute(command: StartGoalCommand): Promise<GoalContextView> {
     // 1. Check goal exists (query projection for fast check)
     const view = await this.goalReader.findById(command.goalId);
     if (!view) {
@@ -71,6 +77,10 @@ export class StartGoalCommandHandler {
     // 8. Publish event to bus (projections will update via subscriptions)
     await this.eventBus.publish(event);
 
-    return { goalId: command.goalId };
+    // 9. Query goal context and map to presentation view
+    const context = await this.goalContextQueryHandler.execute(command.goalId);
+    const contextView = this.goalContextViewMapper.map(context);
+
+    return contextView;
   }
 }

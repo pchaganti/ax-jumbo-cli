@@ -94,7 +94,7 @@ describe("CompleteGoalCommandHandler", () => {
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.QUALIFIED,
       version: 4,
       createdAt: "2025-01-01T00:00:00Z",
@@ -115,7 +115,7 @@ describe("CompleteGoalCommandHandler", () => {
           successCriteria: ["Users can log in"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -185,7 +185,7 @@ describe("CompleteGoalCommandHandler", () => {
       successCriteria: ["Bug is resolved"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.BLOCKED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -207,7 +207,7 @@ describe("CompleteGoalCommandHandler", () => {
           successCriteria: ["Bug is resolved"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -267,7 +267,7 @@ describe("CompleteGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.TODO,
       version: 1,
       createdAt: "2025-01-01T00:00:00Z",
@@ -288,7 +288,7 @@ describe("CompleteGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -314,7 +314,7 @@ describe("CompleteGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.COMPLETED,
       version: 5,
       createdAt: "2025-01-01T00:00:00Z",
@@ -335,7 +335,7 @@ describe("CompleteGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -399,7 +399,7 @@ describe("CompleteGoalCommandHandler", () => {
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -440,7 +440,7 @@ describe("CompleteGoalCommandHandler", () => {
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.QUALIFIED,
       version: 4,
       createdAt: "2025-01-01T00:00:00Z",
@@ -470,7 +470,7 @@ describe("CompleteGoalCommandHandler", () => {
           successCriteria: ["Users can log in"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -527,7 +527,7 @@ describe("CompleteGoalCommandHandler", () => {
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.QUALIFIED,
       version: 4,
       createdAt: "2025-01-01T00:00:00Z",
@@ -556,7 +556,7 @@ describe("CompleteGoalCommandHandler", () => {
           successCriteria: ["Users can log in"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -614,7 +614,7 @@ describe("CompleteGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.QUALIFIED,
       version: 4,
       createdAt: "2025-01-01T00:00:00Z",
@@ -635,7 +635,7 @@ describe("CompleteGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },

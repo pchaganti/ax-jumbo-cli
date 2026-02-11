@@ -14,7 +14,7 @@ function createGoalState(overrides: Partial<GoalState> = {}): GoalState {
     successCriteria: ["Test criterion"],
     scopeIn: [],
     scopeOut: [],
-    boundaries: [],
+    
     status: GoalStatus.TODO,
     version: 0,
     progress: [],

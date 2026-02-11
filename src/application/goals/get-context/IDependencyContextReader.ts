@@ -2,8 +2,9 @@ import { DependencyView } from "../../../application/dependencies/DependencyView
 
 /**
  * Port interface for reading dependencies for goal context.
- * Used by GetGoalContextQueryHandler to filter dependencies by scoped components.
+ * Used by GoalContextAssembler to fetch dependencies for context assembly.
  */
 export interface IDependencyContextReader {
   findAll(): Promise<DependencyView[]>;
+  findByIds(ids: string[]): Promise<DependencyView[]>;
 }

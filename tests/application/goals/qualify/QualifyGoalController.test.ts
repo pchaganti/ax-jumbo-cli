@@ -27,7 +27,7 @@ describe("QualifyGoalController", () => {
     successCriteria: ["Criteria 1"],
     scopeIn: [],
     scopeOut: [],
-    boundaries: [],
+    
     status: GoalStatus.INREVIEW,
     version: 3,
     createdAt: "2025-01-01T00:00:00Z",

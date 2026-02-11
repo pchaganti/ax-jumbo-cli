@@ -9,8 +9,8 @@ import { IApplicationContainer } from "../../../../../application/host/IApplicat
 import { Renderer } from "../../../rendering/Renderer.js";
 import { StartGoalCommandHandler } from "../../../../../application/goals/start/StartGoalCommandHandler.js";
 import { StartGoalCommand } from "../../../../../application/goals/start/StartGoalCommand.js";
-import { GetGoalContextQueryHandler } from "../../../../../application/goals/get-context/GetGoalContextQueryHandler.js";
-import { GoalContextRenderer } from "./GoalContextRenderer.js";
+import { GoalStartOutputBuilder } from "./GoalStartOutputBuilder.js";
+import { GoalContextViewMapper } from "../../../../../application/context/GoalContextViewMapper.js";
 
 /**
  * Command metadata for auto-registration
@@ -41,7 +41,8 @@ export async function goalStart(options: { goalId: string }, container: IApplica
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler
+    // 1. Create command handler with mapper
+    const goalContextViewMapper = new GoalContextViewMapper();
     const commandHandler = new StartGoalCommandHandler(
       container.goalStartedEventStore,
       container.goalStartedEventStore,
@@ -49,47 +50,20 @@ export async function goalStart(options: { goalId: string }, container: IApplica
       container.eventBus,
       container.goalClaimPolicy,
       container.workerIdentityReader,
-      container.settingsReader
+      container.settingsReader,
+      container.goalContextQueryHandler,
+      goalContextViewMapper
     );
 
-    // 2. Execute command
+    // 2. Execute command - returns enriched goal context view
     const command: StartGoalCommand = { goalId: options.goalId };
-    const result = await commandHandler.execute(command);
+    const goalContextView = await commandHandler.execute(command);
 
-    // 3. Fetch updated view for display
-    const view = await container.goalStartedProjector.findById(result.goalId);
+    // 3. Build and render output using builder pattern
+    const outputBuilder = new GoalStartOutputBuilder();
+    const output = outputBuilder.build(goalContextView);
 
-    // 4. Query and render goal context
-    const getGoalContext = new GetGoalContextQueryHandler(
-      container.goalContextReader,
-      container.componentContextReader,
-      container.dependencyContextReader,
-      container.decisionContextReader,
-      container.invariantContextReader,
-      container.guidelineContextReader,
-      container.architectureReader,
-      container.relationRemovedProjector
-    );
-    const goalContextRenderer = new GoalContextRenderer(renderer);
-
-    const goalContext = await getGoalContext.execute(result.goalId);
-    
-    goalContextRenderer.render(goalContext);
-
-    renderer.info("---\n");
-
-    // LLM Guidance
-    const additionalLlmInstructions = [
-      "@LLM: Goal context loaded. Work within scope.",
-      "Track your progress by documenting completed sub-tasks with 'jumbo goal update-progress --goal-id " + options.goalId + " --task-description <description>'.",
-    ];
-    renderer.info(additionalLlmInstructions.join("\n") + "\n");
-
-    // Prominent Review Instructions
-    renderer.divider();
-    renderer.headline("🚀 WHEN YOU'RE FINISHED IMPLEMENTING THEN THE NEXT STEP IS:");
-    renderer.info(`Run: jumbo goal review --goal-id ${options.goalId}`);
-    renderer.divider();
+    renderer.info(output.toHumanReadable());
 
   } catch (error) {
     renderer.error("Failed to start goal", error instanceof Error ? error : String(error));

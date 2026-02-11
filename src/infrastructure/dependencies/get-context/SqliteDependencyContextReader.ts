@@ -17,6 +17,15 @@ export class SqliteDependencyContextReader implements IDependencyContextReader {
     return rows.map(row => this.mapRowToView(row as Record<string, unknown>));
   }
 
+  async findByIds(ids: string[]): Promise<DependencyView[]> {
+    if (ids.length === 0) return [];
+
+    const placeholders = ids.map(() => '?').join(',');
+    const query = `SELECT * FROM dependency_views WHERE dependencyId IN (${placeholders}) ORDER BY createdAt DESC`;
+    const rows = this.db.prepare(query).all(...ids);
+    return rows.map(row => this.mapRowToView(row as Record<string, unknown>));
+  }
+
   private mapRowToView(row: Record<string, unknown>): DependencyView {
     return {
       dependencyId: row.dependencyId as string,

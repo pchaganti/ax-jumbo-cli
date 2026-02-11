@@ -26,7 +26,6 @@ export class SqliteGoalContextReader implements IGoalContextReader {
       successCriteria: JSON.parse(row.successCriteria || "[]"),
       scopeIn: JSON.parse(row.scopeIn || "[]"),
       scopeOut: JSON.parse(row.scopeOut || "[]"),
-      boundaries: JSON.parse(row.boundaries || "[]"),
       status: row.status,
       version: row.version,
       createdAt: row.createdAt,
@@ -36,14 +35,6 @@ export class SqliteGoalContextReader implements IGoalContextReader {
       claimedBy: row.claimedBy || undefined,
       claimedAt: row.claimedAt || undefined,
       claimExpiresAt: row.claimExpiresAt || undefined,
-      // Embedded context fields
-      relevantInvariants: row.relevantInvariants ? JSON.parse(row.relevantInvariants) : undefined,
-      relevantGuidelines: row.relevantGuidelines ? JSON.parse(row.relevantGuidelines) : undefined,
-      relevantDependencies: row.relevantDependencies ? JSON.parse(row.relevantDependencies) : undefined,
-      relevantComponents: row.relevantComponents ? JSON.parse(row.relevantComponents) : undefined,
-      architecture: row.architecture ? JSON.parse(row.architecture) : undefined,
-      filesToBeCreated: row.filesToBeCreated ? JSON.parse(row.filesToBeCreated) : undefined,
-      filesToBeChanged: row.filesToBeChanged ? JSON.parse(row.filesToBeChanged) : undefined,
       nextGoalId: row.nextGoalId || undefined,
     };
   }

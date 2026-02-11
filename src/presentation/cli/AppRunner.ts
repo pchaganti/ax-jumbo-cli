@@ -22,12 +22,13 @@ import { commands } from "./commands/registry/generated-commands.js";
 import { CommanderApplicator } from "./commands/registry/CommanderApplicator.js";
 import { createProgram } from "./program/ProgramFactory.js";
 import { attachGlobalOptions } from "./program/GlobalOptionsHandler.js";
-import { validateProjectRequirement } from "./guards/ProjectGuard.js";
+import { classifyCommand } from "./commands/CommandClassifier.js";
 import {
   isBareCommand,
   showBannerWithContainer,
 } from "./banner/BannerOrchestrator.js";
 import { Renderer } from "./rendering/Renderer.js";
+import { CLI_FLAGS, ARGV } from "./Constants.js";
 
 /**
  * Invocation type classification
@@ -48,13 +49,18 @@ function classifyInvocation(argv: string[]): InvocationType {
 
   // Check for explicit help (root level --help)
   const isExplicitHelp =
-    (argv.includes("--help") || argv.includes("-h")) && argv.length === 3;
+    (argv.includes(CLI_FLAGS.HELP_LONG) ||
+      argv.includes(CLI_FLAGS.HELP_SHORT)) &&
+    argv.length === ARGV.ROOT_COMMAND_ARG_COUNT;
   if (isExplicitHelp) {
     return "help";
   }
 
   // Check for version request
-  if (argv.includes("--version") || argv.includes("-v")) {
+  if (
+    argv.includes(CLI_FLAGS.VERSION_LONG) ||
+    argv.includes(CLI_FLAGS.VERSION_SHORT)
+  ) {
     return "version";
   }
 
@@ -130,17 +136,21 @@ export class AppRunner {
 
     // Check if this is a subcommand help request
     const isSubcommandHelp =
-      (argv.includes("--help") || argv.includes("-h")) && argv.length > 3;
+      (argv.includes(CLI_FLAGS.HELP_LONG) ||
+        argv.includes(CLI_FLAGS.HELP_SHORT)) &&
+      argv.length > ARGV.ROOT_COMMAND_ARG_COUNT;
 
-    // Validate project requirement using metadata
-    const { requiresProject } = validateProjectRequirement(argv, commands);
+    // Classify command to determine project requirement using metadata
+    const classification = classifyCommand(argv, commands);
 
     // Check project existence if required
-    if (requiresProject && !isSubcommandHelp) {
+    if (classification.requiresProject && !isSubcommandHelp) {
       const projectExists = await fs.pathExists(jumboRoot);
       if (!projectExists) {
         const renderer = Renderer.getInstance();
-        renderer.error("Project not initialized. Run 'jumbo project init' first.");
+        renderer.error(
+          "Project not initialized. Run 'jumbo project init' first."
+        );
         process.exit(1);
       }
     }

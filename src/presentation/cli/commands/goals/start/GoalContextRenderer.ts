@@ -66,27 +66,11 @@ export class GoalContextRenderer {
 
     if(this.isScoped(context)){
 
-      renderer.headline("### Scope & Boundaries:");
-      
-      if(goal.filesToBeCreated && goal.filesToBeCreated.length > 0){
-        renderer.headline("#### Files to be Created");
-        goal.filesToBeCreated.forEach((file) => {
-          renderer.info(`- ${file}`);
-        });
-        renderer.info("\n" + "INSTRUCTION: You (the developer) MUST create these files as part of this goal.");
-      }
-
-      if(goal.filesToBeChanged && goal.filesToBeChanged.length > 0){
-        renderer.headline("#### Files to be Changed");
-        goal.filesToBeChanged.forEach((file) => {
-          renderer.info(`- ${file}`);
-        });
-        renderer.info("\n" + "INSTRUCTION: You (the developer) MUST change these files as part of this goal.");
-      }
+      renderer.headline("### Scope:");
 
       if(goal.scopeIn && goal.scopeIn.length > 0){
         renderer.headline("#### In Scope");
-        goal.scopeIn.forEach((item) => {
+        goal.scopeIn.forEach((item: string) => {
           renderer.info(`- ${item}`);
         });
         renderer.info("\n" + "INSTRUCTION: You (the developer) MUST work within the defined scope.");
@@ -94,7 +78,7 @@ export class GoalContextRenderer {
 
       if(goal.scopeOut && goal.scopeOut.length > 0){
         renderer.headline("#### Out of Scope");
-        goal.scopeOut.forEach((item) => {
+        goal.scopeOut.forEach((item: string) => {
           renderer.info(`- ${item}`);
         });
         renderer.info("\n" + "INSTRUCTION: Your (the developer) work MUST NOT overlap these items.");
@@ -103,13 +87,13 @@ export class GoalContextRenderer {
 
     if(context.architecture){
       renderer.headline("### Solution Architecture:");
-      renderer.info("High-level Description: " + context.architecture!.description + "\n");
-      renderer.info("Organization Style: " + context.architecture!.organization + "\n");
+      renderer.info("High-level Description: " + context.architecture.description + "\n");
+      renderer.info("Organization Style: " + context.architecture.organization + "\n");
       renderer.info("\n" + "INSTRUCTION: Namespaces (directory structures) and file names introduced by you (the developer) MUST maintain the solution's architectural organization style.");
-      
-      if(context.architecture!.patterns && context.architecture!.patterns.length > 0){
+
+      if(context.architecture.patterns && context.architecture.patterns.length > 0){
         renderer.headline("#### Design Patterns:");
-        context.architecture!.patterns.forEach((pattern) => {
+        context.architecture.patterns.forEach((pattern: string) => {
           renderer.info(`- ${pattern}`);
         });
         renderer.info("\n" + "INSTRUCTION: You (the developer) MUST must leverage these architectural patterns where applicable.");
@@ -117,9 +101,9 @@ export class GoalContextRenderer {
         renderer.info("New patterns MUST not conflict with existing patterns. For example, if the solution uses a layered architecture pattern, then you MUST NOT introduce a microservices pattern.");
       }
 
-      if(context.architecture!.principles && context.architecture!.principles.length > 0){
+      if(context.architecture.principles && context.architecture.principles.length > 0){
         renderer.headline("#### Principles:");
-        context.architecture!.principles.forEach((principle) => {
+        context.architecture.principles.forEach((principle: string) => {
           renderer.info(`- ${principle}`);
         });
         renderer.info("\n" + "INSTRUCTION: Artifacts created by you (the developer) MUST directly reflect these principles.");
@@ -173,9 +157,7 @@ export class GoalContextRenderer {
   private isScoped(context: GoalContextView): boolean {
     return (
       (Array.isArray(context.goal.scopeIn) && context.goal.scopeIn.length > 0) ||
-      (Array.isArray(context.goal.scopeOut) && context.goal.scopeOut.length > 0) ||
-      (Array.isArray(context.goal.filesToBeCreated) && context.goal.filesToBeCreated.length > 0) ||
-      (Array.isArray(context.goal.filesToBeChanged) && context.goal.filesToBeChanged.length > 0)
+      (Array.isArray(context.goal.scopeOut) && context.goal.scopeOut.length > 0)
     );
   }
 }

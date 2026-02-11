@@ -2,8 +2,9 @@ import { InvariantView } from "../../invariants/InvariantView.js";
 
 /**
  * Port interface for reading invariants for goal context.
- * Used by GetGoalContextQueryHandler to retrieve all invariants.
+ * Used by GoalContextAssembler to fetch invariants for context assembly.
  */
 export interface IInvariantContextReader {
   findAll(): Promise<InvariantView[]>;
+  findByIds(ids: string[]): Promise<InvariantView[]>;
 }

@@ -16,6 +16,15 @@ export class SqliteInvariantContextReader implements IInvariantContextReader {
     return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
   }
 
+  async findByIds(ids: string[]): Promise<InvariantView[]> {
+    if (ids.length === 0) return [];
+
+    const placeholders = ids.map(() => '?').join(',');
+    const query = `SELECT * FROM invariant_views WHERE invariantId IN (${placeholders}) ORDER BY createdAt ASC`;
+    const rows = this.db.prepare(query).all(...ids);
+    return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
+  }
+
   private mapRowToView(row: Record<string, unknown>): InvariantView {
     return {
       invariantId: row.invariantId as string,

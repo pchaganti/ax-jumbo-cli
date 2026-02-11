@@ -83,7 +83,7 @@ describe("Integration: Session Context Rendering", () => {
         successCriteria: ["Users can login with JWT tokens"],
         scopeIn: ["Login endpoint", "Token validation"],
         scopeOut: ["Social auth"],
-        boundaries: ["Use industry-standard JWT library"],
+        
         status: "to-do",
       },
     });

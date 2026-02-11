@@ -5,16 +5,7 @@
  * Only provided fields are updated; omitted fields remain unchanged.
  *
  * Usage:
- *   jumbo goal update <goalId> [--objective "..."] [--criteria "..."] [--scope-in "..."] [--scope-out "..."]
- *
- * Context fields (JSON format - typically used programmatically):
- *   --relevant-invariants <json>
- *   --relevant-guidelines <json>
- *   --relevant-dependencies <json>
- *   --relevant-components <json>
- *   --architecture <json>
- *   --files-to-be-created <items...>
- *   --files-to-be-changed <items...>
+ *   jumbo goal update --goal-id <goalId> [--objective "..."] [--criteria "..."] [--scope-in "..."] [--scope-out "..."]
  */
 
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
@@ -53,34 +44,6 @@ export const metadata: CommandMetadata = {
       description: "Updated out-of-scope items"
     },
     {
-      flags: "--relevant-invariants <json>",
-      description: "Relevant invariants (JSON array)"
-    },
-    {
-      flags: "--relevant-guidelines <json>",
-      description: "Relevant guidelines (JSON array)"
-    },
-    {
-      flags: "--relevant-dependencies <json>",
-      description: "Relevant dependencies (JSON array)"
-    },
-    {
-      flags: "--relevant-components <json>",
-      description: "Relevant components (JSON array)"
-    },
-    {
-      flags: "--architecture <json>",
-      description: "Architecture context (JSON object)"
-    },
-    {
-      flags: "--files-to-be-created <items...>",
-      description: "Files to be created"
-    },
-    {
-      flags: "--files-to-be-changed <items...>",
-      description: "Files to be changed"
-    },
-    {
       flags: "--next-goal <goalId>",
       description: "Update the NextGoal property (chains to specified goal after completion)"
     }
@@ -113,14 +76,6 @@ export async function goalUpdate(
     criteria?: string[];
     scopeIn?: string[];
     scopeOut?: string[];
-    // Context fields (JSON strings from CLI)
-    relevantInvariants?: string;
-    relevantGuidelines?: string;
-    relevantDependencies?: string;
-    relevantComponents?: string;
-    architecture?: string;
-    filesToBeCreated?: string[];
-    filesToBeChanged?: string[];
     nextGoal?: string;
   },
   container: IApplicationContainer
@@ -136,31 +91,13 @@ export async function goalUpdate(
       container.eventBus
     );
 
-    // 2. Parse JSON fields if provided
-    const parseJson = (jsonStr: string | undefined, fieldName: string) => {
-      if (!jsonStr) return undefined;
-      try {
-        return JSON.parse(jsonStr);
-      } catch {
-        throw new Error(`Invalid JSON for ${fieldName}: ${jsonStr}`);
-      }
-    };
-
-    // 3. Build and execute command
+    // 2. Build and execute command
     const command: UpdateGoalCommand = {
       goalId: options.goalId,
       objective: options.objective,
       successCriteria: options.criteria,
       scopeIn: options.scopeIn,
       scopeOut: options.scopeOut,
-      // Context fields
-      relevantInvariants: parseJson(options.relevantInvariants, "relevant-invariants"),
-      relevantGuidelines: parseJson(options.relevantGuidelines, "relevant-guidelines"),
-      relevantDependencies: parseJson(options.relevantDependencies, "relevant-dependencies"),
-      relevantComponents: parseJson(options.relevantComponents, "relevant-components"),
-      architecture: parseJson(options.architecture, "architecture"),
-      filesToBeCreated: options.filesToBeCreated,
-      filesToBeChanged: options.filesToBeChanged,
       nextGoalId: options.nextGoal,
     };
 

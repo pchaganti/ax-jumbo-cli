@@ -29,7 +29,7 @@ describe("ReviewGoalController", () => {
     successCriteria: ["Criteria 1"],
     scopeIn: [],
     scopeOut: [],
-    boundaries: [],
+    
     status: GoalStatus.DOING,
     version: 2,
     createdAt: "2025-01-01T00:00:00Z",

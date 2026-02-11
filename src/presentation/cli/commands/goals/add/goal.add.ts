@@ -15,15 +15,6 @@ import { AddGoalCommandHandler } from "../../../../../application/goals/add/AddG
 import { AddGoalCommand } from "../../../../../application/goals/add/AddGoalCommand.js";
 import { InteractivePromptService } from "../../../prompts/index.js";
 import { ComponentView } from "../../../../../application/components/ComponentView.js";
-import { InvariantView } from "../../../../../application/invariants/InvariantView.js";
-import { GuidelineView } from "../../../../../application/guidelines/GuidelineView.js";
-import { DecisionView } from "../../../../../application/decisions/DecisionView.js";
-import { DependencyView } from "../../../../../application/dependencies/DependencyView.js";
-import { ArchitectureView } from "../../../../../application/architecture/ArchitectureView.js";
-import {
-  EmbeddedDependency,
-  EmbeddedArchitecture,
-} from "../../../../../domain/goals/EmbeddedContextTypes.js";
 
 /**
  * Command metadata for auto-registration
@@ -52,34 +43,6 @@ export const metadata: CommandMetadata = {
     {
       flags: "--scope-out <components...>",
       description: "Components/modules explicitly out of scope"
-    },
-    {
-      flags: "--relevant-invariants <json>",
-      description: "JSON array of relevant invariants [{title, description, rationale?}]"
-    },
-    {
-      flags: "--relevant-guidelines <json>",
-      description: "JSON array of relevant guidelines [{title, description, rationale?, examples?}]"
-    },
-    {
-      flags: "--relevant-components <json>",
-      description: "JSON array of relevant components [{name, responsibility}]"
-    },
-    {
-      flags: "--relevant-dependencies <json>",
-      description: "JSON array of relevant dependencies [{consumer, provider}]"
-    },
-    {
-      flags: "--architecture <json>",
-      description: "JSON object for architecture {description, organization, patterns?, principles?}"
-    },
-    {
-      flags: "--files-to-create <files...>",
-      description: "New files this goal will create"
-    },
-    {
-      flags: "--files-to-change <files...>",
-      description: "Existing files this goal will modify"
     },
     {
       flags: "--next-goal <goalId>",
@@ -115,13 +78,6 @@ interface InteractiveGoalInputs {
   successCriteria: string[];
   scopeIn: string[];
   scopeOut: string[];
-  relevantInvariants: Array<{ title: string; description: string; rationale?: string }>;
-  relevantGuidelines: Array<{ title: string; description: string; rationale?: string; examples?: string[] }>;
-  relevantComponents: Array<{ name: string; responsibility: string }>;
-  relevantDependencies: EmbeddedDependency[];
-  architecture: EmbeddedArchitecture | undefined;
-  filesToCreate: string[];
-  filesToChange: string[];
 }
 
 /**
@@ -130,24 +86,9 @@ interface InteractiveGoalInputs {
 async function runInteractiveFlow(container: IApplicationContainer): Promise<InteractiveGoalInputs> {
   const promptService = new InteractivePromptService();
 
-  // Fetch all entities in parallel
-  const [components, guidelines, invariants, decisions, dependencies, solutionContext] = await Promise.all([
-    container.componentContextReader.findAll(),
-    container.guidelineContextReader.findAll(),
-    container.invariantContextReader.findAll(),
-    container.decisionContextReader.findAllActive(),
-    container.dependencyContextReader.findAll(),
-    container.solutionContextReader.getSolutionContext(),
-  ]);
-
+  // Fetch components for scope selection
+  const components = await container.componentContextReader.findAll();
   const activeComponents = components.filter((c: ComponentView) => c.status === 'active');
-  const activeGuidelines = guidelines.filter((g: GuidelineView) => !g.isRemoved);
-  const activeDependencies = dependencies.filter((d: DependencyView) => d.status === 'active');
-  const architecture = solutionContext.architecture;
-
-  // Build component name lookup for dependencies
-  const componentNameById = new Map<string, string>();
-  activeComponents.forEach((c: ComponentView) => componentNameById.set(c.componentId, c.name));
 
   console.log("\n=== Interactive Goal Creation ===\n");
 
@@ -183,84 +124,11 @@ async function runInteractiveFlow(container: IApplicationContainer): Promise<Int
     }
   );
 
-  // Step 4: Relevant invariants
-  const invariantsResult = await promptService.selectEntities<InvariantView>(
-    invariants,
-    {
-      message: "Select relevant invariants:",
-      suffix: "  (Non-negotiable constraints that must be maintained)",
-      formatter: (inv) => `${inv.title} - ${inv.description}`,
-      emptyMessage: "No invariants defined. Skipping.\n  (Add invariants with: jumbo invariant add)",
-    }
-  );
-
-  // Step 5: Relevant guidelines
-  const guidelinesResult = await promptService.selectEntities<GuidelineView>(
-    activeGuidelines,
-    {
-      message: "Select relevant guidelines:",
-      suffix: "  (Coding standards and practices to follow)",
-      formatter: (g) => `[${g.category}] ${g.title} - ${g.description}`,
-      emptyMessage: "No guidelines defined. Skipping.\n  (Add guidelines with: jumbo guideline add)",
-    }
-  );
-
-  // Step 6: Relevant dependencies
-  const dependenciesResult = await promptService.selectEntities<DependencyView>(
-    activeDependencies,
-    {
-      message: "Select relevant dependencies:",
-      suffix: "  (Component relationships that apply to this goal)",
-      formatter: (d) => {
-        const consumer = componentNameById.get(d.consumerId) || d.consumerId;
-        const provider = componentNameById.get(d.providerId) || d.providerId;
-        return `${consumer} → ${provider}${d.endpoint ? ` (${d.endpoint})` : ''}`;
-      },
-      emptyMessage: "No dependencies defined. Skipping.\n  (Add dependencies with: jumbo dependency add)",
-    }
-  );
-
-  // Step 7: Display architecture for awareness and confirm inclusion
-  let includeArchitecture = false;
-  if (architecture) {
-    promptService.displayInfo(
-      "Current Architecture:",
-      [architecture],
-      (a: ArchitectureView) => `${a.description} (${a.organization})`
-    );
-    const includeArch = await promptService.textInput({
-      message: "Include architecture in goal context? (y/n):",
-      suffix: "  Enter 'y' to embed architecture details in this goal",
-    });
-    includeArchitecture = includeArch?.toLowerCase() === 'y';
-  }
-
-  // Step 8: Display decisions for awareness (no selection)
-  if (decisions.length > 0) {
-    promptService.displayInfo(
-      "Active Decisions (for your awareness):",
-      decisions,
-      (d: DecisionView) => `${d.title} - ${d.context}`
-    );
-  }
-
-  // Step 9: Success criteria
+  // Step 4: Success criteria
   const criteriaInput = await promptService.multiTextInput({
     message: "Success criteria (comma-separated):",
     suffix: "  Measurable outcomes that define when the goal is complete\n  Example: Tests pass, API returns 200, Documentation updated",
     minValues: 1,
-  });
-
-  // Step 10: Files to create (optional)
-  const filesToCreateInput = await promptService.multiTextInput({
-    message: "Files to create (comma-separated, optional):",
-    suffix: "  New files this goal will add\n  Example: src/auth/JwtService.ts, src/middleware/Auth.ts",
-  });
-
-  // Step 11: Files to change (optional)
-  const filesToChangeInput = await promptService.multiTextInput({
-    message: "Files to change (comma-separated, optional):",
-    suffix: "  Existing files this goal will modify\n  Example: src/routes/api.ts, src/config/app.ts",
   });
 
   // Transform selected entities to context format
@@ -269,33 +137,6 @@ async function runInteractiveFlow(container: IApplicationContainer): Promise<Int
     successCriteria: criteriaInput,
     scopeIn: scopeInResult.selected.map((c) => c.name),
     scopeOut: scopeOutResult.selected.map((c) => c.name),
-    relevantInvariants: invariantsResult.selected.map((inv) => ({
-      title: inv.title,
-      description: inv.description,
-      rationale: inv.rationale || undefined,
-    })),
-    relevantGuidelines: guidelinesResult.selected.map((g) => ({
-      title: g.title,
-      description: g.description,
-      rationale: g.rationale || undefined,
-      examples: g.examples.length > 0 ? g.examples : undefined,
-    })),
-    relevantComponents: scopeInResult.selected.map((c) => ({
-      name: c.name,
-      responsibility: c.responsibility,
-    })),
-    relevantDependencies: dependenciesResult.selected.map((d) => ({
-      consumer: componentNameById.get(d.consumerId) || d.consumerId,
-      provider: componentNameById.get(d.providerId) || d.providerId,
-    })),
-    architecture: includeArchitecture && architecture ? {
-      description: architecture.description,
-      organization: architecture.organization,
-      patterns: architecture.patterns.length > 0 ? architecture.patterns : undefined,
-      principles: architecture.principles.length > 0 ? architecture.principles : undefined,
-    } : undefined,
-    filesToCreate: filesToCreateInput,
-    filesToChange: filesToChangeInput,
   };
 }
 
@@ -306,13 +147,6 @@ export async function goalAdd(
     criteria?: string[];
     scopeIn?: string[];
     scopeOut?: string[];
-    relevantInvariants?: string;
-    relevantGuidelines?: string;
-    relevantComponents?: string;
-    relevantDependencies?: string;
-    architecture?: string;
-    filesToCreate?: string[];
-    filesToChange?: string[];
     nextGoal?: string;
     previousGoal?: string;
   },
@@ -340,13 +174,6 @@ export async function goalAdd(
         successCriteria: inputs.successCriteria,
         scopeIn: inputs.scopeIn.length > 0 ? inputs.scopeIn : undefined,
         scopeOut: inputs.scopeOut.length > 0 ? inputs.scopeOut : undefined,
-        relevantInvariants: inputs.relevantInvariants.length > 0 ? inputs.relevantInvariants : undefined,
-        relevantGuidelines: inputs.relevantGuidelines.length > 0 ? inputs.relevantGuidelines : undefined,
-        relevantComponents: inputs.relevantComponents.length > 0 ? inputs.relevantComponents : undefined,
-        relevantDependencies: inputs.relevantDependencies.length > 0 ? inputs.relevantDependencies : undefined,
-        architecture: inputs.architecture,
-        filesToBeCreated: inputs.filesToCreate.length > 0 ? inputs.filesToCreate : undefined,
-        filesToBeChanged: inputs.filesToChange.length > 0 ? inputs.filesToChange : undefined,
         nextGoalId: options.nextGoal,
         previousGoalId: options.previousGoal,
       };
@@ -368,16 +195,6 @@ export async function goalAdd(
       process.exit(1);
     }
 
-    // JSON parsing helper
-    const parseJson = (jsonStr: string | undefined, fieldName: string) => {
-      if (!jsonStr) return undefined;
-      try {
-        return JSON.parse(jsonStr);
-      } catch {
-        throw new Error(`Invalid JSON for ${fieldName}: ${jsonStr}`);
-      }
-    };
-
     // Create command handler with optional update dependencies for goal chaining
     const commandHandler = new AddGoalCommandHandler(
       container.goalAddedEventStore,
@@ -393,13 +210,6 @@ export async function goalAdd(
       successCriteria: options.criteria || [],
       scopeIn: options.scopeIn,
       scopeOut: options.scopeOut,
-      relevantInvariants: parseJson(options.relevantInvariants, "relevant-invariants"),
-      relevantGuidelines: parseJson(options.relevantGuidelines, "relevant-guidelines"),
-      relevantComponents: parseJson(options.relevantComponents, "relevant-components"),
-      relevantDependencies: parseJson(options.relevantDependencies, "relevant-dependencies"),
-      architecture: parseJson(options.architecture, "architecture"),
-      filesToBeCreated: options.filesToCreate,
-      filesToBeChanged: options.filesToChange,
       nextGoalId: options.nextGoal,
       previousGoalId: options.previousGoal,
     };

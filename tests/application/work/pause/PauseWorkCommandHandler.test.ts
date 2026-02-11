@@ -76,7 +76,7 @@ describe("PauseWorkCommandHandler", () => {
       successCriteria: ["Feature works"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -100,7 +100,7 @@ describe("PauseWorkCommandHandler", () => {
           successCriteria: ["Feature works"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -148,7 +148,7 @@ describe("PauseWorkCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -173,7 +173,7 @@ describe("PauseWorkCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -188,7 +188,7 @@ describe("PauseWorkCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -212,7 +212,7 @@ describe("PauseWorkCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -244,7 +244,7 @@ describe("PauseWorkCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -268,7 +268,7 @@ describe("PauseWorkCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },

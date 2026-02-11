@@ -73,7 +73,7 @@ describe("Integration: Goal Lifecycle Tracking", () => {
         successCriteria: ["Feature X works"],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "to-do",
       },
     });
@@ -141,7 +141,7 @@ describe("Integration: Goal Lifecycle Tracking", () => {
         successCriteria: ["API selected"],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "to-do",
       },
     });
@@ -225,7 +225,7 @@ describe("Integration: Goal Lifecycle Tracking", () => {
         successCriteria: ["Docs complete"],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "to-do",
       },
     });
@@ -318,7 +318,7 @@ describe("Integration: Goal Lifecycle Tracking", () => {
         successCriteria: ["Archive works"],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "to-do",
       },
     });
@@ -421,7 +421,7 @@ describe("Integration: Goal Lifecycle Tracking", () => {
         successCriteria: ["Works"],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "to-do",
       },
     });
@@ -498,7 +498,7 @@ describe("Integration: Goal Lifecycle Tracking", () => {
         successCriteria: [],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "to-do",
       },
     });
@@ -534,7 +534,7 @@ describe("Integration: Goal Lifecycle Tracking", () => {
         successCriteria: [],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "to-do",
       },
     });
@@ -571,7 +571,7 @@ describe("Integration: Goal Lifecycle Tracking", () => {
         successCriteria: [],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "to-do",
       },
     });

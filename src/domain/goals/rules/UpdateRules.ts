@@ -6,7 +6,6 @@ interface UpdateFields {
   successCriteria?: string[];
   scopeIn?: string[];
   scopeOut?: string[];
-  boundaries?: string[];
 }
 
 /**
@@ -18,8 +17,7 @@ export class UpdateFieldsProvidedRule implements ValidationRule<UpdateFields> {
       fields.objective !== undefined ||
       fields.successCriteria !== undefined ||
       fields.scopeIn !== undefined ||
-      fields.scopeOut !== undefined ||
-      fields.boundaries !== undefined;
+      fields.scopeOut !== undefined;
 
     return {
       isValid: hasChanges,
@@ -135,27 +133,6 @@ export class OptionalScopeValidRule implements ValidationRule<UpdateFields> {
         (item) => item.length > GoalLimits.SCOPE_ITEM_MAX_LENGTH
       );
       if (tooLongOut) {
-        errors.push(
-          formatErrorMessage(GoalErrorMessages.SCOPE_ITEM_TOO_LONG, {
-            max: GoalLimits.SCOPE_ITEM_MAX_LENGTH,
-          })
-        );
-      }
-    }
-
-    // Validate boundaries if provided
-    if (fields.boundaries !== undefined) {
-      if (fields.boundaries.length > GoalLimits.MAX_SCOPE_ITEMS) {
-        errors.push(
-          formatErrorMessage(GoalErrorMessages.TOO_MANY_SCOPE_ITEMS, {
-            max: GoalLimits.MAX_SCOPE_ITEMS,
-          })
-        );
-      }
-      const tooLongBoundaries = fields.boundaries.find(
-        (item) => item.length > GoalLimits.SCOPE_ITEM_MAX_LENGTH
-      );
-      if (tooLongBoundaries) {
         errors.push(
           formatErrorMessage(GoalErrorMessages.SCOPE_ITEM_TOO_LONG, {
             max: GoalLimits.SCOPE_ITEM_MAX_LENGTH,

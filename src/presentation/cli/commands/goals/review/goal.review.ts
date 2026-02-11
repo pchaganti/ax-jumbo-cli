@@ -97,29 +97,11 @@ function renderReviewContext(
   renderer.info("INSTRUCTION: If ANY criteria are NOT met, then report the issues, fix them, and re-run 'jumbo goal review --goal-id " + response.goalId + "' again.");
 
   if(isScoped(response)){
-    renderer.headline("### Scope & Boundaries:");
-    
-    if(goal.filesToBeCreated && goal.filesToBeCreated.length > 0){
-      renderer.headline("#### Files to be Created");
-      goal.filesToBeCreated.forEach((file) => {
-        renderer.info(`- ${file}`);
-      });
-      renderer.info("\n" + "VERIFY: These files were created.");
-      renderer.info("INSTRUCTION: If any files are missing, then create them and re-run 'jumbo goal review --goal-id " + response.goalId + "' again.");
-    }
-
-    if(goal.filesToBeChanged && goal.filesToBeChanged.length > 0){
-      renderer.headline("#### Files to be Changed");
-      goal.filesToBeChanged.forEach((file) => {
-        renderer.info(`- ${file}`);
-      });
-      renderer.info("\n" + "VERIFY: These files were changed.");
-      renderer.info("INSTRUCTION: If any files are missing or not changed as expected, then update them and re-run 'jumbo goal review --goal-id " + response.goalId + "' again.");
-    }
+    renderer.headline("### Scope:");
 
     if(goal.scopeIn && goal.scopeIn.length > 0){
       renderer.headline("#### In Scope");
-      goal.scopeIn.forEach((item) => {
+      goal.scopeIn.forEach((item: string) => {
         renderer.info(`- ${item}`);
       });
       renderer.info("\n" + "VERIFY: The implementation stayed within the defined scope.");
@@ -128,7 +110,7 @@ function renderReviewContext(
 
     if(goal.scopeOut && goal.scopeOut.length > 0){
       renderer.headline("#### Out of Scope");
-      goal.scopeOut.forEach((item) => {
+      goal.scopeOut.forEach((item: string) => {
         renderer.info(`- ${item}`);
       });
       renderer.info("\n" + "VERIFY: The implementation did not overlap these items.");
@@ -139,14 +121,14 @@ function renderReviewContext(
   // Existing architecture - must be preserved
   if(criteria.architecture){
     renderer.headline("### Solution Architecture:");
-    renderer.info("High-level Description: " + criteria.architecture!.description + "\n");
-    renderer.info("Organization Style: " + criteria.architecture!.organization + "\n");
+    renderer.info("High-level Description: " + criteria.architecture.description + "\n");
+    renderer.info("Organization Style: " + criteria.architecture.organization + "\n");
     renderer.info("\n" + "VERIFY: Namespaces (directory structures) and file names introduced by you (the developer) maintain the solution's architectural organization style.");
     renderer.info("INSTRUCTION: If any namespaces or file names do not maintain the solution's architectural organization style, then adjust them and re-run 'jumbo goal review --goal-id " + response.goalId + "' again.");
-    
-    if(criteria.architecture!.patterns && criteria.architecture!.patterns.length > 0){
+
+    if(criteria.architecture.patterns && criteria.architecture.patterns.length > 0){
       renderer.headline("#### Design Patterns:");
-      criteria.architecture!.patterns.forEach((pattern) => {
+      criteria.architecture.patterns.forEach((pattern: string) => {
         renderer.info(`- ${pattern}`);
       });
       renderer.info("\n" + "VERIFY: You (the developer) leveraged these architectural patterns where applicable.");
@@ -155,9 +137,9 @@ function renderReviewContext(
       renderer.info("INSTRUCTION: If any architectural patterns were not leveraged or new patterns conflict with existing ones, then adjust the implementation and re-run 'jumbo goal review --goal-id " + response.goalId + "' again.");
     }
 
-    if(criteria.architecture!.principles && criteria.architecture!.principles.length > 0){
+    if(criteria.architecture.principles && criteria.architecture.principles.length > 0){
       renderer.headline("#### Principles:");
-      criteria.architecture!.principles.forEach((principle) => {
+      criteria.architecture.principles.forEach((principle: string) => {
         renderer.info(`- ${principle}`);
       });
       renderer.info("\n" + "VERIFY: Artifacts created by you (the developer) directly reflect these principles.");
@@ -225,8 +207,6 @@ function renderReviewContext(
 function isScoped(response: ReviewGoalResponse): boolean {
   return (
     (Array.isArray(response.criteria.goal.scopeIn) && response.criteria.goal.scopeIn.length > 0) ||
-    (Array.isArray(response.criteria.goal.scopeOut) && response.criteria.goal.scopeOut.length > 0) ||
-    (Array.isArray(response.criteria.goal.filesToBeCreated) && response.criteria.goal.filesToBeCreated.length > 0) ||
-    (Array.isArray(response.criteria.goal.filesToBeChanged) && response.criteria.goal.filesToBeChanged.length > 0)
+    (Array.isArray(response.criteria.goal.scopeOut) && response.criteria.goal.scopeOut.length > 0)
   );
 }

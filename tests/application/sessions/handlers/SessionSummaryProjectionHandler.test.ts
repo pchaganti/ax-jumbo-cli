@@ -203,7 +203,7 @@ describe("SessionSummaryProjectionHandler", () => {
         successCriteria: [],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "completed",
         version: 1,
         createdAt: "2025-01-01T09:00:00Z",
@@ -371,7 +371,7 @@ describe("SessionSummaryProjectionHandler", () => {
         successCriteria: [],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "blocked",
         note: "API is down",
         version: 1,
@@ -500,7 +500,7 @@ describe("SessionSummaryProjectionHandler", () => {
         successCriteria: [],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "doing",
         version: 1,
         createdAt: "2025-01-01T09:00:00Z",
@@ -668,7 +668,7 @@ describe("SessionSummaryProjectionHandler", () => {
         successCriteria: [],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "paused",
         version: 1,
         createdAt: "2025-01-01T09:00:00Z",
@@ -757,7 +757,7 @@ describe("SessionSummaryProjectionHandler", () => {
         successCriteria: [],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: "doing",
         version: 1,
         createdAt: "2025-01-01T09:00:00Z",

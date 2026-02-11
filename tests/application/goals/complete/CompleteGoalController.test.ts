@@ -48,7 +48,7 @@ describe("CompleteGoalController", () => {
       successCriteria: ["Criteria"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.COMPLETED,
       version: 4,
       createdAt: "2025-01-01T00:00:00Z",
@@ -80,7 +80,7 @@ describe("CompleteGoalController", () => {
       successCriteria: ["Criteria"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.COMPLETED,
       version: 4,
       createdAt: "2025-01-01T00:00:00Z",
@@ -94,7 +94,7 @@ describe("CompleteGoalController", () => {
       successCriteria: ["Next criteria"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.TODO,
       version: 1,
       createdAt: "2025-01-01T00:00:00Z",

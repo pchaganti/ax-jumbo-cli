@@ -17,6 +17,15 @@ export class SqliteDecisionContextReader implements IDecisionContextReader {
     return rows.map((row: unknown) => this.mapRowToView(row as Record<string, unknown>));
   }
 
+  async findByIds(ids: string[]): Promise<DecisionView[]> {
+    if (ids.length === 0) return [];
+
+    const placeholders = ids.map(() => '?').join(',');
+    const query = `SELECT * FROM decision_views WHERE decisionId IN (${placeholders}) ORDER BY createdAt DESC`;
+    const rows = this.db.prepare(query).all(...ids);
+    return rows.map((row: unknown) => this.mapRowToView(row as Record<string, unknown>));
+  }
+
   private mapRowToView(row: Record<string, unknown>): DecisionView {
     return {
       decisionId: row.decisionId as string,

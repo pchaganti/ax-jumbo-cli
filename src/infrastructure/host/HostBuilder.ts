@@ -114,6 +114,7 @@ import { SqliteGoalProgressUpdatedProjector } from "../goals/update-progress/Sql
 import { SqliteGoalSubmittedForReviewProjector } from "../goals/review/SqliteGoalSubmittedForReviewProjector.js";
 import { SqliteGoalQualifiedProjector } from "../goals/qualify/SqliteGoalQualifiedProjector.js";
 import { SqliteGoalContextReader } from "../goals/get-context/SqliteGoalContextReader.js";
+import { SqliteGoalContextAssembler } from "../context/SqliteGoalContextAssembler.js";
 import { SqliteGoalStatusReader } from "../goals/SqliteGoalStatusReader.js";
 // Decision Projection Stores - decomposed by use case
 import { SqliteDecisionAddedProjector } from "../decisions/add/SqliteDecisionAddedProjector.js";
@@ -251,6 +252,9 @@ import { ValuePropositionRemovedEventHandler } from "../../application/value-pro
 // Relations Event Handlers - decomposed by use case
 import { RelationAddedEventHandler } from "../../application/relations/add/RelationAddedEventHandler.js";
 import { RelationRemovedEventHandler } from "../../application/relations/remove/RelationRemovedEventHandler.js";
+// Context
+import { GoalContextQueryHandler } from "../../application/context/GoalContextQueryHandler.js";
+import { GoalContextViewMapper } from "../../application/context/GoalContextViewMapper.js";
 
 // Goal Controllers
 import { CompleteGoalController } from "../../application/goals/complete/CompleteGoalController.js";
@@ -511,6 +515,20 @@ export class HostBuilder {
       goalClaimPolicy,
       workerIdentityReader
     );
+    // Goal Context Assembler - assembles context from relations
+    const goalContextAssembler = new SqliteGoalContextAssembler(
+      goalContextReader,
+      relationRemovedProjector, // Also implements IRelationReader
+      componentContextReader,
+      dependencyContextReader,
+      decisionContextReader,
+      invariantContextReader,
+      guidelineContextReader,
+      architectureReader
+    );
+    const goalContextQueryHandler = new GoalContextQueryHandler(
+      goalContextAssembler
+    );
     const getGoalContextQueryHandler = new GetGoalContextQueryHandler(
       goalContextReader,
       componentContextReader,
@@ -521,6 +539,7 @@ export class HostBuilder {
       architectureReader,
       relationRemovedProjector
     );
+    const goalContextViewMapper = new GoalContextViewMapper();
     const completeGoalController = new CompleteGoalController(
       completeGoalCommandHandler,
       goalCompletedProjector,
@@ -793,6 +812,9 @@ export class HostBuilder {
       goalRemovedProjector,
       goalProgressUpdatedProjector,
       goalContextReader,
+      goalContextAssembler,
+      goalContextQueryHandler,
+      getGoalContextQueryHandler,
       goalStatusReader,
       // Goal Controllers
       completeGoalController,

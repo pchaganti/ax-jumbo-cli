@@ -57,7 +57,7 @@ describe("PauseGoalCommandHandler", () => {
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -78,7 +78,7 @@ describe("PauseGoalCommandHandler", () => {
           successCriteria: ["Users can log in"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -131,7 +131,7 @@ describe("PauseGoalCommandHandler", () => {
       successCriteria: ["Bug resolved"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -152,7 +152,7 @@ describe("PauseGoalCommandHandler", () => {
           successCriteria: ["Bug resolved"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -207,7 +207,7 @@ describe("PauseGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.TODO,
       version: 1,
       createdAt: "2025-01-01T00:00:00Z",
@@ -228,7 +228,7 @@ describe("PauseGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -255,7 +255,7 @@ describe("PauseGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.PAUSED,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -276,7 +276,7 @@ describe("PauseGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },
@@ -322,7 +322,7 @@ describe("PauseGoalCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      boundaries: [],
+      
       status: GoalStatus.DOING,
       version: 2,
       createdAt: "2025-01-01T00:00:00Z",
@@ -343,7 +343,7 @@ describe("PauseGoalCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          boundaries: [],
+          
           status: GoalStatus.TODO,
         },
       },

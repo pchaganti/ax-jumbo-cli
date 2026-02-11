@@ -32,7 +32,7 @@ describe("GoalAddedEventHandler", () => {
         successCriteria: ["Users can log in"],
         scopeIn: ["AuthController"],
         scopeOut: [],
-        boundaries: [],
+        
         status: GoalStatus.TODO,
       },
     };
@@ -57,7 +57,7 @@ describe("GoalAddedEventHandler", () => {
         successCriteria: ["Criterion 1"],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
+        
         status: GoalStatus.TODO,
       },
     };
