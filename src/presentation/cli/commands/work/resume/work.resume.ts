@@ -12,6 +12,7 @@ import { Renderer } from "../../../rendering/Renderer.js";
 import { ResumeWorkCommandHandler, ResumeWorkResult } from "../../../../../application/work/resume/ResumeWorkCommandHandler.js";
 import { SessionStartTextRenderer } from "../../sessions/start/SessionStartTextRenderer.js";
 import { SessionContextView } from "../../../../../application/sessions/get-context/SessionContext.js";
+import { GoalContextViewMapper } from "../../../../../application/context/GoalContextViewMapper.js";
 
 /**
  * Command metadata for auto-registration
@@ -54,6 +55,7 @@ export async function workResume(
     }
 
     // 1. COMMAND + QUERY: Resume work and get enriched session context
+    const goalContextViewMapper = new GoalContextViewMapper();
     const commandHandler = new ResumeWorkCommandHandler(
       container.workerIdentityReader,
       container.goalStatusReader,
@@ -64,6 +66,8 @@ export async function workResume(
       container.goalClaimPolicy,
       container.settingsReader,
       container.sessionSummaryProjectionStore,
+      goalContextViewMapper,
+      container.goalContextQueryHandler,
       container.projectContextReader,
       container.audienceContextReader,
       container.audiencePainContextReader,

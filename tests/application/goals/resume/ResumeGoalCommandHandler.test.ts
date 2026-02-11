@@ -16,6 +16,9 @@ import { IClock } from "../../../../src/application/time-and-date/IClock";
 import { IWorkerIdentityReader } from "../../../../src/application/host/workers/IWorkerIdentityReader";
 import { ISettingsReader } from "../../../../src/application/settings/ISettingsReader";
 import { createWorkerId } from "../../../../src/application/host/workers/WorkerId";
+import { GoalContextQueryHandler } from "../../../../src/application/context/GoalContextQueryHandler";
+import { GoalContextViewMapper } from "../../../../src/application/context/GoalContextViewMapper";
+import { GoalContextView } from "../../../../src/application/context/GoalContextView";
 
 describe("ResumeGoalCommandHandler", () => {
   let eventWriter: IGoalResumedEventWriter;
@@ -27,6 +30,8 @@ describe("ResumeGoalCommandHandler", () => {
   let claimPolicy: GoalClaimPolicy;
   let workerIdentityReader: IWorkerIdentityReader;
   let settingsReader: ISettingsReader;
+  let goalContextQueryHandler: GoalContextQueryHandler;
+  let goalContextViewMapper: GoalContextViewMapper;
   let handler: ResumeGoalCommandHandler;
 
   const testWorkerId = createWorkerId("test-worker-id");
@@ -81,6 +86,32 @@ describe("ResumeGoalCommandHandler", () => {
       }),
     };
 
+    // Mock goal context query handler - will be customized per test
+    goalContextQueryHandler = {
+      execute: jest.fn().mockImplementation(async (goalId: string) => ({
+        goal: await goalReader.findById(goalId),
+        components: [],
+        dependencies: [],
+        decisions: [],
+        invariants: [],
+        guidelines: [],
+        architecture: null,
+      })),
+    } as any;
+
+    // Mock goal context view mapper
+    goalContextViewMapper = {
+      map: jest.fn().mockImplementation((context) => ({
+        goal: context.goal,
+        components: context.components || [],
+        dependencies: context.dependencies || [],
+        decisions: context.decisions || [],
+        invariants: context.invariants || [],
+        guidelines: context.guidelines || [],
+        architecture: context.architecture || null,
+      })),
+    } as any;
+
     handler = new ResumeGoalCommandHandler(
       eventWriter,
       eventReader,
@@ -88,7 +119,9 @@ describe("ResumeGoalCommandHandler", () => {
       eventBus,
       claimPolicy,
       workerIdentityReader,
-      settingsReader
+      settingsReader,
+      goalContextQueryHandler,
+      goalContextViewMapper
     );
   });
 
@@ -156,7 +189,7 @@ describe("ResumeGoalCommandHandler", () => {
     const result = await handler.execute(command);
 
     // Assert
-    expect(result.goalId).toBe("goal_123");
+    expect(result.goal.goalId).toBe("goal_123");
 
     // Verify event was appended to event store
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
@@ -238,7 +271,7 @@ describe("ResumeGoalCommandHandler", () => {
     const result = await handler.execute(command);
 
     // Assert
-    expect(result.goalId).toBe("goal_456");
+    expect(result.goal.goalId).toBe("goal_456");
     const appendedEvent = (eventWriter.append as jest.Mock).mock.calls[0][0];
     expect(appendedEvent.payload.note).toBe("Ready to continue");
   });
@@ -447,7 +480,7 @@ describe("ResumeGoalCommandHandler", () => {
     const result = await handler.execute(command);
 
     // Assert
-    expect(result.goalId).toBe("goal_claim_test");
+    expect(result.goal.goalId).toBe("goal_claim_test");
 
     // Verify claim data is included in the event payload
     const appendedEvent = (eventWriter.append as jest.Mock).mock.calls[0][0];

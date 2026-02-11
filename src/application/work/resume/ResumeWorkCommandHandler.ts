@@ -19,6 +19,8 @@ import { IProjectContextReader } from "../../project/query/IProjectContextReader
 import { IAudienceContextReader } from "../../audiences/query/IAudienceContextReader.js";
 import { IAudiencePainContextReader } from "../../audience-pains/query/IAudiencePainContextReader.js";
 import { UnprimedBrownfieldQualifier } from "../../UnprimedBrownfieldQualifier.js";
+import { GoalContextViewMapper } from "../../context/GoalContextViewMapper.js";
+import { GoalContextQueryHandler } from "../../context/GoalContextQueryHandler.js";
 
 /**
  * Result of resuming work.
@@ -37,6 +39,8 @@ export interface ResumeWorkResult {
 export class ResumeWorkCommandHandler {
   private readonly sessionContextQueryHandler: SessionContextQueryHandler;
   private readonly enricher: SessionResumeContextEnricher;
+  private readonly goalContextViewMapper: GoalContextViewMapper;
+  private readonly goalContextQueryHandler: GoalContextQueryHandler;
 
   constructor(
     private readonly workerIdentityReader: IWorkerIdentityReader,
@@ -48,6 +52,8 @@ export class ResumeWorkCommandHandler {
     private readonly claimPolicy: GoalClaimPolicy,
     private readonly settingsReader: ISettingsReader,
     sessionSummaryReader: ISessionSummaryReader,
+    goalContextViewMapper: GoalContextViewMapper,
+    goalContextQueryHandler: GoalContextQueryHandler,
     projectContextReader?: IProjectContextReader,
     audienceContextReader?: IAudienceContextReader,
     audiencePainContextReader?: IAudiencePainContextReader,
@@ -62,6 +68,8 @@ export class ResumeWorkCommandHandler {
       unprimedBrownfieldQualifier
     );
     this.enricher = new SessionResumeContextEnricher();
+    this.goalContextViewMapper = goalContextViewMapper;
+    this.goalContextQueryHandler = goalContextQueryHandler;
   }
 
   async execute(_command: ResumeWorkCommand): Promise<ResumeWorkResult> {
@@ -81,6 +89,7 @@ export class ResumeWorkCommandHandler {
     }
 
     // 4. Create ResumeGoalCommandHandler with atomic dependencies
+    const goalContextViewMapper = new GoalContextViewMapper();
     const resumeGoalCommandHandler = new ResumeGoalCommandHandler(
       this.goalResumedEventWriter,
       this.goalResumedEventReader,
@@ -88,7 +97,9 @@ export class ResumeWorkCommandHandler {
       this.eventBus,
       this.claimPolicy,
       this.workerIdentityReader,
-      this.settingsReader
+      this.settingsReader,
+      this.goalContextQueryHandler,
+      goalContextViewMapper
     );
 
     // 5. Create and execute ResumeGoalCommand

@@ -11,8 +11,8 @@ import { IApplicationContainer } from "../../../../../application/host/IApplicat
 import { Renderer } from "../../../rendering/Renderer.js";
 import { ResumeGoalCommandHandler } from "../../../../../application/goals/resume/ResumeGoalCommandHandler.js";
 import { ResumeGoalCommand } from "../../../../../application/goals/resume/ResumeGoalCommand.js";
-import { GetGoalContextQueryHandler } from "../../../../../application/goals/get-context/GetGoalContextQueryHandler.js";
-import { GoalContextRenderer } from "../start/GoalContextRenderer.js";
+import { GoalResumeOutputBuilder } from "./GoalResumeOutputBuilder.js";
+import { GoalContextViewMapper } from "../../../../../application/context/GoalContextViewMapper.js";
 
 /**
  * Command metadata for auto-registration
@@ -53,91 +53,32 @@ export async function goalResume(options: { goalId: string; note?: string }, con
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Query goal context to check current status
-    const getGoalContext = new GetGoalContextQueryHandler(
-      container.goalContextReader,
-      container.componentContextReader,
-      container.dependencyContextReader,
-      container.decisionContextReader,
-      container.invariantContextReader,
-      container.guidelineContextReader,
-      container.architectureReader,
-      container.relationRemovedProjector
+    // 1. Create command handler with mapper
+    const goalContextViewMapper = new GoalContextViewMapper();
+    const commandHandler = new ResumeGoalCommandHandler(
+      container.goalResumedEventStore,
+      container.goalResumedEventStore,
+      container.goalResumedProjector,
+      container.eventBus,
+      container.goalClaimPolicy,
+      container.workerIdentityReader,
+      container.settingsReader,
+      container.goalContextQueryHandler,
+      goalContextViewMapper
     );
 
-    const goalContext = await getGoalContext.execute(options.goalId);
+    // 2. Execute command - returns enriched goal context view
+    const command: ResumeGoalCommand = {
+      goalId: options.goalId,
+      note: options.note
+    };
+    const goalContextView = await commandHandler.execute(command);
 
-    // 2. Validate goal exists
-    if (!goalContext.goal) {
-      renderer.error("Goal not found", `No goal exists with ID: ${options.goalId}`);
-      process.exit(1);
-    }
+    // 3. Build and render output using builder pattern
+    const outputBuilder = new GoalResumeOutputBuilder();
+    const output = outputBuilder.build(goalContextView);
 
-    // 3. If paused, transition to 'doing' status
-    if (goalContext.goal.status === "paused") {
-      const commandHandler = new ResumeGoalCommandHandler(
-        container.goalResumedEventStore,
-        container.goalResumedEventStore,
-        container.goalResumedProjector,
-        container.eventBus,
-        container.goalClaimPolicy,
-        container.workerIdentityReader,
-        container.settingsReader
-      );
-
-      const command: ResumeGoalCommand = {
-        goalId: options.goalId,
-        note: options.note
-      };
-      await commandHandler.execute(command);
-
-      // Re-fetch context after status change
-      const updatedContext = await getGoalContext.execute(options.goalId);
-
-      // 4. Format and render goal context
-      const goalContextFormatter = new GoalContextRenderer(renderer);
-      
-      goalContextFormatter.render(updatedContext);
-
-      renderer.info("---\n");
-
-      // LLM Guidance
-      const llmInstruction = [
-        "@LLM: Goal context loaded. Work within scope.",
-        "YOUR ROLE: Proactively run jumbo commands to capture project memories as they surface.",
-        "Run 'jumbo --help' to see what can be tracked, if you haven't already.",
-      ];
-      renderer.info(llmInstruction.join("\n") + "\n");
-
-      return;
-    }
-
-    // 4. If already 'doing', just validate and render context (idempotent)
-    if (goalContext.goal.status !== "doing") {
-      renderer.error(
-        "Goal cannot be resumed",
-        `Goal status is '${goalContext.goal.status}'. Use 'jumbo goal start' for to-do goals or 'jumbo goal unblock' for blocked goals.`
-      );
-      process.exit(1);
-    }
-
-    // 5. Format and render goal context
-    const goalContextFormatter = new GoalContextRenderer(renderer);
-    goalContextFormatter.render(goalContext);
-
-    renderer.info("---\n");
-
-    // LLM Guidance
-    const additionalLlmInstructions = [
-      "@LLM: Goal context loaded. Work within scope.",
-    ];
-    renderer.info(additionalLlmInstructions.join("\n") + "\n");
-
-    // Prominent Review Instructions
-    renderer.divider();
-    renderer.headline("🚀 IMPORTANT NEXT STEP");
-    renderer.info(`Run: jumbo goal review --goal-id ${options.goalId}`);
-    renderer.divider();
+    renderer.info(output.toHumanReadable());
 
   } catch (error) {
     renderer.error("Failed to resume goal", error instanceof Error ? error : String(error));
