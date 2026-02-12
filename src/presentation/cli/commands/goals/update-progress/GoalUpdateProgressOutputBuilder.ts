@@ -1,5 +1,6 @@
 import { TerminalOutputBuilder } from '../../../output/TerminalOutputBuilder.js';
 import { TerminalOutput } from '../../../output/TerminalOutput.js';
+import { GoalContextView } from '../../../../../application/context/GoalContextView.js';
 
 /**
  * Specialized builder for goal.update-progress command output.
@@ -19,33 +20,24 @@ export class GoalUpdateProgressOutputBuilder {
    * Build output for successful progress update.
    * Renders success message and full progress list.
    */
-  buildSuccess(goalId: string, addedTask: string, progress: string[]): TerminalOutput {
-    this.builder.reset();
-    this.builder.addPrompt("✓ Progress updated");
-    this.builder.addData({
-      goalId,
-      addedTask,
-      totalProgress: progress.length
-    });
+  build(context: GoalContextView, addedTask: string): TerminalOutput {
+    const goal = context.goal;
+    const progress = goal.progress || [];
 
+    // Success message with task info
+    this.builder.addPrompt(
+      `✓ Progress updated\n\n` +
+      `Goal ID: ${goal.goalId}\n` +
+      `Added Task: ${addedTask}\n` +
+      `Total Progress Items: ${progress.length}`
+    );
+
+    // Progress list section
     if (progress.length > 0) {
       const progressList = progress.map((task, index) => `  ${index + 1}. ${task}`).join('\n');
       this.builder.addPrompt(`Progress:\n${progressList}`);
     }
 
-    return this.builder.build();
-  }
-
-  /**
-   * Build output for progress update failure.
-   * Renders error message when progress update fails.
-   */
-  buildFailureError(error: Error | string): TerminalOutput {
-    this.builder.reset();
-    this.builder.addPrompt("✗ Failed to update progress");
-    this.builder.addData({
-      message: error instanceof Error ? error.message : error
-    });
     return this.builder.build();
   }
 }

@@ -9,6 +9,8 @@ import { IApplicationContainer } from "../../../../../application/host/IApplicat
 import { Renderer } from "../../../rendering/Renderer.js";
 import { UpdateGoalProgressCommandHandler } from "../../../../../application/goals/update-progress/UpdateGoalProgressCommandHandler.js";
 import { UpdateGoalProgressCommand } from "../../../../../application/goals/update-progress/UpdateGoalProgressCommand.js";
+import { GoalUpdateProgressOutputBuilder } from "./GoalUpdateProgressOutputBuilder.js";
+import { GoalContextViewMapper } from "../../../../../application/context/GoalContextViewMapper.js";
 
 /**
  * Command metadata for auto-registration
@@ -47,35 +49,30 @@ export async function goalUpdateProgress(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler with dependencies from container
+    // 1. Create command handler with mapper
+    const goalContextViewMapper = new GoalContextViewMapper();
     const commandHandler = new UpdateGoalProgressCommandHandler(
       container.goalProgressUpdatedEventStore,
       container.goalProgressUpdatedEventStore,
       container.goalProgressUpdatedProjector,
-      container.eventBus
+      container.eventBus,
+      container.goalContextQueryHandler,
+      goalContextViewMapper
     );
 
-    // 2. Execute command
+    // 2. Execute command - returns enriched goal context view
     const command: UpdateGoalProgressCommand = {
       goalId: options.goalId,
       taskDescription: options.taskDescription
     };
-    const result = await commandHandler.execute(command);
+    const goalContextView = await commandHandler.execute(command);
 
-    // 3. Render success output
-    renderer.success("Progress updated", {
-      goalId: result.goalId,
-      addedTask: options.taskDescription.trim(),
-      totalProgress: result.progress.length,
-    });
+    // 3. Build and render output using builder pattern
+    const outputBuilder = new GoalUpdateProgressOutputBuilder();
+    const output = outputBuilder.build(goalContextView, options.taskDescription.trim());
 
-    // 4. Render progress list
-    if (result.progress.length > 0) {
-      renderer.section("Progress:");
-      result.progress.forEach((task, index) => {
-        renderer.info(`  ${index + 1}. ${task}`);
-      });
-    }
+    renderer.info(output.toHumanReadable());
+
   } catch (error) {
     renderer.error("Failed to update progress", error instanceof Error ? error : String(error));
     process.exit(1);

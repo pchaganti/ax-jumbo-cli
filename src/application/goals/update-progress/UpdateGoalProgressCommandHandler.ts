@@ -5,20 +5,26 @@ import { IGoalProgressUpdateReader } from "./IGoalProgressUpdateReader.js";
 import { IEventBus } from "../../messaging/IEventBus.js";
 import { Goal } from "../../../domain/goals/Goal.js";
 import { GoalErrorMessages, formatErrorMessage } from "../../../domain/goals/Constants.js";
+import { GoalContextQueryHandler } from "../../context/GoalContextQueryHandler.js";
+import { GoalContextViewMapper } from "../../context/GoalContextViewMapper.js";
+import { GoalContextView } from "../../context/GoalContextView.js";
 
 /**
  * Handles updating progress on a goal.
  * Loads aggregate from event history, calls domain logic, persists event.
+ * Returns enriched goal context view for presentation layer.
  */
 export class UpdateGoalProgressCommandHandler {
   constructor(
     private readonly eventWriter: IGoalProgressUpdatedEventWriter,
     private readonly eventReader: IGoalProgressUpdatedEventReader,
     private readonly goalReader: IGoalProgressUpdateReader,
-    private readonly eventBus: IEventBus
+    private readonly eventBus: IEventBus,
+    private readonly goalContextQueryHandler: GoalContextQueryHandler,
+    private readonly goalContextViewMapper: GoalContextViewMapper
   ) {}
 
-  async execute(command: UpdateGoalProgressCommand): Promise<{ goalId: string; progress: string[] }> {
+  async execute(command: UpdateGoalProgressCommand): Promise<GoalContextView> {
     // 1. Check goal exists (query projection for fast check)
     const view = await this.goalReader.findById(command.goalId);
     if (!view) {
@@ -40,10 +46,10 @@ export class UpdateGoalProgressCommandHandler {
     // 5. Publish event to bus (projections will update via subscriptions)
     await this.eventBus.publish(event);
 
-    // 6. Return updated progress list
-    return {
-      goalId: command.goalId,
-      progress: [...view.progress, command.taskDescription.trim()]
-    };
+    // 6. Query goal context and map to presentation view
+    const context = await this.goalContextQueryHandler.execute(command.goalId);
+    const contextView = this.goalContextViewMapper.map(context);
+
+    return contextView;
   }
 }
