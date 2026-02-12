@@ -6,7 +6,6 @@
 
 import { ReviewGoalController } from "../../../../src/application/goals/review/ReviewGoalController";
 import { SubmitGoalForReviewCommandHandler } from "../../../../src/application/goals/review/SubmitGoalForReviewCommandHandler";
-import { GetGoalContextQueryHandler } from "../../../../src/application/goals/get-context/GetGoalContextQueryHandler";
 import { IGoalSubmitForReviewReader } from "../../../../src/application/goals/review/IGoalSubmitForReviewReader";
 import { GoalErrorMessages, GoalStatus, formatErrorMessage } from "../../../../src/domain/goals/Constants";
 import { GoalView } from "../../../../src/application/goals/GoalView";
@@ -16,7 +15,6 @@ import { createWorkerId } from "../../../../src/application/host/workers/WorkerI
 
 describe("ReviewGoalController", () => {
   let submitGoalForReviewCommandHandler: SubmitGoalForReviewCommandHandler;
-  let getGoalContextQueryHandler: GetGoalContextQueryHandler;
   let goalReader: IGoalSubmitForReviewReader;
   let claimPolicy: GoalClaimPolicy;
   let workerIdentityReader: IWorkerIdentityReader;
@@ -29,7 +27,7 @@ describe("ReviewGoalController", () => {
     successCriteria: ["Criteria 1"],
     scopeIn: [],
     scopeOut: [],
-    
+
     status: GoalStatus.DOING,
     version: 2,
     createdAt: "2025-01-01T00:00:00Z",
@@ -45,17 +43,15 @@ describe("ReviewGoalController", () => {
     decisions: [],
     invariants: [],
     guidelines: [],
-    relations: [],
+    architecture: null,
   });
 
   beforeEach(() => {
-    submitGoalForReviewCommandHandler = {
-      execute: jest.fn().mockResolvedValue({ goalId: "goal_123" }),
-    } as unknown as SubmitGoalForReviewCommandHandler;
+    const mockContext = createMockGoalContext(createMockGoalView());
 
-    getGoalContextQueryHandler = {
-      execute: jest.fn(),
-    } as unknown as GetGoalContextQueryHandler;
+    submitGoalForReviewCommandHandler = {
+      execute: jest.fn().mockResolvedValue(mockContext),
+    } as unknown as SubmitGoalForReviewCommandHandler;
 
     goalReader = {
       findById: jest.fn(),
@@ -80,11 +76,10 @@ describe("ReviewGoalController", () => {
       (goalReader.findById as jest.Mock)
         .mockResolvedValueOnce(mockView)
         .mockResolvedValueOnce(mockUpdatedView);
-      (getGoalContextQueryHandler.execute as jest.Mock).mockResolvedValue(mockContext);
+      (submitGoalForReviewCommandHandler.execute as jest.Mock).mockResolvedValue(mockContext);
 
       const controller = new ReviewGoalController(
         submitGoalForReviewCommandHandler,
-        getGoalContextQueryHandler,
         goalReader,
         claimPolicy,
         workerIdentityReader
@@ -97,7 +92,6 @@ describe("ReviewGoalController", () => {
       expect(response.status).toBe(GoalStatus.INREVIEW);
       expect(response.criteria).toBe(mockContext);
       expect(submitGoalForReviewCommandHandler.execute).toHaveBeenCalledWith({ goalId: "goal_123" });
-      expect(getGoalContextQueryHandler.execute).toHaveBeenCalledWith("goal_123");
     });
 
     it("rejects when goal is claimed by another worker", async () => {
@@ -115,7 +109,6 @@ describe("ReviewGoalController", () => {
 
       const controller = new ReviewGoalController(
         submitGoalForReviewCommandHandler,
-        getGoalContextQueryHandler,
         goalReader,
         claimPolicy,
         workerIdentityReader
@@ -130,7 +123,6 @@ describe("ReviewGoalController", () => {
       // Verify nothing else was called
       expect(goalReader.findById).not.toHaveBeenCalled();
       expect(submitGoalForReviewCommandHandler.execute).not.toHaveBeenCalled();
-      expect(getGoalContextQueryHandler.execute).not.toHaveBeenCalled();
     });
 
     it("throws error when goal is not found", async () => {
@@ -138,7 +130,6 @@ describe("ReviewGoalController", () => {
 
       const controller = new ReviewGoalController(
         submitGoalForReviewCommandHandler,
-        getGoalContextQueryHandler,
         goalReader,
         claimPolicy,
         workerIdentityReader
@@ -154,7 +145,6 @@ describe("ReviewGoalController", () => {
       ).rejects.toThrow(expectedMessage);
 
       expect(submitGoalForReviewCommandHandler.execute).not.toHaveBeenCalled();
-      expect(getGoalContextQueryHandler.execute).not.toHaveBeenCalled();
     });
 
     it("propagates error from command handler when goal cannot be submitted for review", async () => {
@@ -171,7 +161,6 @@ describe("ReviewGoalController", () => {
 
       const controller = new ReviewGoalController(
         submitGoalForReviewCommandHandler,
-        getGoalContextQueryHandler,
         goalReader,
         claimPolicy,
         workerIdentityReader
@@ -181,7 +170,6 @@ describe("ReviewGoalController", () => {
         controller.handle({ goalId: "goal_123" })
       ).rejects.toThrow(commandError.message);
 
-      expect(getGoalContextQueryHandler.execute).not.toHaveBeenCalled();
     });
 
     it("validates claim ownership before any other operation", async () => {
@@ -210,11 +198,9 @@ describe("ReviewGoalController", () => {
         .mockResolvedValueOnce(createMockGoalView())
         .mockResolvedValueOnce(mockUpdatedView);
 
-      (getGoalContextQueryHandler.execute as jest.Mock).mockResolvedValue(mockContext);
 
       const controller = new ReviewGoalController(
         submitGoalForReviewCommandHandler,
-        getGoalContextQueryHandler,
         goalReader,
         claimPolicy,
         workerIdentityReader
@@ -234,19 +220,18 @@ describe("ReviewGoalController", () => {
         components: [{ componentId: "comp_1", name: "Test Component", description: "Desc", status: "active" }],
         dependencies: [{ dependencyId: "dep_1", name: "A -> B", purpose: "API" }],
         decisions: [{ decisionId: "dec_1", title: "Use TypeScript", rationale: "Type safety", status: "active" }],
-        invariants: [{ invariantId: "inv_1", category: "coding", description: "Use strict mode" }],
+        invariants: [{ invariantId: "inv_1", title: "coding", description: "Use strict mode" }],
         guidelines: [{ guidelineId: "guide_1", category: "testing", description: "100% coverage" }],
-        relations: [],
+        architecture: null,
       };
 
       (goalReader.findById as jest.Mock)
         .mockResolvedValueOnce(mockView)
         .mockResolvedValueOnce(mockUpdatedView);
-      (getGoalContextQueryHandler.execute as jest.Mock).mockResolvedValue(mockContext);
+      (submitGoalForReviewCommandHandler.execute as jest.Mock).mockResolvedValue(mockContext);
 
       const controller = new ReviewGoalController(
         submitGoalForReviewCommandHandler,
-        getGoalContextQueryHandler,
         goalReader,
         claimPolicy,
         workerIdentityReader

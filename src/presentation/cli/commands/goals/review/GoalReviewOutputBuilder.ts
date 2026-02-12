@@ -109,7 +109,8 @@ export class GoalReviewOutputBuilder {
     if (criteria.dependencies.length > 0) {
       output += "\n\n## Relevant Dependencies:\n";
       criteria.dependencies.forEach((d) => {
-        output += `- ${d.name} (v${d.version}): ${d.purpose}\n`;
+        const purpose = d.contract || d.endpoint || 'Dependency relationship';
+        output += `- ${d.consumerId} → ${d.providerId}: ${purpose}\n`;
       });
       output += "\nVERIFY: These dependencies are considered in the implementation.\n" +
                 `INSTRUCTION: If any dependencies were not considered, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
@@ -130,7 +131,7 @@ export class GoalReviewOutputBuilder {
     if (criteria.invariants.length > 0) {
       output += "\n\n## Invariants:\n";
       criteria.invariants.forEach((inv) => {
-        output += `- ${inv.category}:\n  - ${inv.description}\n`;
+        output += `- ${inv.title}:\n  - ${inv.description}\n`;
       });
       output += "\nVERIFY: The implementation adheres to ALL of these invariants.\n" +
                 `INSTRUCTION: If the implementation does not adhere to any of these invariants, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;

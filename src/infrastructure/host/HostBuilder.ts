@@ -506,15 +506,6 @@ export class HostBuilder {
     // STEP 4: Create Application Services / Controllers
     // ============================================================
 
-    // Goal Controllers
-    const completeGoalCommandHandler = new CompleteGoalCommandHandler(
-      goalCompletedEventStore,
-      goalCompletedEventStore,
-      goalCompletedProjector,
-      eventBus,
-      goalClaimPolicy,
-      workerIdentityReader
-    );
     // Goal Context Assembler - assembles context from relations
     const goalContextAssembler = new SqliteGoalContextAssembler(
       goalContextReader,
@@ -540,6 +531,18 @@ export class HostBuilder {
       relationRemovedProjector
     );
     const goalContextViewMapper = new GoalContextViewMapper();
+
+    // Goal Controllers
+    const completeGoalCommandHandler = new CompleteGoalCommandHandler(
+      goalCompletedEventStore,
+      goalCompletedEventStore,
+      goalCompletedProjector,
+      eventBus,
+      goalClaimPolicy,
+      workerIdentityReader,
+      goalContextQueryHandler,
+      goalContextViewMapper
+    );
     const completeGoalController = new CompleteGoalController(
       completeGoalCommandHandler,
       goalCompletedProjector,
@@ -553,11 +556,12 @@ export class HostBuilder {
       goalContextReader,
       eventBus,
       goalClaimPolicy,
-      workerIdentityReader
+      workerIdentityReader,
+      goalContextQueryHandler,
+      goalContextViewMapper
     );
     const reviewGoalController = new ReviewGoalController(
       submitGoalForReviewCommandHandler,
-      getGoalContextQueryHandler,
       goalContextReader,
       goalClaimPolicy,
       workerIdentityReader

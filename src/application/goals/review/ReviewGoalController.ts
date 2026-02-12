@@ -1,7 +1,6 @@
 import { ReviewGoalRequest } from "./ReviewGoalRequest.js";
 import { ReviewGoalResponse } from "./ReviewGoalResponse.js";
 import { SubmitGoalForReviewCommandHandler } from "./SubmitGoalForReviewCommandHandler.js";
-import { GetGoalContextQueryHandler } from "../get-context/GetGoalContextQueryHandler.js";
 import { IGoalSubmitForReviewReader } from "./IGoalSubmitForReviewReader.js";
 import { GoalErrorMessages, formatErrorMessage } from "../../../domain/goals/Constants.js";
 import { GoalClaimPolicy } from "../claims/GoalClaimPolicy.js";
@@ -15,13 +14,12 @@ import { IWorkerIdentityReader } from "../../host/workers/IWorkerIdentityReader.
  *
  * Responsibilities:
  * - Validates claim ownership (only the claimant can submit for review)
- * - Delegates state change to SubmitGoalForReviewCommandHandler
+ * - Delegates state change to SubmitGoalForReviewCommandHandler (which returns enriched context)
  * - Returns criteria context for QA verification
  */
 export class ReviewGoalController {
   constructor(
     private readonly submitGoalForReviewCommandHandler: SubmitGoalForReviewCommandHandler,
-    private readonly getGoalContextQueryHandler: GetGoalContextQueryHandler,
     private readonly goalReader: IGoalSubmitForReviewReader,
     private readonly claimPolicy: GoalClaimPolicy,
     private readonly workerIdentityReader: IWorkerIdentityReader
@@ -47,8 +45,8 @@ export class ReviewGoalController {
       );
     }
 
-    // 3. Delegate state change to command handler (validates status transitions)
-    await this.submitGoalForReviewCommandHandler.execute({ goalId: request.goalId });
+    // 3. Delegate state change to command handler (validates status transitions and returns enriched context)
+    const goalContextView = await this.submitGoalForReviewCommandHandler.execute({ goalId: request.goalId });
 
     // 4. Get updated goal view after state change
     const updatedGoalView = await this.goalReader.findById(request.goalId);
@@ -56,14 +54,11 @@ export class ReviewGoalController {
       throw new Error(`Goal not found after review submission: ${request.goalId}`);
     }
 
-    // 5. Get full goal context (criteria, components, invariants, etc.) for QA verification
-    const goalContext = await this.getGoalContextQueryHandler.execute(request.goalId);
-
     return {
       goalId: request.goalId,
       objective: updatedGoalView.objective,
       status: updatedGoalView.status,
-      criteria: goalContext,
+      criteria: goalContextView,
     };
   }
 }

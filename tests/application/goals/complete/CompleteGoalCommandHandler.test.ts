@@ -15,6 +15,9 @@ import { IGoalClaimStore } from "../../../../src/application/goals/claims/IGoalC
 import { IClock } from "../../../../src/application/time-and-date/IClock";
 import { IWorkerIdentityReader } from "../../../../src/application/host/workers/IWorkerIdentityReader";
 import { createWorkerId } from "../../../../src/application/host/workers/WorkerId";
+import { GoalContextQueryHandler } from "../../../../src/application/context/GoalContextQueryHandler";
+import { GoalContextViewMapper } from "../../../../src/application/context/GoalContextViewMapper";
+import { GoalContext } from "../../../../src/application/context/GoalContext";
 
 describe("CompleteGoalCommandHandler", () => {
   let eventWriter: IGoalCompletedEventWriter;
@@ -25,6 +28,8 @@ describe("CompleteGoalCommandHandler", () => {
   let clock: IClock;
   let claimPolicy: GoalClaimPolicy;
   let workerIdentityReader: IWorkerIdentityReader;
+  let goalContextQueryHandler: GoalContextQueryHandler;
+  let goalContextViewMapper: GoalContextViewMapper;
   let handler: CompleteGoalCommandHandler;
 
   const testWorkerId = createWorkerId("test-worker-id");
@@ -71,13 +76,52 @@ describe("CompleteGoalCommandHandler", () => {
       workerId: testWorkerId,
     };
 
+    // Mock goal context query handler
+    goalContextQueryHandler = {
+      execute: jest.fn().mockResolvedValue({
+        goal: {
+          goalId: "goal_123",
+          objective: "Mock objective",
+          successCriteria: [],
+          scopeIn: [],
+          scopeOut: [],
+          status: "doing",
+          version: 1,
+          createdAt: "2025-01-01T00:00:00Z",
+          updatedAt: "2025-01-01T00:00:00Z",
+          progress: [],
+        },
+        components: [],
+        dependencies: [],
+        decisions: [],
+        invariants: [],
+        guidelines: [],
+        architecture: null,
+      }),
+    } as any;
+
+    // Mock goal context view mapper
+    goalContextViewMapper = {
+      map: jest.fn().mockImplementation((context: GoalContext) => ({
+        goal: context.goal,
+        components: context.components,
+        dependencies: context.dependencies,
+        decisions: context.decisions,
+        invariants: context.invariants,
+        guidelines: context.guidelines,
+        architecture: context.architecture,
+      })),
+    } as any;
+
     handler = new CompleteGoalCommandHandler(
       eventWriter,
       eventReader,
       goalReader,
       eventBus,
       claimPolicy,
-      workerIdentityReader
+      workerIdentityReader,
+      goalContextQueryHandler,
+      goalContextViewMapper
     );
   });
 
@@ -155,7 +199,7 @@ describe("CompleteGoalCommandHandler", () => {
     const result = await handler.execute(command);
 
     // Assert
-    expect(result.goalId).toBe("goal_123");
+    expect(result.goal.goalId).toBe("goal_123");
 
     // Verify event was appended to event store
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
@@ -510,7 +554,7 @@ describe("CompleteGoalCommandHandler", () => {
     const result = await handler.execute(command);
 
     // Assert
-    expect(result.goalId).toBe("goal_123");
+    expect(result.goal.goalId).toBe("goal_123");
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
   });
 
@@ -596,7 +640,7 @@ describe("CompleteGoalCommandHandler", () => {
     const result = await handler.execute(command);
 
     // Assert
-    expect(result.goalId).toBe("goal_123");
+    expect(result.goal.goalId).toBe("goal_123");
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
     expect(claimStore.releaseClaim).toHaveBeenCalledWith("goal_123");
   });

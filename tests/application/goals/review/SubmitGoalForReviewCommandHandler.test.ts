@@ -15,6 +15,8 @@ import { IGoalClaimStore } from "../../../../src/application/goals/claims/IGoalC
 import { IClock } from "../../../../src/application/time-and-date/IClock";
 import { IWorkerIdentityReader } from "../../../../src/application/host/workers/IWorkerIdentityReader";
 import { createWorkerId } from "../../../../src/application/host/workers/WorkerId";
+import { GoalContextQueryHandler } from "../../../../src/application/context/GoalContextQueryHandler";
+import { GoalContextViewMapper } from "../../../../src/application/context/GoalContextViewMapper";
 
 describe("SubmitGoalForReviewCommandHandler", () => {
   let eventWriter: IGoalSubmittedForReviewEventWriter;
@@ -25,6 +27,8 @@ describe("SubmitGoalForReviewCommandHandler", () => {
   let clock: IClock;
   let claimPolicy: GoalClaimPolicy;
   let workerIdentityReader: IWorkerIdentityReader;
+  let goalContextQueryHandler: GoalContextQueryHandler;
+  let goalContextViewMapper: GoalContextViewMapper;
   let handler: SubmitGoalForReviewCommandHandler;
 
   const testWorkerId = createWorkerId("test-worker-id");
@@ -71,13 +75,33 @@ describe("SubmitGoalForReviewCommandHandler", () => {
       workerId: testWorkerId,
     };
 
+    // Mock goal context query handler - returns context with the goalId from the request
+    goalContextQueryHandler = {
+      execute: jest.fn().mockImplementation(async (goalId: string) => ({
+        goal: { goalId },
+        components: [],
+        dependencies: [],
+        decisions: [],
+        invariants: [],
+        guidelines: [],
+        architecture: null,
+      })),
+    } as any;
+
+    // Mock goal context view mapper
+    goalContextViewMapper = {
+      map: jest.fn((context) => context),
+    } as any;
+
     handler = new SubmitGoalForReviewCommandHandler(
       eventWriter,
       eventReader,
       goalReader,
       eventBus,
       claimPolicy,
-      workerIdentityReader
+      workerIdentityReader,
+      goalContextQueryHandler,
+      goalContextViewMapper
     );
   });
 
@@ -135,7 +159,7 @@ describe("SubmitGoalForReviewCommandHandler", () => {
     const result = await handler.execute(command);
 
     // Assert
-    expect(result.goalId).toBe("goal_123");
+    expect(result.goal.goalId).toBe("goal_123");
 
     // Verify event was appended to event store
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
@@ -218,7 +242,7 @@ describe("SubmitGoalForReviewCommandHandler", () => {
     const result = await handler.execute(command);
 
     // Assert
-    expect(result.goalId).toBe("goal_456");
+    expect(result.goal.goalId).toBe("goal_456");
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
     const appendedEvent = (eventWriter.append as jest.Mock).mock.calls[0][0];
     expect(appendedEvent.type).toBe(GoalEventType.SUBMITTED_FOR_REVIEW);
@@ -542,7 +566,7 @@ describe("SubmitGoalForReviewCommandHandler", () => {
     const result = await handler.execute(command);
 
     // Assert
-    expect(result.goalId).toBe("goal_123");
+    expect(result.goal.goalId).toBe("goal_123");
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
   });
 
@@ -608,7 +632,7 @@ describe("SubmitGoalForReviewCommandHandler", () => {
     const result = await handler.execute(command);
 
     // Assert
-    expect(result.goalId).toBe("goal_123");
+    expect(result.goal.goalId).toBe("goal_123");
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
   });
 
