@@ -21,7 +21,9 @@ import { InvariantView } from "../../../../../application/invariants/InvariantVi
 import { GuidelineView } from "../../../../../application/guidelines/GuidelineView.js";
 import { DecisionView } from "../../../../../application/decisions/DecisionView.js";
 import { EntityType, EntityTypeValue, RelationStrengthValue } from "../../../../../domain/relations/Constants.js";
-import { GoalView } from "../../../../../application/goals/GoalView.js";
+import { GoalRefineOutputBuilder } from "./GoalRefineOutputBuilder.js";
+import { GoalContextViewMapper } from "../../../../../application/context/GoalContextViewMapper.js";
+import { GoalContextView } from "../../../../../application/context/GoalContextView.js";
 
 /**
  * Command metadata for auto-registration
@@ -75,47 +77,55 @@ export async function goalRefine(
   container: IApplicationContainer
 ) {
   const renderer = Renderer.getInstance();
+  const outputBuilder = new GoalRefineOutputBuilder();
 
   try {
     // 1. Verify goal exists and is in to-do status
     const goalView = await container.goalContextReader.findById(options.goalId);
     if (!goalView) {
-      renderer.error("Goal not found", `No goal exists with ID: ${options.goalId}`);
+      const output = outputBuilder.buildGoalNotFoundError(options.goalId);
+      renderer.error(output.toHumanReadable());
       process.exit(1);
     }
 
     // 2. Branch based on mode
     if (options.interactive) {
       // Interactive mode: renderGoalDetails + runInteractiveRelationFlow + approveGoal
-      renderGoalDetails(goalView, renderer);
-      const createdRelations = await runInteractiveRelationFlow(options.goalId, container, renderer);
+      const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);
+      renderer.info(detailsOutput.toHumanReadable());
+
+      const createdRelations = await runInteractiveRelationFlow(options.goalId, container);
 
       // Display relations if any were created
       if (createdRelations.length > 0) {
-        renderer.info("\nRelations registered:");
-        createdRelations.forEach((rel) => {
-          renderer.info(`  - ${rel.relationType} → ${rel.toType}:${rel.toId}`);
-        });
+        const relationsOutput = outputBuilder.buildCreatedRelations(createdRelations);
+        renderer.info(relationsOutput.toHumanReadable());
       }
 
-      await approveGoal(options.goalId, container, renderer);
+      const goalContextView = await approveGoal(options.goalId, container);
+      const successOutput = outputBuilder.buildSuccess(goalContextView.goal.goalId, goalContextView.goal.status);
+      renderer.info(successOutput.toHumanReadable());
     } else if (options.approve) {
       // Approve mode: renderGoalDetails + renderLlmRefinementPrompt + approveGoal
-      renderGoalDetails(goalView, renderer);
-      renderLlmRefinementPrompt(options.goalId, renderer);
-      await approveGoal(options.goalId, container, renderer);
+      const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);
+      renderer.info(detailsOutput.toHumanReadable());
+
+      const goalContextView = await approveGoal(options.goalId, container);
+      const successOutput = outputBuilder.buildSuccess(goalContextView.goal.goalId, goalContextView.goal.status);
+      renderer.info(successOutput.toHumanReadable());
     } else {
       // Default mode: renderGoalDetails + renderLlmRefinementPrompt + show approval instruction (no status change)
-      renderGoalDetails(goalView, renderer);
-      renderLlmRefinementPrompt(options.goalId, renderer);
+      const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);
+      renderer.info(detailsOutput.toHumanReadable());
 
       // Show approval instruction
-      renderer.info("\n@LLM: Review goal details above. When ready to approve refinement, run:");
-      renderer.info(`  jumbo goal refine --goal-id ${options.goalId} --approve`);
+      const approvalOutput = outputBuilder.buildApprovalInstruction(options.goalId);
+      renderer.info(approvalOutput.toHumanReadable());
     }
 
   } catch (error) {
-    renderer.error("Failed to refine goal", error instanceof Error ? error : String(error));
+    const errorOutput = outputBuilder.buildFailureError(error instanceof Error ? error : String(error));
+    renderer.error(errorOutput.toHumanReadable());
     process.exit(1);
   }
 }
@@ -125,8 +135,7 @@ export async function goalRefine(
  */
 async function runInteractiveRelationFlow(
   goalId: string,
-  container: IApplicationContainer,
-  renderer: Renderer
+  container: IApplicationContainer
 ): Promise<Array<{ relationId: string; toType: string; toId: string; relationType: string }>> {
   const promptService = new InteractivePromptService();
   const createdRelations: Array<{ relationId: string; toType: string; toId: string; relationType: string }> = [];
@@ -290,119 +299,29 @@ async function runInteractiveRelationFlow(
 }
 
 /**
- * Renders goal details for review during refinement
- * Displays: Goal ID, Status, Objective, Success Criteria, Scope In, Scope Out
- */
-function renderGoalDetails(goal: GoalView, renderer: Renderer): void {
-  // Goal ID and Status
-  renderer.section("Goal Details");
-  renderer.info(`Goal ID: ${goal.goalId}`);
-  renderer.info(`Status: ${goal.status}`);
-
-  // Objective
-  renderer.section("Objective");
-  renderer.info(goal.objective);
-
-  // Success Criteria
-  if (goal.successCriteria && goal.successCriteria.length > 0) {
-    renderer.section("Success Criteria");
-    goal.successCriteria.forEach((criteria) => {
-      renderer.info(`  - ${criteria}`);
-    });
-  }
-
-  // Scope In
-  if (goal.scopeIn && goal.scopeIn.length > 0) {
-    renderer.section("Scope In");
-    goal.scopeIn.forEach((item) => {
-      renderer.info(`  - ${item}`);
-    });
-  }
-
-  // Scope Out
-  if (goal.scopeOut && goal.scopeOut.length > 0) {
-    renderer.section("Scope Out");
-    goal.scopeOut.forEach((item) => {
-      renderer.info(`  - ${item}`);
-    });
-  }
-}
-
-/**
- * Renders LLM instructions for refinement phase
- * Outputs entity exploration commands and relation add syntax
- */
-function renderLlmRefinementPrompt(goalId: string, renderer: Renderer): void {
-  renderer.info("\n@LLM: CRITICAL - Goal refinement requires comprehensive relation registration.");
-  renderer.info("Relations capture essential context that will be provided when implementing this goal.");
-  renderer.info("Incomplete relations result in missing architectural constraints, patterns, and domain");
-  renderer.info("knowledge during implementation.");
-  renderer.info("\nBE THOROUGH: Most goals require 5-10+ relations across multiple entity types.");
-
-  // Entity exploration commands
-  renderer.info("\nExplore project entities with these commands:");
-  renderer.info("  jumbo invariants list    - Non-negotiable constraints");
-  renderer.info("  jumbo guidelines list    - Recommended practices");
-  renderer.info("  jumbo decisions list     - Architectural decisions");
-  renderer.info("  jumbo components list    - System components");
-  renderer.info("  jumbo dependencies list  - External dependencies");
-  renderer.info("  jumbo architecture show  - Architecture overview");
-
-  // Relation add syntax
-  renderer.info("\nRegister relations with:");
-  renderer.info(`  jumbo relation add --from-type goal --from-id ${goalId} --to-type <entity-type> --to-id <entity-id> --relation-type <type> --description "<description>"`);
-
-  // Common relation types
-  renderer.info("\nCommon relation types:");
-  renderer.info("  involves     - Implementation will modify or interact with this entity");
-  renderer.info("  uses         - Implementation will use or depend on this entity");
-  renderer.info("  must-respect - Implementation must adhere to this constraint");
-  renderer.info("  follows      - Implementation must follow this practice or standard");
-  renderer.info("  implements   - Implementation applies or realizes this architectural decision");
-
-  // Guidance on what to look for
-  renderer.info("\nWhat to register:");
-  renderer.info("  - Invariants: Architectural constraints the implementation must adhere to");
-  renderer.info("  - Guidelines: Coding standards, testing requirements the implementation must follow");
-  renderer.info("  - Decisions: Architectural patterns the implementation will apply");
-  renderer.info("  - Components: Existing code this implementation will modify or depend on");
-  renderer.info("  - Dependencies: External libraries the implementation will integrate");
-  renderer.info("\nDO NOT approve refinement until comprehensive relations are registered!");
-}
-
-/**
  * Approves goal refinement by transitioning status from 'to-do' to 'refined'.
  * Uses RefineGoalCommandHandler to persist the state change via event sourcing.
- * Displays success message with goal details and LLM instruction for next step.
+ * Returns enriched goal context view for presentation layer.
  */
 async function approveGoal(
   goalId: string,
-  container: IApplicationContainer,
-  renderer: Renderer
-): Promise<void> {
-  // Execute refine command via handler
+  container: IApplicationContainer
+): Promise<GoalContextView> {
+  // Create command handler with mapper
+  const goalContextViewMapper = new GoalContextViewMapper();
   const refineHandler = new RefineGoalCommandHandler(
     container.goalRefinedEventStore,
     container.goalRefinedEventStore,
     container.goalRefinedProjector,
-    container.eventBus
+    container.eventBus,
+    container.goalContextQueryHandler,
+    goalContextViewMapper
   );
 
   const refineCommand: RefineGoalCommand = { goalId };
-  const result = await refineHandler.execute(refineCommand);
+  const goalContextView = await refineHandler.execute(refineCommand);
 
-  // Fetch updated view for display
-  const updatedView = await container.goalRefinedProjector.findById(result.goalId);
-
-  // Display success message with goalId and status
-  renderer.success("Goal refined", {
-    goalId: result.goalId,
-    status: updatedView?.status
-  });
-
-  // Display @LLM instruction to run jumbo goal start
-  renderer.info("\n@LLM: Goal is now refined and ready to start.");
-  renderer.info(`Run: jumbo goal start --goal-id ${goalId}`);
+  return goalContextView;
 }
 
 /**

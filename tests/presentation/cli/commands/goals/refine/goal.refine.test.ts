@@ -145,12 +145,25 @@ describe("goal.refine command", () => {
     mockGoalRefinedProjector.mockApplyGoalRefined.mockResolvedValue(undefined);
     mockGoalRefinedProjector.mockFindById.mockResolvedValue(mockRefinedGoalView);
 
+    const mockGoalContextQueryHandler = {
+      execute: jest.fn<() => Promise<any>>().mockResolvedValue({
+        goal: mockRefinedGoalView,
+        components: [],
+        dependencies: [],
+        decisions: [],
+        invariants: [],
+        guidelines: [],
+        architecture: null,
+      }),
+    };
+
     // Create mock container
     mockContainer = {
       goalContextReader: mockGoalContextReader,
       goalRefinedEventStore: mockGoalRefinedEventStore,
       goalRefinedProjector: mockGoalRefinedProjector,
       eventBus: mockEventBus,
+      goalContextQueryHandler: mockGoalContextQueryHandler as any,
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

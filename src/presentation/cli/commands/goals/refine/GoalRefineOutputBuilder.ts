@@ -92,4 +92,102 @@ export class GoalRefineOutputBuilder {
     );
     return this.builder.build();
   }
+
+  /**
+   * Build output for goal details and LLM refinement prompt (default/approve mode).
+   * Renders goal details (ID, status, objective, criteria, scope) and LLM instructions
+   * for comprehensive relation registration.
+   */
+  buildGoalDetailsAndRefinementPrompt(goal: GoalView): TerminalOutput {
+    this.builder.reset();
+
+    // Goal ID and Status section
+    this.builder.addPrompt(
+      "=== Goal Details ===\n" +
+      `Goal ID: ${goal.goalId}\n` +
+      `Status: ${goal.status}`
+    );
+
+    // Objective section
+    this.builder.addPrompt(
+      "\n=== Objective ===\n" +
+      goal.objective
+    );
+
+    // Success Criteria section
+    if (goal.successCriteria && goal.successCriteria.length > 0) {
+      const criteriaText = goal.successCriteria.map(c => `  - ${c}`).join('\n');
+      this.builder.addPrompt(
+        "\n=== Success Criteria ===\n" +
+        criteriaText
+      );
+    }
+
+    // Scope In section
+    if (goal.scopeIn && goal.scopeIn.length > 0) {
+      const scopeInText = goal.scopeIn.map(s => `  - ${s}`).join('\n');
+      this.builder.addPrompt(
+        "\n=== Scope In ===\n" +
+        scopeInText
+      );
+    }
+
+    // Scope Out section
+    if (goal.scopeOut && goal.scopeOut.length > 0) {
+      const scopeOutText = goal.scopeOut.map(s => `  - ${s}`).join('\n');
+      this.builder.addPrompt(
+        "\n=== Scope Out ===\n" +
+        scopeOutText
+      );
+    }
+
+    // LLM Refinement Instructions
+    this.builder.addPrompt(
+      "\n@LLM: CRITICAL - Goal refinement requires comprehensive relation registration.\n" +
+      "Relations capture essential context that will be provided when implementing this goal.\n" +
+      "Incomplete relations result in missing architectural constraints, patterns, and domain\n" +
+      "knowledge during implementation.\n" +
+      "\nBE THOROUGH: Most goals require 5-10+ relations across multiple entity types."
+    );
+
+    // Entity exploration commands
+    this.builder.addPrompt(
+      "\nExplore project entities with these commands:\n" +
+      "  jumbo invariants list    - Non-negotiable constraints\n" +
+      "  jumbo guidelines list    - Recommended practices\n" +
+      "  jumbo decisions list     - Architectural decisions\n" +
+      "  jumbo components list    - System components\n" +
+      "  jumbo dependencies list  - External dependencies\n" +
+      "  jumbo architecture show  - Architecture overview"
+    );
+
+    // Relation add syntax
+    this.builder.addPrompt(
+      "\nRegister relations with:\n" +
+      `  jumbo relation add --from-type goal --from-id ${goal.goalId} --to-type <entity-type> --to-id <entity-id> --relation-type <type> --description "<description>"`
+    );
+
+    // Common relation types
+    this.builder.addPrompt(
+      "\nCommon relation types:\n" +
+      "  involves     - Implementation will modify or interact with this entity\n" +
+      "  uses         - Implementation will use or depend on this entity\n" +
+      "  must-respect - Implementation must adhere to this constraint\n" +
+      "  follows      - Implementation must follow this practice or standard\n" +
+      "  implements   - Implementation applies or realizes this architectural decision"
+    );
+
+    // Guidance on what to register
+    this.builder.addPrompt(
+      "\nWhat to register:\n" +
+      "  - Invariants: Architectural constraints the implementation must adhere to\n" +
+      "  - Guidelines: Coding standards, testing requirements the implementation must follow\n" +
+      "  - Decisions: Architectural patterns the implementation will apply\n" +
+      "  - Components: Existing code this implementation will modify or depend on\n" +
+      "  - Dependencies: External libraries the implementation will integrate\n" +
+      "\nDO NOT approve refinement until comprehensive relations are registered!"
+    );
+
+    return this.builder.build();
+  }
 }

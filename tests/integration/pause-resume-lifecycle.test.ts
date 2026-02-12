@@ -60,11 +60,14 @@ describe("Pause-Resume Lifecycle Integration", () => {
     expect(view!.version).toBe(1);
 
     // 2. Refine goal
+    const goalContextViewMapper = new GoalContextViewMapper();
     const refineHandler = new RefineGoalCommandHandler(
       container.goalRefinedEventStore,
       container.goalRefinedEventStore,
       container.goalRefinedProjector,
-      container.eventBus
+      container.eventBus,
+      container.goalContextQueryHandler,
+      goalContextViewMapper
     );
     const refineCommand: RefineGoalCommand = {
       goalId,
@@ -177,11 +180,14 @@ describe("Pause-Resume Lifecycle Integration", () => {
     });
     const goalId = addResult.goalId;
 
+    const goalContextViewMapper = new GoalContextViewMapper();
     const refineHandler = new RefineGoalCommandHandler(
       container.goalRefinedEventStore,
       container.goalRefinedEventStore,
       container.goalRefinedProjector,
-      container.eventBus
+      container.eventBus,
+      container.goalContextQueryHandler,
+      goalContextViewMapper
     );
     await refineHandler.execute({ goalId });
 
@@ -231,11 +237,14 @@ describe("Pause-Resume Lifecycle Integration", () => {
     });
     const goalId = addResult.goalId;
 
+    const goalContextViewMapper = new GoalContextViewMapper();
     const refineHandler = new RefineGoalCommandHandler(
       container.goalRefinedEventStore,
       container.goalRefinedEventStore,
       container.goalRefinedProjector,
-      container.eventBus
+      container.eventBus,
+      container.goalContextQueryHandler,
+      goalContextViewMapper
     );
     await refineHandler.execute({ goalId });
 
@@ -310,11 +319,14 @@ describe("Pause-Resume Lifecycle Integration", () => {
     });
     const goalId = addResult.goalId;
 
+    const goalContextViewMapper = new GoalContextViewMapper();
     const refineHandler = new RefineGoalCommandHandler(
       container.goalRefinedEventStore,
       container.goalRefinedEventStore,
       container.goalRefinedProjector,
-      container.eventBus
+      container.eventBus,
+      container.goalContextQueryHandler,
+      goalContextViewMapper
     );
     await refineHandler.execute({ goalId });
 
