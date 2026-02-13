@@ -25,6 +25,7 @@ import { componentAdd, metadata as componentAddMeta } from '../../commands/compo
 import { componentDeprecate, metadata as componentDeprecateMeta } from '../../commands/components/deprecate/component.deprecate.js';
 import { componentsList, metadata as componentsListMeta } from '../../commands/components/list/components.list.js';
 import { componentRemove, metadata as componentRemoveMeta } from '../../commands/components/remove/component.remove.js';
+import { componentShow, metadata as componentShowMeta } from '../../commands/components/show/component.show.js';
 import { componentUpdate, metadata as componentUpdateMeta } from '../../commands/components/update/component.update.js';
 import { decisionAdd, metadata as decisionAddMeta } from '../../commands/decisions/add/decision.add.js';
 import { decisionsList, metadata as decisionsListMeta } from '../../commands/decisions/list/decisions.list.js';
@@ -61,6 +62,7 @@ import { invariantsList, metadata as invariantsListMeta } from '../../commands/i
 import { invariantRemove, metadata as invariantRemoveMeta } from '../../commands/invariants/remove/invariant.remove.js';
 import { invariantUpdate, metadata as invariantUpdateMeta } from '../../commands/invariants/update/invariant.update.js';
 import { dbRebuild, metadata as dbRebuildMeta } from '../../commands/maintenance/db/rebuild/db.rebuild.js';
+import { maintenanceRepair, metadata as maintenanceRepairMeta } from '../../commands/maintenance/repair/maintenance.repair.js';
 import { projectInit, metadata as projectInitMeta } from '../../commands/project/init/project.init.js';
 import { projectUpdate, metadata as projectUpdateMeta } from '../../commands/project/update/project.update.js';
 import { relationAdd, metadata as relationAddMeta } from '../../commands/relations/add/relation.add.js';
@@ -157,6 +159,11 @@ export const commands: RegisteredCommand[] = [
     path: 'component remove',
     metadata: componentRemoveMeta,
     handler: componentRemove
+  },
+  {
+    path: 'component show',
+    metadata: componentShowMeta,
+    handler: componentShow
   },
   {
     path: 'component update',
@@ -337,6 +344,11 @@ export const commands: RegisteredCommand[] = [
     path: 'db rebuild',
     metadata: dbRebuildMeta,
     handler: dbRebuild
+  },
+  {
+    path: 'maintenance repair',
+    metadata: maintenanceRepairMeta,
+    handler: maintenanceRepair
   },
   {
     path: 'project init',

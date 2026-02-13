@@ -95,6 +95,7 @@ import { IComponentRemovedProjector } from "../components/remove/IComponentRemov
 import { IComponentRemoveReader } from "../components/remove/IComponentRemoveReader.js";
 import { IComponentContextReader } from "../goals/get-context/IComponentContextReader.js";
 import { IComponentListReader } from "../components/list/IComponentListReader.js";
+import { IComponentReader } from "../components/get/IComponentReader.js";
 import { IDependencyAddedProjector } from "../dependencies/add/IDependencyAddedProjector.js";
 import { IDependencyAddReader } from "../dependencies/add/IDependencyAddReader.js";
 import { IDependencyUpdatedProjector } from "../dependencies/update/IDependencyUpdatedProjector.js";
@@ -362,6 +363,7 @@ export interface IApplicationContainer {
   componentRemovedProjector: IComponentRemovedProjector & IComponentRemoveReader;
   componentContextReader: IComponentContextReader;
   componentListReader: IComponentListReader;
+  componentReader: IComponentReader;
   // Dependency Projection Stores - decomposed by use case
   dependencyAddedProjector: IDependencyAddedProjector & IDependencyAddReader;
   dependencyUpdatedProjector: IDependencyUpdatedProjector & IDependencyUpdateReader;

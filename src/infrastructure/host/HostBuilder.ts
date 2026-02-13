@@ -138,6 +138,7 @@ import { SqliteComponentDeprecatedProjector } from "../components/deprecate/Sqli
 import { SqliteComponentRemovedProjector } from "../components/remove/SqliteComponentRemovedProjector.js";
 import { SqliteComponentContextReader } from "../components/get-context/SqliteComponentContextReader.js";
 import { SqliteComponentListReader } from "../components/list/SqliteComponentListReader.js";
+import { SqliteComponentReader } from "../components/get/SqliteComponentReader.js";
 // Dependency Projection Stores - decomposed by use case
 import { SqliteDependencyAddedProjector } from "../dependencies/add/SqliteDependencyAddedProjector.js";
 import { SqliteDependencyUpdatedProjector } from "../dependencies/update/SqliteDependencyUpdatedProjector.js";
@@ -457,6 +458,7 @@ export class HostBuilder {
     const componentRemovedProjector = new SqliteComponentRemovedProjector(this.db);
     const componentContextReader = new SqliteComponentContextReader(this.db);
     const componentListReader = new SqliteComponentListReader(this.db);
+    const componentReader = new SqliteComponentReader(this.db);
     // Dependency Projection Stores - decomposed by use case
     const dependencyAddedProjector = new SqliteDependencyAddedProjector(this.db);
     const dependencyUpdatedProjector = new SqliteDependencyUpdatedProjector(this.db);
@@ -910,6 +912,7 @@ export class HostBuilder {
       componentRemovedProjector,
       componentContextReader,
       componentListReader,
+      componentReader,
       // Dependency Projection Stores - decomposed by use case
       dependencyAddedProjector,
       dependencyUpdatedProjector,
