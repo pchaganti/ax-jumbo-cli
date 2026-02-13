@@ -1,7 +1,7 @@
 /**
  * CLI Command: jumbo goal start
  *
- * Starts a defined goal (transitions status from 'to-do' to 'doing').
+ * Starts a refined goal (transitions status from 'refined' to 'doing').
  */
 
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
@@ -16,7 +16,7 @@ import { GoalContextViewMapper } from "../../../../../application/context/GoalCo
  * Command metadata for auto-registration
  */
 export const metadata: CommandMetadata = {
-  description: "Start a defined goal (transitions status from 'to-do' to 'doing')",
+  description: "Start a refined goal (transitions status from 'refined' to 'doing')",
   category: "work",
   requiredOptions: [
     {

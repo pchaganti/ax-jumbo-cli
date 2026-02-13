@@ -4,7 +4,7 @@
  */
 
 import { Goal, GoalState } from "../../../../src/domain/goals/Goal";
-import { GoalAddedEvent, GoalStartedEvent, GoalCompletedEvent, GoalPausedEvent, GoalResumedEvent, GoalSubmittedForReviewEvent, GoalQualifiedEvent } from "../../../../src/domain/goals/EventIndex";
+import { GoalAddedEvent, GoalRefinedEvent, GoalStartedEvent, GoalCompletedEvent, GoalPausedEvent, GoalResumedEvent, GoalSubmittedForReviewEvent, GoalQualifiedEvent } from "../../../../src/domain/goals/EventIndex";
 import { GoalEventType, GoalStatus } from "../../../../src/domain/goals/Constants";
 
 function createEmptyGoalState(id: string): GoalState {
@@ -124,6 +124,43 @@ describe("Goal", () => {
       // Assert
       expect(state.status).toBe(GoalStatus.COMPLETED);
       expect(state.version).toBe(3);
+      // Other fields should remain unchanged
+      expect(state.objective).toBe("Implement authentication");
+      expect(state.successCriteria).toEqual(["Users can log in"]);
+    });
+  });
+
+  describe("apply() - GoalRefinedEvent", () => {
+    it("should apply GoalRefinedEvent event correctly", () => {
+      // Arrange
+      const state = {
+        id: "goal_123",
+        objective: "Implement authentication",
+        successCriteria: ["Users can log in"],
+        scopeIn: ["AuthController"],
+        scopeOut: [],
+        status: GoalStatus.TODO,
+        version: 1,
+        progress: [],
+      };
+
+      const event: GoalRefinedEvent = {
+        type: GoalEventType.REFINED,
+        aggregateId: "goal_123",
+        version: 2,
+        timestamp: new Date().toISOString(),
+        payload: {
+          status: GoalStatus.REFINED,
+          refinedAt: new Date().toISOString(),
+        },
+      };
+
+      // Act
+      Goal.apply(state, event);
+
+      // Assert
+      expect(state.status).toBe(GoalStatus.REFINED);
+      expect(state.version).toBe(2);
       // Other fields should remain unchanged
       expect(state.objective).toBe("Implement authentication");
       expect(state.successCriteria).toEqual(["Users can log in"]);
@@ -463,7 +500,7 @@ describe("Goal", () => {
   });
 
   describe("rehydrate() - full review workflow", () => {
-    it("should rehydrate through complete review workflow (TODO -> DOING -> IN_REVIEW -> QUALIFIED -> COMPLETED)", () => {
+    it("should rehydrate through complete review workflow (TODO -> REFINED -> DOING -> IN_REVIEW -> QUALIFIED -> COMPLETED)", () => {
       // Arrange
       const addedEvent: GoalAddedEvent = {
         type: GoalEventType.ADDED,
@@ -479,10 +516,21 @@ describe("Goal", () => {
         },
       };
 
+      const refinedEvent: GoalRefinedEvent = {
+        type: GoalEventType.REFINED,
+        aggregateId: "goal_123",
+        version: 2,
+        timestamp: new Date().toISOString(),
+        payload: {
+          status: GoalStatus.REFINED,
+          refinedAt: new Date().toISOString(),
+        },
+      };
+
       const startedEvent: GoalStartedEvent = {
         type: GoalEventType.STARTED,
         aggregateId: "goal_123",
-        version: 2,
+        version: 3,
         timestamp: new Date().toISOString(),
         payload: {
           status: GoalStatus.DOING,
@@ -492,7 +540,7 @@ describe("Goal", () => {
       const submittedEvent: GoalSubmittedForReviewEvent = {
         type: GoalEventType.SUBMITTED_FOR_REVIEW,
         aggregateId: "goal_123",
-        version: 3,
+        version: 4,
         timestamp: new Date().toISOString(),
         payload: {
           status: GoalStatus.INREVIEW,
@@ -503,7 +551,7 @@ describe("Goal", () => {
       const qualifiedEvent: GoalQualifiedEvent = {
         type: GoalEventType.QUALIFIED,
         aggregateId: "goal_123",
-        version: 4,
+        version: 5,
         timestamp: new Date().toISOString(),
         payload: {
           status: GoalStatus.QUALIFIED,
@@ -514,7 +562,7 @@ describe("Goal", () => {
       const completedEvent: GoalCompletedEvent = {
         type: GoalEventType.COMPLETED,
         aggregateId: "goal_123",
-        version: 5,
+        version: 6,
         timestamp: new Date().toISOString(),
         payload: {
           status: GoalStatus.COMPLETED,
@@ -524,6 +572,7 @@ describe("Goal", () => {
       // Act
       const goal = Goal.rehydrate("goal_123", [
         addedEvent,
+        refinedEvent,
         startedEvent,
         submittedEvent,
         qualifiedEvent,
@@ -534,7 +583,7 @@ describe("Goal", () => {
       // Assert
       expect(state.objective).toBe("Implement authentication");
       expect(state.status).toBe(GoalStatus.COMPLETED);
-      expect(state.version).toBe(5);
+      expect(state.version).toBe(6);
     });
   });
 });

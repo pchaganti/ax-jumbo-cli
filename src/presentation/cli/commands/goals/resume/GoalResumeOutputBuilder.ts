@@ -6,7 +6,7 @@ import { GoalContextView } from '../../../../../application/context/GoalContextV
  * Specialized builder for goal.resume command output.
  * Preserves the existing effective prompt structure that guides LLM implementation.
  *
- * Pattern extracted from existing GoalContextRenderer (goal.resume.ts)
+ * Renders goal context as structured LLM implementation instructions.
  */
 export class GoalResumeOutputBuilder {
   private builder: TerminalOutputBuilder;
