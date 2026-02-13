@@ -19,6 +19,7 @@ import { createWorkerId } from "../../../../src/application/host/workers/WorkerI
 import { GoalContextViewMapper } from "../../../../src/application/context/GoalContextViewMapper";
 import { GoalContextQueryHandler } from "../../../../src/application/context/GoalContextQueryHandler";
 import { IGoalContextAssembler } from "../../../../src/application/context/IGoalContextAssembler";
+import { ILogger } from "../../../../src/application/logging/ILogger";
 
 describe("ResumeWorkCommandHandler", () => {
   let workerIdentityReader: IWorkerIdentityReader;
@@ -32,6 +33,7 @@ describe("ResumeWorkCommandHandler", () => {
   let sessionSummaryReader: ISessionSummaryReader;
   let goalContextViewMapper: GoalContextViewMapper;
   let goalContextQueryHandler: GoalContextQueryHandler;
+  let logger: ILogger;
   let handler: ResumeWorkCommandHandler;
 
   const workerId = createWorkerId("worker_123");
@@ -105,6 +107,15 @@ describe("ResumeWorkCommandHandler", () => {
       findLatest: jest.fn().mockResolvedValue(null),
     };
 
+    // Mock logger
+    logger = {
+      debug: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      flush: jest.fn(),
+    } as unknown as ILogger;
+
     // Mock goal context assembler
     const goalContextAssembler = {
       assembleContextForGoal: jest.fn().mockResolvedValue({
@@ -133,6 +144,7 @@ describe("ResumeWorkCommandHandler", () => {
       eventBus,
       claimPolicy,
       settingsReader,
+      logger,
       sessionSummaryReader,
       goalContextViewMapper,
       goalContextQueryHandler

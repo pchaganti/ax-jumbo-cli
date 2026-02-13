@@ -27,6 +27,9 @@ import { IDatabaseRebuildService } from "../../application/maintenance/db/rebuil
 import { FsEventStore } from "../persistence/FsEventStore.js";
 import { InProcessEventBus } from "../messaging/InProcessEventBus.js";
 import { SystemClock } from "../time-and-date/SystemClock.js";
+import { FileLogger } from "../logging/FileLogger.js";
+import { LogLevel } from "../../application/logging/ILogger.js";
+import * as path from "path";
 // TEMPORARY: Use sequential rebuild service to avoid race conditions
 // TODO: Swap back to LocalDatabaseRebuildService when Epic/Feature/Task redesign is complete
 import { TemporarySequentialDatabaseRebuildService } from "../local/TemporarySequentialDatabaseRebuildService.js";
@@ -267,6 +270,10 @@ import { QualifyGoalController } from "../../application/goals/qualify/QualifyGo
 import { QualifyGoalCommandHandler } from "../../application/goals/qualify/QualifyGoalCommandHandler.js";
 import { FsGoalQualifiedEventStore } from "../goals/qualify/FsGoalQualifiedEventStore.js";
 
+// Work Command Handlers
+import { PauseWorkCommandHandler } from "../../application/work/pause/PauseWorkCommandHandler.js";
+import { ResumeWorkCommandHandler } from "../../application/work/resume/ResumeWorkCommandHandler.js";
+
 // Solution Context
 import { UnprimedBrownfieldQualifier } from "../../application/UnprimedBrownfieldQualifier.js";
 
@@ -304,6 +311,10 @@ export class HostBuilder {
     const eventBus = new InProcessEventBus();
     const clock = new SystemClock();
     const cliVersionReader = new CliVersionReader();
+
+    // Create logger (writes to .jumbo/logs/jumbo.log)
+    const logFilePath = path.join(this.rootDir, "logs", "jumbo.log");
+    const logger = new FileLogger(logFilePath, LogLevel.DEBUG);
 
     // Initialize settings file if it doesn't exist
     const settingsInitializer = new FsSettingsInitializer(this.rootDir);
@@ -584,6 +595,35 @@ export class HostBuilder {
       workerIdentityReader
     );
 
+    // Work Command Handlers
+    const pauseWorkCommandHandler = new PauseWorkCommandHandler(
+      workerIdentityReader,
+      goalStatusReader,
+      goalPausedEventStore,
+      goalPausedEventStore,
+      goalPausedProjector,
+      eventBus,
+      logger
+    );
+    const resumeWorkCommandHandler = new ResumeWorkCommandHandler(
+      workerIdentityReader,
+      goalStatusReader,
+      goalResumedEventStore,
+      goalResumedEventStore,
+      goalResumedProjector,
+      eventBus,
+      goalClaimPolicy,
+      settingsReader,
+      logger,
+      sessionSummaryProjectionStore,
+      goalContextViewMapper,
+      goalContextQueryHandler,
+      projectContextReader,
+      audienceContextReader,
+      audiencePainContextReader,
+      unprimedBrownfieldQualifier
+    );
+
     // Project Initialization Protocol
     const initializeProjectCommandHandler = new InitializeProjectCommandHandler(
       projectInitializedEventStore,
@@ -764,6 +804,7 @@ export class HostBuilder {
       eventBus,
       eventStore,
       clock,
+      logger,
       settingsReader,
       settingsInitializer,
 
@@ -826,6 +867,10 @@ export class HostBuilder {
       completeGoalController,
       reviewGoalController,
       qualifyGoalController,
+
+      // Work Command Handlers
+      pauseWorkCommandHandler,
+      resumeWorkCommandHandler,
 
       // Solution Category
       // Architecture Event Stores - decomposed by use case

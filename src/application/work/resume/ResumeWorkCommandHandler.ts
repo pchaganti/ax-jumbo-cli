@@ -21,6 +21,7 @@ import { IAudiencePainContextReader } from "../../audience-pains/query/IAudience
 import { UnprimedBrownfieldQualifier } from "../../UnprimedBrownfieldQualifier.js";
 import { GoalContextViewMapper } from "../../context/GoalContextViewMapper.js";
 import { GoalContextQueryHandler } from "../../context/GoalContextQueryHandler.js";
+import { ILogger } from "../../logging/ILogger.js";
 
 /**
  * Result of resuming work.
@@ -51,6 +52,7 @@ export class ResumeWorkCommandHandler {
     private readonly eventBus: IEventBus,
     private readonly claimPolicy: GoalClaimPolicy,
     private readonly settingsReader: ISettingsReader,
+    private readonly logger: ILogger,
     sessionSummaryReader: ISessionSummaryReader,
     goalContextViewMapper: GoalContextViewMapper,
     goalContextQueryHandler: GoalContextQueryHandler,
@@ -73,11 +75,18 @@ export class ResumeWorkCommandHandler {
   }
 
   async execute(_command: ResumeWorkCommand): Promise<ResumeWorkResult> {
+    this.logger.debug("[ResumeWorkCommandHandler] Starting execute");
+
     // 1. Get current worker's identity
     const workerId = this.workerIdentityReader.workerId;
+    this.logger.debug("[ResumeWorkCommandHandler] Worker ID obtained", { workerId });
 
     // 2. Query for goals in 'paused' status
     const pausedGoals = await this.goalStatusReader.findByStatus(GoalStatus.PAUSED);
+    this.logger.info("[ResumeWorkCommandHandler] Queried paused goals", {
+      count: pausedGoals.length,
+      goals: pausedGoals.map(g => ({ id: g.goalId, claimedBy: g.claimedBy, objective: g.objective }))
+    });
 
     // 3. Find the goal claimed by this worker
     const pausedGoal = pausedGoals.find(
@@ -85,8 +94,30 @@ export class ResumeWorkCommandHandler {
     );
 
     if (!pausedGoal) {
+      const errorContext = {
+        workerId,
+        pausedGoalsCount: pausedGoals.length,
+        allClaimedBy: pausedGoals.map(g => g.claimedBy)
+      };
+
+      // Log to file
+      this.logger.error("[ResumeWorkCommandHandler] No paused goal found for worker", undefined, errorContext);
+
+      // Write to stderr as JSON
+      console.error(JSON.stringify({
+        level: "ERROR",
+        timestamp: new Date().toISOString(),
+        message: "[ResumeWorkCommandHandler] No paused goal found for worker",
+        context: errorContext
+      }));
+
       throw new Error("No paused goal found for current worker");
     }
+
+    this.logger.info("[ResumeWorkCommandHandler] Found paused goal for worker", {
+      goalId: pausedGoal.goalId,
+      objective: pausedGoal.objective
+    });
 
     // 4. Create ResumeGoalCommandHandler with atomic dependencies
     const goalContextViewMapper = new GoalContextViewMapper();

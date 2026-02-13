@@ -17,6 +17,7 @@ import { IEventStore } from "../persistence/IEventStore.js";
 import { IEventBus } from "../messaging/IEventBus.js";
 import { IClock } from "../time-and-date/IClock.js";
 import { IDatabaseRebuildService } from "../maintenance/db/rebuild/IDatabaseRebuildService.js";
+import { ILogger } from "../logging/ILogger.js";
 
 // Settings
 import { ISettingsReader } from "../settings/ISettingsReader.js";
@@ -63,6 +64,10 @@ import { IGoalSubmittedForReviewEventReader } from "../goals/review/IGoalSubmitt
 import { QualifyGoalController } from "../goals/qualify/QualifyGoalController.js";
 import { IGoalQualifiedEventWriter } from "../goals/qualify/IGoalQualifiedEventWriter.js";
 import { IGoalQualifiedEventReader } from "../goals/qualify/IGoalQualifiedEventReader.js";
+
+// Work Command Handlers
+import { PauseWorkCommandHandler } from "../work/pause/PauseWorkCommandHandler.js";
+import { ResumeWorkCommandHandler } from "../work/resume/ResumeWorkCommandHandler.js";
 
 import { IDecisionAddedProjector } from "../decisions/add/IDecisionAddedProjector.js";
 import { IDecisionUpdatedProjector } from "../decisions/update/IDecisionUpdatedProjector.js";
@@ -248,6 +253,7 @@ export interface IApplicationContainer {
   eventBus: IEventBus;
   eventStore: IEventStore;
   clock: IClock;
+  logger: ILogger;
   settingsReader: ISettingsReader;
   settingsInitializer: ISettingsInitializer;
 
@@ -311,6 +317,10 @@ export interface IApplicationContainer {
   completeGoalController: CompleteGoalController;
   reviewGoalController: ReviewGoalController;
   qualifyGoalController: QualifyGoalController;
+
+  // Work Command Handlers
+  pauseWorkCommandHandler: PauseWorkCommandHandler;
+  resumeWorkCommandHandler: ResumeWorkCommandHandler;
 
   // Solution Category - Event Stores
   // Architecture Event Stores - decomposed by use case

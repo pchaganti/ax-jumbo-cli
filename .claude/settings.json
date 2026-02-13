@@ -29,6 +29,15 @@
             "command": "jumbo work pause"
           }
         ]
+      },
+      {
+        "matcher": "manual",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jumbo work pause"
+          }
+        ]
       }
     ]
   }

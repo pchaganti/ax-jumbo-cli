@@ -8,7 +8,6 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { PauseWorkCommandHandler } from "../../../../../application/work/pause/PauseWorkCommandHandler.js";
 
 /**
  * Command metadata for auto-registration
@@ -38,18 +37,13 @@ export async function workPause(
   const renderer = Renderer.getInstance();
 
   try {
-    // Create command handler with dependencies from container
-    const commandHandler = new PauseWorkCommandHandler(
-      container.workerIdentityReader,
-      container.goalStatusReader,
-      container.goalPausedEventStore,
-      container.goalPausedEventStore,
-      container.goalPausedProjector,
-      container.eventBus
-    );
+    container.logger.debug("[work.pause] Starting workPause command");
 
+    container.logger.debug("[work.pause] About to execute command handler");
     // Execute command
-    const result = await commandHandler.execute({});
+    const result = await container.pauseWorkCommandHandler.execute({});
+
+    container.logger.info("[work.pause] Successfully executed PauseWorkCommandHandler");
 
     // Success output
     renderer.success("Work paused", {
@@ -59,7 +53,29 @@ export async function workPause(
       reason: "WorkPaused"
     });
   } catch (error) {
-    renderer.error("Failed to pause work", error instanceof Error ? error : String(error));
-    process.exit(1);
+    // Check if this is a "no active goal" scenario (not an error for hooks)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isNoActiveGoal = errorMessage.includes("No active goal found");
+
+    // Log to file
+    container.logger.error(
+      "[work.pause] ERROR caught in workPause",
+      error instanceof Error ? error : new Error(String(error)),
+      { errorType: typeof error, isNoActiveGoal }
+    );
+
+    // Flush logger before exiting to ensure error is written
+    if (container.logger.flush) {
+      await container.logger.flush();
+    }
+
+    if (isNoActiveGoal) {
+      // Not an error - just no work to pause. Exit cleanly for hooks.
+      renderer.info("No active goal to pause");
+    } else {
+      // Actual error - render error and fail
+      renderer.error("Failed to pause work", error instanceof Error ? error : String(error));
+      process.exit(1);
+    }
   }
 }

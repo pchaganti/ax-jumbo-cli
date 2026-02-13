@@ -40,6 +40,10 @@ export class SessionContextQueryHandler {
     const doingGoals = await this.goalStatusReader.findByStatus(GoalStatus.DOING);
     const pausedGoals = await this.goalStatusReader.findByStatus(GoalStatus.PAUSED);
     const blockedGoals = await this.goalStatusReader.findByStatus(GoalStatus.BLOCKED);
+    const inReviewGoals = await this.goalStatusReader.findByStatus(GoalStatus.INREVIEW);
+    const qualifiedGoals = await this.goalStatusReader.findByStatus(GoalStatus.QUALIFIED);
+    const todoGoals = await this.goalStatusReader.findByStatus(GoalStatus.TODO);
+    const refinedGoals = await this.goalStatusReader.findByStatus(GoalStatus.REFINED);
 
     // Query all projection stores in parallel for efficiency
     const [
@@ -54,7 +58,7 @@ export class SessionContextQueryHandler {
       this.audienceContextReader?.findAllActive() ?? Promise.resolve([]),
       this.audiencePainContextReader?.findAllActive() ?? Promise.resolve([]),
       this.sessionSummaryReader.findLatest(),
-      this.goalStatusReader.findByStatus(GoalStatus.TODO),
+      todoGoals.concat(refinedGoals),
       this.unprimedBrownfieldQualifier?.isUnprimed() ?? Promise.resolve(false),
     ]);
 
@@ -62,7 +66,7 @@ export class SessionContextQueryHandler {
       ? { project, audiences, audiencePains }
       : null;
 
-    const inProgressGoals = doingGoals.concat(pausedGoals, blockedGoals);
+    const inProgressGoals = doingGoals.concat(pausedGoals, blockedGoals, inReviewGoals, qualifiedGoals);
 
     return {
       projectContext,

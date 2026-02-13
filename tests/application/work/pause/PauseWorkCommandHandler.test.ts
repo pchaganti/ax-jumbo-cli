@@ -13,6 +13,7 @@ import { GoalEventType, GoalStatus } from "../../../../src/domain/goals/Constant
 import { GoalPausedReasons } from "../../../../src/domain/goals/GoalPausedReasons";
 import { GoalView } from "../../../../src/application/goals/GoalView";
 import { createWorkerId } from "../../../../src/application/host/workers/WorkerId";
+import { ILogger } from "../../../../src/application/logging/ILogger";
 
 describe("PauseWorkCommandHandler", () => {
   let workerIdentityReader: IWorkerIdentityReader;
@@ -21,6 +22,7 @@ describe("PauseWorkCommandHandler", () => {
   let goalPausedEventReader: IGoalPausedEventReader;
   let goalReader: IGoalReader;
   let eventBus: IEventBus;
+  let logger: ILogger;
   let handler: PauseWorkCommandHandler;
 
   const workerId = createWorkerId("worker_123");
@@ -58,13 +60,23 @@ describe("PauseWorkCommandHandler", () => {
       publish: jest.fn().mockResolvedValue(undefined),
     };
 
+    // Mock logger
+    logger = {
+      debug: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      flush: jest.fn(),
+    } as unknown as ILogger;
+
     handler = new PauseWorkCommandHandler(
       workerIdentityReader,
       goalStatusReader,
       goalPausedEventWriter,
       goalPausedEventReader,
       goalReader,
-      eventBus
+      eventBus,
+      logger
     );
   });
 
