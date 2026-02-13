@@ -6,6 +6,7 @@
  */
 
 import { Database } from "better-sqlite3";
+import { GoalStatusType } from "../../domain/goals/Constants.js";
 import { IGoalStatusReader } from "../../application/goals/IGoalStatusReader.js";
 import { IGoalReadForSessionSummary } from "../../application/sessions/get-context/IGoalReadForSessionSummary.js";
 import { GoalView } from "../../application/goals/GoalView.js";
@@ -15,7 +16,7 @@ export class SqliteGoalStatusReader
 {
   constructor(private db: Database) {}
 
-  async findByStatus(status: string): Promise<GoalView[]> {
+  async findByStatus(status: GoalStatusType): Promise<GoalView[]> {
     const rows = this.db
       .prepare(
         "SELECT * FROM goal_views WHERE status = ? ORDER BY createdAt DESC"
@@ -45,7 +46,7 @@ export class SqliteGoalStatusReader
       successCriteria: JSON.parse(row.successCriteria || "[]"),
       scopeIn: JSON.parse(row.scopeIn || "[]"),
       scopeOut: JSON.parse(row.scopeOut || "[]"),
-      status: row.status,
+      status: row.status as GoalStatusType,
       version: row.version,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

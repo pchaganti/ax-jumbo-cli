@@ -6,6 +6,7 @@
  */
 
 import { Database } from "better-sqlite3";
+import { GoalStatusType } from "../../../domain/goals/Constants.js";
 import { IGoalContextReader } from "../../../application/goals/get-context/IGoalContextReader.js";
 import { GoalView } from "../../../application/goals/GoalView.js";
 
@@ -26,7 +27,7 @@ export class SqliteGoalContextReader implements IGoalContextReader {
       successCriteria: JSON.parse(row.successCriteria || "[]"),
       scopeIn: JSON.parse(row.scopeIn || "[]"),
       scopeOut: JSON.parse(row.scopeOut || "[]"),
-      status: row.status,
+      status: row.status as GoalStatusType,
       version: row.version,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

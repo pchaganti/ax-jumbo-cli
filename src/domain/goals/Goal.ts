@@ -170,7 +170,7 @@ export class Goal extends BaseAggregate<GoalState, GoalEvent> {
 
       case GoalEventType.REMOVED: {
         const e = event as GoalRemovedEvent;
-        // Goal is removed - mark in state for filtering in queries
+        // Goal is removed - projection handles this via row deletion
         state.version = e.version;
         break;
       }

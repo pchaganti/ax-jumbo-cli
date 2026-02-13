@@ -1,3 +1,4 @@
+import { GoalStatusType } from "../../domain/goals/Constants.js";
 import { GoalView } from "./GoalView.js";
 
 /**
@@ -5,6 +6,6 @@ import { GoalView } from "./GoalView.js";
  * Used by query handlers that need to aggregate goals by status.
  */
 export interface IGoalStatusReader {
-  findByStatus(status: string): Promise<GoalView[]>;
+  findByStatus(status: GoalStatusType): Promise<GoalView[]>;
   findAll(): Promise<GoalView[]>;
 }
