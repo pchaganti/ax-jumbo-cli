@@ -14,7 +14,6 @@
  */
 
 import path from "path";
-import fs from "fs-extra";
 import { Host } from "./infrastructure/host/Host.js";
 import { AppRunner } from "./presentation/cli/AppRunner.js";
 import { CliVersionReader } from "./infrastructure/cli-metadata/query/CliVersionReader.js";
@@ -22,6 +21,7 @@ import { IApplicationContainer } from "./application/host/IApplicationContainer.
 import { classifyCommand } from "./presentation/cli/commands/CommandClassifier.js";
 import { commands } from "./presentation/cli/commands/registry/generated-commands.js";
 import { ARGV } from "./presentation/cli/Constants.js";
+import { ProjectRootResolver } from "./infrastructure/project/ProjectRootResolver.js";
 
 /**
  * Determines if the invocation requires full infrastructure.
@@ -32,8 +32,12 @@ async function needsInfrastructure(argv: string[]): Promise<boolean> {
 
   // Bare 'jumbo' command - needs infra only if project exists
   if (argv.length === ARGV.NODE_AND_SCRIPT_ARG_COUNT) {
-    const jumboRoot = path.join(process.cwd(), ".jumbo");
-    return fs.pathExists(jumboRoot);
+    try {
+      new ProjectRootResolver().resolve();
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   return classification.requiresInfrastructure;
@@ -52,7 +56,8 @@ async function main(): Promise<void> {
   let container: IApplicationContainer | null = null;
 
   if (requiresInfra) {
-    const jumboRoot = path.join(process.cwd(), ".jumbo");
+    const projectRoot = new ProjectRootResolver().resolve();
+    const jumboRoot = path.join(projectRoot, ".jumbo");
     const host = new Host(jumboRoot);
     const builder = host.createBuilder();
     container = await builder.build();

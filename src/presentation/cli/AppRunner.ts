@@ -15,8 +15,6 @@
  * - No concrete infrastructure types
  */
 
-import path from "path";
-import fs from "fs-extra";
 import { IApplicationContainer } from "../../application/host/IApplicationContainer.js";
 import { commands } from "./commands/registry/generated-commands.js";
 import { CommanderApplicator } from "./commands/registry/CommanderApplicator.js";
@@ -132,8 +130,6 @@ export class AppRunner {
     program: ReturnType<typeof createProgram>,
     argv: string[]
   ): Promise<void> {
-    const jumboRoot = path.join(process.cwd(), ".jumbo");
-
     // Check if this is a subcommand help request
     const isSubcommandHelp =
       (argv.includes(CLI_FLAGS.HELP_LONG) ||
@@ -145,11 +141,10 @@ export class AppRunner {
 
     // Check project existence if required
     if (classification.requiresProject && !isSubcommandHelp) {
-      const projectExists = await fs.pathExists(jumboRoot);
-      if (!projectExists) {
+      if (!this.container) {
         const renderer = Renderer.getInstance();
         renderer.error(
-          "Project not initialized. Run 'jumbo project init' first."
+          "No Jumbo project found. Run `jumbo project init` from your project root."
         );
         process.exit(1);
       }

@@ -7,8 +7,6 @@
  * settings files up to date.
  */
 
-import fs from "fs-extra";
-import path from "path";
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
@@ -71,13 +69,6 @@ export async function maintenanceRepair(options: RepairOptions, container: IAppl
   const outputBuilder = new RepairOutputBuilder();
 
   try {
-    // Check if Jumbo is initialized
-    const jumboRoot = path.join(process.cwd(), ".jumbo");
-    if (!(await fs.pathExists(jumboRoot))) {
-      renderer.error("Not in a Jumbo project", "Run 'jumbo project init' first");
-      process.exit(1);
-    }
-
     // Confirm operation
     if (!options.yes) {
       const output = outputBuilder.buildConfirmationRequired();
@@ -85,7 +76,7 @@ export async function maintenanceRepair(options: RepairOptions, container: IAppl
       process.exit(1);
     }
 
-    const projectRoot = process.cwd();
+    const projectRoot = container.projectRootResolver.resolve();
     const steps: RepairStepResult[] = [];
 
     // Commander inverts --no-X flags: --no-agents sets options.agents = false

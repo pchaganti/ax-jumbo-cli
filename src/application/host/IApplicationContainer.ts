@@ -18,6 +18,7 @@ import { IEventBus } from "../messaging/IEventBus.js";
 import { IClock } from "../time-and-date/IClock.js";
 import { IDatabaseRebuildService } from "../maintenance/db/rebuild/IDatabaseRebuildService.js";
 import { ILogger } from "../logging/ILogger.js";
+import { IProjectRootResolver } from "../project/IProjectRootResolver.js";
 
 // Settings
 import { ISettingsReader } from "../settings/ISettingsReader.js";
@@ -251,6 +252,7 @@ import { IRelationRemovedEventReader } from "../relations/remove/IRelationRemove
  */
 export interface IApplicationContainer {
   // Core Infrastructure
+  projectRootResolver: IProjectRootResolver;
   eventBus: IEventBus;
   eventStore: IEventStore;
   clock: IClock;

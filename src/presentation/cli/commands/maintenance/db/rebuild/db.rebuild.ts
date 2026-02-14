@@ -9,8 +9,6 @@
  * handled by the infrastructure layer via dependency inversion.
  */
 
-import fs from "fs-extra";
-import path from "path";
 import { CommandMetadata } from "../../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../../rendering/Renderer.js";
@@ -51,15 +49,6 @@ export async function dbRebuild(options: RebuildOptions, container: IApplication
   const renderer = Renderer.getInstance();
 
   try {
-    // Get jumbo root directory
-    const jumboRoot = path.join(process.cwd(), ".jumbo");
-
-    // Check if Jumbo is initialized
-    if (!(await fs.pathExists(jumboRoot))) {
-      renderer.error("Not in a Jumbo project", "Run 'jumbo project init' first");
-      process.exit(1);
-    }
-
     // Confirm destructive operation
     if (!options.yes) {
       renderer.info(

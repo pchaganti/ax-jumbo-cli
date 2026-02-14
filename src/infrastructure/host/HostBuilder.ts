@@ -24,6 +24,7 @@ import { IClock } from "../../application/time-and-date/IClock.js";
 import { IDatabaseRebuildService } from "../../application/maintenance/db/rebuild/IDatabaseRebuildService.js";
 
 // Infrastructure implementations
+import { ProjectRootResolver } from "../project/ProjectRootResolver.js";
 import { FsEventStore } from "../persistence/FsEventStore.js";
 import { InProcessEventBus } from "../messaging/InProcessEventBus.js";
 import { SystemClock } from "../time-and-date/SystemClock.js";
@@ -308,6 +309,7 @@ export class HostBuilder {
     // STEP 1: Get Core Infrastructure
     // ============================================================
 
+    const projectRootResolver = new ProjectRootResolver();
     const eventStore = new FsEventStore(this.rootDir);
     const eventBus = new InProcessEventBus();
     const clock = new SystemClock();
@@ -803,6 +805,7 @@ export class HostBuilder {
 
     return {
       // Core Infrastructure
+      projectRootResolver,
       eventBus,
       eventStore,
       clock,
