@@ -14,6 +14,7 @@ describe("GetDependenciesQueryHandler", () => {
   beforeEach(() => {
     mockReader = {
       findAll: jest.fn(),
+      findByIds: jest.fn(),
     } as jest.Mocked<IDependencyViewReader>;
 
     queryHandler = new GetDependenciesQueryHandler(mockReader);

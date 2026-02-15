@@ -28,6 +28,15 @@ export class SqliteComponentViewReader implements IComponentViewReader {
     return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
   }
 
+  async findByIds(ids: string[]): Promise<ComponentView[]> {
+    if (ids.length === 0) return [];
+
+    const placeholders = ids.map(() => "?").join(",");
+    const query = `SELECT * FROM component_views WHERE componentId IN (${placeholders}) ORDER BY name`;
+    const rows = this.db.prepare(query).all(...ids);
+    return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
+  }
+
   private mapRowToView(row: Record<string, unknown>): ComponentView {
     return {
       componentId: row.componentId as string,

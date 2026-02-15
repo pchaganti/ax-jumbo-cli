@@ -17,4 +17,11 @@ export interface IDependencyViewReader {
    * @returns Array of dependency views ordered by creation date (newest first)
    */
   findAll(filter?: DependencyListFilter): Promise<DependencyView[]>;
+
+  /**
+   * Retrieves dependencies by their IDs.
+   * @param ids - Array of dependency IDs to retrieve
+   * @returns Array of dependency views ordered by creation date (newest first)
+   */
+  findByIds(ids: string[]): Promise<DependencyView[]>;
 }

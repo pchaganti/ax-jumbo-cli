@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from "@jest/globals";
 import { SqliteGoalContextAssembler } from "../../../src/infrastructure/context/SqliteGoalContextAssembler.js";
-import { IGoalContextReader } from "../../../src/application/context/goals/get-context/IGoalContextReader.js";
+import { IGoalReader } from "../../../src/application/context/goals/start/IGoalReader.js";
 import { IRelationReader } from "../../../src/application/context/relations/IRelationReader.js";
-import { IComponentContextReader } from "../../../src/application/context/goals/get-context/IComponentContextReader.js";
-import { IDependencyContextReader } from "../../../src/application/context/goals/get-context/IDependencyContextReader.js";
-import { IDecisionContextReader } from "../../../src/application/context/goals/get-context/IDecisionContextReader.js";
-import { IInvariantContextReader } from "../../../src/application/context/goals/get-context/IInvariantContextReader.js";
-import { IGuidelineContextReader } from "../../../src/application/context/goals/get-context/IGuidelineContextReader.js";
+import { IComponentViewReader, ComponentStatusFilter } from "../../../src/application/context/components/get/IComponentViewReader.js";
+import { IDependencyViewReader, DependencyListFilter } from "../../../src/application/context/dependencies/get/IDependencyViewReader.js";
+import { IDecisionViewReader, DecisionStatusFilter } from "../../../src/application/context/decisions/get/IDecisionViewReader.js";
+import { IInvariantViewReader } from "../../../src/application/context/invariants/get/IInvariantViewReader.js";
+import { IGuidelineViewReader } from "../../../src/application/context/guidelines/get/IGuidelineViewReader.js";
 import { IArchitectureReader } from "../../../src/application/context/architecture/IArchitectureReader.js";
 import { GoalView } from "../../../src/application/context/goals/GoalView.js";
 import { ComponentView } from "../../../src/application/context/components/ComponentView.js";
@@ -31,7 +31,7 @@ import { GuidelineCategory } from "../../../src/domain/guidelines/Constants.js";
  */
 
 // Mock implementations
-class MockGoalContextReader implements IGoalContextReader {
+class MockGoalReader implements IGoalReader {
   private goals: Map<string, GoalView> = new Map();
 
   async findById(goalId: string): Promise<GoalView | null> {
@@ -63,10 +63,10 @@ class MockRelationReader implements IRelationReader {
   }
 }
 
-class MockComponentContextReader implements IComponentContextReader {
+class MockComponentViewReader implements IComponentViewReader {
   private components: ComponentView[] = [];
 
-  async findAll(): Promise<ComponentView[]> {
+  async findAll(_status?: ComponentStatusFilter): Promise<ComponentView[]> {
     return this.components;
   }
 
@@ -79,10 +79,10 @@ class MockComponentContextReader implements IComponentContextReader {
   }
 }
 
-class MockDependencyContextReader implements IDependencyContextReader {
+class MockDependencyViewReader implements IDependencyViewReader {
   private dependencies: DependencyView[] = [];
 
-  async findAll(): Promise<DependencyView[]> {
+  async findAll(_filter?: DependencyListFilter): Promise<DependencyView[]> {
     return this.dependencies;
   }
 
@@ -95,11 +95,14 @@ class MockDependencyContextReader implements IDependencyContextReader {
   }
 }
 
-class MockDecisionContextReader implements IDecisionContextReader {
+class MockDecisionViewReader implements IDecisionViewReader {
   private decisions: DecisionView[] = [];
 
-  async findAllActive(): Promise<DecisionView[]> {
-    return this.decisions.filter(d => d.status === 'active');
+  async findAll(status?: DecisionStatusFilter): Promise<DecisionView[]> {
+    if (status && status !== 'all') {
+      return this.decisions.filter(d => d.status === status);
+    }
+    return this.decisions;
   }
 
   async findByIds(ids: string[]): Promise<DecisionView[]> {
@@ -111,7 +114,7 @@ class MockDecisionContextReader implements IDecisionContextReader {
   }
 }
 
-class MockInvariantContextReader implements IInvariantContextReader {
+class MockInvariantViewReader implements IInvariantViewReader {
   private invariants: InvariantView[] = [];
 
   async findAll(): Promise<InvariantView[]> {
@@ -127,10 +130,10 @@ class MockInvariantContextReader implements IInvariantContextReader {
   }
 }
 
-class MockGuidelineContextReader implements IGuidelineContextReader {
+class MockGuidelineViewReader implements IGuidelineViewReader {
   private guidelines: GuidelineView[] = [];
 
-  async findAll(): Promise<GuidelineView[]> {
+  async findAll(_category?: string): Promise<GuidelineView[]> {
     return this.guidelines;
   }
 
@@ -156,24 +159,24 @@ class MockArchitectureReader implements IArchitectureReader {
 }
 
 describe("SqliteGoalContextAssembler", () => {
-  let goalReader: MockGoalContextReader;
+  let goalReader: MockGoalReader;
   let relationReader: MockRelationReader;
-  let componentReader: MockComponentContextReader;
-  let dependencyReader: MockDependencyContextReader;
-  let decisionReader: MockDecisionContextReader;
-  let invariantReader: MockInvariantContextReader;
-  let guidelineReader: MockGuidelineContextReader;
+  let componentReader: MockComponentViewReader;
+  let dependencyReader: MockDependencyViewReader;
+  let decisionReader: MockDecisionViewReader;
+  let invariantReader: MockInvariantViewReader;
+  let guidelineReader: MockGuidelineViewReader;
   let architectureReader: MockArchitectureReader;
   let assembler: SqliteGoalContextAssembler;
 
   beforeEach(() => {
-    goalReader = new MockGoalContextReader();
+    goalReader = new MockGoalReader();
     relationReader = new MockRelationReader();
-    componentReader = new MockComponentContextReader();
-    dependencyReader = new MockDependencyContextReader();
-    decisionReader = new MockDecisionContextReader();
-    invariantReader = new MockInvariantContextReader();
-    guidelineReader = new MockGuidelineContextReader();
+    componentReader = new MockComponentViewReader();
+    dependencyReader = new MockDependencyViewReader();
+    decisionReader = new MockDecisionViewReader();
+    invariantReader = new MockInvariantViewReader();
+    guidelineReader = new MockGuidelineViewReader();
     architectureReader = new MockArchitectureReader();
 
     assembler = new SqliteGoalContextAssembler(

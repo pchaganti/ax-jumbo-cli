@@ -20,6 +20,7 @@ describe("components.list command", () => {
 
     mockComponentViewReader = {
       findAll: jest.fn(),
+      findByIds: jest.fn(),
     } as jest.Mocked<IComponentViewReader>;
 
     mockContainer = {

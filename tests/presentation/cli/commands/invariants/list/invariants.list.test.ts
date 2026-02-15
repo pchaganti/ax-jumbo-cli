@@ -20,6 +20,7 @@ describe("invariants.list command", () => {
 
     mockInvariantViewReader = {
       findAll: jest.fn(),
+      findByIds: jest.fn(),
     } as jest.Mocked<IInvariantViewReader>;
 
     mockContainer = {

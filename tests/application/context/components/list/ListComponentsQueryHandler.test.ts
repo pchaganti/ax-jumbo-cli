@@ -14,6 +14,7 @@ describe("GetComponentsQueryHandler", () => {
   beforeEach(() => {
     mockReader = {
       findAll: jest.fn(),
+      findByIds: jest.fn(),
     } as jest.Mocked<IComponentViewReader>;
 
     queryHandler = new GetComponentsQueryHandler(mockReader);

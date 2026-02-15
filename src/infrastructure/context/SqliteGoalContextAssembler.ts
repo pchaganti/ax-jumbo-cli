@@ -5,13 +5,13 @@ import { RelatedDependency } from "../../application/context/RelatedDependency.j
 import { RelatedDecision } from "../../application/context/RelatedDecision.js";
 import { RelatedInvariant } from "../../application/context/RelatedInvariant.js";
 import { RelatedGuideline } from "../../application/context/RelatedGuideline.js";
-import { IGoalContextReader } from "../../application/context/goals/get-context/IGoalContextReader.js";
+import { IGoalReader } from "../../application/context/goals/start/IGoalReader.js";
 import { IRelationReader } from "../../application/context/relations/IRelationReader.js";
-import { IComponentContextReader } from "../../application/context/goals/get-context/IComponentContextReader.js";
-import { IDependencyContextReader } from "../../application/context/goals/get-context/IDependencyContextReader.js";
-import { IDecisionContextReader } from "../../application/context/goals/get-context/IDecisionContextReader.js";
-import { IInvariantContextReader } from "../../application/context/goals/get-context/IInvariantContextReader.js";
-import { IGuidelineContextReader } from "../../application/context/goals/get-context/IGuidelineContextReader.js";
+import { IComponentViewReader } from "../../application/context/components/get/IComponentViewReader.js";
+import { IDependencyViewReader } from "../../application/context/dependencies/get/IDependencyViewReader.js";
+import { IDecisionViewReader } from "../../application/context/decisions/get/IDecisionViewReader.js";
+import { IInvariantViewReader } from "../../application/context/invariants/get/IInvariantViewReader.js";
+import { IGuidelineViewReader } from "../../application/context/guidelines/get/IGuidelineViewReader.js";
 import { IArchitectureReader } from "../../application/context/architecture/IArchitectureReader.js";
 import { EntityType } from "../../domain/relations/Constants.js";
 
@@ -33,13 +33,13 @@ import { EntityType } from "../../domain/relations/Constants.js";
  */
 export class SqliteGoalContextAssembler implements IGoalContextAssembler {
   constructor(
-    private readonly goalReader: IGoalContextReader,
+    private readonly goalReader: IGoalReader,
     private readonly relationReader: IRelationReader,
-    private readonly componentReader: IComponentContextReader,
-    private readonly dependencyReader: IDependencyContextReader,
-    private readonly decisionReader: IDecisionContextReader,
-    private readonly invariantReader: IInvariantContextReader,
-    private readonly guidelineReader: IGuidelineContextReader,
+    private readonly componentReader: IComponentViewReader,
+    private readonly dependencyReader: IDependencyViewReader,
+    private readonly decisionReader: IDecisionViewReader,
+    private readonly invariantReader: IInvariantViewReader,
+    private readonly guidelineReader: IGuidelineViewReader,
     private readonly architectureReader: IArchitectureReader
   ) {}
 
@@ -88,7 +88,7 @@ export class SqliteGoalContextAssembler implements IGoalContextAssembler {
     ] = await Promise.all([
       hasNoRelations ? this.componentReader.findAll() : this.componentReader.findByIds(componentIds),
       hasNoRelations ? this.dependencyReader.findAll() : this.dependencyReader.findByIds(dependencyIds),
-      hasNoRelations ? this.decisionReader.findAllActive() : this.decisionReader.findByIds(decisionIds),
+      hasNoRelations ? this.decisionReader.findAll("active") : this.decisionReader.findByIds(decisionIds),
       hasNoRelations ? this.invariantReader.findAll() : this.invariantReader.findByIds(invariantIds),
       hasNoRelations ? this.guidelineReader.findAll() : this.guidelineReader.findByIds(guidelineIds),
       hasNoRelations || hasArchitectureRelation ? this.architectureReader.find() : Promise.resolve(null)

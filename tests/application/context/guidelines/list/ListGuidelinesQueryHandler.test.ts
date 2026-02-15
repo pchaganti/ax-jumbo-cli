@@ -14,6 +14,7 @@ describe("GetGuidelinesQueryHandler", () => {
   beforeEach(() => {
     mockReader = {
       findAll: jest.fn(),
+      findByIds: jest.fn(),
     } as jest.Mocked<IGuidelineViewReader>;
 
     queryHandler = new GetGuidelinesQueryHandler(mockReader);

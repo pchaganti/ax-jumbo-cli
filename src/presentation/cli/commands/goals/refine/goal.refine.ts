@@ -142,10 +142,10 @@ async function runInteractiveRelationFlow(
 
   // Fetch all entities in parallel
   const [components, guidelines, invariants, decisions] = await Promise.all([
-    container.componentContextReader.findAll(),
-    container.guidelineContextReader.findAll(),
-    container.invariantContextReader.findAll(),
-    container.decisionContextReader.findAllActive(),
+    container.componentViewReader.findAll(),
+    container.guidelineViewReader.findAll(),
+    container.invariantViewReader.findAll(),
+    container.decisionViewReader.findAll("active"),
   ]);
 
   const activeComponents = components.filter((c: ComponentView) => c.status === 'active');

@@ -14,6 +14,7 @@ describe("GetInvariantsQueryHandler", () => {
   beforeEach(() => {
     mockReader = {
       findAll: jest.fn(),
+      findByIds: jest.fn(),
     } as jest.Mocked<IInvariantViewReader>;
 
     queryHandler = new GetInvariantsQueryHandler(mockReader);

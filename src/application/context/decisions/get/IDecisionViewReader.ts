@@ -14,4 +14,11 @@ export interface IDecisionViewReader {
    * @returns Array of decision views ordered by creation date (newest first)
    */
   findAll(status?: DecisionStatusFilter): Promise<DecisionView[]>;
+
+  /**
+   * Retrieves decisions by their IDs.
+   * @param ids - Array of decision IDs to retrieve
+   * @returns Array of decision views ordered by creation date (newest first)
+   */
+  findByIds(ids: string[]): Promise<DecisionView[]>;
 }

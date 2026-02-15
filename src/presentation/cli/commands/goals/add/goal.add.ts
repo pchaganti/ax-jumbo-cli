@@ -88,7 +88,7 @@ async function runInteractiveFlow(container: IApplicationContainer): Promise<Int
   const promptService = new InteractivePromptService();
 
   // Fetch components for scope selection
-  const components = await container.componentContextReader.findAll();
+  const components = await container.componentViewReader.findAll();
   const activeComponents = components.filter((c: ComponentView) => c.status === 'active');
 
   // Step 1: Objective (required)

@@ -51,7 +51,7 @@ import { IGoalResetProjector } from "../context/goals/reset/IGoalResetProjector.
 import { IGoalResetReader } from "../context/goals/reset/IGoalResetReader.js";
 import { IGoalRemovedProjector } from "../context/goals/remove/IGoalRemovedProjector.js";
 import { IGoalRemoveReader } from "../context/goals/remove/IGoalRemoveReader.js";
-import { IGoalContextReader } from "../context/goals/get-context/IGoalContextReader.js";
+import { IGoalReader } from "../context/goals/start/IGoalReader.js";
 import { IGoalContextAssembler } from "../context/IGoalContextAssembler.js";
 import { IGoalStatusReader } from "../context/goals/IGoalStatusReader.js";
 import { GoalContextQueryHandler } from "../context/GoalContextQueryHandler.js";
@@ -76,7 +76,6 @@ import { IDecisionReversedProjector } from "../context/decisions/reverse/IDecisi
 import { IDecisionReverseReader } from "../context/decisions/reverse/IDecisionReverseReader.js";
 import { IDecisionSupersededProjector } from "../context/decisions/supersede/IDecisionSupersededProjector.js";
 import { IDecisionSupersedeReader } from "../context/decisions/supersede/IDecisionSupersedeReader.js";
-import { IDecisionContextReader } from "../context/goals/get-context/IDecisionContextReader.js";
 import { IDecisionSessionReader } from "../context/sessions/get-context/IDecisionSessionReader.js";
 import { IDecisionViewReader } from "../context/decisions/get/IDecisionViewReader.js";
 import { IArchitectureDefinedProjector } from "../context/architecture/define/IArchitectureDefinedProjector.js";
@@ -93,7 +92,6 @@ import { IComponentDeprecatedProjector } from "../context/components/deprecate/I
 import { IComponentDeprecateReader } from "../context/components/deprecate/IComponentDeprecateReader.js";
 import { IComponentRemovedProjector } from "../context/components/remove/IComponentRemovedProjector.js";
 import { IComponentRemoveReader } from "../context/components/remove/IComponentRemoveReader.js";
-import { IComponentContextReader } from "../context/goals/get-context/IComponentContextReader.js";
 import { IComponentViewReader } from "../context/components/get/IComponentViewReader.js";
 import { IComponentReader } from "../context/components/get/IComponentReader.js";
 import { IDependencyAddedProjector } from "../context/dependencies/add/IDependencyAddedProjector.js";
@@ -102,14 +100,12 @@ import { IDependencyUpdatedProjector } from "../context/dependencies/update/IDep
 import { IDependencyUpdateReader } from "../context/dependencies/update/IDependencyUpdateReader.js";
 import { IDependencyRemovedProjector } from "../context/dependencies/remove/IDependencyRemovedProjector.js";
 import { IDependencyRemoveReader } from "../context/dependencies/remove/IDependencyRemoveReader.js";
-import { IDependencyContextReader } from "../context/goals/get-context/IDependencyContextReader.js";
 import { IDependencyViewReader } from "../context/dependencies/get/IDependencyViewReader.js";
 import { IGuidelineAddedProjector } from "../context/guidelines/add/IGuidelineAddedProjector.js";
 import { IGuidelineUpdatedProjector } from "../context/guidelines/update/IGuidelineUpdatedProjector.js";
 import { IGuidelineUpdateReader } from "../context/guidelines/update/IGuidelineUpdateReader.js";
 import { IGuidelineRemovedProjector } from "../context/guidelines/remove/IGuidelineRemovedProjector.js";
 import { IGuidelineRemoveReader } from "../context/guidelines/remove/IGuidelineRemoveReader.js";
-import { IGuidelineContextReader } from "../context/goals/get-context/IGuidelineContextReader.js";
 import { IGuidelineViewReader } from "../context/guidelines/get/IGuidelineViewReader.js";
 import { IInvariantAddedProjector } from "../context/invariants/add/IInvariantAddedProjector.js";
 import { IInvariantAddReader } from "../context/invariants/add/IInvariantAddReader.js";
@@ -117,7 +113,6 @@ import { IInvariantUpdatedProjector } from "../context/invariants/update/IInvari
 import { IInvariantUpdateReader } from "../context/invariants/update/IInvariantUpdateReader.js";
 import { IInvariantRemovedProjector } from "../context/invariants/remove/IInvariantRemovedProjector.js";
 import { IInvariantRemoveReader } from "../context/invariants/remove/IInvariantRemoveReader.js";
-import { IInvariantContextReader } from "../context/goals/get-context/IInvariantContextReader.js";
 import { IInvariantViewReader } from "../context/invariants/get/IInvariantViewReader.js";
 // Relations Projection Store ports - decomposed by use case
 import { IRelationAddedProjector } from "../context/relations/add/IRelationAddedProjector.js";
@@ -310,7 +305,7 @@ export interface IApplicationContainer {
   goalResetProjector: IGoalResetProjector & IGoalResetReader;
   goalRemovedProjector: IGoalRemovedProjector & IGoalRemoveReader;
   goalProgressUpdatedProjector: IGoalProgressUpdatedProjector & IGoalProgressUpdateReader;
-  goalContextReader: IGoalContextReader;
+  goalContextReader: IGoalReader;
   goalContextAssembler: IGoalContextAssembler;
   goalContextQueryHandler: GoalContextQueryHandler;
   goalStatusReader: IGoalStatusReader & IGoalReadForSessionSummary;
@@ -361,34 +356,29 @@ export interface IApplicationContainer {
   componentUpdatedProjector: IComponentUpdatedProjector & IComponentUpdateReader;
   componentDeprecatedProjector: IComponentDeprecatedProjector & IComponentDeprecateReader;
   componentRemovedProjector: IComponentRemovedProjector & IComponentRemoveReader;
-  componentContextReader: IComponentContextReader;
   componentViewReader: IComponentViewReader;
   componentReader: IComponentReader;
   // Dependency Projection Stores - decomposed by use case
   dependencyAddedProjector: IDependencyAddedProjector & IDependencyAddReader;
   dependencyUpdatedProjector: IDependencyUpdatedProjector & IDependencyUpdateReader;
   dependencyRemovedProjector: IDependencyRemovedProjector & IDependencyRemoveReader;
-  dependencyContextReader: IDependencyContextReader;
   dependencyViewReader: IDependencyViewReader;
   // Decision Projection Stores - decomposed by use case
   decisionAddedProjector: IDecisionAddedProjector;
   decisionUpdatedProjector: IDecisionUpdatedProjector & IDecisionUpdateReader;
   decisionReversedProjector: IDecisionReversedProjector & IDecisionReverseReader;
   decisionSupersededProjector: IDecisionSupersededProjector & IDecisionSupersedeReader;
-  decisionContextReader: IDecisionContextReader;
   decisionSessionReader: IDecisionSessionReader;
   decisionViewReader: IDecisionViewReader;
   // Guideline Projection Stores - decomposed by use case
   guidelineAddedProjector: IGuidelineAddedProjector;
   guidelineUpdatedProjector: IGuidelineUpdatedProjector & IGuidelineUpdateReader;
   guidelineRemovedProjector: IGuidelineRemovedProjector & IGuidelineRemoveReader;
-  guidelineContextReader: IGuidelineContextReader;
   guidelineViewReader: IGuidelineViewReader;
   // Invariant Projection Stores - decomposed by use case
   invariantAddedProjector: IInvariantAddedProjector & IInvariantAddReader;
   invariantUpdatedProjector: IInvariantUpdatedProjector & IInvariantUpdateReader;
   invariantRemovedProjector: IInvariantRemovedProjector & IInvariantRemoveReader;
-  invariantContextReader: IInvariantContextReader;
   invariantViewReader: IInvariantViewReader;
   // Solution Context - cross-cutting reader and qualifier
   solutionContextReader: ISolutionContextReader;

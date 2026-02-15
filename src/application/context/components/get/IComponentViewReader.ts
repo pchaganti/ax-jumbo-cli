@@ -14,4 +14,11 @@ export interface IComponentViewReader {
    * @returns Array of component views ordered by name
    */
   findAll(status?: ComponentStatusFilter): Promise<ComponentView[]>;
+
+  /**
+   * Retrieves components by their IDs.
+   * @param ids - Array of component IDs to retrieve
+   * @returns Array of component views ordered by name
+   */
+  findByIds(ids: string[]): Promise<ComponentView[]>;
 }

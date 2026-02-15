@@ -16,7 +16,7 @@ import { GoalStatus, GoalEventType } from "../../../../../../src/domain/goals/Co
 import { BaseEvent } from "../../../../../../src/domain/BaseEvent.js";
 import { AppendResult } from "../../../../../../src/application/persistence/IEventStore.js";
 import { IEventHandler } from "../../../../../../src/application/messaging/IEventHandler.js";
-import { IGoalContextReader } from "../../../../../../src/application/context/goals/get-context/IGoalContextReader.js";
+import { IGoalReader } from "../../../../../../src/application/context/goals/start/IGoalReader.js";
 import { IGoalRefineEventWriter } from "../../../../../../src/application/context/goals/refine/IGoalRefineEventWriter.js";
 import { IGoalRefineEventReader } from "../../../../../../src/application/context/goals/refine/IGoalRefineEventReader.js";
 import { IGoalRefinedProjector } from "../../../../../../src/application/context/goals/refine/IGoalRefinedProjector.js";
@@ -28,7 +28,7 @@ import { GoalRefinedEvent } from "../../../../../../src/domain/goals/refine/Goal
  * Mock implementations for test dependencies
  */
 
-class MockGoalContextReader implements IGoalContextReader {
+class MockGoalContextReader implements IGoalReader {
   mockFindById: jest.Mock<(goalId: string) => Promise<GoalView | null>> = jest.fn();
 
   async findById(goalId: string): Promise<GoalView | null> {

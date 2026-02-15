@@ -14,6 +14,7 @@ describe("GetDecisionsQueryHandler", () => {
   beforeEach(() => {
     mockReader = {
       findAll: jest.fn(),
+      findByIds: jest.fn(),
     } as jest.Mocked<IDecisionViewReader>;
 
     queryHandler = new GetDecisionsQueryHandler(mockReader);

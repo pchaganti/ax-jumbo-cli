@@ -20,6 +20,7 @@ describe("guidelines.list command", () => {
 
     mockGuidelineViewReader = {
       findAll: jest.fn(),
+      findByIds: jest.fn(),
     } as jest.Mocked<IGuidelineViewReader>;
 
     mockContainer = {

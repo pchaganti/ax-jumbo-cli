@@ -20,6 +20,7 @@ describe("decisions.list command", () => {
 
     mockDecisionViewReader = {
       findAll: jest.fn(),
+      findByIds: jest.fn(),
     } as jest.Mocked<IDecisionViewReader>;
 
     mockContainer = {

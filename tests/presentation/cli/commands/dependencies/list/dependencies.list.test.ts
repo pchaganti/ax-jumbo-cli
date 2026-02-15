@@ -19,6 +19,7 @@ describe("dependencies.list command", () => {
 
     mockDependencyViewReader = {
       findAll: jest.fn(),
+      findByIds: jest.fn(),
     } as jest.Mocked<IDependencyViewReader>;
 
     mockContainer = {
