@@ -264,7 +264,6 @@ import { GoalContextViewMapper } from "../../application/context/GoalContextView
 // Goal Controllers
 import { CompleteGoalController } from "../../application/context/goals/complete/CompleteGoalController.js";
 import { CompleteGoalCommandHandler } from "../../application/context/goals/complete/CompleteGoalCommandHandler.js";
-import { GetGoalContextQueryHandler } from "../../application/context/goals/get-context/GetGoalContextQueryHandler.js";
 import { ReviewGoalController } from "../../application/context/goals/review/ReviewGoalController.js";
 import { SubmitGoalForReviewCommandHandler } from "../../application/context/goals/review/SubmitGoalForReviewCommandHandler.js";
 import { FsGoalSubmittedForReviewEventStore } from "../context/goals/review/FsGoalSubmittedForReviewEventStore.js";
@@ -534,16 +533,6 @@ export class HostBuilder {
     );
     const goalContextQueryHandler = new GoalContextQueryHandler(
       goalContextAssembler
-    );
-    const getGoalContextQueryHandler = new GetGoalContextQueryHandler(
-      goalContextReader,
-      componentContextReader,
-      dependencyContextReader,
-      decisionContextReader,
-      invariantContextReader,
-      guidelineContextReader,
-      architectureReader,
-      relationRemovedProjector
     );
     const goalContextViewMapper = new GoalContextViewMapper();
 
@@ -866,7 +855,6 @@ export class HostBuilder {
       goalContextReader,
       goalContextAssembler,
       goalContextQueryHandler,
-      getGoalContextQueryHandler,
       goalStatusReader,
       // Goal Controllers
       completeGoalController,

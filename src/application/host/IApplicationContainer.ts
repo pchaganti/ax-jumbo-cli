@@ -55,7 +55,6 @@ import { IGoalContextReader } from "../context/goals/get-context/IGoalContextRea
 import { IGoalContextAssembler } from "../context/IGoalContextAssembler.js";
 import { IGoalStatusReader } from "../context/goals/IGoalStatusReader.js";
 import { GoalContextQueryHandler } from "../context/GoalContextQueryHandler.js";
-import { GetGoalContextQueryHandler } from "../context/goals/get-context/GetGoalContextQueryHandler.js";
 import { IGoalReadForSessionSummary } from "../context/sessions/get-context/IGoalReadForSessionSummary.js";
 // Goal Controllers
 import { CompleteGoalController } from "../context/goals/complete/CompleteGoalController.js";
@@ -314,7 +313,6 @@ export interface IApplicationContainer {
   goalContextReader: IGoalContextReader;
   goalContextAssembler: IGoalContextAssembler;
   goalContextQueryHandler: GoalContextQueryHandler;
-  getGoalContextQueryHandler: GetGoalContextQueryHandler;
   goalStatusReader: IGoalStatusReader & IGoalReadForSessionSummary;
   // Goal Controllers
   completeGoalController: CompleteGoalController;
