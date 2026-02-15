@@ -12,7 +12,7 @@ import { GoalRecord } from "./GoalRecord.js";
 export class GoalRecordMapper {
   toView(record: GoalRecord): GoalView {
     return {
-      goalId: record.goalId,
+      goalId: record.id,
       objective: record.objective,
       successCriteria: JSON.parse(record.successCriteria || "[]"),
       scopeIn: JSON.parse(record.scopeIn || "[]"),

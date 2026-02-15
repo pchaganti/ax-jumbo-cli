@@ -47,7 +47,7 @@ export class SqliteGoalResumedProjector
 
   async findById(goalId: string): Promise<GoalView | null> {
     const row = this.db
-      .prepare("SELECT * FROM goal_views WHERE goalId = ?")
+      .prepare("SELECT *, goalId AS id FROM goal_views WHERE goalId = ?")
       .get(goalId) as GoalRecord | undefined;
     return row ? this.mapper.toView(row) : null;
   }

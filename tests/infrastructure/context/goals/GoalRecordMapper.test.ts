@@ -18,7 +18,7 @@ describe("GoalRecordMapper", () => {
 
   function buildRecord(overrides: Partial<GoalRecord> = {}): GoalRecord {
     return {
-      goalId: "goal_test-1",
+      id: "goal_test-1",
       objective: "Test objective",
       successCriteria: '["criterion 1","criterion 2"]',
       scopeIn: '["in scope"]',

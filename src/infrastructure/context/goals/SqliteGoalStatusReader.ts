@@ -23,7 +23,7 @@ export class SqliteGoalStatusReader
   async findByStatus(status: GoalStatusType): Promise<GoalView[]> {
     const rows = this.db
       .prepare(
-        "SELECT * FROM goal_views WHERE status = ? ORDER BY createdAt DESC"
+        "SELECT *, goalId AS id FROM goal_views WHERE status = ? ORDER BY createdAt DESC"
       )
       .all(status) as GoalRecord[];
     return rows.map((row) => this.mapper.toView(row));
@@ -31,14 +31,14 @@ export class SqliteGoalStatusReader
 
   async findAll(): Promise<GoalView[]> {
     const rows = this.db
-      .prepare("SELECT * FROM goal_views ORDER BY createdAt DESC")
+      .prepare("SELECT *, goalId AS id FROM goal_views ORDER BY createdAt DESC")
       .all() as GoalRecord[];
     return rows.map((row) => this.mapper.toView(row));
   }
 
   async findById(goalId: string): Promise<GoalView | null> {
     const row = this.db
-      .prepare("SELECT * FROM goal_views WHERE goalId = ?")
+      .prepare("SELECT *, goalId AS id FROM goal_views WHERE goalId = ?")
       .get(goalId) as GoalRecord | undefined;
     return row ? this.mapper.toView(row) : null;
   }

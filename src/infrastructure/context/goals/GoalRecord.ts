@@ -7,7 +7,7 @@
  */
 
 export interface GoalRecord {
-  readonly goalId: string;
+  readonly id: string;
   readonly objective: string;
   readonly successCriteria: string; // JSON array
   readonly scopeIn: string; // JSON array
