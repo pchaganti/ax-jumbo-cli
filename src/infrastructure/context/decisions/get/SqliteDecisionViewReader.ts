@@ -8,8 +8,12 @@
 import { Database } from "better-sqlite3";
 import { IDecisionViewReader, DecisionStatusFilter } from "../../../../application/context/decisions/get/IDecisionViewReader.js";
 import { DecisionView } from "../../../../application/context/decisions/DecisionView.js";
+import { DecisionRecord } from "../DecisionRecord.js";
+import { DecisionRecordMapper } from "../DecisionRecordMapper.js";
 
 export class SqliteDecisionViewReader implements IDecisionViewReader {
+  private readonly mapper = new DecisionRecordMapper();
+
   constructor(private db: Database) {}
 
   async findAll(status: DecisionStatusFilter = "all"): Promise<DecisionView[]> {
@@ -24,7 +28,7 @@ export class SqliteDecisionViewReader implements IDecisionViewReader {
     query += " ORDER BY createdAt DESC";
 
     const rows = this.db.prepare(query).all(...params);
-    return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
+    return rows.map((row) => this.mapper.toView(this.mapRowToRecord(row as Record<string, unknown>)));
   }
 
   async findByIds(ids: string[]): Promise<DecisionView[]> {
@@ -33,18 +37,18 @@ export class SqliteDecisionViewReader implements IDecisionViewReader {
     const placeholders = ids.map(() => "?").join(",");
     const query = `SELECT * FROM decision_views WHERE decisionId IN (${placeholders}) ORDER BY createdAt DESC`;
     const rows = this.db.prepare(query).all(...ids);
-    return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
+    return rows.map((row) => this.mapper.toView(this.mapRowToRecord(row as Record<string, unknown>)));
   }
 
-  private mapRowToView(row: Record<string, unknown>): DecisionView {
+  private mapRowToRecord(row: Record<string, unknown>): DecisionRecord {
     return {
-      decisionId: row.decisionId as string,
+      id: row.decisionId as string,
       title: row.title as string,
       context: row.context as string,
       rationale: (row.rationale as string) ?? null,
-      alternatives: JSON.parse((row.alternatives as string) || "[]"),
+      alternatives: (row.alternatives as string) || "[]",
       consequences: (row.consequences as string) ?? null,
-      status: row.status as DecisionView["status"],
+      status: row.status as string,
       supersededBy: (row.supersededBy as string) ?? null,
       reversalReason: (row.reversalReason as string) ?? null,
       reversedAt: (row.reversedAt as string) ?? null,

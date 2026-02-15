@@ -8,8 +8,12 @@
 import { Database } from "better-sqlite3";
 import { IDependencyViewReader, DependencyListFilter } from "../../../../application/context/dependencies/get/IDependencyViewReader.js";
 import { DependencyView } from "../../../../application/context/dependencies/DependencyView.js";
+import { DependencyRecord } from "../DependencyRecord.js";
+import { DependencyRecordMapper } from "../DependencyRecordMapper.js";
 
 export class SqliteDependencyViewReader implements IDependencyViewReader {
+  private readonly mapper = new DependencyRecordMapper();
+
   constructor(private db: Database) {}
 
   async findAll(filter?: DependencyListFilter): Promise<DependencyView[]> {
@@ -33,7 +37,7 @@ export class SqliteDependencyViewReader implements IDependencyViewReader {
     query += " ORDER BY createdAt DESC";
 
     const rows = this.db.prepare(query).all(...params);
-    return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
+    return rows.map((row) => this.mapper.toView(this.mapRowToRecord(row as Record<string, unknown>)));
   }
 
   async findByIds(ids: string[]): Promise<DependencyView[]> {
@@ -42,17 +46,17 @@ export class SqliteDependencyViewReader implements IDependencyViewReader {
     const placeholders = ids.map(() => "?").join(",");
     const query = `SELECT * FROM dependency_views WHERE dependencyId IN (${placeholders}) ORDER BY createdAt DESC`;
     const rows = this.db.prepare(query).all(...ids);
-    return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
+    return rows.map((row) => this.mapper.toView(this.mapRowToRecord(row as Record<string, unknown>)));
   }
 
-  private mapRowToView(row: Record<string, unknown>): DependencyView {
+  private mapRowToRecord(row: Record<string, unknown>): DependencyRecord {
     return {
-      dependencyId: row.dependencyId as string,
+      id: row.dependencyId as string,
       consumerId: row.consumerId as string,
       providerId: row.providerId as string,
       endpoint: (row.endpoint as string) ?? null,
       contract: (row.contract as string) ?? null,
-      status: row.status as DependencyView["status"],
+      status: row.status as string,
       version: row.version as number,
       createdAt: row.createdAt as string,
       updatedAt: row.updatedAt as string,

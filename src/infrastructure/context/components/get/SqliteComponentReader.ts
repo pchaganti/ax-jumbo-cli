@@ -8,9 +8,12 @@
 import { Database } from "better-sqlite3";
 import { IComponentReader } from "../../../../application/context/components/get/IComponentReader.js";
 import { ComponentView } from "../../../../application/context/components/ComponentView.js";
-import { ComponentTypeValue, ComponentStatusValue } from "../../../../domain/components/Constants.js";
+import { ComponentRecord } from "../ComponentRecord.js";
+import { ComponentRecordMapper } from "../ComponentRecordMapper.js";
 
 export class SqliteComponentReader implements IComponentReader {
+  private readonly mapper = new ComponentRecordMapper();
+
   constructor(private db: Database) {}
 
   async findById(componentId: string): Promise<ComponentView | null> {
@@ -18,7 +21,7 @@ export class SqliteComponentReader implements IComponentReader {
       .prepare("SELECT * FROM component_views WHERE componentId = ?")
       .get(componentId) as Record<string, unknown> | undefined;
 
-    return row ? this.mapRowToView(row) : null;
+    return row ? this.mapper.toView(this.mapRowToRecord(row)) : null;
   }
 
   async findByName(name: string): Promise<ComponentView | null> {
@@ -26,18 +29,18 @@ export class SqliteComponentReader implements IComponentReader {
       .prepare("SELECT * FROM component_views WHERE name = ?")
       .get(name) as Record<string, unknown> | undefined;
 
-    return row ? this.mapRowToView(row) : null;
+    return row ? this.mapper.toView(this.mapRowToRecord(row)) : null;
   }
 
-  private mapRowToView(row: Record<string, unknown>): ComponentView {
+  private mapRowToRecord(row: Record<string, unknown>): ComponentRecord {
     return {
-      componentId: row.componentId as string,
+      id: row.componentId as string,
       name: row.name as string,
-      type: row.type as ComponentTypeValue,
+      type: row.type as string,
       description: row.description as string,
       responsibility: row.responsibility as string,
       path: row.path as string,
-      status: row.status as ComponentStatusValue,
+      status: row.status as string,
       deprecationReason: (row.deprecationReason as string) ?? null,
       version: row.version as number,
       createdAt: row.createdAt as string,

@@ -8,9 +8,12 @@
 import { Database } from "better-sqlite3";
 import { IGuidelineViewReader } from "../../../../application/context/guidelines/get/IGuidelineViewReader.js";
 import { GuidelineView } from "../../../../application/context/guidelines/GuidelineView.js";
-import { GuidelineCategoryValue } from "../../../../domain/guidelines/Constants.js";
+import { GuidelineRecord } from "../GuidelineRecord.js";
+import { GuidelineRecordMapper } from "../GuidelineRecordMapper.js";
 
 export class SqliteGuidelineViewReader implements IGuidelineViewReader {
+  private readonly mapper = new GuidelineRecordMapper();
+
   constructor(private db: Database) {}
 
   async findAll(category?: string): Promise<GuidelineView[]> {
@@ -25,7 +28,7 @@ export class SqliteGuidelineViewReader implements IGuidelineViewReader {
     query += " ORDER BY category, createdAt ASC";
 
     const rows = this.db.prepare(query).all(...params);
-    return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
+    return rows.map((row) => this.mapper.toView(this.mapRowToRecord(row as Record<string, unknown>)));
   }
 
   async findByIds(ids: string[]): Promise<GuidelineView[]> {
@@ -34,19 +37,19 @@ export class SqliteGuidelineViewReader implements IGuidelineViewReader {
     const placeholders = ids.map(() => "?").join(",");
     const query = `SELECT * FROM guideline_views WHERE guidelineId IN (${placeholders}) ORDER BY createdAt DESC`;
     const rows = this.db.prepare(query).all(...ids);
-    return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
+    return rows.map((row) => this.mapper.toView(this.mapRowToRecord(row as Record<string, unknown>)));
   }
 
-  private mapRowToView(row: Record<string, unknown>): GuidelineView {
+  private mapRowToRecord(row: Record<string, unknown>): GuidelineRecord {
     return {
-      guidelineId: row.guidelineId as string,
-      category: row.category as GuidelineCategoryValue,
+      id: row.guidelineId as string,
+      category: row.category as string,
       title: row.title as string,
       description: row.description as string,
       rationale: row.rationale as string,
       enforcement: row.enforcement as string,
-      examples: JSON.parse((row.examples as string) || "[]"),
-      isRemoved: Boolean(row.isRemoved),
+      examples: (row.examples as string) || "[]",
+      isRemoved: row.isRemoved as number,
       removedAt: (row.removedAt as string) ?? null,
       removalReason: (row.removalReason as string) ?? null,
       version: row.version as number,

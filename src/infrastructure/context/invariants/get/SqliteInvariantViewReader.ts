@@ -8,15 +8,19 @@
 import { Database } from "better-sqlite3";
 import { IInvariantViewReader } from "../../../../application/context/invariants/get/IInvariantViewReader.js";
 import { InvariantView } from "../../../../application/context/invariants/InvariantView.js";
+import { InvariantRecord } from "../InvariantRecord.js";
+import { InvariantRecordMapper } from "../InvariantRecordMapper.js";
 
 export class SqliteInvariantViewReader implements IInvariantViewReader {
+  private readonly mapper = new InvariantRecordMapper();
+
   constructor(private db: Database) {}
 
   async findAll(): Promise<InvariantView[]> {
     const rows = this.db
       .prepare("SELECT * FROM invariant_views ORDER BY createdAt ASC")
       .all();
-    return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
+    return rows.map((row) => this.mapper.toView(this.mapRowToRecord(row as Record<string, unknown>)));
   }
 
   async findByIds(ids: string[]): Promise<InvariantView[]> {
@@ -25,12 +29,12 @@ export class SqliteInvariantViewReader implements IInvariantViewReader {
     const placeholders = ids.map(() => "?").join(",");
     const query = `SELECT * FROM invariant_views WHERE invariantId IN (${placeholders}) ORDER BY createdAt ASC`;
     const rows = this.db.prepare(query).all(...ids);
-    return rows.map((row) => this.mapRowToView(row as Record<string, unknown>));
+    return rows.map((row) => this.mapper.toView(this.mapRowToRecord(row as Record<string, unknown>)));
   }
 
-  private mapRowToView(row: Record<string, unknown>): InvariantView {
+  private mapRowToRecord(row: Record<string, unknown>): InvariantRecord {
     return {
-      invariantId: row.invariantId as string,
+      id: row.invariantId as string,
       title: row.title as string,
       description: row.description as string,
       rationale: (row.rationale as string) ?? null,
