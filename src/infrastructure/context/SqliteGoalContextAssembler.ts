@@ -1,10 +1,6 @@
 import { IGoalContextAssembler } from "../../application/context/IGoalContextAssembler.js";
 import { GoalContext } from "../../application/context/goals/get-context/GoalContext.js";
-import { RelatedComponent } from "../../application/context/goals/get-context/RelatedComponent.js";
-import { RelatedDependency } from "../../application/context/goals/get-context/RelatedDependency.js";
-import { RelatedDecision } from "../../application/context/goals/get-context/RelatedDecision.js";
-import { RelatedInvariant } from "../../application/context/goals/get-context/RelatedInvariant.js";
-import { RelatedGuideline } from "../../application/context/goals/get-context/RelatedGuideline.js";
+import { RelatedContext } from "../../application/context/goals/get-context/RelatedContext.js";
 import { IGoalReader } from "../../application/context/goals/start/IGoalReader.js";
 import { IRelationReader } from "../../application/context/relations/IRelationReader.js";
 import { IComponentViewReader } from "../../application/context/components/get/IComponentViewReader.js";
@@ -13,6 +9,12 @@ import { IDecisionViewReader } from "../../application/context/decisions/get/IDe
 import { IInvariantViewReader } from "../../application/context/invariants/get/IInvariantViewReader.js";
 import { IGuidelineViewReader } from "../../application/context/guidelines/get/IGuidelineViewReader.js";
 import { IArchitectureReader } from "../../application/context/architecture/IArchitectureReader.js";
+import { ComponentView } from "../../application/context/components/ComponentView.js";
+import { DependencyView } from "../../application/context/dependencies/DependencyView.js";
+import { DecisionView } from "../../application/context/decisions/DecisionView.js";
+import { InvariantView } from "../../application/context/invariants/InvariantView.js";
+import { GuidelineView } from "../../application/context/guidelines/GuidelineView.js";
+import { RelationView } from "../../application/context/relations/RelationView.js";
 import { EntityType } from "../../domain/relations/Constants.js";
 
 /**
@@ -24,7 +26,7 @@ import { EntityType } from "../../domain/relations/Constants.js";
  * 3. Batch fetch entities (one query per type)
  *    - If no relations exist, fetches ALL entities to provide complete project context
  *    - If relations exist, fetches only related entities
- * 4. Merge entity data with relation metadata
+ * 4. Merge entity data with relation metadata into RelatedContext<T>
  *    - Default relation metadata used when no explicit relations exist
  * 5. Return complete GoalContext
  *
@@ -94,72 +96,31 @@ export class SqliteGoalContextAssembler implements IGoalContextAssembler {
       hasNoRelations || hasArchitectureRelation ? this.architectureReader.find() : Promise.resolve(null)
     ]);
 
-    // 5. Merge entity data with relation metadata
-    // If no relations exist, provide default metadata for all entities
+    // 5. Merge entity data with relation metadata into RelatedContext<T>
     // Create lookup maps for O(1) relation metadata access
     const relationMap = new Map(
       relations.map(r => [`${r.toEntityType}:${r.toEntityId}`, r])
     );
 
-    const components: RelatedComponent[] = componentViews
-      .map((view): RelatedComponent | null => {
-        const relation = relationMap.get(`${EntityType.COMPONENT}:${view.componentId}`);
-        if (!relation && !hasNoRelations) return null;
-        return {
-          ...view,
-          relationType: relation?.relationType ?? 'default',
-          relationDescription: relation?.description ?? ''
-        };
-      })
-      .filter((item: RelatedComponent | null): item is RelatedComponent => item !== null);
+    const components = this.toRelatedContexts(
+      componentViews, EntityType.COMPONENT, v => v.componentId, relationMap, hasNoRelations
+    );
 
-    const dependencies: RelatedDependency[] = dependencyViews
-      .map((view): RelatedDependency | null => {
-        const relation = relationMap.get(`${EntityType.DEPENDENCY}:${view.dependencyId}`);
-        if (!relation && !hasNoRelations) return null;
-        return {
-          ...view,
-          relationType: relation?.relationType ?? 'default',
-          relationDescription: relation?.description ?? ''
-        };
-      })
-      .filter((item: RelatedDependency | null): item is RelatedDependency => item !== null);
+    const dependencies = this.toRelatedContexts(
+      dependencyViews, EntityType.DEPENDENCY, v => v.dependencyId, relationMap, hasNoRelations
+    );
 
-    const decisions: RelatedDecision[] = decisionViews
-      .map((view): RelatedDecision | null => {
-        const relation = relationMap.get(`${EntityType.DECISION}:${view.decisionId}`);
-        if (!relation && !hasNoRelations) return null;
-        return {
-          ...view,
-          relationType: relation?.relationType ?? 'default',
-          relationDescription: relation?.description ?? ''
-        };
-      })
-      .filter((item: RelatedDecision | null): item is RelatedDecision => item !== null);
+    const decisions = this.toRelatedContexts(
+      decisionViews, EntityType.DECISION, v => v.decisionId, relationMap, hasNoRelations
+    );
 
-    const invariants: RelatedInvariant[] = invariantViews
-      .map((view): RelatedInvariant | null => {
-        const relation = relationMap.get(`${EntityType.INVARIANT}:${view.invariantId}`);
-        if (!relation && !hasNoRelations) return null;
-        return {
-          ...view,
-          relationType: relation?.relationType ?? 'default',
-          relationDescription: relation?.description ?? ''
-        };
-      })
-      .filter((item: RelatedInvariant | null): item is RelatedInvariant => item !== null);
+    const invariants = this.toRelatedContexts(
+      invariantViews, EntityType.INVARIANT, v => v.invariantId, relationMap, hasNoRelations
+    );
 
-    const guidelines: RelatedGuideline[] = guidelineViews
-      .map((view): RelatedGuideline | null => {
-        const relation = relationMap.get(`${EntityType.GUIDELINE}:${view.guidelineId}`);
-        if (!relation && !hasNoRelations) return null;
-        return {
-          ...view,
-          relationType: relation?.relationType ?? 'default',
-          relationDescription: relation?.description ?? ''
-        };
-      })
-      .filter((item: RelatedGuideline | null): item is RelatedGuideline => item !== null);
+    const guidelines = this.toRelatedContexts(
+      guidelineViews, EntityType.GUIDELINE, v => v.guidelineId, relationMap, hasNoRelations
+    );
 
     // 6. Return assembled context
     return {
@@ -171,5 +132,29 @@ export class SqliteGoalContextAssembler implements IGoalContextAssembler {
       guidelines,
       architecture: architectureView
     };
+  }
+
+  /**
+   * Map entity views to RelatedContext<T> by merging with relation metadata.
+   * Filters out entities without matching relations (unless hasNoRelations).
+   */
+  private toRelatedContexts<T>(
+    views: T[],
+    entityType: string,
+    getId: (view: T) => string,
+    relationMap: Map<string, RelationView>,
+    hasNoRelations: boolean
+  ): RelatedContext<T>[] {
+    return views
+      .map((view): RelatedContext<T> | null => {
+        const relation = relationMap.get(`${entityType}:${getId(view)}`);
+        if (!relation && !hasNoRelations) return null;
+        return {
+          entity: view,
+          relationType: relation?.relationType ?? 'default',
+          relationDescription: relation?.description ?? ''
+        };
+      })
+      .filter((item): item is RelatedContext<T> => item !== null);
   }
 }

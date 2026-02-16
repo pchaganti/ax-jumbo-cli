@@ -1,10 +1,11 @@
 import { GoalView } from "../GoalView.js";
 import { ArchitectureView } from "../../architecture/ArchitectureView.js";
-import { RelatedComponent } from "./RelatedComponent.js";
-import { RelatedDependency } from "./RelatedDependency.js";
-import { RelatedDecision } from "./RelatedDecision.js";
-import { RelatedInvariant } from "./RelatedInvariant.js";
-import { RelatedGuideline } from "./RelatedGuideline.js";
+import { ComponentView } from "../../components/ComponentView.js";
+import { DependencyView } from "../../dependencies/DependencyView.js";
+import { DecisionView } from "../../decisions/DecisionView.js";
+import { InvariantView } from "../../invariants/InvariantView.js";
+import { GuidelineView } from "../../guidelines/GuidelineView.js";
+import { RelatedContext } from "./RelatedContext.js";
 
 /**
  * GoalContext - Core relation-based context for a goal.
@@ -15,8 +16,8 @@ import { RelatedGuideline } from "./RelatedGuideline.js";
  * - Related entities (fetched via batch readers)
  *
  * All arrays are guaranteed non-null and contain no null items.
- * Related entities include relation metadata (type + description)
- * to provide context about WHY the relation exists.
+ * Related entities are wrapped in RelatedContext<T> to provide
+ * relation metadata (type + description) about WHY the relation exists.
  *
  * Callers can map this to specific views:
  * - StartGoalContextView (enriched with LLM prompts)
@@ -25,10 +26,10 @@ import { RelatedGuideline } from "./RelatedGuideline.js";
  */
 export interface GoalContext {
   readonly goal: GoalView;
-  readonly components: ReadonlyArray<RelatedComponent>;
-  readonly dependencies: ReadonlyArray<RelatedDependency>;
-  readonly decisions: ReadonlyArray<RelatedDecision>;
-  readonly invariants: ReadonlyArray<RelatedInvariant>;
-  readonly guidelines: ReadonlyArray<RelatedGuideline>;
+  readonly components: ReadonlyArray<RelatedContext<ComponentView>>;
+  readonly dependencies: ReadonlyArray<RelatedContext<DependencyView>>;
+  readonly decisions: ReadonlyArray<RelatedContext<DecisionView>>;
+  readonly invariants: ReadonlyArray<RelatedContext<InvariantView>>;
+  readonly guidelines: ReadonlyArray<RelatedContext<GuidelineView>>;
   readonly architecture: ArchitectureView | null;
 }

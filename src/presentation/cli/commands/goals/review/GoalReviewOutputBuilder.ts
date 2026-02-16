@@ -99,7 +99,7 @@ export class GoalReviewOutputBuilder {
     if (criteria.components.length > 0) {
       output += "\n\n## Relevant Components:\n";
       criteria.components.forEach((c) => {
-        output += `- ${c.name}: ${c.description}\n`;
+        output += `- ${c.entity.name}: ${c.entity.description}\n`;
       });
       output += "\nVERIFY: These components were considered in the implementation.\n" +
                 `INSTRUCTION: If any components were not considered, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
@@ -109,8 +109,8 @@ export class GoalReviewOutputBuilder {
     if (criteria.dependencies.length > 0) {
       output += "\n\n## Relevant Dependencies:\n";
       criteria.dependencies.forEach((d) => {
-        const purpose = d.contract || d.endpoint || 'Dependency relationship';
-        output += `- ${d.consumerId} → ${d.providerId}: ${purpose}\n`;
+        const purpose = d.entity.contract || d.entity.endpoint || 'Dependency relationship';
+        output += `- ${d.entity.consumerId} → ${d.entity.providerId}: ${purpose}\n`;
       });
       output += "\nVERIFY: These dependencies are considered in the implementation.\n" +
                 `INSTRUCTION: If any dependencies were not considered, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
@@ -120,7 +120,7 @@ export class GoalReviewOutputBuilder {
     if (criteria.decisions.length > 0) {
       output += "\n\n## Relevant Decisions:\n";
       criteria.decisions.forEach((d) => {
-        output += `- ${d.title}: ${d.rationale}\n`;
+        output += `- ${d.entity.title}: ${d.entity.rationale}\n`;
       });
       output += "\nNOTE: The solution may contain artifacts that reflect previous design decisions.\n" +
                 "VERIFY:These design decisions are reflected in the implementation and ensure the trajectory of the solution is consistent.\n" +
@@ -131,7 +131,7 @@ export class GoalReviewOutputBuilder {
     if (criteria.invariants.length > 0) {
       output += "\n\n## Invariants:\n";
       criteria.invariants.forEach((inv) => {
-        output += `- ${inv.title}:\n  - ${inv.description}\n`;
+        output += `- ${inv.entity.title}:\n  - ${inv.entity.description}\n`;
       });
       output += "\nVERIFY: The implementation adheres to ALL of these invariants.\n" +
                 `INSTRUCTION: If the implementation does not adhere to any of these invariants, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
@@ -141,7 +141,7 @@ export class GoalReviewOutputBuilder {
     if (criteria.guidelines.length > 0) {
       output += "\n\n## Guidelines:\n";
       criteria.guidelines.forEach((g) => {
-        output += `- ${g.category}: ${g.description}\n`;
+        output += `- ${g.entity.category}: ${g.entity.description}\n`;
       });
       output += "\nVERIFY: The implementation follows these guidelines.\n" +
                 `INSTRUCTION: If the implementation does not follow any of these guidelines, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;

@@ -126,7 +126,7 @@ export class GoalShowOutputBuilder {
     if (context.components.length > 0) {
       let componentsOutput = "\n=== Related Components ===\n";
       for (const component of context.components) {
-        componentsOutput += `\n- ${component.name}: ${component.description}`;
+        componentsOutput += `\n- ${component.entity.name}: ${component.entity.description}`;
       }
       this.builder.addPrompt(componentsOutput);
     }
@@ -135,8 +135,8 @@ export class GoalShowOutputBuilder {
     if (context.dependencies.length > 0) {
       let dependenciesOutput = "\n=== Related Dependencies ===\n";
       for (const dependency of context.dependencies) {
-        const purpose = dependency.contract || dependency.endpoint || 'Dependency relationship';
-        dependenciesOutput += `\n- ${dependency.consumerId} → ${dependency.providerId}: ${purpose}`;
+        const purpose = dependency.entity.contract || dependency.entity.endpoint || 'Dependency relationship';
+        dependenciesOutput += `\n- ${dependency.entity.consumerId} → ${dependency.entity.providerId}: ${purpose}`;
       }
       this.builder.addPrompt(dependenciesOutput);
     }
@@ -145,7 +145,7 @@ export class GoalShowOutputBuilder {
     if (context.decisions.length > 0) {
       let decisionsOutput = "\n=== Related Decisions ===\n";
       for (const decision of context.decisions) {
-        decisionsOutput += `\n- ${decision.title}: ${decision.rationale}`;
+        decisionsOutput += `\n- ${decision.entity.title}: ${decision.entity.rationale}`;
       }
       this.builder.addPrompt(decisionsOutput);
     }
@@ -154,7 +154,7 @@ export class GoalShowOutputBuilder {
     if (context.invariants.length > 0) {
       let invariantsOutput = "\n=== Invariants ===\n";
       for (const invariant of context.invariants) {
-        invariantsOutput += `\n- ${invariant.title}: ${invariant.description}`;
+        invariantsOutput += `\n- ${invariant.entity.title}: ${invariant.entity.description}`;
       }
       this.builder.addPrompt(invariantsOutput);
     }
@@ -163,7 +163,7 @@ export class GoalShowOutputBuilder {
     if (context.guidelines.length > 0) {
       let guidelinesOutput = "\n=== Guidelines ===\n";
       for (const guideline of context.guidelines) {
-        guidelinesOutput += `\n- ${guideline.category}: ${guideline.description}`;
+        guidelinesOutput += `\n- ${guideline.entity.category}: ${guideline.entity.description}`;
       }
       this.builder.addPrompt(guidelinesOutput);
     }

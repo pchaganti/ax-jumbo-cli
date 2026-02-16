@@ -99,7 +99,7 @@ export class GoalStartOutputBuilder {
     // Components section
     if (context.components.length > 0) {
       const componentsText = context.components
-        .map(c => `- ${c.name}: ${c.description}`)
+        .map(c => `- ${c.entity.name}: ${c.entity.description}`)
         .join('\n');
       this.builder.addPrompt(
         `## Relevant Components:\n${componentsText}\n\n` +
@@ -111,8 +111,8 @@ export class GoalStartOutputBuilder {
     if (context.dependencies.length > 0) {
       const dependenciesText = context.dependencies
         .map(d => {
-          const purpose = d.contract || d.endpoint || 'Dependency relationship';
-          return `- ${d.consumerId} → ${d.providerId}: ${purpose}`;
+          const purpose = d.entity.contract || d.entity.endpoint || 'Dependency relationship';
+          return `- ${d.entity.consumerId} → ${d.entity.providerId}: ${purpose}`;
         })
         .join('\n');
       this.builder.addPrompt(
@@ -124,7 +124,7 @@ export class GoalStartOutputBuilder {
     // Decisions section
     if (context.decisions.length > 0) {
       const decisionsText = context.decisions
-        .map(d => `- ${d.title}: ${d.rationale}`)
+        .map(d => `- ${d.entity.title}: ${d.entity.rationale}`)
         .join('\n');
       this.builder.addPrompt(
         `## Relevant Decisions:\n${decisionsText}\n\n` +
@@ -136,7 +136,7 @@ export class GoalStartOutputBuilder {
     // Invariants section (CRITICAL - emphasized)
     if (context.invariants.length > 0) {
       const invariantsText = context.invariants
-        .map(inv => `- ${inv.title}:\n  - ${inv.description}`)
+        .map(inv => `- ${inv.entity.title}:\n  - ${inv.entity.description}`)
         .join('\n');
       this.builder.addPrompt(
         `## Invariants:\n${invariantsText}\n\n` +
@@ -147,7 +147,7 @@ export class GoalStartOutputBuilder {
     // Guidelines section
     if (context.guidelines.length > 0) {
       const guidelinesText = context.guidelines
-        .map(g => `- ${g.category}: ${g.description}`)
+        .map(g => `- ${g.entity.category}: ${g.entity.description}`)
         .join('\n');
       this.builder.addPrompt(
         `## Guidelines:\n${guidelinesText}\n\n` +

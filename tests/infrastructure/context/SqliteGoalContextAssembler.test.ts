@@ -26,7 +26,7 @@ import { GuidelineCategory } from "../../../src/domain/guidelines/Constants.js";
  * Tests cover:
  * - Default behavior: when no relations exist, fetch all entities
  * - Explicit relations: when relations exist, fetch only related entities
- * - Relation metadata mapping
+ * - Relation metadata mapping into RelatedContext<T>
  * - Architecture handling
  */
 
@@ -313,31 +313,31 @@ describe("SqliteGoalContextAssembler", () => {
       expect(result!.goal).toEqual(goal);
       expect(result!.components).toHaveLength(1);
       expect(result!.components[0]).toEqual({
-        ...component,
+        entity: component,
         relationType: "default",
         relationDescription: ""
       });
       expect(result!.dependencies).toHaveLength(1);
       expect(result!.dependencies[0]).toEqual({
-        ...dependency,
+        entity: dependency,
         relationType: "default",
         relationDescription: ""
       });
       expect(result!.decisions).toHaveLength(1);
       expect(result!.decisions[0]).toEqual({
-        ...decision,
+        entity: decision,
         relationType: "default",
         relationDescription: ""
       });
       expect(result!.invariants).toHaveLength(1);
       expect(result!.invariants[0]).toEqual({
-        ...invariant,
+        entity: invariant,
         relationType: "default",
         relationDescription: ""
       });
       expect(result!.guidelines).toHaveLength(1);
       expect(result!.guidelines[0]).toEqual({
-        ...guideline,
+        entity: guideline,
         relationType: "default",
         relationDescription: ""
       });
@@ -413,7 +413,7 @@ describe("SqliteGoalContextAssembler", () => {
       expect(result).not.toBeNull();
       expect(result!.components).toHaveLength(1);
       expect(result!.components[0]).toEqual({
-        ...component1,
+        entity: component1,
         relationType: "modifies",
         relationDescription: "This goal modifies UserService"
       });
