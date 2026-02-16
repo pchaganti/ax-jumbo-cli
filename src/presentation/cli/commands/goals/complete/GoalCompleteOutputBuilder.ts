@@ -18,7 +18,7 @@ export class GoalCompleteOutputBuilder {
 
   /**
    * Build output for successful goal completion.
-   * Renders learning capture prompt and optional next goal information.
+   * Renders learning capture prompt, entity review, and optional next goal information.
    */
   buildSuccess(
     contextView: ContextualGoalView,
@@ -26,35 +26,56 @@ export class GoalCompleteOutputBuilder {
   ): TerminalOutput {
     this.builder.reset();
 
-    // Learning capture prompt
+    // Section 1: Capture new learnings
     this.builder.addPrompt(
       "# Goal Completed - Capture Learnings\n" +
-      "@LLM: Reflect:\n" +
-      "Did your interaction with the user while implementing this goal surface uncaptured invariants, guidelines, decisions, components, dependencies, or architectural patterns?\n" +
-      "Were you corrected in any way that highlights a missing invariant, guideline, decision, component, dependency, or architectural pattern that should be captured?\n" +
-      "If you answer 'yes' to any of these questions, propose additions to the knowledge base.\n" +
-      "Only propose additions if they are:\n" +
+      "@LLM: Reflect on your interaction with the user during this goal.\n" +
+      "Did it surface any NEW invariants, guidelines, decisions, components, dependencies, or architectural patterns not yet captured?\n" +
+      "Were you corrected in a way that reveals a missing rule?\n" +
+      "Only propose additions that are:\n" +
       "  - Universal (applicable beyond this specific goal)\n" +
       "  - Dense (one sentence, no examples unless the example IS the rule)\n" +
       "  - Actionable (changes how code is written or decisions are made)\n" +
-      "Capturable types: invariant, guideline, decision, component, dependency, architecture.\n" +
       "If nothing qualifies, say so. Avoid restating what's already captured.\n" +
-      "Run 'jumbo --help' for command details.\n\n" +
-      "## Register Components and Relations\n" +
-      "@LLM: IMPORTANT - Register any components created during this goal:\n" +
-      "1. Use 'jumbo component add' to register new components (services, libs, APIs, etc.)\n" +
-      "2. Use 'jumbo relation add' to establish relationships:\n" +
-      "   - Component dependencies (depends-on, uses)\n" +
-      "   - Goal-to-component traceability (created, involves)\n" +
-      "   - Architecture relationships (implements, extends)\n" +
-      "   - Invariant relationships (respects)\n" +
-      "   - Guideline relationships (follows)\n" +
-      "   - Decision relationships (implements)\n" +
-      "3. Building the relation graph enriches project context for future work.\n" +
-      "Example:\n" +
-      "  jumbo component add --name \"FooService\" --type \"service\" --description \"...\" --responsibility \"...\" --path \"src/...\"\n" +
-      "  jumbo relation add --from-type component --from-id <new-component-id> --to-type component --to-id <base-component-id> --relation-type depends-on --strength strong\n" +
-      "  jumbo relation add --from-type goal --from-id <this-goal-id> --to-type component --to-id <new-component-id> --relation-type created --strength strong"
+      "Run 'jumbo --help' for command details."
+    );
+
+    // Section 2: Review registered entities for staleness
+    this.builder.addPrompt(
+      "## Review Registered Entities\n" +
+      "@LLM: This goal may have changed the codebase in ways that affect registered entities.\n" +
+      "For each entity type below, consider whether any existing registrations need updating based on the work performed.\n\n" +
+      "### Components\n" +
+      "Did any component descriptions, responsibilities, or paths change? Were any components deprecated or removed?\n" +
+      "  Update: jumbo component update --component-id <id> --description \"...\" --responsibility \"...\"\n" +
+      "  Deprecate: jumbo component deprecate --component-id <id> --reason \"...\"\n" +
+      "  Add new: jumbo component add --name \"...\" --type \"...\" --description \"...\" --responsibility \"...\" --path \"...\"\n\n" +
+      "### Decisions\n" +
+      "Were any architectural decisions made, superseded, or invalidated by this work?\n" +
+      "  Add: jumbo decision add --title \"...\" --context \"...\" --rationale \"...\"\n" +
+      "  Update: jumbo decision update --decision-id <id> --rationale \"...\"\n" +
+      "  Supersede: jumbo decision supersede --decision-id <id> --new-decision-id <new-id>\n\n" +
+      "### Invariants\n" +
+      "Were any invariants introduced, weakened, strengthened, or made obsolete?\n" +
+      "  Add: jumbo invariant add --title \"...\" --description \"...\" --enforcement \"...\"\n" +
+      "  Update: jumbo invariant update --invariant-id <id> --description \"...\" --enforcement \"...\"\n" +
+      "  Remove: jumbo invariant remove --invariant-id <id>\n\n" +
+      "### Guidelines\n" +
+      "Were any coding, testing, or documentation guidelines introduced or changed?\n" +
+      "  Add: jumbo guideline add --category \"...\" --title \"...\" --description \"...\"\n" +
+      "  Update: jumbo guideline update --guideline-id <id> --description \"...\"\n" +
+      "  Remove: jumbo guideline remove --guideline-id <id>\n\n" +
+      "### Dependencies\n" +
+      "Were any inter-component dependencies added, removed, or changed?\n" +
+      "  Add: jumbo dependency add --consumer-id <id> --provider-id <id> --contract \"...\"\n" +
+      "  Update: jumbo dependency update --dependency-id <id> --contract \"...\"\n" +
+      "  Remove: jumbo dependency remove --dependency-id <id>\n\n" +
+      "### Architecture\n" +
+      "Did this work change the architecture style, principles, or patterns?\n" +
+      "  Update: jumbo architecture update --style \"...\" --principles \"...\"\n\n" +
+      "### Relations\n" +
+      "Should any new relations be established between entities touched by this goal?\n" +
+      "  Add: jumbo relation add --from-type <type> --from-id <id> --to-type <type> --to-id <id> --relation-type <type> --strength <level>"
     );
 
     // Next goal in chain (if exists)

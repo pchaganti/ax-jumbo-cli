@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New command: `jumbo goal update-progress`
   - **Migration**: Update any scripts or automation to use the new kebab-case command name
 
+- **V2 namespace remodel (internal)**: Major internal restructuring of types, namespaces, and architectural boundaries. While these are internal changes, plugins or scripts that depend on internal module paths will break.
+  - **Removed types**: `GoalContextView`, `SessionSummaryProjection` (+ handler, store), `RelatedComponent`, `RelatedDecision`, `RelatedDependency`, `RelatedGuideline`, `RelatedInvariant`
+  - **Removed namespaces**: `list/` directories and `I*ListReader` interfaces replaced by `get/` and `I*ViewReader`; `get-context/` merged into `get/`
+  - **Dropped table**: `session_summary_views` table removed via migration (was orphaned after `SessionSummaryProjection` removal)
+  - **Migration**: Run `jumbo repair --yes` after upgrading to rebuild the database with V2 projections
+
 ### Added
 
 - **Goal review workflow**: New two-step quality assurance workflow for goals before completion:
@@ -57,6 +63,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Goal complete simplified**: The `jumbo goal complete` command no longer handles QA mode or commit logic. Goals must be pre-qualified through the review workflow. The `--commit` flag has been removed.
 
 - **Internal architecture**: Implemented Host/HostBuilder pattern for cleaner infrastructure composition (no user-facing impact)
+
+- **V2 namespace remodel (internal)**:
+  - Introduced `*Record` types (`GoalRecord`, `SessionRecord`, `ComponentRecord`, `DecisionRecord`, `DependencyRecord`, `GuidelineRecord`, `InvariantRecord`, `RelationRecord`) with dedicated `*RecordMapper` services at the infrastructure/application boundary
+  - Replaced five bespoke `Related*` types with generic `RelatedContext<T>` wrapper
+  - Split `GoalContext` into pure relations container (`GoalContext`) and composed return type (`ContextualGoalView`)
+  - Replaced event-sourced `SessionSummaryProjection` with query-time assembled `SessionContext`
+  - Renamed `list/` directories to `get/` and `I*ListReader` interfaces to `I*ViewReader` across all entity namespaces
 
 ### Removed
 
