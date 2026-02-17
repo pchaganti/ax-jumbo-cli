@@ -733,6 +733,18 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     const deprecateComponentController = new DeprecateComponentController(
       deprecateComponentGateway
     );
+    const removeComponentCommandHandler = new RemoveComponentCommandHandler(
+      componentRemovedEventStore,
+      eventBus,
+      componentRemovedProjector
+    );
+    const removeComponentGateway = new LocalRemoveComponentGateway(
+      removeComponentCommandHandler,
+      componentRemovedProjector
+    );
+    const removeComponentController = new RemoveComponentController(
+      removeComponentGateway
+    );
 
     // Audience Pain Controllers
     const addAudiencePainCommandHandler = new AddAudiencePainCommandHandler(
@@ -1053,6 +1065,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       updateComponentController,
       showComponentController,
       deprecateComponentController,
+      removeComponentController,
 
       // Solution Category
       // Architecture Event Stores - decomposed by use case

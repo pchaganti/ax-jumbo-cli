@@ -7,8 +7,6 @@
 
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
-import { RemoveComponentCommandHandler } from "../../../../../application/context/components/remove/RemoveComponentCommandHandler.js";
-import { RemoveComponentCommand } from "../../../../../application/context/components/remove/RemoveComponentCommand.js";
 import { Renderer } from "../../../rendering/Renderer.js";
 
 /**
@@ -45,34 +43,19 @@ export async function componentRemove(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler using container dependencies
-    const commandHandler = new RemoveComponentCommandHandler(
-      container.componentRemovedEventStore,
-      container.eventBus,
-      container.componentRemovedProjector
-    );
-
-    // 2. Execute command
-    const command: RemoveComponentCommand = {
-      componentId: options.componentId
-    };
-
-    await commandHandler.execute(command);
-
-    // 3. Fetch updated view for display
-    const view = await container.componentRemovedProjector.findById(options.componentId);
-
-    // Success output
-    const data: Record<string, string | number> = {
+    const response = await container.removeComponentController.handle({
       componentId: options.componentId,
-      name: view?.name || 'Unknown',
-      status: view?.status || 'removed'
+    });
+
+    const data: Record<string, string> = {
+      componentId: response.componentId,
+      name: response.name,
+      status: response.status,
     };
 
-    renderer.success(`Component '${view?.name || options.componentId}' marked as removed`, data);
+    renderer.success(`Component '${response.name}' marked as removed`, data);
   } catch (error) {
     renderer.error("Failed to remove component", error instanceof Error ? error : String(error));
     process.exit(1);
   }
-  // NO CLEANUP - infrastructure manages itself!
 }
