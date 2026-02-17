@@ -10,6 +10,7 @@ import { RegisteredCommand } from "./CommandMetadata.js";
 import { IApplicationContainer } from "../../../../application/host/IApplicationContainer.js";
 import { extractParts } from "./PathNormalizer.js";
 import { Renderer } from "../../rendering/Renderer.js";
+import { formatSubcommandHelp } from "../../help/SubcommandHelpFormatter.js";
 
 /**
  * Applies registered commands to Commander.js
@@ -97,13 +98,11 @@ export class CommanderApplicator {
       }
     });
 
-    // Add examples/related to help
-    if (registeredCommand.metadata.examples) {
-      cmd.addHelpText("after", "\n" + this.formatExamples(registeredCommand.metadata.examples));
-    }
-    if (registeredCommand.metadata.related?.length) {
-      cmd.addHelpText("after", "\n" + this.formatRelated(registeredCommand.metadata.related));
-    }
+    // Override help to use gh-style formatting
+    const capturedCommand = registeredCommand;
+    cmd.helpInformation = function () {
+      return formatSubcommandHelp(capturedCommand);
+    };
 
     // Action handler with error handling and container injection
     cmd.action(async options => {
@@ -116,17 +115,6 @@ export class CommanderApplicator {
         process.exit(1);
       }
     });
-  }
-
-  private formatExamples(examples: { command: string; description: string }[]): string {
-    return (
-      "Examples:\n" +
-      examples.map(ex => `  $ ${ex.command}\n    ${ex.description}\n`).join("\n")
-    );
-  }
-
-  private formatRelated(related: string[]): string {
-    return `Related commands:\n  ${related.map(cmd => `jumbo ${cmd}`).join("\n  ")}\n`;
   }
 
   /**
@@ -175,17 +163,12 @@ export class CommanderApplicator {
         }
       });
 
-      // Add examples with alias command name
-      if (registeredCommand.metadata.examples) {
-        const aliasExamples = registeredCommand.metadata.examples.map(ex => ({
-          command: ex.command.replace(`${parent} ${subcommand}`, alias),
-          description: ex.description,
-        }));
-        cmd.addHelpText("after", "\n" + this.formatExamples(aliasExamples));
-      }
-      if (registeredCommand.metadata.related?.length) {
-        cmd.addHelpText("after", "\n" + this.formatRelated(registeredCommand.metadata.related));
-      }
+      // Override help to use gh-style formatting with alias name
+      const capturedForAlias = registeredCommand;
+      const capturedAlias = alias;
+      cmd.helpInformation = function () {
+        return formatSubcommandHelp(capturedForAlias, capturedAlias);
+      };
 
       // Same action handler
       cmd.action(async options => {

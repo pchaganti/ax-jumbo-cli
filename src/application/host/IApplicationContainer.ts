@@ -65,6 +65,9 @@ import { QualifyGoalController } from "../context/goals/qualify/QualifyGoalContr
 import { IGoalQualifiedEventWriter } from "../context/goals/qualify/IGoalQualifiedEventWriter.js";
 import { IGoalQualifiedEventReader } from "../context/goals/qualify/IGoalQualifiedEventReader.js";
 
+// Architecture Controllers
+import { DefineArchitectureController } from "../context/architecture/define/DefineArchitectureController.js";
+
 // Work Command Handlers
 import { PauseWorkCommandHandler } from "../context/work/pause/PauseWorkCommandHandler.js";
 import { ResumeWorkController } from "../context/work/resume/ResumeWorkController.js";
@@ -318,6 +321,9 @@ export interface IApplicationContainer {
   // Work Command Handlers
   pauseWorkCommandHandler: PauseWorkCommandHandler;
   resumeWorkController: ResumeWorkController;
+
+  // Architecture Controllers
+  defineArchitectureController: DefineArchitectureController;
 
   // Solution Category - Event Stores
   // Architecture Event Stores - decomposed by use case

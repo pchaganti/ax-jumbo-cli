@@ -272,6 +272,10 @@ import { PauseWorkCommandHandler } from "../../application/context/work/pause/Pa
 import { ResumeWorkController } from "../../application/context/work/resume/ResumeWorkController.js";
 import { ResumeGoalCommandHandler } from "../../application/context/goals/resume/ResumeGoalCommandHandler.js";
 
+// Architecture Controllers
+import { DefineArchitectureController } from "../../application/context/architecture/define/DefineArchitectureController.js";
+import { LocalDefineArchitectureGateway } from "../../application/context/architecture/define/LocalDefineArchitectureGateway.js";
+
 // Solution Context
 import { UnprimedBrownfieldQualifier } from "../../application/UnprimedBrownfieldQualifier.js";
 
@@ -622,6 +626,16 @@ export class HostBuilder {
       logger
     );
 
+    // Architecture Controllers
+    const defineArchitectureGateway = new LocalDefineArchitectureGateway(
+      architectureDefinedEventStore,
+      architectureDefinedProjector,
+      eventBus
+    );
+    const defineArchitectureController = new DefineArchitectureController(
+      defineArchitectureGateway
+    );
+
     // Project Initialization Protocol
     const initializeProjectCommandHandler = new InitializeProjectCommandHandler(
       projectInitializedEventStore,
@@ -861,6 +875,9 @@ export class HostBuilder {
       // Work Command Handlers
       pauseWorkCommandHandler,
       resumeWorkController,
+
+      // Architecture Controllers
+      defineArchitectureController,
 
       // Solution Category
       // Architecture Event Stores - decomposed by use case
