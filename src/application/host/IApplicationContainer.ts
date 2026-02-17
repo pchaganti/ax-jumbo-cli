@@ -66,7 +66,7 @@ import { IGoalQualifiedEventReader } from "../context/goals/qualify/IGoalQualifi
 
 // Work Command Handlers
 import { PauseWorkCommandHandler } from "../context/work/pause/PauseWorkCommandHandler.js";
-import { ResumeWorkCommandHandler } from "../context/work/resume/ResumeWorkCommandHandler.js";
+import { ResumeWorkController } from "../context/work/resume/ResumeWorkController.js";
 
 import { IDecisionAddedProjector } from "../context/decisions/add/IDecisionAddedProjector.js";
 import { IDecisionUpdatedProjector } from "../context/decisions/update/IDecisionUpdatedProjector.js";
@@ -315,7 +315,7 @@ export interface IApplicationContainer {
 
   // Work Command Handlers
   pauseWorkCommandHandler: PauseWorkCommandHandler;
-  resumeWorkCommandHandler: ResumeWorkCommandHandler;
+  resumeWorkController: ResumeWorkController;
 
   // Solution Category - Event Stores
   // Architecture Event Stores - decomposed by use case

@@ -13,7 +13,7 @@ import { IAudiencePainContextReader } from "../../audience-pains/query/IAudience
  * Assembles session orientation data from multiple view readers using the multi-query pattern.
  * All queries run in parallel via Promise.all for optimal performance.
  * Returns a ContextualSessionView pairing the active session with its context.
- * Used by controllers (SessionStartController) and enrichers (SessionResumeContextEnricher)
+ * Used by controllers (SessionStartController, ResumeWorkController)
  * that compose this base view with event-specific enrichment.
  */
 export class SessionContextQueryHandler {

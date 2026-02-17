@@ -267,7 +267,8 @@ import { StartSessionCommandHandler } from "../../application/context/sessions/s
 
 // Work Command Handlers
 import { PauseWorkCommandHandler } from "../../application/context/work/pause/PauseWorkCommandHandler.js";
-import { ResumeWorkCommandHandler } from "../../application/context/work/resume/ResumeWorkCommandHandler.js";
+import { ResumeWorkController } from "../../application/context/work/resume/ResumeWorkController.js";
+import { ResumeGoalCommandHandler } from "../../application/context/goals/resume/ResumeGoalCommandHandler.js";
 
 // Solution Context
 import { UnprimedBrownfieldQualifier } from "../../application/UnprimedBrownfieldQualifier.js";
@@ -597,22 +598,22 @@ export class HostBuilder {
       eventBus,
       logger
     );
-    const resumeWorkCommandHandler = new ResumeWorkCommandHandler(
-      workerIdentityReader,
-      goalStatusReader,
+    const resumeGoalCommandHandler = new ResumeGoalCommandHandler(
       goalResumedEventStore,
       goalResumedEventStore,
       goalResumedProjector,
       eventBus,
       goalClaimPolicy,
+      workerIdentityReader,
       settingsReader,
-      logger,
-      sessionViewReader,
-      decisionViewReader,
-      goalContextQueryHandler,
-      projectContextReader,
-      audienceContextReader,
-      audiencePainContextReader
+      goalContextQueryHandler
+    );
+    const resumeWorkController = new ResumeWorkController(
+      workerIdentityReader,
+      goalStatusReader,
+      resumeGoalCommandHandler,
+      sessionContextQueryHandler,
+      logger
     );
 
     // Project Initialization Protocol
@@ -852,7 +853,7 @@ export class HostBuilder {
 
       // Work Command Handlers
       pauseWorkCommandHandler,
-      resumeWorkCommandHandler,
+      resumeWorkController,
 
       // Solution Category
       // Architecture Event Stores - decomposed by use case
