@@ -6,9 +6,7 @@
 
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
-import { UpdateArchitectureCommandHandler } from "../../../../../application/context/architecture/update/UpdateArchitectureCommandHandler.js";
-import { UpdateArchitectureCommand } from "../../../../../application/context/architecture/update/UpdateArchitectureCommand.js";
-import { DataStore } from "../../../../../domain/architecture/define/ArchitectureDefinedEvent.js";
+import { UpdateArchitectureRequest } from "../../../../../application/context/architecture/update/UpdateArchitectureRequest.js";
 import { Renderer } from "../../../rendering/Renderer.js";
 
 /**
@@ -74,39 +72,20 @@ export async function architectureUpdate(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler using container dependencies
-    const commandHandler = new UpdateArchitectureCommandHandler(
-      container.architectureUpdatedEventStore,
-      container.architectureUpdatedEventStore,
-      container.eventBus
-    );
-
-    // 2. Parse data stores from string format
-    let dataStores: DataStore[] | undefined;
-    if (options.dataStore) {
-      dataStores = options.dataStore.map(ds => {
-        const [name, type, purpose] = ds.split(':');
-        return { name, type, purpose };
-      });
-    }
-
-    // 3. Build command
-    const command: UpdateArchitectureCommand = {
+    // 1. Build typed request
+    const request: UpdateArchitectureRequest = {
       description: options.description,
       organization: options.organization,
       patterns: options.pattern,
       principles: options.principle,
-      dataStores,
+      dataStores: options.dataStore,
       stack: options.stack
     };
 
-    // 4. Execute command
-    await commandHandler.execute(command);
+    // 2. Delegate to controller
+    await container.updateArchitectureController.handle(request);
 
-    // 5. Fetch updated view for display
-    const view = await container.architectureUpdatedProjector.findById('architecture');
-
-    // Success output
+    // 3. Success output
     renderer.success("Architecture updated successfully");
 
     // Show what was updated

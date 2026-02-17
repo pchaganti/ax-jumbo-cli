@@ -275,6 +275,8 @@ import { ResumeGoalCommandHandler } from "../../application/context/goals/resume
 // Architecture Controllers
 import { DefineArchitectureController } from "../../application/context/architecture/define/DefineArchitectureController.js";
 import { LocalDefineArchitectureGateway } from "../../application/context/architecture/define/LocalDefineArchitectureGateway.js";
+import { UpdateArchitectureController } from "../../application/context/architecture/update/UpdateArchitectureController.js";
+import { LocalUpdateArchitectureGateway } from "../../application/context/architecture/update/LocalUpdateArchitectureGateway.js";
 import { GetArchitectureController } from "../../application/context/architecture/get/GetArchitectureController.js";
 import { LocalGetArchitectureGateway } from "../../application/context/architecture/get/LocalGetArchitectureGateway.js";
 
@@ -636,6 +638,14 @@ export class HostBuilder {
     const defineArchitectureController = new DefineArchitectureController(
       defineArchitectureGateway
     );
+    const updateArchitectureGateway = new LocalUpdateArchitectureGateway(
+      architectureUpdatedEventStore,
+      architectureUpdatedEventStore,
+      eventBus
+    );
+    const updateArchitectureController = new UpdateArchitectureController(
+      updateArchitectureGateway
+    );
     const getArchitectureGateway = new LocalGetArchitectureGateway(
       architectureReader
     );
@@ -885,6 +895,7 @@ export class HostBuilder {
 
       // Architecture Controllers
       defineArchitectureController,
+      updateArchitectureController,
       getArchitectureController,
 
       // Solution Category

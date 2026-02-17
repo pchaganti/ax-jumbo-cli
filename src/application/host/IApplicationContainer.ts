@@ -67,6 +67,7 @@ import { IGoalQualifiedEventReader } from "../context/goals/qualify/IGoalQualifi
 
 // Architecture Controllers
 import { DefineArchitectureController } from "../context/architecture/define/DefineArchitectureController.js";
+import { UpdateArchitectureController } from "../context/architecture/update/UpdateArchitectureController.js";
 
 // Work Command Handlers
 import { PauseWorkCommandHandler } from "../context/work/pause/PauseWorkCommandHandler.js";
@@ -324,6 +325,7 @@ export interface IApplicationContainer {
 
   // Architecture Controllers
   defineArchitectureController: DefineArchitectureController;
+  updateArchitectureController: UpdateArchitectureController;
   getArchitectureController: GetArchitectureController;
 
   // Solution Category - Event Stores
