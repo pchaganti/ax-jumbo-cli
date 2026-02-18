@@ -40,6 +40,7 @@ import { IGoalUpdateReader } from "../context/goals/update/IGoalUpdateReader.js"
 import { IGoalBlockedProjector } from "../context/goals/block/IGoalBlockedProjector.js";
 import { IGoalUnblockedProjector } from "../context/goals/unblock/IGoalUnblockedProjector.js";
 import { IGoalPausedProjector } from "../context/goals/pause/IGoalPausedProjector.js";
+import { IGoalPauseReader } from "../context/goals/pause/IGoalPauseReader.js";
 import { IGoalResumedProjector } from "../context/goals/resume/IGoalResumedProjector.js";
 import { IGoalCompletedProjector } from "../context/goals/complete/IGoalCompletedProjector.js";
 import { IGoalCompleteReader } from "../context/goals/complete/IGoalCompleteReader.js";
@@ -58,12 +59,23 @@ import { GetSessionsController } from "../context/sessions/get/GetSessionsContro
 
 // Goal Controllers
 import { AddGoalController } from "../context/goals/add/AddGoalController.js";
+import { StartGoalController } from "../context/goals/start/StartGoalController.js";
 import { CompleteGoalController } from "../context/goals/complete/CompleteGoalController.js";
 import { ReviewGoalController } from "../context/goals/review/ReviewGoalController.js";
 import { IGoalSubmittedForReviewEventWriter } from "../context/goals/review/IGoalSubmittedForReviewEventWriter.js";
 import { IGoalSubmittedForReviewEventReader } from "../context/goals/review/IGoalSubmittedForReviewEventReader.js";
 import { QualifyGoalController } from "../context/goals/qualify/QualifyGoalController.js";
+import { RefineGoalController } from "../context/goals/refine/RefineGoalController.js";
+import { ResetGoalController } from "../context/goals/reset/ResetGoalController.js";
 import { BlockGoalController } from "../context/goals/block/BlockGoalController.js";
+import { UnblockGoalController } from "../context/goals/unblock/UnblockGoalController.js";
+import { GetGoalsController } from "../context/goals/get/GetGoalsController.js";
+import { ShowGoalController } from "../context/goals/get/ShowGoalController.js";
+import { PauseGoalController } from "../context/goals/pause/PauseGoalController.js";
+import { ResumeGoalController } from "../context/goals/resume/ResumeGoalController.js";
+import { RemoveGoalController } from "../context/goals/remove/RemoveGoalController.js";
+import { UpdateGoalController } from "../context/goals/update/UpdateGoalController.js";
+import { UpdateGoalProgressController } from "../context/goals/update-progress/UpdateGoalProgressController.js";
 import { IGoalQualifiedEventWriter } from "../context/goals/qualify/IGoalQualifiedEventWriter.js";
 import { IGoalQualifiedEventReader } from "../context/goals/qualify/IGoalQualifiedEventReader.js";
 
@@ -253,6 +265,7 @@ import { IValuePropositionAddedEventWriter } from "../context/value-propositions
 import { IValuePropositionUpdatedEventWriter } from "../context/value-propositions/update/IValuePropositionUpdatedEventWriter.js";
 import { IValuePropositionRemovedEventWriter } from "../context/value-propositions/remove/IValuePropositionRemovedEventWriter.js";
 // Relations Event Store ports - decomposed by use case
+import { AddRelationController } from "../context/relations/add/AddRelationController.js";
 import { IRelationAddedEventWriter } from "../context/relations/add/IRelationAddedEventWriter.js";
 import { IRelationRemovedEventWriter } from "../context/relations/remove/IRelationRemovedEventWriter.js";
 import { IRelationRemovedEventReader } from "../context/relations/remove/IRelationRemovedEventReader.js";
@@ -324,7 +337,7 @@ export interface IApplicationContainer {
   goalUpdatedProjector: IGoalUpdatedProjector & IGoalUpdateReader;
   goalBlockedProjector: IGoalBlockedProjector;
   goalUnblockedProjector: IGoalUnblockedProjector;
-  goalPausedProjector: IGoalPausedProjector & IGoalReader;
+  goalPausedProjector: IGoalPausedProjector & IGoalReader & IGoalPauseReader;
   goalResumedProjector: IGoalResumedProjector & IGoalReader;
   goalCompletedProjector: IGoalCompletedProjector & IGoalCompleteReader;
   goalRefinedProjector: IGoalRefinedProjector & IGoalRefineReader;
@@ -341,10 +354,21 @@ export interface IApplicationContainer {
 
   // Goal Controllers
   addGoalController: AddGoalController;
+  startGoalController: StartGoalController;
   completeGoalController: CompleteGoalController;
   reviewGoalController: ReviewGoalController;
   qualifyGoalController: QualifyGoalController;
   blockGoalController: BlockGoalController;
+  unblockGoalController: UnblockGoalController;
+  getGoalsController: GetGoalsController;
+  showGoalController: ShowGoalController;
+  pauseGoalController: PauseGoalController;
+  resumeGoalController: ResumeGoalController;
+  refineGoalController: RefineGoalController;
+  removeGoalController: RemoveGoalController;
+  resetGoalController: ResetGoalController;
+  updateGoalController: UpdateGoalController;
+  updateGoalProgressController: UpdateGoalProgressController;
 
   // Decision Controllers
   addDecisionController: AddDecisionController;
@@ -488,6 +512,9 @@ export interface IApplicationContainer {
   valuePropositionUpdatedProjector: IValuePropositionUpdatedProjector & IValuePropositionUpdateReader;
   valuePropositionRemovedProjector: IValuePropositionRemovedProjector & IValuePropositionRemoveReader;
   valuePropositionContextReader: IValuePropositionContextReader;
+
+  // Relations Category - Controllers
+  addRelationController: AddRelationController;
 
   // Relations Category - Event Stores - decomposed by use case
   relationAddedEventStore: IRelationAddedEventWriter;

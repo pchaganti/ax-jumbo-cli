@@ -1,6 +1,6 @@
 import { TerminalOutputBuilder } from '../../../output/TerminalOutputBuilder.js';
 import { TerminalOutput } from '../../../output/TerminalOutput.js';
-import { ContextualGoalView } from '../../../../../application/context/goals/get/ContextualGoalView.js';
+import { QualifyGoalResponse } from '../../../../../application/context/goals/qualify/QualifyGoalResponse.js';
 
 /**
  * Specialized builder for goal.qualify command output.
@@ -20,17 +20,15 @@ export class GoalQualifyOutputBuilder {
    * Build output for successful goal qualification.
    * Renders qualification result with next steps.
    */
-  buildSuccess(context: ContextualGoalView): TerminalOutput {
+  buildSuccess(response: QualifyGoalResponse): TerminalOutput {
     this.builder.reset();
-
-    const goal = context.goal;
 
     // Header and success message
     this.builder.addPrompt(
       "# Goal Qualified\n" +
-      `Goal ID: ${goal.goalId}\n` +
-      `Objective: ${goal.objective}\n` +
-      `Status: ${goal.status}\n` +
+      `Goal ID: ${response.goalId}\n` +
+      `Objective: ${response.objective}\n` +
+      `Status: ${response.status}\n` +
       "---\n\n" +
       "## QA Review Passed\n" +
       "The goal has been verified and qualified for completion.\n" +
@@ -40,11 +38,11 @@ export class GoalQualifyOutputBuilder {
     // Next steps
     let nextSteps = "## Next Steps\n" +
                     "Complete the goal:\n" +
-                    `  Run: jumbo goal complete --goal-id ${goal.goalId}`;
+                    `  Run: jumbo goal complete --goal-id ${response.goalId}`;
 
-    if (goal.nextGoalId) {
+    if (response.nextGoalId) {
       nextSteps += "\n\nAfter completion, the next goal in the queue is:\n" +
-                   `  Goal ID: ${goal.nextGoalId}`;
+                   `  Goal ID: ${response.nextGoalId}`;
     }
 
     nextSteps += "\n---\n";

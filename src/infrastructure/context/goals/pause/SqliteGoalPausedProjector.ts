@@ -8,13 +8,14 @@
 import { Database } from "better-sqlite3";
 import { IGoalPausedProjector } from "../../../../application/context/goals/pause/IGoalPausedProjector.js";
 import { IGoalReader } from "../../../../application/context/goals/pause/IGoalReader.js";
+import { IGoalPauseReader } from "../../../../application/context/goals/pause/IGoalPauseReader.js";
 import { GoalPausedEvent } from "../../../../domain/goals/pause/GoalPausedEvent.js";
 import { GoalView } from "../../../../application/context/goals/GoalView.js";
 import { GoalRecord } from "../GoalRecord.js";
 import { GoalRecordMapper } from "../GoalRecordMapper.js";
 
 export class SqliteGoalPausedProjector
-  implements IGoalPausedProjector, IGoalReader
+  implements IGoalPausedProjector, IGoalReader, IGoalPauseReader
 {
   private readonly mapper = new GoalRecordMapper();
 

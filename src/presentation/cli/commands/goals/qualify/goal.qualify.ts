@@ -8,8 +8,6 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { QualifyGoalCommandHandler } from "../../../../../application/context/goals/qualify/QualifyGoalCommandHandler.js";
-import { QualifyGoalCommand } from "../../../../../application/context/goals/qualify/QualifyGoalCommand.js";
 import { GoalQualifyOutputBuilder } from "./GoalQualifyOutputBuilder.js";
 
 /**
@@ -45,24 +43,14 @@ export async function goalQualify(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler
-    const commandHandler = new QualifyGoalCommandHandler(
-      container.goalQualifiedEventStore,
-      container.goalQualifiedEventStore,
-      container.goalContextReader,
-      container.eventBus,
-      container.goalClaimPolicy,
-      container.workerIdentityReader,
-      container.goalContextQueryHandler
-    );
+    // 1. Execute via controller
+    const response = await container.qualifyGoalController.handle({
+      goalId: options.goalId,
+    });
 
-    // 2. Execute command - returns enriched goal context view
-    const command: QualifyGoalCommand = { goalId: options.goalId };
-    const goalContextView = await commandHandler.execute(command);
-
-    // 3. Build and render output using builder pattern
+    // 2. Build and render output using builder pattern
     const outputBuilder = new GoalQualifyOutputBuilder();
-    const output = outputBuilder.buildSuccess(goalContextView);
+    const output = outputBuilder.buildSuccess(response);
 
     renderer.info(output.toHumanReadable());
 

@@ -11,18 +11,13 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { RefineGoalCommandHandler } from "../../../../../application/context/goals/refine/RefineGoalCommandHandler.js";
-import { RefineGoalCommand } from "../../../../../application/context/goals/refine/RefineGoalCommand.js";
-import { AddRelationCommandHandler } from "../../../../../application/context/relations/add/AddRelationCommandHandler.js";
-import { AddRelationCommand } from "../../../../../application/context/relations/add/AddRelationCommand.js";
 import { InteractivePromptService } from "../../../prompts/index.js";
 import { ComponentView } from "../../../../../application/context/components/ComponentView.js";
 import { InvariantView } from "../../../../../application/context/invariants/InvariantView.js";
 import { GuidelineView } from "../../../../../application/context/guidelines/GuidelineView.js";
 import { DecisionView } from "../../../../../application/context/decisions/DecisionView.js";
-import { EntityType, EntityTypeValue, RelationStrengthValue } from "../../../../../domain/relations/Constants.js";
+import { EntityType } from "../../../../../domain/relations/Constants.js";
 import { GoalRefineOutputBuilder } from "./GoalRefineOutputBuilder.js";
-import { ContextualGoalView } from "../../../../../application/context/goals/get/ContextualGoalView.js";
 
 /**
  * Command metadata for auto-registration
@@ -101,16 +96,16 @@ export async function goalRefine(
         renderer.info(relationsOutput.toHumanReadable());
       }
 
-      const goalContextView = await approveGoal(options.goalId, container);
-      const successOutput = outputBuilder.buildSuccess(goalContextView.goal.goalId, goalContextView.goal.status);
+      const response = await container.refineGoalController.handle({ goalId: options.goalId });
+      const successOutput = outputBuilder.buildSuccess(response.goalId, response.status);
       renderer.info(successOutput.toHumanReadable());
     } else if (options.approve) {
       // Approve mode: renderGoalDetails + renderLlmRefinementPrompt + approveGoal
       const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);
       renderer.info(detailsOutput.toHumanReadable());
 
-      const goalContextView = await approveGoal(options.goalId, container);
-      const successOutput = outputBuilder.buildSuccess(goalContextView.goal.goalId, goalContextView.goal.status);
+      const response = await container.refineGoalController.handle({ goalId: options.goalId });
+      const successOutput = outputBuilder.buildSuccess(response.goalId, response.status);
       renderer.info(successOutput.toHumanReadable());
     } else {
       // Default mode: renderGoalDetails + renderLlmRefinementPrompt + show approval instruction (no status change)
@@ -179,14 +174,14 @@ async function runInteractiveRelationFlow(
       required: true,
     });
 
-    const relation = await createRelation(
-      goalId,
-      EntityType.COMPONENT,
-      component.componentId,
-      relationType!,
-      description!,
-      container
-    );
+    const relation = await container.addRelationController.handle({
+      fromEntityType: EntityType.GOAL,
+      fromEntityId: goalId,
+      toEntityType: EntityType.COMPONENT,
+      toEntityId: component.componentId,
+      relationType: relationType!,
+      description: description!,
+    });
     createdRelations.push({
       relationId: relation.relationId,
       toType: EntityType.COMPONENT,
@@ -208,14 +203,14 @@ async function runInteractiveRelationFlow(
 
   // Create relations for selected invariants
   for (const invariant of invariantResult.selected) {
-    const relation = await createRelation(
-      goalId,
-      EntityType.INVARIANT,
-      invariant.invariantId,
-      "must-respect",
-      `Goal must respect invariant: ${invariant.title}`,
-      container
-    );
+    const relation = await container.addRelationController.handle({
+      fromEntityType: EntityType.GOAL,
+      fromEntityId: goalId,
+      toEntityType: EntityType.INVARIANT,
+      toEntityId: invariant.invariantId,
+      relationType: "must-respect",
+      description: `Goal must respect invariant: ${invariant.title}`,
+    });
     createdRelations.push({
       relationId: relation.relationId,
       toType: EntityType.INVARIANT,
@@ -237,14 +232,14 @@ async function runInteractiveRelationFlow(
 
   // Create relations for selected guidelines
   for (const guideline of guidelineResult.selected) {
-    const relation = await createRelation(
-      goalId,
-      EntityType.GUIDELINE,
-      guideline.guidelineId,
-      "follows",
-      `Goal follows guideline: ${guideline.title}`,
-      container
-    );
+    const relation = await container.addRelationController.handle({
+      fromEntityType: EntityType.GOAL,
+      fromEntityId: goalId,
+      toEntityType: EntityType.GUIDELINE,
+      toEntityId: guideline.guidelineId,
+      relationType: "follows",
+      description: `Goal follows guideline: ${guideline.title}`,
+    });
     createdRelations.push({
       relationId: relation.relationId,
       toType: EntityType.GUIDELINE,
@@ -276,14 +271,14 @@ async function runInteractiveRelationFlow(
       );
 
       for (const decision of decisionResult.selected) {
-        const relation = await createRelation(
-          goalId,
-          EntityType.DECISION,
-          decision.decisionId,
-          "implements",
-          `Goal implements decision: ${decision.title}`,
-          container
-        );
+        const relation = await container.addRelationController.handle({
+          fromEntityType: EntityType.GOAL,
+          fromEntityId: goalId,
+          toEntityType: EntityType.DECISION,
+          toEntityId: decision.decisionId,
+          relationType: "implements",
+          description: `Goal implements decision: ${decision.title}`,
+        });
         createdRelations.push({
           relationId: relation.relationId,
           toType: EntityType.DECISION,
@@ -296,59 +291,3 @@ async function runInteractiveRelationFlow(
 
   return createdRelations;
 }
-
-/**
- * Approves goal refinement by transitioning status from 'to-do' to 'refined'.
- * Uses RefineGoalCommandHandler to persist the state change via event sourcing.
- * Returns enriched goal context view for presentation layer.
- */
-async function approveGoal(
-  goalId: string,
-  container: IApplicationContainer
-): Promise<ContextualGoalView> {
-  // Create command handler
-  const refineHandler = new RefineGoalCommandHandler(
-    container.goalRefinedEventStore,
-    container.goalRefinedEventStore,
-    container.goalRefinedProjector,
-    container.eventBus,
-    container.goalContextQueryHandler
-  );
-
-  const refineCommand: RefineGoalCommand = { goalId };
-  const goalContextView = await refineHandler.execute(refineCommand);
-
-  return goalContextView;
-}
-
-/**
- * Creates a single relation from goal to target entity
- */
-async function createRelation(
-  goalId: string,
-  toType: EntityTypeValue,
-  toId: string,
-  relationType: string,
-  description: string,
-  container: IApplicationContainer,
-  strength?: RelationStrengthValue
-): Promise<{ relationId: string }> {
-  const handler = new AddRelationCommandHandler(
-    container.relationAddedEventStore,
-    container.eventBus,
-    container.relationAddedProjector
-  );
-
-  const command: AddRelationCommand = {
-    fromEntityType: EntityType.GOAL,
-    fromEntityId: goalId,
-    toEntityType: toType,
-    toEntityId: toId,
-    relationType,
-    description,
-    strength,
-  };
-
-  return handler.execute(command);
-}
-

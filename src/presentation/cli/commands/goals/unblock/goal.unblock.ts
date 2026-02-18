@@ -7,8 +7,6 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { UnblockGoalCommandHandler } from "../../../../../application/context/goals/unblock/UnblockGoalCommandHandler.js";
-import { UnblockGoalCommand } from "../../../../../application/context/goals/unblock/UnblockGoalCommand.js";
 import { GoalUnblockOutputBuilder } from "./GoalUnblockOutputBuilder.js";
 
 /**
@@ -53,23 +51,13 @@ export async function goalUnblock(
   const outputBuilder = new GoalUnblockOutputBuilder();
 
   try {
-    // 1. Create command handler
-    const commandHandler = new UnblockGoalCommandHandler(
-      container.goalUnblockedEventStore,
-      container.goalUnblockedEventStore,
-      container.eventBus
-    );
-
-    // 2. Execute command
-    const command: UnblockGoalCommand = {
+    const { goalId, note } = await container.unblockGoalController.handle({
       goalId: options.goalId,
-      note: options.note
-    };
-
-    await commandHandler.execute(command);
+      note: options.note,
+    });
 
     // Build and render success output
-    const output = outputBuilder.buildSuccess(options.goalId, options.note);
+    const output = outputBuilder.buildSuccess(goalId, note);
     renderer.info(output.toHumanReadable());
   } catch (error) {
     const output = outputBuilder.buildFailureError(error instanceof Error ? error : String(error));

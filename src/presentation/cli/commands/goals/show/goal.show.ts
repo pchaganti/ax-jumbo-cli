@@ -9,8 +9,6 @@ import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
 import { GoalShowOutputBuilder } from "./GoalShowOutputBuilder.js";
-import { ShowGoalCommandHandler } from "../../../../../application/context/goals/show/ShowGoalCommandHandler.js";
-import { ShowGoalCommand } from "../../../../../application/context/goals/show/ShowGoalCommand.js";
 
 /**
  * Command metadata for auto-registration
@@ -44,23 +42,19 @@ export async function goalShow(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler with context dependencies
-    const commandHandler = new ShowGoalCommandHandler(
-      container.goalContextQueryHandler
-    );
+    // 1. Execute via controller — returns typed response
+    const { contextualGoalView } = await container.showGoalController.handle({
+      goalId: options.goalId
+    });
 
-    // 2. Execute command - returns goal context view
-    const command: ShowGoalCommand = { goalId: options.goalId };
-    const contextView = await commandHandler.execute(command);
-
-    // 3. Build and render output using builder pattern
+    // 2. Build and render output using builder pattern
     // Preserve TTY vs pipe behavior: formatted text for humans, JSON for machines
     const outputBuilder = new GoalShowOutputBuilder();
     if (process.stdout.isTTY) {
-      const output = outputBuilder.build(contextView);
+      const output = outputBuilder.build(contextualGoalView);
       renderer.info(output.toHumanReadable());
     } else {
-      const output = outputBuilder.buildStructuredOutput(contextView);
+      const output = outputBuilder.buildStructuredOutput(contextualGoalView);
       // For non-TTY (pipes/redirects), extract data and output as JSON
       const sections = output.getSections();
       const dataSection = sections.find(s => s.type === 'data');

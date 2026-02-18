@@ -7,8 +7,6 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { UpdateGoalProgressCommandHandler } from "../../../../../application/context/goals/update-progress/UpdateGoalProgressCommandHandler.js";
-import { UpdateGoalProgressCommand } from "../../../../../application/context/goals/update-progress/UpdateGoalProgressCommand.js";
 import { GoalUpdateProgressOutputBuilder } from "./GoalUpdateProgressOutputBuilder.js";
 
 /**
@@ -48,25 +46,14 @@ export async function goalUpdateProgress(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler
-    const commandHandler = new UpdateGoalProgressCommandHandler(
-      container.goalProgressUpdatedEventStore,
-      container.goalProgressUpdatedEventStore,
-      container.goalProgressUpdatedProjector,
-      container.eventBus,
-      container.goalContextQueryHandler
-    );
-
-    // 2. Execute command - returns enriched goal context view
-    const command: UpdateGoalProgressCommand = {
+    const response = await container.updateGoalProgressController.handle({
       goalId: options.goalId,
-      taskDescription: options.taskDescription
-    };
-    const goalContextView = await commandHandler.execute(command);
+      taskDescription: options.taskDescription,
+    });
 
-    // 3. Build and render output using builder pattern
+    // Build and render output using builder pattern
     const outputBuilder = new GoalUpdateProgressOutputBuilder();
-    const output = outputBuilder.build(goalContextView, options.taskDescription.trim());
+    const output = outputBuilder.build(response.goalContextView, options.taskDescription.trim());
 
     renderer.info(output.toHumanReadable());
 

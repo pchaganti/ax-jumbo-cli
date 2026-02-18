@@ -7,8 +7,6 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { RemoveGoalCommandHandler } from "../../../../../application/context/goals/remove/RemoveGoalCommandHandler.js";
-import { RemoveGoalCommand } from "../../../../../application/context/goals/remove/RemoveGoalCommand.js";
 import { GoalRemoveOutputBuilder } from "./GoalRemoveOutputBuilder.js";
 
 /**
@@ -41,23 +39,11 @@ export async function goalRemove(options: { goalId: string }, container: IApplic
   const outputBuilder = new GoalRemoveOutputBuilder();
 
   try {
-    // 1. Fetch view before removal for display
-    const view = await container.goalRemovedProjector.findById(options.goalId);
+    const response = await container.removeGoalController.handle({
+      goalId: options.goalId,
+    });
 
-    // 2. Create command handler
-    const commandHandler = new RemoveGoalCommandHandler(
-      container.goalRemovedEventStore,
-      container.goalRemovedEventStore,
-      container.goalRemovedProjector,
-      container.eventBus
-    );
-
-    // 3. Execute command
-    const command: RemoveGoalCommand = { goalId: options.goalId };
-    const result = await commandHandler.execute(command);
-
-    // Build and render success output
-    const output = outputBuilder.buildSuccess(result.goalId, view?.objective || options.goalId);
+    const output = outputBuilder.buildSuccess(response.goalId, response.objective);
     renderer.info(output.toHumanReadable());
   } catch (error) {
     const output = outputBuilder.buildFailureError(error instanceof Error ? error : String(error));

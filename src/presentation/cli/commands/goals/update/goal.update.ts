@@ -11,8 +11,7 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { UpdateGoalCommandHandler } from "../../../../../application/context/goals/update/UpdateGoalCommandHandler.js";
-import { UpdateGoalCommand } from "../../../../../application/context/goals/update/UpdateGoalCommand.js";
+import { UpdateGoalRequest } from "../../../../../application/context/goals/update/UpdateGoalRequest.js";
 import { GoalUpdateOutputBuilder } from "./GoalUpdateOutputBuilder.js";
 
 /**
@@ -85,16 +84,7 @@ export async function goalUpdate(
   const outputBuilder = new GoalUpdateOutputBuilder();
 
   try {
-    // 1. Create command handler
-    const commandHandler = new UpdateGoalCommandHandler(
-      container.goalUpdatedEventStore,
-      container.goalUpdatedEventStore,
-      container.goalUpdatedProjector,
-      container.eventBus
-    );
-
-    // 2. Build and execute command
-    const command: UpdateGoalCommand = {
+    const request: UpdateGoalRequest = {
       goalId: options.goalId,
       objective: options.objective,
       successCriteria: options.criteria,
@@ -103,10 +93,10 @@ export async function goalUpdate(
       nextGoalId: options.nextGoal,
     };
 
-    const result = await commandHandler.execute(command);
+    const response = await container.updateGoalController.handle(request);
 
     // Build and render success output
-    const output = outputBuilder.buildSuccess(result.goalId);
+    const output = outputBuilder.buildSuccess(response.goalId);
     renderer.info(output.toHumanReadable());
   } catch (error) {
     const output = outputBuilder.buildFailureError(error instanceof Error ? error : String(error));

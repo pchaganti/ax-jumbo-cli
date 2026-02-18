@@ -9,8 +9,6 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { ResumeGoalCommandHandler } from "../../../../../application/context/goals/resume/ResumeGoalCommandHandler.js";
-import { ResumeGoalCommand } from "../../../../../application/context/goals/resume/ResumeGoalCommand.js";
 import { GoalResumeOutputBuilder } from "./GoalResumeOutputBuilder.js";
 
 /**
@@ -52,28 +50,14 @@ export async function goalResume(options: { goalId: string; note?: string }, con
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler
-    const commandHandler = new ResumeGoalCommandHandler(
-      container.goalResumedEventStore,
-      container.goalResumedEventStore,
-      container.goalResumedProjector,
-      container.eventBus,
-      container.goalClaimPolicy,
-      container.workerIdentityReader,
-      container.settingsReader,
-      container.goalContextQueryHandler
-    );
-
-    // 2. Execute command - returns enriched goal context view
-    const command: ResumeGoalCommand = {
+    const response = await container.resumeGoalController.handle({
       goalId: options.goalId,
-      note: options.note
-    };
-    const goalContextView = await commandHandler.execute(command);
+      note: options.note,
+    });
 
-    // 3. Build and render output using builder pattern
+    // Build and render output using builder pattern
     const outputBuilder = new GoalResumeOutputBuilder();
-    const output = outputBuilder.build(goalContextView);
+    const output = outputBuilder.build(response.contextualGoalView);
 
     renderer.info(output.toHumanReadable());
 

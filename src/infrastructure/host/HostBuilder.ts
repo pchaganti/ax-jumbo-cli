@@ -278,6 +278,9 @@ import { ValuePropositionUpdatedEventHandler } from "../../application/context/v
 import { ValuePropositionRemovedEventHandler } from "../../application/context/value-propositions/remove/ValuePropositionRemovedEventHandler.js";
 // Relations Event Handlers - decomposed by use case
 import { RelationAddedEventHandler } from "../../application/context/relations/add/RelationAddedEventHandler.js";
+import { AddRelationCommandHandler } from "../../application/context/relations/add/AddRelationCommandHandler.js";
+import { LocalAddRelationGateway } from "../../application/context/relations/add/LocalAddRelationGateway.js";
+import { AddRelationController } from "../../application/context/relations/add/AddRelationController.js";
 import { RelationRemovedEventHandler } from "../../application/context/relations/remove/RelationRemovedEventHandler.js";
 // Context
 import { GoalContextQueryHandler } from "../../application/context/goals/get/GoalContextQueryHandler.js";
@@ -291,15 +294,62 @@ import { CompleteGoalCommandHandler } from "../../application/context/goals/comp
 import { LocalCompleteGoalGateway } from "../../application/context/goals/complete/LocalCompleteGoalGateway.js";
 import { ReviewGoalController } from "../../application/context/goals/review/ReviewGoalController.js";
 import { SubmitGoalForReviewCommandHandler } from "../../application/context/goals/review/SubmitGoalForReviewCommandHandler.js";
+import { LocalReviewGoalGateway } from "../../application/context/goals/review/LocalReviewGoalGateway.js";
 import { FsGoalSubmittedForReviewEventStore } from "../context/goals/review/FsGoalSubmittedForReviewEventStore.js";
 import { QualifyGoalController } from "../../application/context/goals/qualify/QualifyGoalController.js";
 import { QualifyGoalCommandHandler } from "../../application/context/goals/qualify/QualifyGoalCommandHandler.js";
+import { LocalQualifyGoalGateway } from "../../application/context/goals/qualify/LocalQualifyGoalGateway.js";
 import { FsGoalQualifiedEventStore } from "../context/goals/qualify/FsGoalQualifiedEventStore.js";
 
 // BlockGoal Controller-Gateway
+import { RefineGoalCommandHandler } from "../../application/context/goals/refine/RefineGoalCommandHandler.js";
+import { LocalRefineGoalGateway } from "../../application/context/goals/refine/LocalRefineGoalGateway.js";
+import { RefineGoalController } from "../../application/context/goals/refine/RefineGoalController.js";
 import { BlockGoalCommandHandler } from "../../application/context/goals/block/BlockGoalCommandHandler.js";
 import { LocalBlockGoalGateway } from "../../application/context/goals/block/LocalBlockGoalGateway.js";
 import { BlockGoalController } from "../../application/context/goals/block/BlockGoalController.js";
+
+// UnblockGoal Controller-Gateway
+import { UnblockGoalCommandHandler } from "../../application/context/goals/unblock/UnblockGoalCommandHandler.js";
+import { LocalUnblockGoalGateway } from "../../application/context/goals/unblock/LocalUnblockGoalGateway.js";
+import { UnblockGoalController } from "../../application/context/goals/unblock/UnblockGoalController.js";
+
+// RemoveGoal Controller-Gateway
+import { RemoveGoalCommandHandler } from "../../application/context/goals/remove/RemoveGoalCommandHandler.js";
+import { LocalRemoveGoalGateway } from "../../application/context/goals/remove/LocalRemoveGoalGateway.js";
+import { RemoveGoalController } from "../../application/context/goals/remove/RemoveGoalController.js";
+
+// ResetGoal Controller-Gateway
+import { ResetGoalCommandHandler } from "../../application/context/goals/reset/ResetGoalCommandHandler.js";
+import { LocalResetGoalGateway } from "../../application/context/goals/reset/LocalResetGoalGateway.js";
+import { ResetGoalController } from "../../application/context/goals/reset/ResetGoalController.js";
+
+// UpdateGoal Controller-Gateway
+import { UpdateGoalCommandHandler } from "../../application/context/goals/update/UpdateGoalCommandHandler.js";
+import { LocalUpdateGoalGateway } from "../../application/context/goals/update/LocalUpdateGoalGateway.js";
+import { UpdateGoalController } from "../../application/context/goals/update/UpdateGoalController.js";
+
+// UpdateGoalProgress Controller-Gateway
+import { UpdateGoalProgressCommandHandler } from "../../application/context/goals/update-progress/UpdateGoalProgressCommandHandler.js";
+import { LocalUpdateGoalProgressGateway } from "../../application/context/goals/update-progress/LocalUpdateGoalProgressGateway.js";
+import { UpdateGoalProgressController } from "../../application/context/goals/update-progress/UpdateGoalProgressController.js";
+
+// StartGoal Controller-Gateway
+import { StartGoalCommandHandler } from "../../application/context/goals/start/StartGoalCommandHandler.js";
+import { LocalStartGoalGateway } from "../../application/context/goals/start/LocalStartGoalGateway.js";
+import { StartGoalController } from "../../application/context/goals/start/StartGoalController.js";
+
+// PauseGoal Controller-Gateway
+import { PauseGoalCommandHandler } from "../../application/context/goals/pause/PauseGoalCommandHandler.js";
+import { LocalPauseGoalGateway } from "../../application/context/goals/pause/LocalPauseGoalGateway.js";
+import { PauseGoalController } from "../../application/context/goals/pause/PauseGoalController.js";
+
+// GetGoals Controller-Gateway
+import { GetGoalsController } from "../../application/context/goals/get/GetGoalsController.js";
+import { LocalGetGoalsGateway } from "../context/goals/get/LocalGetGoalsGateway.js";
+// ShowGoal Controller-Gateway
+import { ShowGoalController } from "../../application/context/goals/get/ShowGoalController.js";
+import { LocalShowGoalGateway } from "../context/goals/get/LocalShowGoalGateway.js";
 
 // Session Controllers
 import { SessionStartController } from "../../application/context/sessions/start/SessionStartController.js";
@@ -312,6 +362,8 @@ import { StartSessionCommandHandler } from "../../application/context/sessions/s
 import { PauseWorkCommandHandler } from "../../application/context/work/pause/PauseWorkCommandHandler.js";
 import { ResumeWorkController } from "../../application/context/work/resume/ResumeWorkController.js";
 import { ResumeGoalCommandHandler } from "../../application/context/goals/resume/ResumeGoalCommandHandler.js";
+import { LocalResumeGoalGateway } from "../../application/context/goals/resume/LocalResumeGoalGateway.js";
+import { ResumeGoalController } from "../../application/context/goals/resume/ResumeGoalController.js";
 
 // Architecture Controllers
 import { AddAudiencePainCommandHandler } from "../../application/context/audience-pains/add/AddAudiencePainCommandHandler.js";
@@ -661,11 +713,14 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       workerIdentityReader,
       goalContextQueryHandler
     );
-    const reviewGoalController = new ReviewGoalController(
+    const reviewGoalGateway = new LocalReviewGoalGateway(
       submitGoalForReviewCommandHandler,
       goalStartedProjector,
       goalClaimPolicy,
       workerIdentityReader
+    );
+    const reviewGoalController = new ReviewGoalController(
+      reviewGoalGateway
     );
     // QualifyGoalController dependencies
     const qualifyGoalCommandHandler = new QualifyGoalCommandHandler(
@@ -677,11 +732,14 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       workerIdentityReader,
       goalContextQueryHandler
     );
-    const qualifyGoalController = new QualifyGoalController(
+    const qualifyGoalGateway = new LocalQualifyGoalGateway(
       qualifyGoalCommandHandler,
       goalStartedProjector,
       goalClaimPolicy,
       workerIdentityReader
+    );
+    const qualifyGoalController = new QualifyGoalController(
+      qualifyGoalGateway
     );
 
     // BlockGoal Controller
@@ -696,6 +754,136 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     const blockGoalController = new BlockGoalController(
       blockGoalGateway
     );
+
+    // UnblockGoal Controller
+    const unblockGoalCommandHandler = new UnblockGoalCommandHandler(
+      goalUnblockedEventStore,
+      goalUnblockedEventStore,
+      eventBus
+    );
+    const unblockGoalGateway = new LocalUnblockGoalGateway(
+      unblockGoalCommandHandler
+    );
+    const unblockGoalController = new UnblockGoalController(
+      unblockGoalGateway
+    );
+
+    // StartGoal Controller
+    const startGoalCommandHandler = new StartGoalCommandHandler(
+      goalStartedEventStore,
+      goalStartedEventStore,
+      goalStartedProjector,
+      eventBus,
+      goalClaimPolicy,
+      workerIdentityReader,
+      settingsReader,
+      goalContextQueryHandler
+    );
+    const startGoalGateway = new LocalStartGoalGateway(
+      startGoalCommandHandler
+    );
+    const startGoalController = new StartGoalController(
+      startGoalGateway
+    );
+
+    // PauseGoal Controller
+    const pauseGoalCommandHandler = new PauseGoalCommandHandler(
+      goalPausedEventStore,
+      goalPausedEventStore,
+      goalPausedProjector,
+      eventBus
+    );
+    const pauseGoalGateway = new LocalPauseGoalGateway(
+      pauseGoalCommandHandler,
+      goalPausedProjector
+    );
+    const pauseGoalController = new PauseGoalController(
+      pauseGoalGateway
+    );
+
+    // RemoveGoal Controller
+    const removeGoalCommandHandler = new RemoveGoalCommandHandler(
+      goalRemovedEventStore,
+      goalRemovedEventStore,
+      goalRemovedProjector,
+      eventBus
+    );
+    const removeGoalGateway = new LocalRemoveGoalGateway(
+      removeGoalCommandHandler,
+      goalRemovedProjector
+    );
+    const removeGoalController = new RemoveGoalController(
+      removeGoalGateway
+    );
+
+    // ResetGoal Controller
+    const resetGoalCommandHandler = new ResetGoalCommandHandler(
+      goalResetEventStore,
+      goalResetEventStore,
+      goalResetProjector,
+      eventBus,
+      goalClaimPolicy,
+      workerIdentityReader
+    );
+    const resetGoalGateway = new LocalResetGoalGateway(
+      resetGoalCommandHandler,
+      goalResetProjector
+    );
+    const resetGoalController = new ResetGoalController(
+      resetGoalGateway
+    );
+
+    // UpdateGoal Controller
+    const updateGoalCommandHandler = new UpdateGoalCommandHandler(
+      goalUpdatedEventStore,
+      goalUpdatedEventStore,
+      goalUpdatedProjector,
+      eventBus
+    );
+    const updateGoalGateway = new LocalUpdateGoalGateway(
+      updateGoalCommandHandler
+    );
+    const updateGoalController = new UpdateGoalController(
+      updateGoalGateway
+    );
+
+    // UpdateGoalProgress Controller
+    const updateGoalProgressCommandHandler = new UpdateGoalProgressCommandHandler(
+      goalProgressUpdatedEventStore,
+      goalProgressUpdatedEventStore,
+      goalProgressUpdatedProjector,
+      eventBus,
+      goalContextQueryHandler
+    );
+    const updateGoalProgressGateway = new LocalUpdateGoalProgressGateway(
+      updateGoalProgressCommandHandler
+    );
+    const updateGoalProgressController = new UpdateGoalProgressController(
+      updateGoalProgressGateway
+    );
+
+    // RefineGoal Controller
+    const refineGoalCommandHandler = new RefineGoalCommandHandler(
+      goalRefinedEventStore,
+      goalRefinedEventStore,
+      goalRefinedProjector,
+      eventBus,
+      goalContextQueryHandler
+    );
+    const refineGoalGateway = new LocalRefineGoalGateway(
+      refineGoalCommandHandler
+    );
+    const refineGoalController = new RefineGoalController(
+      refineGoalGateway
+    );
+
+    // GetGoals Controller
+    const getGoalsGateway = new LocalGetGoalsGateway(goalStatusReader);
+    const getGoalsController = new GetGoalsController(getGoalsGateway);
+
+    // ShowGoal Controller
+    const showGoalGateway = new LocalShowGoalGateway(goalContextQueryHandler);
+    const showGoalController = new ShowGoalController(showGoalGateway);
 
     // Work Command Handlers
     const pauseWorkCommandHandler = new PauseWorkCommandHandler(
@@ -716,6 +904,12 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       workerIdentityReader,
       settingsReader,
       goalContextQueryHandler
+    );
+    const resumeGoalGateway = new LocalResumeGoalGateway(
+      resumeGoalCommandHandler
+    );
+    const resumeGoalController = new ResumeGoalController(
+      resumeGoalGateway
     );
     const resumeWorkController = new ResumeWorkController(
       workerIdentityReader,
@@ -978,6 +1172,19 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       settingsInitializer
     );
 
+    // AddRelation Controller
+    const addRelationCommandHandler = new AddRelationCommandHandler(
+      relationAddedEventStore,
+      eventBus,
+      relationAddedProjector
+    );
+    const addRelationGateway = new LocalAddRelationGateway(
+      addRelationCommandHandler
+    );
+    const addRelationController = new AddRelationController(
+      addRelationGateway
+    );
+
     // ============================================================
     // STEP 5: Create Projection Handlers (Event Subscribers)
     // ============================================================
@@ -1196,10 +1403,21 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       getSessionsController,
       // Goal Controllers
       addGoalController,
+      startGoalController,
       completeGoalController,
       reviewGoalController,
       qualifyGoalController,
       blockGoalController,
+      unblockGoalController,
+      getGoalsController,
+      showGoalController,
+      pauseGoalController,
+      resumeGoalController,
+      refineGoalController,
+      removeGoalController,
+      resetGoalController,
+      updateGoalController,
+      updateGoalProgressController,
 
       // Decision Controllers
       addDecisionController,
@@ -1340,6 +1558,8 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       valuePropositionRemovedProjector,
       valuePropositionContextReader,
 
+      // Relations Category - Controllers
+      addRelationController,
       // Relations Category - decomposed by use case
       relationAddedEventStore,
       relationRemovedEventStore,

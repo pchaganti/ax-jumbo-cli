@@ -12,17 +12,8 @@ import { goalRefine } from "../../../../../../src/presentation/cli/commands/goal
 import { IApplicationContainer } from "../../../../../../src/application/host/IApplicationContainer.js";
 import { GoalView } from "../../../../../../src/application/context/goals/GoalView.js";
 import { Renderer } from "../../../../../../src/presentation/cli/rendering/Renderer.js";
-import { GoalStatus, GoalEventType } from "../../../../../../src/domain/goals/Constants.js";
-import { BaseEvent } from "../../../../../../src/domain/BaseEvent.js";
-import { AppendResult } from "../../../../../../src/application/persistence/IEventStore.js";
-import { IEventHandler } from "../../../../../../src/application/messaging/IEventHandler.js";
+import { GoalStatus } from "../../../../../../src/domain/goals/Constants.js";
 import { IGoalReader } from "../../../../../../src/application/context/goals/start/IGoalReader.js";
-import { IGoalRefineEventWriter } from "../../../../../../src/application/context/goals/refine/IGoalRefineEventWriter.js";
-import { IGoalRefineEventReader } from "../../../../../../src/application/context/goals/refine/IGoalRefineEventReader.js";
-import { IGoalRefinedProjector } from "../../../../../../src/application/context/goals/refine/IGoalRefinedProjector.js";
-import { IGoalRefineReader } from "../../../../../../src/application/context/goals/refine/IGoalRefineReader.js";
-import { IEventBus } from "../../../../../../src/application/messaging/IEventBus.js";
-import { GoalRefinedEvent } from "../../../../../../src/domain/goals/refine/GoalRefinedEvent.js";
 
 /**
  * Mock implementations for test dependencies
@@ -36,58 +27,9 @@ class MockGoalContextReader implements IGoalReader {
   }
 }
 
-class MockGoalRefinedEventStore implements IGoalRefineEventWriter, IGoalRefineEventReader {
-  events: BaseEvent[] = [];
-  mockAppend: jest.Mock<(event: BaseEvent & Record<string, any>) => Promise<AppendResult>> = jest.fn();
-  mockReadStream: jest.Mock<(streamId: string) => Promise<BaseEvent[]>> = jest.fn();
-
-  async append(event: BaseEvent & Record<string, any>): Promise<AppendResult> {
-    return this.mockAppend(event);
-  }
-
-  async readStream(streamId: string): Promise<BaseEvent[]> {
-    return this.mockReadStream(streamId);
-  }
-}
-
-class MockGoalRefinedProjector implements IGoalRefinedProjector, IGoalRefineReader {
-  mockApplyGoalRefined: jest.Mock<(event: GoalRefinedEvent) => Promise<void>> = jest.fn();
-  mockFindById: jest.Mock<(goalId: string) => Promise<GoalView | null>> = jest.fn();
-
-  async applyGoalRefined(event: GoalRefinedEvent): Promise<void> {
-    return this.mockApplyGoalRefined(event);
-  }
-
-  async findById(goalId: string): Promise<GoalView | null> {
-    return this.mockFindById(goalId);
-  }
-}
-
-class MockEventBus implements IEventBus {
-  publishedEvents: BaseEvent[] = [];
-  handlers: Map<string, IEventHandler[]> = new Map();
-
-  subscribe(eventType: string, handler: IEventHandler): void {
-    if (!this.handlers.has(eventType)) {
-      this.handlers.set(eventType, []);
-    }
-    this.handlers.get(eventType)!.push(handler);
-  }
-
-  async publish(event: BaseEvent): Promise<void> {
-    this.publishedEvents.push(event);
-    const handlers = this.handlers.get(event.type) || [];
-    for (const handler of handlers) {
-      await handler.handle(event);
-    }
-  }
-}
-
 describe("goal.refine command", () => {
   let mockGoalContextReader: MockGoalContextReader;
-  let mockGoalRefinedEventStore: MockGoalRefinedEventStore;
-  let mockGoalRefinedProjector: MockGoalRefinedProjector;
-  let mockEventBus: MockEventBus;
+  let mockRefineGoalController: { handle: jest.Mock };
   let mockContainer: Partial<IApplicationContainer>;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
@@ -99,19 +41,12 @@ describe("goal.refine command", () => {
     successCriteria: ["Users can log in", "Sessions are persisted"],
     scopeIn: ["Login form", "Session management"],
     scopeOut: ["Password reset", "Social login"],
-    
+
     status: GoalStatus.TODO,
     version: 1,
     createdAt: "2025-01-01T10:00:00Z",
     updatedAt: "2025-01-01T10:00:00Z",
     progress: [],
-  };
-
-  const mockRefinedGoalView: GoalView = {
-    ...mockTodoGoalView,
-    status: GoalStatus.REFINED,
-    version: 2,
-    updatedAt: "2025-01-01T11:00:00Z",
   };
 
   beforeEach(() => {
@@ -120,50 +55,17 @@ describe("goal.refine command", () => {
 
     // Create mock instances
     mockGoalContextReader = new MockGoalContextReader();
-    mockGoalRefinedEventStore = new MockGoalRefinedEventStore();
-    mockGoalRefinedProjector = new MockGoalRefinedProjector();
-    mockEventBus = new MockEventBus();
-
-    // Set up default mock behaviors
-    mockGoalRefinedEventStore.mockAppend.mockResolvedValue({ nextSeq: 2 });
-    mockGoalRefinedEventStore.mockReadStream.mockResolvedValue([
-      {
-        type: GoalEventType.ADDED,
-        aggregateId: "goal_123",
-        version: 1,
-        timestamp: "2025-01-01T10:00:00Z",
-        payload: {
-          objective: "Implement user authentication",
-          successCriteria: ["Users can log in", "Sessions are persisted"],
-          scopeIn: ["Login form", "Session management"],
-          scopeOut: ["Password reset", "Social login"],
-          
-          status: GoalStatus.TODO,
-        },
-      },
-    ]);
-    mockGoalRefinedProjector.mockApplyGoalRefined.mockResolvedValue(undefined);
-    mockGoalRefinedProjector.mockFindById.mockResolvedValue(mockRefinedGoalView);
-
-    const mockGoalContextQueryHandler = {
-      execute: jest.fn<() => Promise<any>>().mockResolvedValue({
-        goal: mockRefinedGoalView,
-        components: [],
-        dependencies: [],
-        decisions: [],
-        invariants: [],
-        guidelines: [],
-        architecture: null,
+    mockRefineGoalController = {
+      handle: jest.fn<() => Promise<any>>().mockResolvedValue({
+        goalId: "goal_123",
+        status: GoalStatus.REFINED,
       }),
     };
 
     // Create mock container
     mockContainer = {
       goalContextReader: mockGoalContextReader,
-      goalRefinedEventStore: mockGoalRefinedEventStore,
-      goalRefinedProjector: mockGoalRefinedProjector,
-      eventBus: mockEventBus,
-      goalContextQueryHandler: mockGoalContextQueryHandler as any,
+      refineGoalController: mockRefineGoalController as any,
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
@@ -192,8 +94,8 @@ describe("goal.refine command", () => {
       // Verify goal was fetched
       expect(mockGoalContextReader.mockFindById).toHaveBeenCalledWith("goal_123");
 
-      // Verify no state transition occurred (no event append)
-      expect(mockGoalRefinedEventStore.mockAppend).not.toHaveBeenCalled();
+      // Verify no controller call (no state transition)
+      expect(mockRefineGoalController.handle).not.toHaveBeenCalled();
 
       // Verify output includes goal details and LLM instructions
       expect(consoleLogSpy).toHaveBeenCalled();
@@ -249,7 +151,7 @@ describe("goal.refine command", () => {
   });
 
   describe("--approve mode", () => {
-    it("should transition goal status from to-do to refined", async () => {
+    it("should transition goal status from to-do to refined via controller", async () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(mockTodoGoalView);
 
       await goalRefine(
@@ -260,11 +162,8 @@ describe("goal.refine command", () => {
       // Verify goal was fetched
       expect(mockGoalContextReader.mockFindById).toHaveBeenCalledWith("goal_123");
 
-      // Verify state transition occurred
-      expect(mockGoalRefinedEventStore.mockAppend).toHaveBeenCalledTimes(1);
-
-      // Verify event was published to bus
-      expect(mockEventBus.publishedEvents.length).toBe(1);
+      // Verify controller was called
+      expect(mockRefineGoalController.handle).toHaveBeenCalledWith({ goalId: "goal_123" });
 
       // Verify success message
       const allOutput = consoleLogSpy.mock.calls.map((c) => c.join(" ")).join("\n");
@@ -308,7 +207,7 @@ describe("goal.refine command", () => {
         mockContainer as IApplicationContainer
       );
 
-      expect(mockGoalRefinedEventStore.mockAppend).toHaveBeenCalledTimes(1);
+      expect(mockRefineGoalController.handle).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalled();
     });
   });
@@ -326,9 +225,9 @@ describe("goal.refine command", () => {
       expect(errorOutput).toContain("Goal not found");
     });
 
-    it("should exit with error when event store fails during approve", async () => {
+    it("should exit with error when controller fails during approve", async () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(mockTodoGoalView);
-      mockGoalRefinedEventStore.mockAppend.mockRejectedValue(new Error("Event store failure"));
+      mockRefineGoalController.handle.mockRejectedValue(new Error("Goal cannot be refined"));
 
       await expect(
         goalRefine({ goalId: "goal_123", approve: true }, mockContainer as IApplicationContainer)
@@ -340,23 +239,13 @@ describe("goal.refine command", () => {
     });
 
     it("should handle goal already in refined status during approve", async () => {
-      mockGoalContextReader.mockFindById.mockResolvedValue(mockRefinedGoalView);
-      mockGoalRefinedEventStore.mockReadStream.mockResolvedValue([
-        {
-          type: GoalEventType.ADDED,
-          aggregateId: "goal_123",
-          version: 1,
-          timestamp: "2025-01-01T10:00:00Z",
-          payload: { objective: "Test", status: GoalStatus.TODO },
-        },
-        {
-          type: GoalEventType.REFINED,
-          aggregateId: "goal_123",
-          version: 2,
-          timestamp: "2025-01-01T11:00:00Z",
-          payload: { status: GoalStatus.REFINED },
-        },
-      ]);
+      mockGoalContextReader.mockFindById.mockResolvedValue({
+        ...mockTodoGoalView,
+        status: GoalStatus.REFINED,
+      });
+      mockRefineGoalController.handle.mockRejectedValue(
+        new Error("Goal is not in TODO status")
+      );
 
       await expect(
         goalRefine({ goalId: "goal_123", approve: true }, mockContainer as IApplicationContainer)

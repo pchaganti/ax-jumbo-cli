@@ -8,8 +8,6 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { ResetGoalCommandHandler } from "../../../../../application/context/goals/reset/ResetGoalCommandHandler.js";
-import { ResetGoalCommand } from "../../../../../application/context/goals/reset/ResetGoalCommand.js";
 import { GoalResetOutputBuilder } from "./GoalResetOutputBuilder.js";
 
 /**
@@ -42,28 +40,15 @@ export async function goalReset(options: { goalId: string }, container: IApplica
   const outputBuilder = new GoalResetOutputBuilder();
 
   try {
-    // 1. Create command handler
-    const commandHandler = new ResetGoalCommandHandler(
-      container.goalResetEventStore,
-      container.goalResetEventStore,
-      container.goalResetProjector,
-      container.eventBus,
-      container.goalClaimPolicy,
-      container.workerIdentityReader
-    );
-
-    // 2. Execute command
-    const command: ResetGoalCommand = { goalId: options.goalId };
-    const result = await commandHandler.execute(command);
-
-    // 3. Fetch updated view for display
-    const view = await container.goalResetProjector.findById(result.goalId);
+    const response = await container.resetGoalController.handle({
+      goalId: options.goalId,
+    });
 
     // Build and render success output
     const output = outputBuilder.buildSuccess(
-      result.goalId,
-      view?.objective || options.goalId,
-      view?.status || 'to-do'
+      response.goalId,
+      response.objective,
+      response.status
     );
     renderer.info(output.toHumanReadable());
   } catch (error) {

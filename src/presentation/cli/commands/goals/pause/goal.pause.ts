@@ -7,8 +7,6 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { PauseGoalCommandHandler } from "../../../../../application/context/goals/pause/PauseGoalCommandHandler.js";
-import { PauseGoalCommand } from "../../../../../application/context/goals/pause/PauseGoalCommand.js";
 import { GoalPausedReasons, GoalPausedReasonsType } from "../../../../../domain/goals/GoalPausedReasons.js";
 import { GoalPauseOutputBuilder } from "./GoalPauseOutputBuilder.js";
 
@@ -59,40 +57,17 @@ export async function goalPause(
   const outputBuilder = new GoalPauseOutputBuilder();
 
   try {
-    // 1. Validate reason
-    const validReasons = Object.values(GoalPausedReasons);
-    if (!validReasons.includes(options.reason as any)) {
-      throw new Error(
-        `Invalid reason: ${options.reason}. Valid reasons: ${validReasons.join(", ")}`
-      );
-    }
-    const reason = options.reason as GoalPausedReasonsType;
-
-    // 2. Create command handler
-    const commandHandler = new PauseGoalCommandHandler(
-      container.goalPausedEventStore,
-      container.goalPausedEventStore,
-      container.goalPausedProjector,
-      container.eventBus
-    );
-
-    // 3. Execute command
-    const command: PauseGoalCommand = {
+    const response = await container.pauseGoalController.handle({
       goalId: options.goalId,
-      reason,
-      note: options.note
-    };
-    const result = await commandHandler.execute(command);
+      reason: options.reason as GoalPausedReasonsType,
+      note: options.note,
+    });
 
-    // 4. Fetch updated view for display
-    const view = await container.goalPausedProjector.findById(result.goalId);
-
-    // Build and render success output
     const output = outputBuilder.buildSuccess(
-      result.goalId,
-      view?.objective || "",
-      view?.status || "paused",
-      reason
+      response.goalId,
+      response.objective,
+      response.status,
+      response.reason as GoalPausedReasonsType
     );
     renderer.info(output.toHumanReadable());
   } catch (error) {
@@ -100,5 +75,4 @@ export async function goalPause(
     renderer.info(output.toHumanReadable());
     process.exit(1);
   }
-  // NO CLEANUP - infrastructure manages itself!
 }
