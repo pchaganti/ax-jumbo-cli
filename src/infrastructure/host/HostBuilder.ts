@@ -63,6 +63,9 @@ import { ReverseDecisionController } from "../../application/context/decisions/r
 import { SupersedeDecisionCommandHandler } from "../../application/context/decisions/supersede/SupersedeDecisionCommandHandler.js";
 import { LocalSupersedeDecisionGateway } from "../../application/context/decisions/supersede/LocalSupersedeDecisionGateway.js";
 import { SupersedeDecisionController } from "../../application/context/decisions/supersede/SupersedeDecisionController.js";
+import { UpdateDecisionCommandHandler } from "../../application/context/decisions/update/UpdateDecisionCommandHandler.js";
+import { LocalUpdateDecisionGateway } from "../../application/context/decisions/update/LocalUpdateDecisionGateway.js";
+import { UpdateDecisionController } from "../../application/context/decisions/update/UpdateDecisionController.js";
 // Decision Event Stores - decomposed by use case
 import { FsDecisionAddedEventStore } from "../context/decisions/add/FsDecisionAddedEventStore.js";
 import { FsDecisionUpdatedEventStore } from "../context/decisions/update/FsDecisionUpdatedEventStore.js";
@@ -738,6 +741,17 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     const supersedeDecisionController = new SupersedeDecisionController(
       supersedeDecisionGateway
     );
+    const updateDecisionCommandHandler = new UpdateDecisionCommandHandler(
+      decisionUpdatedEventStore,
+      decisionUpdatedProjector,
+      eventBus
+    );
+    const updateDecisionGateway = new LocalUpdateDecisionGateway(
+      updateDecisionCommandHandler
+    );
+    const updateDecisionController = new UpdateDecisionController(
+      updateDecisionGateway
+    );
 
     // Component Controllers
     const addComponentCommandHandler = new AddComponentCommandHandler(
@@ -1098,6 +1112,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       getDecisionsController,
       reverseDecisionController,
       supersedeDecisionController,
+      updateDecisionController,
 
       // Work Command Handlers
       pauseWorkCommandHandler,

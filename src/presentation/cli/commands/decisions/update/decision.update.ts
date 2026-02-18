@@ -1,7 +1,6 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
-import { UpdateDecisionCommandHandler } from "../../../../../application/context/decisions/update/UpdateDecisionCommandHandler.js";
-import { UpdateDecisionCommand } from "../../../../../application/context/decisions/update/UpdateDecisionCommand.js";
+import { UpdateDecisionRequest } from "../../../../../application/context/decisions/update/UpdateDecisionRequest.js";
 import { Renderer } from "../../../rendering/Renderer.js";
 
 /**
@@ -69,15 +68,7 @@ export async function decisionUpdate(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler using container dependencies
-    const commandHandler = new UpdateDecisionCommandHandler(
-      container.decisionUpdatedEventStore,
-      container.decisionUpdatedProjector,
-      container.eventBus
-    );
-
-    // 2. Execute command
-    const command: UpdateDecisionCommand = {
+    const request: UpdateDecisionRequest = {
       decisionId: options.decisionId,
       title: options.title,
       context: options.context,
@@ -86,7 +77,7 @@ export async function decisionUpdate(
       consequences: options.consequences
     };
 
-    const result = await commandHandler.execute(command);
+    const response = await container.updateDecisionController.handle(request);
 
     // Success output - show what was updated
     const updatedFields: string[] = [];
@@ -96,7 +87,7 @@ export async function decisionUpdate(
     if (options.alternative) updatedFields.push('alternatives');
     if (options.consequences) updatedFields.push('consequences');
 
-    renderer.success(`Decision updated (${result.decisionId})`);
+    renderer.success(`Decision updated (${response.decisionId})`);
     renderer.info(`Updated fields: ${updatedFields.join(', ')}`);
   } catch (error) {
     renderer.error("Failed to update decision", error instanceof Error ? error : String(error));
