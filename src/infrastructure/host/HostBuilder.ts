@@ -51,6 +51,12 @@ import { FsGoalRefinedEventStore } from "../context/goals/refine/FsGoalRefinedEv
 import { FsGoalResetEventStore } from "../context/goals/reset/FsGoalResetEventStore.js";
 import { FsGoalRemovedEventStore } from "../context/goals/remove/FsGoalRemovedEventStore.js";
 import { FsGoalProgressUpdatedEventStore } from "../context/goals/update-progress/FsGoalProgressUpdatedEventStore.js";
+// Decision Controllers
+import { AddDecisionCommandHandler } from "../../application/context/decisions/add/AddDecisionCommandHandler.js";
+import { LocalAddDecisionGateway } from "../../application/context/decisions/add/LocalAddDecisionGateway.js";
+import { AddDecisionController } from "../../application/context/decisions/add/AddDecisionController.js";
+import { LocalGetDecisionsGateway } from "../../application/context/decisions/get/LocalGetDecisionsGateway.js";
+import { GetDecisionsController } from "../../application/context/decisions/get/GetDecisionsController.js";
 // Decision Event Stores - decomposed by use case
 import { FsDecisionAddedEventStore } from "../context/decisions/add/FsDecisionAddedEventStore.js";
 import { FsDecisionUpdatedEventStore } from "../context/decisions/update/FsDecisionUpdatedEventStore.js";
@@ -687,6 +693,24 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       getArchitectureGateway
     );
 
+    // Decision Controllers
+    const addDecisionCommandHandler = new AddDecisionCommandHandler(
+      decisionAddedEventStore,
+      eventBus
+    );
+    const addDecisionGateway = new LocalAddDecisionGateway(
+      addDecisionCommandHandler
+    );
+    const addDecisionController = new AddDecisionController(
+      addDecisionGateway
+    );
+    const getDecisionsGateway = new LocalGetDecisionsGateway(
+      decisionViewReader
+    );
+    const getDecisionsController = new GetDecisionsController(
+      getDecisionsGateway
+    );
+
     // Component Controllers
     const addComponentCommandHandler = new AddComponentCommandHandler(
       componentAddedEventStore,
@@ -1040,6 +1064,10 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       completeGoalController,
       reviewGoalController,
       qualifyGoalController,
+
+      // Decision Controllers
+      addDecisionController,
+      getDecisionsController,
 
       // Work Command Handlers
       pauseWorkCommandHandler,

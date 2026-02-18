@@ -82,6 +82,8 @@ import { UpdateArchitectureController } from "../context/architecture/update/Upd
 import { PauseWorkCommandHandler } from "../context/work/pause/PauseWorkCommandHandler.js";
 import { ResumeWorkController } from "../context/work/resume/ResumeWorkController.js";
 
+import { AddDecisionController } from "../context/decisions/add/AddDecisionController.js";
+import { GetDecisionsController } from "../context/decisions/get/GetDecisionsController.js";
 import { IDecisionAddedProjector } from "../context/decisions/add/IDecisionAddedProjector.js";
 import { IDecisionUpdatedProjector } from "../context/decisions/update/IDecisionUpdatedProjector.js";
 import { IDecisionUpdateReader } from "../context/decisions/update/IDecisionUpdateReader.js";
@@ -332,6 +334,10 @@ export interface IApplicationContainer {
   completeGoalController: CompleteGoalController;
   reviewGoalController: ReviewGoalController;
   qualifyGoalController: QualifyGoalController;
+
+  // Decision Controllers
+  addDecisionController: AddDecisionController;
+  getDecisionsController: GetDecisionsController;
 
   // Work Command Handlers
   pauseWorkCommandHandler: PauseWorkCommandHandler;

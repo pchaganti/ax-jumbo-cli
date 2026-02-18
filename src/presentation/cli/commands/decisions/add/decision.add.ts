@@ -7,8 +7,7 @@
 
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
-import { AddDecisionCommandHandler } from "../../../../../application/context/decisions/add/AddDecisionCommandHandler.js";
-import { AddDecisionCommand } from "../../../../../application/context/decisions/add/AddDecisionCommand.js";
+import { AddDecisionRequest } from "../../../../../application/context/decisions/add/AddDecisionRequest.js";
 import { Renderer } from "../../../rendering/Renderer.js";
 
 /**
@@ -73,14 +72,7 @@ export async function decisionAdd(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Create command handler using container dependencies
-    const commandHandler = new AddDecisionCommandHandler(
-      container.decisionAddedEventStore,
-      container.eventBus
-    );
-
-    // 2. Execute command
-    const command: AddDecisionCommand = {
+    const request: AddDecisionRequest = {
       title: options.title,
       context: options.context,
       rationale: options.rationale,
@@ -88,10 +80,10 @@ export async function decisionAdd(
       consequences: options.consequences,
     };
 
-    const result = await commandHandler.execute(command);
+    const response = await container.addDecisionController.handle(request);
 
     // Success output
-    renderer.success(`Decision '${options.title}' added (${result.decisionId})`);
+    renderer.success(`Decision '${options.title}' added (${response.decisionId})`);
     if (options.rationale) {
       const preview =
         options.rationale.length > 100
