@@ -11,7 +11,6 @@
 
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
-import { GetDependenciesQueryHandler } from "../../../../../application/context/dependencies/get/GetDependenciesQueryHandler.js";
 import { Renderer } from "../../../rendering/Renderer.js";
 import { DependencyView } from "../../../../../application/context/dependencies/DependencyView.js";
 
@@ -94,13 +93,8 @@ export async function dependenciesList(
       provider: options.provider,
     };
 
-    // Create query handler using container dependencies
-    const queryHandler = new GetDependenciesQueryHandler(
-      container.dependencyViewReader
-    );
-
-    // Execute query
-    const dependencies = await queryHandler.execute(filter);
+    // Delegate to controller
+    const { dependencies } = await container.getDependenciesController.handle({ filter });
 
     if (dependencies.length === 0) {
       const filterParts: string[] = [];
