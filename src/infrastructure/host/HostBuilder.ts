@@ -21,7 +21,10 @@ import { IApplicationContainer } from "../../application/host/IApplicationContai
 import { IEventStore } from "../../application/persistence/IEventStore.js";
 import { IEventBus } from "../../application/messaging/IEventBus.js";
 import { IClock } from "../../application/time-and-date/IClock.js";
-import { IDatabaseRebuildService } from "../../application/maintenance/db/rebuild/IDatabaseRebuildService.js";
+import { RebuildDatabaseController } from "../../application/maintenance/db/rebuild/RebuildDatabaseController.js";
+import { LocalRebuildDatabaseGateway } from "../../application/maintenance/db/rebuild/LocalRebuildDatabaseGateway.js";
+import { RepairMaintenanceController } from "../../application/maintenance/repair/RepairMaintenanceController.js";
+import { LocalRepairMaintenanceGateway } from "../../application/maintenance/repair/LocalRepairMaintenanceGateway.js";
 
 // Infrastructure implementations
 import { ProjectRootResolver } from "../context/project/ProjectRootResolver.js";
@@ -490,7 +493,7 @@ export class HostBuilder {
     const goalClaimStore = new FsGoalClaimStore(this.rootDir);
     const goalClaimPolicy = new GoalClaimPolicy(goalClaimStore, clock);
 
-    // Create database rebuild service
+    // Create database rebuild service and controller
     // TEMPORARY: Uses sequential event bus to avoid race conditions during rebuild
     // TODO: Swap back to LocalDatabaseRebuildService when Epic/Feature/Task redesign is complete
     const databaseRebuildService = new TemporarySequentialDatabaseRebuildService(
@@ -498,7 +501,8 @@ export class HostBuilder {
       this.db,
       eventStore
     );
-
+    const rebuildDatabaseGateway = new LocalRebuildDatabaseGateway(databaseRebuildService);
+    const rebuildDatabaseController = new RebuildDatabaseController(rebuildDatabaseGateway);
     // ============================================================
     // STEP 2: Create Domain Event Stores
     // ============================================================
@@ -555,6 +559,13 @@ export class HostBuilder {
     const projectUpdatedEventStore = new FsProjectUpdatedEventStore(this.rootDir);
     // Project Services
     const agentFileProtocol = new AgentFileProtocol();
+    const repairMaintenanceGateway = new LocalRepairMaintenanceGateway(
+      projectRootResolver,
+      agentFileProtocol,
+      settingsInitializer,
+      databaseRebuildService
+    );
+    const repairMaintenanceController = new RepairMaintenanceController(repairMaintenanceGateway);
     // Audience Event Stores - decomposed by use case
     const audienceAddedEventStore = new FsAudienceAddedEventStore(this.rootDir);
     const audienceUpdatedEventStore = new FsAudienceUpdatedEventStore(this.rootDir);
@@ -1470,8 +1481,9 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       // Goal Claims
       goalClaimPolicy,
 
-      // Maintenance Services
-      databaseRebuildService,
+      // Maintenance Controllers
+      rebuildDatabaseController,
+      repairMaintenanceController,
 
       // CLI Version
       cliVersionReader,

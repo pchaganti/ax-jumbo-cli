@@ -1,14 +1,6 @@
 import { TerminalOutputBuilder } from '../../../output/TerminalOutputBuilder.js';
 import { TerminalOutput } from '../../../output/TerminalOutput.js';
-
-/**
- * Result of a single repair step.
- */
-export interface RepairStepResult {
-  name: string;
-  status: 'repaired' | 'skipped' | 'failed';
-  detail?: string;
-}
+import { RepairStepResult } from '../../../../../application/maintenance/repair/RepairMaintenanceResponse.js';
 
 /**
  * Specialized builder for maintenance.repair command output.

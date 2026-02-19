@@ -61,13 +61,14 @@ export async function dbRebuild(options: RebuildOptions, container: IApplication
 
     renderer.info("Starting database rebuild...\n");
 
-    // Delegate to infrastructure via application layer abstraction
-    // All db lifecycle concerns (close, delete, reinitialize) are handled internally
-    const result = await container.databaseRebuildService.rebuild();
+    // Delegate to controller — all db lifecycle concerns handled internally
+    const response = await container.rebuildDatabaseController.handle({
+      skipConfirmation: options.yes,
+    });
 
     // Success output
     renderer.success("Database rebuilt successfully", {
-      eventsReplayed: result.eventsReplayed,
+      eventsReplayed: response.eventsReplayed,
     });
   } catch (error) {
     renderer.error(

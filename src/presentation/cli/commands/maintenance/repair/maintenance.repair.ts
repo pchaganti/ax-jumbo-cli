@@ -10,7 +10,7 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { RepairOutputBuilder, RepairStepResult } from "./RepairOutputBuilder.js";
+import { RepairOutputBuilder } from "./RepairOutputBuilder.js";
 
 /**
  * Command metadata for auto-registration
@@ -76,84 +76,15 @@ export async function maintenanceRepair(options: RepairOptions, container: IAppl
       process.exit(1);
     }
 
-    const projectRoot = container.projectRootResolver.resolve();
-    const steps: RepairStepResult[] = [];
-
     // Commander inverts --no-X flags: --no-agents sets options.agents = false
-    const doAgents = options.agents !== false;
-    const doSettings = options.settings !== false;
-    const doDb = options.db !== false;
-
-    // Step 1: Repair AGENTS.md
-    if (doAgents) {
-      try {
-        await container.agentFileProtocol.repairAgentsMd(projectRoot);
-        steps.push({ name: "AGENTS.md", status: "repaired" });
-      } catch (error) {
-        steps.push({
-          name: "AGENTS.md",
-          status: "failed",
-          detail: error instanceof Error ? error.message : String(error),
-        });
-      }
-    } else {
-      steps.push({ name: "AGENTS.md", status: "skipped" });
-    }
-
-    // Step 2: Repair agent configurations (CLAUDE.md, GEMINI.md, copilot, hooks, settings)
-    if (doAgents) {
-      try {
-        await container.agentFileProtocol.repairAgentConfigurations(projectRoot);
-        steps.push({ name: "Agent configurations", status: "repaired" });
-      } catch (error) {
-        steps.push({
-          name: "Agent configurations",
-          status: "failed",
-          detail: error instanceof Error ? error.message : String(error),
-        });
-      }
-    } else {
-      steps.push({ name: "Agent configurations", status: "skipped" });
-    }
-
-    // Step 3: Ensure settings.jsonc
-    if (doSettings) {
-      try {
-        await container.settingsInitializer.ensureSettingsFileExists();
-        steps.push({ name: "Settings", status: "repaired" });
-      } catch (error) {
-        steps.push({
-          name: "Settings",
-          status: "failed",
-          detail: error instanceof Error ? error.message : String(error),
-        });
-      }
-    } else {
-      steps.push({ name: "Settings", status: "skipped" });
-    }
-
-    // Step 4: Rebuild database
-    if (doDb) {
-      try {
-        const result = await container.databaseRebuildService.rebuild();
-        steps.push({
-          name: "Database",
-          status: "repaired",
-          detail: `${result.eventsReplayed} events replayed`,
-        });
-      } catch (error) {
-        steps.push({
-          name: "Database",
-          status: "failed",
-          detail: error instanceof Error ? error.message : String(error),
-        });
-      }
-    } else {
-      steps.push({ name: "Database", status: "skipped" });
-    }
+    const response = await container.repairMaintenanceController.handle({
+      doAgents: options.agents !== false,
+      doSettings: options.settings !== false,
+      doDb: options.db !== false,
+    });
 
     // Render results
-    const output = outputBuilder.buildSuccess(steps);
+    const output = outputBuilder.buildSuccess(response.steps);
     renderer.info(output.toHumanReadable());
   } catch (error) {
     const output = outputBuilder.buildFailureError(error instanceof Error ? error : String(error));
