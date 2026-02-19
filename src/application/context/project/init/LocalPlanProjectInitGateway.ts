@@ -1,0 +1,29 @@
+import { IPlanProjectInitGateway } from "./IPlanProjectInitGateway.js";
+import { PlanProjectInitRequest } from "./PlanProjectInitRequest.js";
+import { PlanProjectInitResponse } from "./PlanProjectInitResponse.js";
+import { PlannedFileChange } from "./PlannedFileChange.js";
+import { IAgentFileProtocol } from "./IAgentFileProtocol.js";
+import { ISettingsInitializer } from "../../../settings/ISettingsInitializer.js";
+
+export class LocalPlanProjectInitGateway implements IPlanProjectInitGateway {
+  constructor(
+    private readonly agentFileProtocol: IAgentFileProtocol,
+    private readonly settingsInitializer: ISettingsInitializer
+  ) {}
+
+  async planProjectInit(request: PlanProjectInitRequest): Promise<PlanProjectInitResponse> {
+    const changes: PlannedFileChange[] = [];
+
+    // Get agent file changes (AGENTS.md and all agent configurers)
+    const agentChanges = await this.agentFileProtocol.getPlannedFileChanges(request.projectRoot);
+    changes.push(...agentChanges);
+
+    // Get settings file change (if needed)
+    const settingsChange = await this.settingsInitializer.getPlannedFileChange();
+    if (settingsChange) {
+      changes.push(settingsChange);
+    }
+
+    return { plannedChanges: changes };
+  }
+}

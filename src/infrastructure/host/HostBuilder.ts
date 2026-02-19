@@ -225,8 +225,11 @@ import { SqliteProjectUpdatedProjector } from "../context/project/update/SqliteP
 import { SqliteProjectContextReader } from "../context/project/query/SqliteProjectContextReader.js";
 // Project Services
 import { AgentFileProtocol } from "../context/project/init/AgentFileProtocol.js";
-import { InitializationProtocol } from "../../application/context/project/init/InitializationProtocol.js";
 import { InitializeProjectCommandHandler } from "../../application/context/project/init/InitializeProjectCommandHandler.js";
+import { LocalPlanProjectInitGateway } from "../../application/context/project/init/LocalPlanProjectInitGateway.js";
+import { PlanProjectInitController } from "../../application/context/project/init/PlanProjectInitController.js";
+import { LocalInitializeProjectGateway } from "../../application/context/project/init/LocalInitializeProjectGateway.js";
+import { InitializeProjectController } from "../../application/context/project/init/InitializeProjectController.js";
 // Audience Context Reader
 import { SqliteAudienceContextReader } from "../context/audiences/query/SqliteAudienceContextReader.js";
 // AudiencePain Context Reader
@@ -1312,10 +1315,19 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       agentFileProtocol,
       settingsInitializer
     );
-    const initializationProtocol = new InitializationProtocol(
-      initializeProjectCommandHandler,
+    const localPlanProjectInitGateway = new LocalPlanProjectInitGateway(
       agentFileProtocol,
       settingsInitializer
+    );
+    const planProjectInitController = new PlanProjectInitController(
+      localPlanProjectInitGateway
+    );
+    const localInitializeProjectGateway = new LocalInitializeProjectGateway(
+      initializeProjectCommandHandler,
+      localPlanProjectInitGateway
+    );
+    const initializeProjectController = new InitializeProjectController(
+      localInitializeProjectGateway
     );
 
     // AddRelation Controller
@@ -1684,7 +1696,8 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       projectUpdatedEventStore,
       // Project Services
       agentFileProtocol,
-      initializationProtocol,
+      planProjectInitController,
+      initializeProjectController,
       // Audience Event Stores - decomposed by use case
       audienceAddedEventStore,
       audienceUpdatedEventStore,

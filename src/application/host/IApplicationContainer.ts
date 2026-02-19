@@ -193,7 +193,8 @@ import { IProjectContextReader } from "../context/project/query/IProjectContextR
 import { IProjectInitializedEventWriter } from "../context/project/init/IProjectInitializedEventWriter.js";
 import { IProjectUpdatedEventWriter } from "../context/project/update/IProjectUpdatedEventWriter.js";
 import { IAgentFileProtocol } from "../context/project/init/IAgentFileProtocol.js";
-import { IInitializationProtocol } from "../context/project/init/IInitializationProtocol.js";
+import { PlanProjectInitController } from "../context/project/init/PlanProjectInitController.js";
+import { InitializeProjectController } from "../context/project/init/InitializeProjectController.js";
 import { UpdateProjectController } from "../context/project/update/UpdateProjectController.js";
 import { IAudienceContextReader } from "../context/audiences/query/IAudienceContextReader.js";
 import { IAudiencePainContextReader } from "../context/audience-pains/query/IAudiencePainContextReader.js";
@@ -503,7 +504,8 @@ export interface IApplicationContainer {
   projectUpdatedEventStore: IProjectUpdatedEventWriter;
   // Project Services
   agentFileProtocol: IAgentFileProtocol;
-  initializationProtocol: IInitializationProtocol;
+  planProjectInitController: PlanProjectInitController;
+  initializeProjectController: InitializeProjectController;
   // Audience Event Stores - decomposed by use case
   audienceAddedEventStore: IAudienceAddedEventWriter;
   audienceUpdatedEventStore: IAudienceUpdatedEventWriter;

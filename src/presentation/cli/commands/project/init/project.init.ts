@@ -10,7 +10,6 @@ import inquirer from "inquirer";
 import chalk from "chalk";
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
-import { InitializeProjectCommand } from "../../../../../application/context/project/init/InitializeProjectCommand.js";
 import { PlannedFileChange } from "../../../../../application/context/project/init/PlannedFileChange.js";
 import { Renderer } from "../../../rendering/Renderer.js";
 import { getBannerLines, showAnimatedBanner } from "../../../banner/AnimatedBanner.js";
@@ -199,8 +198,8 @@ export async function projectInit(
 
   // Get planned changes from application layer (single source of truth)
   const projectRoot = process.cwd();
-  const plannedChanges = await container.initializationProtocol.getPlannedFileChanges(projectRoot);
-  displayPlannedChanges(renderer, plannedChanges);
+  const planResponse = await container.planProjectInitController.handle({ projectRoot });
+  displayPlannedChanges(renderer, planResponse.plannedChanges);
 
   // Ask for confirmation (unless --yolo flag is set)
   if (!options.yolo) {
@@ -214,17 +213,16 @@ export async function projectInit(
   // Show progress header
   renderer.info("\nInitializing project...\n");
 
-  // Execute initialization via protocol
-  const command: InitializeProjectCommand = {
+  // Execute initialization via controller
+  const result = await container.initializeProjectController.handle({
     name: projectDetails.name,
     purpose: projectDetails.purpose,
-  };
-
-  const result = await container.initializationProtocol.execute(command, projectRoot);
+    projectRoot,
+  });
 
   // Show completion status for each change (from the result, not hardcoded)
   console.log();
-  result.changes.forEach((change) => {
+  result.changes.forEach((change: PlannedFileChange) => {
     const symbol = change.action === "create" ? chalk.green("✓") : chalk.yellow("✓");
     const verb = change.action === "create" ? "Created" : "Updated";
     console.log(`  ${symbol} ${verb} ${change.path}`);
