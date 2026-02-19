@@ -56,7 +56,7 @@ async function main(): Promise<void> {
   let container: IApplicationContainer | null = null;
 
   if (requiresInfra) {
-    const projectRoot = new ProjectRootResolver().resolve();
+    const projectRoot = new ProjectRootResolver().resolveOrDefault();
     const jumboRoot = path.join(projectRoot, ".jumbo");
     const host = new Host(jumboRoot);
     const builder = host.createBuilder();

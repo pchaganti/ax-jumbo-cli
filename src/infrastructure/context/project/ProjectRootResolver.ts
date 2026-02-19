@@ -4,21 +4,23 @@ import { IProjectRootResolver } from "../../../application/context/project/IProj
 
 export class ProjectRootResolver implements IProjectRootResolver {
   resolve(): string {
-    let dir = process.cwd();
+    const dir = process.cwd();
+    const candidate = path.join(dir, ".jumbo");
 
-    while (true) {
-      const candidate = path.join(dir, ".jumbo");
-      if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
-        return dir;
-      }
+    if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
+      return dir;
+    }
 
-      const parent = path.dirname(dir);
-      if (parent === dir) {
-        throw new Error(
-          "No Jumbo project found. Run `jumbo project init` from your project root."
-        );
-      }
-      dir = parent;
+    throw new Error(
+      "No Jumbo project found. Run `jumbo project init` from your project root."
+    );
+  }
+
+  resolveOrDefault(): string {
+    try {
+      return this.resolve();
+    } catch {
+      return process.cwd();
     }
   }
 }
