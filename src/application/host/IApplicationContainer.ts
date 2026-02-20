@@ -121,10 +121,13 @@ import { GetArchitectureController } from "../context/architecture/get/GetArchit
 import { AddComponentController } from "../context/components/add/AddComponentController.js";
 import { GetComponentsController } from "../context/components/list/GetComponentsController.js";
 import { UpdateComponentController } from "../context/components/update/UpdateComponentController.js";
+import { RenameComponentController } from "../context/components/rename/RenameComponentController.js";
 import { IComponentAddedProjector } from "../context/components/add/IComponentAddedProjector.js";
 import { IComponentAddReader } from "../context/components/add/IComponentAddReader.js";
 import { IComponentUpdatedProjector } from "../context/components/update/IComponentUpdatedProjector.js";
 import { IComponentUpdateReader } from "../context/components/update/IComponentUpdateReader.js";
+import { IComponentRenamedProjector } from "../context/components/rename/IComponentRenamedProjector.js";
+import { IComponentRenameReader } from "../context/components/rename/IComponentRenameReader.js";
 import { DeprecateComponentController } from "../context/components/deprecate/DeprecateComponentController.js";
 import { RemoveComponentController } from "../context/components/remove/RemoveComponentController.js";
 import { ShowComponentController } from "../context/components/show/ShowComponentController.js";
@@ -251,6 +254,7 @@ import { IArchitectureUpdatedEventWriter } from "../context/architecture/update/
 import { IArchitectureUpdatedEventReader } from "../context/architecture/update/IArchitectureUpdatedEventReader.js";
 import { IComponentAddedEventWriter } from "../context/components/add/IComponentAddedEventWriter.js";
 import { IComponentUpdatedEventWriter } from "../context/components/update/IComponentUpdatedEventWriter.js";
+import { IComponentRenamedEventWriter } from "../context/components/rename/IComponentRenamedEventWriter.js";
 import { IComponentDeprecatedProjector } from "../context/components/deprecate/IComponentDeprecatedProjector.js";
 import { IComponentRemovedEventWriter } from "../context/components/remove/IComponentRemovedEventWriter.js";
 import { IDependencyAddedEventWriter } from "../context/dependencies/add/IDependencyAddedEventWriter.js";
@@ -423,6 +427,7 @@ export interface IApplicationContainer {
   addComponentController: AddComponentController;
   getComponentsController: GetComponentsController;
   updateComponentController: UpdateComponentController;
+  renameComponentController: RenameComponentController;
 
   // Dependency Controllers
   addDependencyController: AddDependencyController;
@@ -437,6 +442,7 @@ export interface IApplicationContainer {
   // Component Event Stores - decomposed by use case
   componentAddedEventStore: IComponentAddedEventWriter;
   componentUpdatedEventStore: IComponentUpdatedEventWriter;
+  componentRenamedEventStore: IComponentRenamedEventWriter;
   deprecateComponentController: DeprecateComponentController;
   removeComponentController: RemoveComponentController;
   showComponentController: ShowComponentController;
@@ -467,6 +473,7 @@ export interface IApplicationContainer {
   // Component Projection Stores - decomposed by use case
   componentAddedProjector: IComponentAddedProjector & IComponentAddReader;
   componentUpdatedProjector: IComponentUpdatedProjector & IComponentUpdateReader;
+  componentRenamedProjector: IComponentRenamedProjector & IComponentRenameReader;
   componentDeprecatedProjector: IComponentDeprecatedProjector;
   componentRemovedProjector: IComponentRemovedProjector & IComponentRemoveReader;
   componentViewReader: IComponentViewReader;

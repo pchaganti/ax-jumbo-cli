@@ -82,6 +82,7 @@ import { FsComponentAddedEventStore } from "../context/components/add/FsComponen
 import { FsComponentUpdatedEventStore } from "../context/components/update/FsComponentUpdatedEventStore.js";
 import { FsComponentDeprecatedEventStore } from "../context/components/deprecate/FsComponentDeprecatedEventStore.js";
 import { FsComponentRemovedEventStore } from "../context/components/remove/FsComponentRemovedEventStore.js";
+import { FsComponentRenamedEventStore } from "../context/components/rename/FsComponentRenamedEventStore.js";
 // Dependency Controllers
 import { AddDependencyCommandHandler } from "../../application/context/dependencies/add/AddDependencyCommandHandler.js";
 import { LocalAddDependencyGateway } from "../../application/context/dependencies/add/LocalAddDependencyGateway.js";
@@ -185,6 +186,7 @@ import { SqliteComponentAddedProjector } from "../context/components/add/SqliteC
 import { SqliteComponentUpdatedProjector } from "../context/components/update/SqliteComponentUpdatedProjector.js";
 import { SqliteComponentDeprecatedProjector } from "../context/components/deprecate/SqliteComponentDeprecatedProjector.js";
 import { SqliteComponentRemovedProjector } from "../context/components/remove/SqliteComponentRemovedProjector.js";
+import { SqliteComponentRenamedProjector } from "../context/components/rename/SqliteComponentRenamedProjector.js";
 import { SqliteComponentViewReader } from "../context/components/get/SqliteComponentViewReader.js";
 import { SqliteComponentReader } from "../context/components/get/SqliteComponentReader.js";
 // Dependency Projection Stores - decomposed by use case
@@ -274,6 +276,7 @@ import { ComponentAddedEventHandler } from "../../application/context/components
 import { ComponentUpdatedEventHandler } from "../../application/context/components/update/ComponentUpdatedEventHandler.js";
 import { ComponentDeprecatedEventHandler } from "../../application/context/components/deprecate/ComponentDeprecatedEventHandler.js";
 import { ComponentRemovedEventHandler } from "../../application/context/components/remove/ComponentRemovedEventHandler.js";
+import { ComponentRenamedEventHandler } from "../../application/context/components/rename/ComponentRenamedEventHandler.js";
 // Dependency Event Handlers - decomposed by use case
 import { DependencyAddedEventHandler } from "../../application/context/dependencies/add/DependencyAddedEventHandler.js";
 import { DependencyUpdatedEventHandler } from "../../application/context/dependencies/update/DependencyUpdatedEventHandler.js";
@@ -443,6 +446,9 @@ import { GetComponentsController } from "../../application/context/components/li
 import { UpdateComponentCommandHandler } from "../../application/context/components/update/UpdateComponentCommandHandler.js";
 import { LocalUpdateComponentGateway } from "../../application/context/components/update/LocalUpdateComponentGateway.js";
 import { UpdateComponentController } from "../../application/context/components/update/UpdateComponentController.js";
+import { RenameComponentCommandHandler } from "../../application/context/components/rename/RenameComponentCommandHandler.js";
+import { LocalRenameComponentGateway } from "../../application/context/components/rename/LocalRenameComponentGateway.js";
+import { RenameComponentController } from "../../application/context/components/rename/RenameComponentController.js";
 import { LocalShowComponentGateway } from "../../application/context/components/show/LocalShowComponentGateway.js";
 import { ShowComponentController } from "../../application/context/components/show/ShowComponentController.js";
 import { DeprecateComponentCommandHandler } from "../../application/context/components/deprecate/DeprecateComponentCommandHandler.js";
@@ -564,6 +570,7 @@ export class HostBuilder {
     const componentUpdatedEventStore = new FsComponentUpdatedEventStore(this.rootDir);
     const componentDeprecatedEventStore = new FsComponentDeprecatedEventStore(this.rootDir);
     const componentRemovedEventStore = new FsComponentRemovedEventStore(this.rootDir);
+    const componentRenamedEventStore = new FsComponentRenamedEventStore(this.rootDir);
     // Dependency Event Stores - decomposed by use case
     const dependencyAddedEventStore = new FsDependencyAddedEventStore(this.rootDir);
     const dependencyUpdatedEventStore = new FsDependencyUpdatedEventStore(this.rootDir);
@@ -647,6 +654,7 @@ export class HostBuilder {
     const componentUpdatedProjector = new SqliteComponentUpdatedProjector(this.db);
     const componentDeprecatedProjector = new SqliteComponentDeprecatedProjector(this.db);
     const componentRemovedProjector = new SqliteComponentRemovedProjector(this.db);
+    const componentRenamedProjector = new SqliteComponentRenamedProjector(this.db);
     const componentViewReader = new SqliteComponentViewReader(this.db);
     const componentReader = new SqliteComponentReader(this.db);
     // Dependency Projection Stores - decomposed by use case
@@ -1209,6 +1217,18 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     const updateComponentController = new UpdateComponentController(
       updateComponentGateway
     );
+    const renameComponentCommandHandler = new RenameComponentCommandHandler(
+      componentRenamedEventStore,
+      eventBus,
+      componentRenamedProjector
+    );
+    const renameComponentGateway = new LocalRenameComponentGateway(
+      renameComponentCommandHandler,
+      componentRenamedProjector
+    );
+    const renameComponentController = new RenameComponentController(
+      renameComponentGateway
+    );
     const showComponentGateway = new LocalShowComponentGateway(
       componentReader,
       relationViewReader
@@ -1436,6 +1456,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     const componentUpdatedEventHandler = new ComponentUpdatedEventHandler(componentUpdatedProjector);
     const componentDeprecatedEventHandler = new ComponentDeprecatedEventHandler(componentDeprecatedProjector);
     const componentRemovedEventHandler = new ComponentRemovedEventHandler(componentRemovedProjector);
+    const componentRenamedEventHandler = new ComponentRenamedEventHandler(componentRenamedProjector);
     // Dependency Event Handlers - decomposed by use case
     const dependencyAddedEventHandler = new DependencyAddedEventHandler(dependencyAddedProjector);
     const dependencyUpdatedEventHandler = new DependencyUpdatedEventHandler(dependencyUpdatedProjector);
@@ -1549,6 +1570,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     eventBus.subscribe("ComponentUpdatedEvent", componentUpdatedEventHandler);
     eventBus.subscribe("ComponentDeprecatedEvent", componentDeprecatedEventHandler);
     eventBus.subscribe("ComponentRemovedEvent", componentRemovedEventHandler);
+    eventBus.subscribe("ComponentRenamedEvent", componentRenamedEventHandler);
 
     // Solution Category - Dependency events - decomposed by use case
     eventBus.subscribe("DependencyAddedEvent", dependencyAddedEventHandler);
@@ -1714,6 +1736,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       addComponentController,
       getComponentsController,
       updateComponentController,
+      renameComponentController,
       showComponentController,
       deprecateComponentController,
       removeComponentController,
@@ -1731,6 +1754,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       // Component Event Stores - decomposed by use case
       componentAddedEventStore,
       componentUpdatedEventStore,
+      componentRenamedEventStore,
       componentRemovedEventStore,
       // Dependency Event Stores - decomposed by use case
       dependencyAddedEventStore,
@@ -1756,6 +1780,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       // Component Projection Stores - decomposed by use case
       componentAddedProjector,
       componentUpdatedProjector,
+      componentRenamedProjector,
       componentDeprecatedProjector,
       componentRemovedProjector,
       componentViewReader,

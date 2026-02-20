@@ -3,7 +3,8 @@ export const ComponentEventType = {
   ADDED: 'ComponentAddedEvent',
   UPDATED: 'ComponentUpdatedEvent',
   DEPRECATED: 'ComponentDeprecatedEvent',
-  REMOVED: 'ComponentRemovedEvent'
+  REMOVED: 'ComponentRemovedEvent',
+  RENAMED: 'ComponentRenamedEvent'
 } as const;
 
 export type ComponentEventTypeValue = typeof ComponentEventType[keyof typeof ComponentEventType];
@@ -49,7 +50,8 @@ export const ComponentErrorMessages = {
   ALREADY_REMOVED: 'Component has been removed',
   NOT_DEPRECATED: 'Component must be deprecated before removal',
   NO_FIELDS_TO_UPDATE: 'At least one field must be provided to update',
-  COMPONENT_NOT_FOUND: 'Component with ID {id} not found'
+  COMPONENT_NOT_FOUND: 'Component with ID {id} not found',
+  SAME_NAME: 'New name must be different from the current name'
 } as const;
 
 // Numeric limits

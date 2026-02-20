@@ -6,7 +6,8 @@ import {
   ComponentAddedEvent,
   ComponentUpdatedEvent,
   ComponentDeprecatedEvent,
-  ComponentRemovedEvent
+  ComponentRemovedEvent,
+  ComponentRenamedEvent
 } from "./EventIndex.js";
 import {
   ComponentEventType,
@@ -75,6 +76,12 @@ export class Component extends BaseAggregate<ComponentState, ComponentEvent> {
       case ComponentEventType.REMOVED: {
         const e = event as ComponentRemovedEvent;
         state.status = e.payload.status;
+        state.version = e.version;
+        break;
+      }
+      case ComponentEventType.RENAMED: {
+        const e = event as ComponentRenamedEvent;
+        state.name = e.payload.name;
         state.version = e.version;
         break;
       }
@@ -177,6 +184,26 @@ export class Component extends BaseAggregate<ComponentState, ComponentEvent> {
         path,
         type
       },
+      Component.apply
+    );
+  }
+
+  rename(name: string): ComponentRenamedEvent {
+    if (this.state.status === ComponentStatus.REMOVED) {
+      throw new Error(ComponentErrorMessages.ALREADY_REMOVED);
+    }
+
+    // Validate new name
+    ValidationRuleSet.ensure(name, NAME_RULES);
+
+    // Ensure name is actually different
+    if (name === this.state.name) {
+      throw new Error(ComponentErrorMessages.SAME_NAME);
+    }
+
+    return this.makeEvent<ComponentRenamedEvent>(
+      ComponentEventType.RENAMED,
+      { name },
       Component.apply
     );
   }
