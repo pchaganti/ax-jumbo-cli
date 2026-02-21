@@ -127,7 +127,7 @@ export class GoalShowOutputBuilder {
     if (context.components.length > 0) {
       let componentsOutput = "\n=== Related Components ===\n";
       for (const component of context.components) {
-        componentsOutput += `\n- ${component.entity.name}: ${component.entity.description}`;
+        componentsOutput += `\n- ${component.entity.name}: \n\t${component.entity.description}`;
       }
       this.builder.addPrompt(componentsOutput);
     }
@@ -137,7 +137,7 @@ export class GoalShowOutputBuilder {
       let dependenciesOutput = "\n=== Related Dependencies ===\n";
       for (const dependency of context.dependencies) {
         const purpose = dependency.entity.contract || dependency.entity.endpoint || 'Dependency relationship';
-        dependenciesOutput += `\n- ${dependency.entity.consumerId} → ${dependency.entity.providerId}: ${purpose}`;
+        dependenciesOutput += `\n- ${dependency.entity.consumerId} → ${dependency.entity.providerId}: \n\t${purpose}`;
       }
       this.builder.addPrompt(dependenciesOutput);
     }
@@ -146,7 +146,7 @@ export class GoalShowOutputBuilder {
     if (context.decisions.length > 0) {
       let decisionsOutput = "\n=== Related Decisions ===\n";
       for (const decision of context.decisions) {
-        decisionsOutput += `\n- ${decision.entity.title}: ${decision.entity.rationale}`;
+        decisionsOutput += `\n- ${decision.entity.title}: \n\t${decision.entity.rationale}`;
       }
       this.builder.addPrompt(decisionsOutput);
     }
@@ -155,7 +155,7 @@ export class GoalShowOutputBuilder {
     if (context.invariants.length > 0) {
       let invariantsOutput = "\n=== Invariants ===\n";
       for (const invariant of context.invariants) {
-        invariantsOutput += `\n- ${invariant.entity.title}: ${invariant.entity.description}`;
+        invariantsOutput += `\n- ${invariant.entity.title}: \n\t${invariant.entity.description}`;
       }
       this.builder.addPrompt(invariantsOutput);
     }
@@ -164,7 +164,7 @@ export class GoalShowOutputBuilder {
     if (context.guidelines.length > 0) {
       let guidelinesOutput = "\n=== Guidelines ===\n";
       for (const guideline of context.guidelines) {
-        guidelinesOutput += `\n- ${guideline.entity.category}: ${guideline.entity.description}`;
+        guidelinesOutput += `\n- ${guideline.entity.category}: \n\t${guideline.entity.description}`;
       }
       this.builder.addPrompt(guidelinesOutput);
     }
