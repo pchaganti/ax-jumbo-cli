@@ -17,34 +17,34 @@ export const metadata: CommandMetadata = {
   category: "project-knowledge",
   requiredOptions: [
     {
-      flags: "--pain-id <painId>",
+      flags: "-i, --id <id>",
       description: "ID of the audience pain to update",
     },
   ],
   options: [
     {
-      flags: "--title <title>",
+      flags: "-t, --title <title>",
       description: "Updated pain title",
     },
     {
-      flags: "--description <description>",
+      flags: "-d, --description <description>",
       description: "Updated pain description",
     },
   ],
   examples: [
     {
       command:
-        'jumbo audience-pain update --pain-id pain_123 --title "Context persistence challenge"',
+        'jumbo audience-pain update --id pain_123 --title "Context persistence challenge"',
       description: "Update pain title",
     },
     {
       command:
-        'jumbo audience-pain update --pain-id pain_123 --description "New description"',
+        'jumbo audience-pain update --id pain_123 --description "New description"',
       description: "Update pain description",
     },
     {
       command:
-        'jumbo audience-pain update --pain-id pain_123 --title "New title" --description "New description"',
+        'jumbo audience-pain update --id pain_123 --title "New title" --description "New description"',
       description: "Update both title and description",
     },
   ],
@@ -56,7 +56,7 @@ export const metadata: CommandMetadata = {
  * Called by Commander with parsed options
  */
 export async function audiencePainUpdate(options: {
-  painId: string;
+  id: string;
   title?: string;
   description?: string;
 }, container: IApplicationContainer) {
@@ -72,7 +72,7 @@ export async function audiencePainUpdate(options: {
 
   try {
     const request: UpdateAudiencePainRequest = {
-      painId: options.painId,
+      painId: options.id,
       title: options.title,
       description: options.description,
     };

@@ -17,17 +17,17 @@ export const metadata: CommandMetadata = {
   category: "project-knowledge",
   requiredOptions: [
     {
-      flags: "--audience-id <audienceId>",
+      flags: "-i, --id <id>",
       description: "ID of the audience to update",
     },
   ],
   options: [
     {
-      flags: "--name <name>",
+      flags: "-n, --name <name>",
       description: "Updated audience name",
     },
     {
-      flags: "--description <description>",
+      flags: "-d, --description <description>",
       description: "Updated audience description",
     },
     {
@@ -38,12 +38,12 @@ export const metadata: CommandMetadata = {
   examples: [
     {
       command:
-        "jumbo audience update --audience-id audience-123 --name 'Updated Name'",
+        "jumbo audience update --id audience-123 --name 'Updated Name'",
       description: "Update audience name",
     },
     {
       command:
-        'jumbo audience update --audience-id audience-123 --name "Software Engineers" --description "Professional developers" --priority primary',
+        'jumbo audience update --id audience-123 --name "Software Engineers" --description "Professional developers" --priority primary',
       description: "Update multiple fields",
     },
   ],
@@ -55,7 +55,7 @@ export const metadata: CommandMetadata = {
  * Called by Commander with parsed options
  */
 export async function audienceUpdate(options: {
-  audienceId: string;
+  id: string;
   name?: string;
   description?: string;
   priority?: AudiencePriorityType;
@@ -64,7 +64,7 @@ export async function audienceUpdate(options: {
 
   try {
     const response = await container.updateAudienceController.handle({
-      audienceId: options.audienceId,
+      audienceId: options.id,
       name: options.name,
       description: options.description,
       priority: options.priority,
@@ -80,7 +80,7 @@ export async function audienceUpdate(options: {
     if (options.priority) data.priority = options.priority;
 
     renderer.success(
-      `Audience '${options.name || options.audienceId}' updated successfully.`,
+      `Audience '${options.name || options.id}' updated successfully.`,
       data
     );
   } catch (error) {

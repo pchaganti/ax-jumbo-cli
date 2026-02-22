@@ -16,24 +16,24 @@ export const metadata: CommandMetadata = {
   category: "project-knowledge",
   requiredOptions: [
     {
-      flags: "--audience-id <audienceId>",
+      flags: "-i, --id <id>",
       description: "ID of the audience to remove",
     },
   ],
   options: [
     {
-      flags: "--reason <reason>",
+      flags: "-r, --reason <reason>",
       description: "Reason for removing the audience",
     },
   ],
   examples: [
     {
-      command: 'jumbo audience remove --audience-id "audience-123"',
+      command: 'jumbo audience remove --id "audience-123"',
       description: "Remove an audience",
     },
     {
       command:
-        'jumbo audience remove --audience-id "audience-123" --reason "No longer in target market"',
+        'jumbo audience remove --id "audience-123" --reason "No longer in target market"',
       description: "Remove an audience with a reason",
     },
   ],
@@ -45,14 +45,14 @@ export const metadata: CommandMetadata = {
  * Called by Commander with parsed options
  */
 export async function audienceRemove(options: {
-  audienceId: string;
+  id: string;
   reason?: string;
 }, container: IApplicationContainer) {
   const renderer = Renderer.getInstance();
 
   try {
     const response = await container.removeAudienceController.handle({
-      audienceId: options.audienceId,
+      audienceId: options.id,
       reason: options.reason,
     });
 

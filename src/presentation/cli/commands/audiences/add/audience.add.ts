@@ -17,11 +17,11 @@ export const metadata: CommandMetadata = {
   category: "project-knowledge",
   requiredOptions: [
     {
-      flags: "--name <name>",
+      flags: "-n, --name <name>",
       description: "Audience name (e.g., 'Software Developers')",
     },
     {
-      flags: "--description <description>",
+      flags: "-d, --description <description>",
       description: "Who they are and what they do",
     },
     {
