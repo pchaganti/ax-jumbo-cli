@@ -5,7 +5,7 @@
  * Only provided fields are updated; omitted fields remain unchanged.
  *
  * Usage:
- *   jumbo goal update --goal-id <goalId> [--title "..."] [--objective "..."] [--criteria "..."] [--scope-in "..."] [--scope-out "..."]
+ *   jumbo goal update --id <id> [--title "..."] [--objective "..."] [--criteria "..."] [--scope-in "..."] [--scope-out "..."]
  */
 
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
@@ -22,7 +22,7 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to update"
     }
   ],
@@ -58,19 +58,19 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal update --goal-id goal_abc123 --title \"New Title\"",
+      command: "jumbo goal update --id goal_abc123 --title \"New Title\"",
       description: "Update a goal's title only"
     },
     {
-      command: "jumbo goal update --goal-id goal_abc123 --objective \"Updated goal\"",
+      command: "jumbo goal update --id goal_abc123 --objective \"Updated goal\"",
       description: "Update a goal's objective only"
     },
     {
-      command: "jumbo goal update --goal-id goal_abc123 --criteria \"Criterion 1\" --criteria \"Criterion 2\"",
+      command: "jumbo goal update --id goal_abc123 --criteria \"Criterion 1\" --criteria \"Criterion 2\"",
       description: "Update success criteria only"
     },
     {
-      command: "jumbo goal update --goal-id goal_abc123 --objective \"New objective\" --scope-in \"Component A\"",
+      command: "jumbo goal update --id goal_abc123 --objective \"New objective\" --scope-in \"Component A\"",
       description: "Update multiple fields at once"
     }
   ],
@@ -83,7 +83,7 @@ export const metadata: CommandMetadata = {
  */
 export async function goalUpdate(
   options: {
-    goalId: string;
+    id: string;
     title?: string;
     objective?: string;
     criteria?: string[];
@@ -99,7 +99,7 @@ export async function goalUpdate(
 
   try {
     const request: UpdateGoalRequest = {
-      goalId: options.goalId,
+      goalId: options.id,
       title: options.title,
       objective: options.objective,
       successCriteria: options.criteria,

@@ -182,7 +182,7 @@ export class GoalShowOutputBuilder {
     this.builder.addPrompt(
       "\n---\n" +
       "NOTE: To load this goal with full LLM implementation instructions,\n" +
-      `run: jumbo goal start --goal-id ${goal.goalId}\n`
+      `run: jumbo goal start --id ${goal.goalId}\n`
     );
 
     return this.builder.build();

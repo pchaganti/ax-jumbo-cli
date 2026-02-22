@@ -38,7 +38,7 @@ export class GoalQualifyOutputBuilder {
     // Next steps
     let nextSteps = "## Next Steps\n" +
                     "Complete the goal:\n" +
-                    `  Run: jumbo goal complete --goal-id ${response.goalId}`;
+                    `  Run: jumbo goal complete --id ${response.goalId}`;
 
     if (response.nextGoalId) {
       nextSteps += "\n\nAfter completion, the next goal in the queue is:\n" +

@@ -17,7 +17,7 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to block"
     },
     {
@@ -27,7 +27,7 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal block --goal-id goal_abc123 --note \"Waiting for API credentials\"",
+      command: "jumbo goal block --id goal_abc123 --note \"Waiting for API credentials\"",
       description: "Block a goal with a reason"
     }
   ],
@@ -36,7 +36,7 @@ export const metadata: CommandMetadata = {
 
 export async function goalBlock(
   options: {
-    goalId: string;
+    id: string;
     note: string;
   },
   container: IApplicationContainer
@@ -46,7 +46,7 @@ export async function goalBlock(
 
   try {
     const { goalId, note } = await container.blockGoalController.handle({
-      goalId: options.goalId,
+      goalId: options.id,
       note: options.note,
     });
 

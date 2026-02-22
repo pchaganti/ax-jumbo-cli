@@ -26,7 +26,7 @@ export class GoalRefineOutputBuilder {
     this.builder.addData({ goalId, status });
     this.builder.addPrompt(
       "\n@LLM: Goal is now refined and ready to start.\n" +
-      `Run: jumbo goal start --goal-id ${goalId}`
+      `Run: jumbo goal start --id ${goalId}`
     );
     return this.builder.build();
   }
@@ -88,7 +88,7 @@ export class GoalRefineOutputBuilder {
     this.builder.reset();
     this.builder.addPrompt(
       "\n@LLM: Review goal details above. When ready to approve refinement, run:\n" +
-      `  jumbo goal refine --goal-id ${goalId} --approve`
+      `  jumbo goal refine --id ${goalId} --approve`
     );
     return this.builder.build();
   }

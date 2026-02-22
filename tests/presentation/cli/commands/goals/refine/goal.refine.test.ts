@@ -87,7 +87,7 @@ describe("goal.refine command", () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(mockTodoGoalView);
 
       await goalRefine(
-        { goalId: "goal_123" },
+        { id: "goal_123" },
         mockContainer as IApplicationContainer
       );
 
@@ -103,14 +103,14 @@ describe("goal.refine command", () => {
       expect(allOutput).toContain("Goal ID:");
       expect(allOutput).toContain("goal_123");
       expect(allOutput).toContain("@LLM:");
-      expect(allOutput).toContain("jumbo goal refine --goal-id goal_123 --approve");
+      expect(allOutput).toContain("jumbo goal refine --id goal_123 --approve");
     });
 
     it("should display success criteria when present", async () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(mockTodoGoalView);
 
       await goalRefine(
-        { goalId: "goal_123" },
+        { id: "goal_123" },
         mockContainer as IApplicationContainer
       );
 
@@ -123,7 +123,7 @@ describe("goal.refine command", () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(mockTodoGoalView);
 
       await goalRefine(
-        { goalId: "goal_123" },
+        { id: "goal_123" },
         mockContainer as IApplicationContainer
       );
 
@@ -138,7 +138,7 @@ describe("goal.refine command", () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(mockTodoGoalView);
 
       await goalRefine(
-        { goalId: "goal_123" },
+        { id: "goal_123" },
         mockContainer as IApplicationContainer
       );
 
@@ -155,7 +155,7 @@ describe("goal.refine command", () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(mockTodoGoalView);
 
       await goalRefine(
-        { goalId: "goal_123", approve: true },
+        { id: "goal_123", approve: true },
         mockContainer as IApplicationContainer
       );
 
@@ -175,7 +175,7 @@ describe("goal.refine command", () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(mockTodoGoalView);
 
       await goalRefine(
-        { goalId: "goal_123", approve: true },
+        { id: "goal_123", approve: true },
         mockContainer as IApplicationContainer
       );
 
@@ -189,7 +189,7 @@ describe("goal.refine command", () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(mockTodoGoalView);
 
       await goalRefine(
-        { goalId: "goal_123", approve: true },
+        { id: "goal_123", approve: true },
         mockContainer as IApplicationContainer
       );
 
@@ -203,7 +203,7 @@ describe("goal.refine command", () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(mockTodoGoalView);
 
       await goalRefine(
-        { goalId: "goal_123", approve: true },
+        { id: "goal_123", approve: true },
         mockContainer as IApplicationContainer
       );
 
@@ -217,7 +217,7 @@ describe("goal.refine command", () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(null);
 
       await expect(
-        goalRefine({ goalId: "nonexistent" }, mockContainer as IApplicationContainer)
+        goalRefine({ id: "nonexistent" }, mockContainer as IApplicationContainer)
       ).rejects.toThrow("process.exit called with code 1");
 
       // Error messages go to console.error
@@ -230,7 +230,7 @@ describe("goal.refine command", () => {
       mockRefineGoalController.handle.mockRejectedValue(new Error("Goal cannot be refined"));
 
       await expect(
-        goalRefine({ goalId: "goal_123", approve: true }, mockContainer as IApplicationContainer)
+        goalRefine({ id: "goal_123", approve: true }, mockContainer as IApplicationContainer)
       ).rejects.toThrow("process.exit called with code 1");
 
       // Error messages go to console.error
@@ -248,7 +248,7 @@ describe("goal.refine command", () => {
       );
 
       await expect(
-        goalRefine({ goalId: "goal_123", approve: true }, mockContainer as IApplicationContainer)
+        goalRefine({ id: "goal_123", approve: true }, mockContainer as IApplicationContainer)
       ).rejects.toThrow("process.exit called with code 1");
 
       // Error messages go to console.error
@@ -266,7 +266,7 @@ describe("goal.refine command", () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(goalWithoutCriteria);
 
       await goalRefine(
-        { goalId: "goal_123" },
+        { id: "goal_123" },
         mockContainer as IApplicationContainer
       );
 
@@ -285,7 +285,7 @@ describe("goal.refine command", () => {
       mockGoalContextReader.mockFindById.mockResolvedValue(goalWithoutScope);
 
       await goalRefine(
-        { goalId: "goal_123" },
+        { id: "goal_123" },
         mockContainer as IApplicationContainer
       );
 

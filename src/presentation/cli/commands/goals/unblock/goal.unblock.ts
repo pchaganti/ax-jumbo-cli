@@ -17,7 +17,7 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to unblock"
     }
   ],
@@ -29,11 +29,11 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal unblock --goal-id goal_abc123",
+      command: "jumbo goal unblock --id goal_abc123",
       description: "Unblock a goal"
     },
     {
-      command: "jumbo goal unblock --goal-id goal_abc123 --note \"API credentials received\"",
+      command: "jumbo goal unblock --id goal_abc123 --note \"API credentials received\"",
       description: "Unblock a goal with resolution note"
     }
   ],
@@ -42,7 +42,7 @@ export const metadata: CommandMetadata = {
 
 export async function goalUnblock(
   options: {
-    goalId: string;
+    id: string;
     note?: string;
   },
   container: IApplicationContainer
@@ -52,7 +52,7 @@ export async function goalUnblock(
 
   try {
     const { goalId, note } = await container.unblockGoalController.handle({
-      goalId: options.goalId,
+      goalId: options.id,
       note: options.note,
     });
 

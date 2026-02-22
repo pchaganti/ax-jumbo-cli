@@ -41,7 +41,7 @@ export class GoalReviewOutputBuilder {
       output += `- ${c}\n`;
     });
     output += "\nVERIFY: Does the implementation succeed in fulfilling the objective and these specific criteria and adhere to the instructions below?\n" +
-              `INSTRUCTION: If ANY criteria are NOT met, then report the issues, fix them, and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+              `INSTRUCTION: If ANY criteria are NOT met, then report the issues, fix them, and re-run 'jumbo goal review --id ${response.goalId}' again.`;
 
     // Scope (if scoped)
     if (this.isScoped(response)) {
@@ -53,7 +53,7 @@ export class GoalReviewOutputBuilder {
           output += `- ${item}\n`;
         });
         output += "\nVERIFY: The implementation stayed within the defined scope.\n" +
-                  `INSTRUCTION: If any work was done outside the defined scope, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+                  `INSTRUCTION: If any work was done outside the defined scope, then adjust the implementation and re-run 'jumbo goal review --id ${response.goalId}' again.`;
       }
 
       if (goal.scopeOut && goal.scopeOut.length > 0) {
@@ -62,7 +62,7 @@ export class GoalReviewOutputBuilder {
           output += `- ${item}\n`;
         });
         output += "\nVERIFY: The implementation did not overlap these items.\n" +
-                  `INSTRUCTION: If any work overlapped these items, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+                  `INSTRUCTION: If any work overlapped these items, then adjust the implementation and re-run 'jumbo goal review --id ${response.goalId}' again.`;
       }
     }
 
@@ -72,7 +72,7 @@ export class GoalReviewOutputBuilder {
                 `High-level Description: ${context.architecture.description}\n\n` +
                 `Organization Style: ${context.architecture.organization}\n\n` +
                 "\nVERIFY: Namespaces (directory structures) and file names introduced by you (the developer) maintain the solution's architectural organization style.\n" +
-                `INSTRUCTION: If any namespaces or file names do not maintain the solution's architectural organization style, then adjust them and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+                `INSTRUCTION: If any namespaces or file names do not maintain the solution's architectural organization style, then adjust them and re-run 'jumbo goal review --id ${response.goalId}' again.`;
 
       if (context.architecture.patterns && context.architecture.patterns.length > 0) {
         output += "\n\n#### Design Patterns:\n";
@@ -82,7 +82,7 @@ export class GoalReviewOutputBuilder {
         output += "\nVERIFY: You (the developer) leveraged these architectural patterns where applicable.\n" +
                   "If the goal does not fit a prescribed pattern, then did you register the new architecture pattern with jumbo. Run 'jumbo architecture update --help' for further instructions.\n" +
                   "New patterns MUST not conflict with existing patterns. For example, if the solution uses a layered architecture pattern, then you MUST NOT introduce a microservices pattern.\n" +
-                  `INSTRUCTION: If any architectural patterns were not leveraged or new patterns conflict with existing ones, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+                  `INSTRUCTION: If any architectural patterns were not leveraged or new patterns conflict with existing ones, then adjust the implementation and re-run 'jumbo goal review --id ${response.goalId}' again.`;
       }
 
       if (context.architecture.principles && context.architecture.principles.length > 0) {
@@ -91,7 +91,7 @@ export class GoalReviewOutputBuilder {
           output += `- ${principle}\n`;
         });
         output += "\nVERIFY: Artifacts created by you (the developer) directly reflect these principles.\n" +
-                  `INSTRUCTION: If any artifacts do not reflect these principles, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+                  `INSTRUCTION: If any artifacts do not reflect these principles, then adjust the implementation and re-run 'jumbo goal review --id ${response.goalId}' again.`;
       }
     }
 
@@ -102,7 +102,7 @@ export class GoalReviewOutputBuilder {
         output += `- ${c.entity.name}: ${c.entity.description}\n`;
       });
       output += "\nVERIFY: These components were considered in the implementation.\n" +
-                `INSTRUCTION: If any components were not considered, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+                `INSTRUCTION: If any components were not considered, then adjust the implementation and re-run 'jumbo goal review --id ${response.goalId}' again.`;
     }
 
     // Dependencies
@@ -113,7 +113,7 @@ export class GoalReviewOutputBuilder {
         output += `- ${d.entity.consumerId} → ${d.entity.providerId}: ${purpose}\n`;
       });
       output += "\nVERIFY: These dependencies are considered in the implementation.\n" +
-                `INSTRUCTION: If any dependencies were not considered, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+                `INSTRUCTION: If any dependencies were not considered, then adjust the implementation and re-run 'jumbo goal review --id ${response.goalId}' again.`;
     }
 
     // Decisions
@@ -124,7 +124,7 @@ export class GoalReviewOutputBuilder {
       });
       output += "\nNOTE: The solution may contain artifacts that reflect previous design decisions.\n" +
                 "VERIFY:These design decisions are reflected in the implementation and ensure the trajectory of the solution is consistent.\n" +
-                `INSTRUCTION: If any design decisions are not reflected or the trajectory is inconsistent, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+                `INSTRUCTION: If any design decisions are not reflected or the trajectory is inconsistent, then adjust the implementation and re-run 'jumbo goal review --id ${response.goalId}' again.`;
     }
 
     // Invariants
@@ -134,7 +134,7 @@ export class GoalReviewOutputBuilder {
         output += `- ${inv.entity.title}:\n  - ${inv.entity.description}\n`;
       });
       output += "\nVERIFY: The implementation adheres to ALL of these invariants.\n" +
-                `INSTRUCTION: If the implementation does not adhere to any of these invariants, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+                `INSTRUCTION: If the implementation does not adhere to any of these invariants, then adjust the implementation and re-run 'jumbo goal review --id ${response.goalId}' again.`;
     }
 
     // Guidelines
@@ -144,16 +144,16 @@ export class GoalReviewOutputBuilder {
         output += `- ${g.entity.category}: ${g.entity.description}\n`;
       });
       output += "\nVERIFY: The implementation follows these guidelines.\n" +
-                `INSTRUCTION: If the implementation does not follow any of these guidelines, then adjust the implementation and re-run 'jumbo goal review --goal-id ${response.goalId}' again.`;
+                `INSTRUCTION: If the implementation does not follow any of these guidelines, then adjust the implementation and re-run 'jumbo goal review --id ${response.goalId}' again.`;
     }
 
     // Final instructions
     output += "\n\n---\n" +
               "## Next Steps\n" +
               "If ALL criteria are met:\n" +
-              `  Run: jumbo goal qualify --goal-id ${response.goalId}\n\n` +
+              `  Run: jumbo goal qualify --id ${response.goalId}\n\n` +
               "If ANY criteria are NOT met:\n" +
-              `  Fix the issues and run: jumbo goal review --goal-id ${response.goalId} again\n` +
+              `  Fix the issues and run: jumbo goal review --id ${response.goalId} again\n` +
               "---\n";
 
     this.builder.addPrompt(output);

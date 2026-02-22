@@ -19,7 +19,7 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to resume"
     }
   ],
@@ -31,11 +31,11 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal resume --goal-id goal_abc123",
+      command: "jumbo goal resume --id goal_abc123",
       description: "Resume working on a paused or in-progress goal"
     },
     {
-      command: "jumbo goal resume --goal-id goal_abc123 --note \"Ready to continue\"",
+      command: "jumbo goal resume --id goal_abc123 --note \"Ready to continue\"",
       description: "Resume a paused goal with a note"
     }
   ],
@@ -46,12 +46,12 @@ export const metadata: CommandMetadata = {
  * Command handler
  * Called by Commander with parsed options
  */
-export async function goalResume(options: { goalId: string; note?: string }, container: IApplicationContainer) {
+export async function goalResume(options: { id: string; note?: string }, container: IApplicationContainer) {
   const renderer = Renderer.getInstance();
 
   try {
     const response = await container.resumeGoalController.handle({
-      goalId: options.goalId,
+      goalId: options.id,
       note: options.note,
     });
 

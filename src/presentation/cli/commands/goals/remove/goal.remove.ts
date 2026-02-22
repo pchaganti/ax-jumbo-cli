@@ -17,13 +17,13 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to remove"
     }
   ],
   examples: [
     {
-      command: "jumbo goal remove --goal-id goal_abc123",
+      command: "jumbo goal remove --id goal_abc123",
       description: "Remove a goal"
     }
   ],
@@ -34,13 +34,13 @@ export const metadata: CommandMetadata = {
  * Command handler
  * Called by Commander with parsed options
  */
-export async function goalRemove(options: { goalId: string }, container: IApplicationContainer) {
+export async function goalRemove(options: { id: string }, container: IApplicationContainer) {
   const renderer = Renderer.getInstance();
   const outputBuilder = new GoalRemoveOutputBuilder();
 
   try {
     const response = await container.removeGoalController.handle({
-      goalId: options.goalId,
+      goalId: options.id,
     });
 
     const output = outputBuilder.buildSuccess(response.goalId, response.objective);

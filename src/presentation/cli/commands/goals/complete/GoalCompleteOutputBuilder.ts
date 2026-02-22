@@ -85,7 +85,7 @@ export class GoalCompleteOutputBuilder {
       });
       this.builder.addPrompt(
         "Start the next goal immediately. Run:\n" +
-        `  jumbo goal start --goal-id ${response.nextGoal.goalId}`
+        `  jumbo goal start --id ${response.nextGoal.goalId}`
       );
     }
 

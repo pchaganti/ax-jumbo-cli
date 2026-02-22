@@ -19,14 +19,14 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to submit for review"
     }
   ],
   options: [],
   examples: [
     {
-      command: "jumbo goal review --goal-id goal_abc123",
+      command: "jumbo goal review --id goal_abc123",
       description: "Submit a goal for QA review"
     }
   ],
@@ -38,7 +38,7 @@ export const metadata: CommandMetadata = {
  * Called by Commander with parsed options
  */
 export async function goalReview(
-  options: { goalId: string },
+  options: { id: string },
   container: IApplicationContainer
 ) {
   const renderer = Renderer.getInstance();
@@ -49,7 +49,7 @@ export async function goalReview(
 
     // 2. Create request
     const request: ReviewGoalRequest = {
-      goalId: options.goalId,
+      goalId: options.id,
     };
 
     // 3. Handle request

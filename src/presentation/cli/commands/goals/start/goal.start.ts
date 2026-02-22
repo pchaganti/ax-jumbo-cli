@@ -17,13 +17,13 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "[required]ID of the goal to start"
     }
   ],
   examples: [
     {
-      command: "jumbo goal start --goal-id goal_abc123",
+      command: "jumbo goal start --id goal_abc123",
       description: "Start working on the goal with ID 'goal_abc123'"
     }
   ],
@@ -34,12 +34,12 @@ export const metadata: CommandMetadata = {
  * Command handler
  * Called by Commander with parsed options
  */
-export async function goalStart(options: { goalId: string }, container: IApplicationContainer) {
+export async function goalStart(options: { id: string }, container: IApplicationContainer) {
   const renderer = Renderer.getInstance();
 
   try {
     const response = await container.startGoalController.handle({
-      goalId: options.goalId,
+      goalId: options.id,
     });
 
     // Build and render output using builder pattern

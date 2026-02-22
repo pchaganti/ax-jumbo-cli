@@ -18,13 +18,13 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to show"
     }
   ],
   examples: [
     {
-      command: "jumbo goal show --goal-id goal_abc123",
+      command: "jumbo goal show --id goal_abc123",
       description: "Show complete goal details"
     }
   ],
@@ -36,7 +36,7 @@ export const metadata: CommandMetadata = {
  * Called by Commander with parsed options
  */
 export async function goalShow(
-  options: { goalId: string },
+  options: { id: string },
   container: IApplicationContainer
 ) {
   const renderer = Renderer.getInstance();
@@ -44,7 +44,7 @@ export async function goalShow(
   try {
     // 1. Execute via controller — returns typed response
     const { contextualGoalView } = await container.showGoalController.handle({
-      goalId: options.goalId
+      goalId: options.id
     });
 
     // 2. Build and render output using builder pattern
@@ -66,7 +66,7 @@ export async function goalShow(
   } catch (error) {
     // Handle goal not found case
     if (error instanceof Error && error.message.includes("Goal not found")) {
-      renderer.error("Goal not found", `No goal exists with ID: ${options.goalId}`);
+      renderer.error("Goal not found", `No goal exists with ID: ${options.id}`);
       process.exit(1);
     }
 

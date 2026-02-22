@@ -27,7 +27,7 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to refine"
     }
   ],
@@ -43,15 +43,15 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal refine --goal-id goal_abc123",
+      command: "jumbo goal refine --id goal_abc123",
       description: "Display goal details for review (interactive mode)"
     },
     {
-      command: "jumbo goal refine --goal-id goal_abc123 --approve",
+      command: "jumbo goal refine --id goal_abc123 --approve",
       description: "Approve and refine the goal without prompts"
     },
     {
-      command: "jumbo goal refine --goal-id goal_abc123 --interactive",
+      command: "jumbo goal refine --id goal_abc123 --interactive",
       description: "Refine with interactive prompts to register relations"
     }
   ],
@@ -64,7 +64,7 @@ export const metadata: CommandMetadata = {
  */
 export async function goalRefine(
   options: {
-    goalId: string;
+    id: string;
     interactive?: boolean;
     approve?: boolean;
   },
@@ -75,9 +75,9 @@ export async function goalRefine(
 
   try {
     // 1. Verify goal exists and is in to-do status
-    const goalView = await container.goalContextReader.findById(options.goalId);
+    const goalView = await container.goalContextReader.findById(options.id);
     if (!goalView) {
-      const output = outputBuilder.buildGoalNotFoundError(options.goalId);
+      const output = outputBuilder.buildGoalNotFoundError(options.id);
       renderer.error(output.toHumanReadable());
       process.exit(1);
     }
@@ -88,7 +88,7 @@ export async function goalRefine(
       const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);
       renderer.info(detailsOutput.toHumanReadable());
 
-      const createdRelations = await runInteractiveRelationFlow(options.goalId, container);
+      const createdRelations = await runInteractiveRelationFlow(options.id, container);
 
       // Display relations if any were created
       if (createdRelations.length > 0) {
@@ -96,7 +96,7 @@ export async function goalRefine(
         renderer.info(relationsOutput.toHumanReadable());
       }
 
-      const response = await container.refineGoalController.handle({ goalId: options.goalId });
+      const response = await container.refineGoalController.handle({ goalId: options.id });
       const successOutput = outputBuilder.buildSuccess(response.goalId, response.status);
       renderer.info(successOutput.toHumanReadable());
     } else if (options.approve) {
@@ -104,7 +104,7 @@ export async function goalRefine(
       const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);
       renderer.info(detailsOutput.toHumanReadable());
 
-      const response = await container.refineGoalController.handle({ goalId: options.goalId });
+      const response = await container.refineGoalController.handle({ goalId: options.id });
       const successOutput = outputBuilder.buildSuccess(response.goalId, response.status);
       renderer.info(successOutput.toHumanReadable());
     } else {
@@ -113,7 +113,7 @@ export async function goalRefine(
       renderer.info(detailsOutput.toHumanReadable());
 
       // Show approval instruction
-      const approvalOutput = outputBuilder.buildApprovalInstruction(options.goalId);
+      const approvalOutput = outputBuilder.buildApprovalInstruction(options.id);
       renderer.info(approvalOutput.toHumanReadable());
     }
 

@@ -18,14 +18,14 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to qualify"
     }
   ],
   options: [],
   examples: [
     {
-      command: "jumbo goal qualify --goal-id goal_abc123",
+      command: "jumbo goal qualify --id goal_abc123",
       description: "Qualify a goal after QA review passes"
     }
   ],
@@ -37,7 +37,7 @@ export const metadata: CommandMetadata = {
  * Called by Commander with parsed options
  */
 export async function goalQualify(
-  options: { goalId: string },
+  options: { id: string },
   container: IApplicationContainer
 ) {
   const renderer = Renderer.getInstance();
@@ -45,7 +45,7 @@ export async function goalQualify(
   try {
     // 1. Execute via controller
     const response = await container.qualifyGoalController.handle({
-      goalId: options.goalId,
+      goalId: options.id,
     });
 
     // 2. Build and render output using builder pattern

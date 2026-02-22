@@ -160,14 +160,14 @@ export class GoalStartOutputBuilder {
     this.builder.addPrompt(
       "---\n\n" +
       "@LLM: Goal context loaded. Work within scope.\n" +
-      `Track your progress by documenting completed sub-tasks with 'jumbo goal update-progress --goal-id ${goal.goalId} --task-description <description>'.`
+      `Track your progress by documenting completed sub-tasks with 'jumbo goal update-progress --id ${goal.goalId} --task-description <description>'.`
     );
 
     // Review instructions (prominent)
     this.builder.addPrompt(
       "=".repeat(80) + "\n" +
       "🚀 WHEN YOU'RE FINISHED IMPLEMENTING THEN THE NEXT STEP IS:\n" +
-      `Run: jumbo goal review --goal-id ${goal.goalId}\n` +
+      `Run: jumbo goal review --id ${goal.goalId}\n` +
       "=".repeat(80)
     );
 

@@ -18,13 +18,13 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to reset"
     }
   ],
   examples: [
     {
-      command: "jumbo goal reset --goal-id goal_abc123",
+      command: "jumbo goal reset --id goal_abc123",
       description: "Reset a goal to 'to-do' status"
     }
   ],
@@ -35,13 +35,13 @@ export const metadata: CommandMetadata = {
  * Command handler
  * Called by Commander with parsed options
  */
-export async function goalReset(options: { goalId: string }, container: IApplicationContainer) {
+export async function goalReset(options: { id: string }, container: IApplicationContainer) {
   const renderer = Renderer.getInstance();
   const outputBuilder = new GoalResetOutputBuilder();
 
   try {
     const response = await container.resetGoalController.handle({
-      goalId: options.goalId,
+      goalId: options.id,
     });
 
     // Build and render success output

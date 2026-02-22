@@ -17,7 +17,7 @@ export const metadata: CommandMetadata = {
   category: "work",
   requiredOptions: [
     {
-      flags: "--goal-id <goalId>",
+      flags: "--id <id>",
       description: "ID of the goal to update progress on"
     },
     {
@@ -28,7 +28,7 @@ export const metadata: CommandMetadata = {
   options: [],
   examples: [
     {
-      command: "jumbo goal update-progress --goal-id goal_abc123 --task-description \"Implemented user login form\"",
+      command: "jumbo goal update-progress --id goal_abc123 --task-description \"Implemented user login form\"",
       description: "Record progress on a goal"
     }
   ],
@@ -40,14 +40,14 @@ export const metadata: CommandMetadata = {
  * Called by Commander with parsed options
  */
 export async function goalUpdateProgress(
-  options: { goalId: string; taskDescription: string },
+  options: { id: string; taskDescription: string },
   container: IApplicationContainer
 ) {
   const renderer = Renderer.getInstance();
 
   try {
     const response = await container.updateGoalProgressController.handle({
-      goalId: options.goalId,
+      goalId: options.id,
       taskDescription: options.taskDescription,
     });
 
