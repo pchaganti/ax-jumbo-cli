@@ -16,13 +16,13 @@ export const metadata: CommandMetadata = {
   category: "project-knowledge",
   requiredOptions: [
     {
-      flags: "--value-proposition-id <valuePropositionId>",
+      flags: "-i, --id <id>",
       description: "ID of the value proposition to remove",
     },
   ],
   examples: [
     {
-      command: "jumbo value remove --value-proposition-id value_abc123",
+      command: "jumbo value remove --id value_abc123",
       description: "Remove a value proposition by ID",
     },
   ],
@@ -34,13 +34,13 @@ export const metadata: CommandMetadata = {
  * Called by Commander with parsed options
  */
 export async function valueRemove(options: {
-  valuePropositionId: string;
+  id: string;
 }, container: IApplicationContainer) {
   const renderer = Renderer.getInstance();
 
   try {
     const response = await container.removeValuePropositionController.handle({
-      valuePropositionId: options.valuePropositionId,
+      valuePropositionId: options.id,
     });
 
     // Success output

@@ -17,11 +17,11 @@ export const metadata: CommandMetadata = {
   category: "project-knowledge",
   requiredOptions: [
     {
-      flags: "--title <title>",
+      flags: "-t, --title <title>",
       description: "Short value description",
     },
     {
-      flags: "--description <description>",
+      flags: "-d, --description <description>",
       description: "Detailed explanation of the value",
     },
     {

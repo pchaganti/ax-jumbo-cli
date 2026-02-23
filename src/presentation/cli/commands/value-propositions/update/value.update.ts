@@ -17,17 +17,17 @@ export const metadata: CommandMetadata = {
   category: "project-knowledge",
   requiredOptions: [
     {
-      flags: "--id <id>",
+      flags: "-i, --id <id>",
       description: "ID of the value proposition to update",
     },
   ],
   options: [
     {
-      flags: "--title <title>",
+      flags: "-t, --title <title>",
       description: "Updated title (max 100 chars)",
     },
     {
-      flags: "--description <description>",
+      flags: "-d, --description <description>",
       description: "Updated description (max 1000 chars)",
     },
     {
