@@ -24,7 +24,7 @@ export const metadata: CommandMetadata = {
   category: "work",
   options: [
     {
-      flags: "--status <status>",
+      flags: "-s, --status <status>",
       description: "Filter by status: active, paused, ended, or all (default: all)",
     },
   ],
