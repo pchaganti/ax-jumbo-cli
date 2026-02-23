@@ -35,13 +35,13 @@ export const Colors = {
   // Monochrome gradient (bright → dim)
   // gradientA: chalk.rgb(199, 189, 155),
   // gradientB: chalk.rgb(206, 198, 168),
-  // gradientC: chalk.rgb(241, 239, 230),
-  // gradientA: chalk.rgb(109, 192, 241),
-  // gradientB: chalk.rgb(171, 215, 241),
-  // gradientC: chalk.rgb(232, 238, 241),
-  gradientA: chalk.rgb(255, 140, 0),
-  gradientB: chalk.rgb(255, 181, 84),
-  gradientC: chalk.rgb(255, 231, 199),
+  // gradientC: chalk.rgb(221, 219, 220),
+  gradientA: chalk.rgb(255, 91, 21),
+  gradientB: chalk.rgb(102, 178, 255),
+  gradientC: chalk.rgb(219, 251, 235),
+  // gradientA: chalk.rgb(255, 140, 0),
+  // gradientB: chalk.rgb(255, 181, 84),
+  // gradientC: chalk.rgb(171, 215, 241),
 } as const;
 
 /**
@@ -167,4 +167,14 @@ export function truncate(text: string, maxLength: number): string {
   const len = visualLength(text);
   if (len <= maxLength) return text;
   return stripAnsi(text).substring(0, maxLength - 3) + Symbols.ellipsis;
+}
+
+function isBackgroundLight(): boolean {
+  const colorfgbg = process.env.COLORFGBG;
+  if (colorfgbg) {
+    const parts = colorfgbg.split(";");
+    const bg = parseInt(parts[parts.length - 1], 10);
+    if (!isNaN(bg)) return bg > 6;
+  }
+  return false;
 }
