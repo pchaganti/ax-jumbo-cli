@@ -72,7 +72,7 @@ export class GoalCompleteOutputBuilder {
       "  Update: jumbo architecture update --style \"...\" --principles \"...\"\n\n" +
       "### Relations\n" +
       "Should any new relations be established between entities touched by this goal?\n" +
-      "  Add: jumbo relation add --from-type <type> --from-id <id> --to-type <type> --to-id <id> --relation-type <type> --strength <level>"
+      "  Add: jumbo relation add --from-type <type> --from-id <id> --to-type <type> --to-id <id> --type <type> --strength <level>"
     );
 
     // Next goal in chain (if exists)

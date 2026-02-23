@@ -164,7 +164,7 @@ export class GoalRefineOutputBuilder {
     // Relation add syntax
     this.builder.addPrompt(
       "\nRegister relations with:\n" +
-      `  jumbo relation add --from-type goal --from-id ${goal.goalId} --to-type <entity-type> --to-id <entity-id> --relation-type <type> --description "<description>"`
+      `  jumbo relation add --from-type goal --from-id ${goal.goalId} --to-type <entity-type> --to-id <entity-id> --type <type> --description "<description>"`
     );
 
     // Common relation types

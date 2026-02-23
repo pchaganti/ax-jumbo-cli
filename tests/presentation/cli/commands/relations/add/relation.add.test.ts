@@ -42,7 +42,7 @@ describe("relation.add command", () => {
         fromId: "goal_123",
         toType: "component",
         toId: "comp_456",
-        relationType: "involves",
+        type: "involves",
         description: "Goal involves component",
       },
       mockContainer as IApplicationContainer
@@ -69,7 +69,7 @@ describe("relation.add command", () => {
         fromId: "goal_123",
         toType: "invariant",
         toId: "inv_789",
-        relationType: "must-respect",
+        type: "must-respect",
         description: "Must respect invariant",
         strength: "strong",
       },
@@ -92,7 +92,7 @@ describe("relation.add command", () => {
         fromId: "goal_123",
         toType: "component",
         toId: "comp_456",
-        relationType: "involves",
+        type: "involves",
         description: "Goal involves component",
       },
       mockContainer as IApplicationContainer

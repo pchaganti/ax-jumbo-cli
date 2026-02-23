@@ -34,7 +34,7 @@ export const metadata: CommandMetadata = {
       description: "Target entity ID"
     },
     {
-      flags: "--relation-type <relationType>",
+      flags: "-T, --type <type>",
       description: "Type of relationship (e.g., involves, uses, depends-on)"
     },
     {
@@ -50,11 +50,11 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo relation add --from-type goal --from-id auth-impl --to-type component --to-id TokenService --relation-type involves --description 'Goal requires TokenService implementation'",
+      command: "jumbo relation add --from-type goal --from-id auth-impl --to-type component --to-id TokenService --type involves --description 'Goal requires TokenService implementation'",
       description: "Link a goal to a component it involves"
     },
     {
-      command: "jumbo relation add --from-type component --from-id TokenService --to-type dependency --to-id jsonwebtoken --relation-type uses --strength strong --description 'TokenService critically depends on jsonwebtoken'",
+      command: "jumbo relation add --from-type component --from-id TokenService --to-type dependency --to-id jsonwebtoken --type uses --strength strong --description 'TokenService critically depends on jsonwebtoken'",
       description: "Link a component to its dependency with strength"
     }
   ],
@@ -70,7 +70,7 @@ export async function relationAdd(options: {
   fromId: string;
   toType: string;
   toId: string;
-  relationType: string;
+  type: string;
   description: string;
   strength?: string;
 }, container: IApplicationContainer) {
@@ -82,7 +82,7 @@ export async function relationAdd(options: {
       fromEntityId: options.fromId,
       toEntityType: options.toType as EntityTypeValue,
       toEntityId: options.toId,
-      relationType: options.relationType,
+      relationType: options.type,
       description: options.description,
       strength: options.strength as RelationStrengthValue | undefined
     };
@@ -92,7 +92,7 @@ export async function relationAdd(options: {
     const data: Record<string, string> = {
       relationId,
       from: `${options.fromType}:${options.fromId}`,
-      relationType: options.relationType,
+      relationType: options.type,
       to: `${options.toType}:${options.toId}`,
     };
     if (options.strength) {

@@ -71,7 +71,7 @@ export const metadata: CommandMetadata = {
   topLevelAliases: ["init"],
   options: [
     {
-      flags: "--name <name>",
+      flags: "-n, --name <name>",
       description: "Project name (required in non-interactive mode)"
     },
     {
