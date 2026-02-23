@@ -15,9 +15,13 @@ module.exports = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!uuid)',
+  ],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
+    '^.+\\.[jt]s$': ['ts-jest', {
       useESM: true,
+      isolatedModules: true,
     }],
   },
 };

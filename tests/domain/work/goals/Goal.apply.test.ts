@@ -3,18 +3,18 @@
  * (formerly GoalProjection)
  */
 
-import { Goal, GoalState } from "../../../../src/domain/work/goals/Goal";
-import { GoalAddedEvent, GoalStartedEvent, GoalCompletedEvent, GoalPausedEvent, GoalResumedEvent, GoalSubmittedForReviewEvent, GoalQualifiedEvent } from "../../../../src/domain/work/goals/EventIndex";
-import { GoalEventType, GoalStatus } from "../../../../src/domain/work/goals/Constants";
+import { Goal, GoalState } from "../../../../src/domain/goals/Goal";
+import { GoalAddedEvent, GoalRefinedEvent, GoalStartedEvent, GoalCompletedEvent, GoalPausedEvent, GoalResumedEvent, GoalSubmittedForReviewEvent, GoalQualifiedEvent } from "../../../../src/domain/goals/EventIndex";
+import { GoalEventType, GoalStatus } from "../../../../src/domain/goals/Constants";
 
 function createEmptyGoalState(id: string): GoalState {
   return {
     id,
+    title: "",
     objective: "",
     successCriteria: [],
     scopeIn: [],
     scopeOut: [],
-    boundaries: [],
     status: GoalStatus.TODO,
     version: 0,
     progress: [],
@@ -27,11 +27,11 @@ describe("Goal", () => {
       // Arrange
       const state = {
         id: "goal_123",
+        title: "",
         objective: "",
         successCriteria: [],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
         status: 'to-do' as const,
         version: 0,
         progress: [],
@@ -43,11 +43,11 @@ describe("Goal", () => {
         version: 1,
         timestamp: new Date().toISOString(),
         payload: {
+          title: "Auth feature",
           objective: "Implement authentication",
           successCriteria: ["Users can log in"],
           scopeIn: ["AuthController"],
           scopeOut: ["AdminPanel"],
-          boundaries: ["No breaking changes"],
           status: GoalStatus.TODO,
         },
       };
@@ -60,91 +60,19 @@ describe("Goal", () => {
       expect(state.successCriteria).toEqual(["Users can log in"]);
       expect(state.scopeIn).toEqual(["AuthController"]);
       expect(state.scopeOut).toEqual(["AdminPanel"]);
-      expect(state.boundaries).toEqual(["No breaking changes"]);
       expect(state.status).toBe(GoalStatus.TODO);
       expect(state.version).toBe(1);
-    });
-
-    it("should apply GoalAddedEvent event with embedded context fields", () => {
-      // Arrange
-      const state = createEmptyGoalState("goal_123");
-
-      const event: GoalAddedEvent = {
-        type: GoalEventType.ADDED,
-        aggregateId: "goal_123",
-        version: 1,
-        timestamp: new Date().toISOString(),
-        payload: {
-          objective: "Implement feature",
-          successCriteria: ["Feature works"],
-          scopeIn: [],
-          scopeOut: [],
-          boundaries: [],
-          status: GoalStatus.TODO,
-          relevantInvariants: [{ title: "SOLID", description: "Follow SOLID principles" }],
-          relevantGuidelines: [{ title: "Testing", description: "Write tests first" }],
-          relevantDependencies: [{ consumer: "ServiceA", provider: "ServiceB" }],
-          relevantComponents: [{ name: "FeatureModule", responsibility: "Handle feature" }],
-          architecture: { description: "Microservices", organization: "By domain" },
-          filesToBeCreated: ["src/feature/index.ts"],
-          filesToBeChanged: ["src/main.ts"],
-        },
-      };
-
-      // Act
-      Goal.apply(state, event);
-
-      // Assert
-      expect(state.relevantInvariants).toEqual([{ title: "SOLID", description: "Follow SOLID principles" }]);
-      expect(state.relevantGuidelines).toEqual([{ title: "Testing", description: "Write tests first" }]);
-      expect(state.relevantDependencies).toEqual([{ consumer: "ServiceA", provider: "ServiceB" }]);
-      expect(state.relevantComponents).toEqual([{ name: "FeatureModule", responsibility: "Handle feature" }]);
-      expect(state.architecture).toEqual({ description: "Microservices", organization: "By domain" });
-      expect(state.filesToBeCreated).toEqual(["src/feature/index.ts"]);
-      expect(state.filesToBeChanged).toEqual(["src/main.ts"]);
-    });
-
-    it("should not set embedded context fields when not provided in event", () => {
-      // Arrange
-      const state = createEmptyGoalState("goal_123");
-
-      const event: GoalAddedEvent = {
-        type: GoalEventType.ADDED,
-        aggregateId: "goal_123",
-        version: 1,
-        timestamp: new Date().toISOString(),
-        payload: {
-          objective: "Simple goal",
-          successCriteria: ["Done"],
-          scopeIn: [],
-          scopeOut: [],
-          boundaries: [],
-          status: GoalStatus.TODO,
-        },
-      };
-
-      // Act
-      Goal.apply(state, event);
-
-      // Assert - embedded context fields should remain undefined
-      expect(state.relevantInvariants).toBeUndefined();
-      expect(state.relevantGuidelines).toBeUndefined();
-      expect(state.relevantDependencies).toBeUndefined();
-      expect(state.relevantComponents).toBeUndefined();
-      expect(state.architecture).toBeUndefined();
-      expect(state.filesToBeCreated).toBeUndefined();
-      expect(state.filesToBeChanged).toBeUndefined();
     });
 
     it("should apply GoalStartedEvent event correctly", () => {
       // Arrange
       const state = {
         id: "goal_123",
+        title: "Auth feature",
         objective: "Implement authentication",
         successCriteria: ["Users can log in"],
         scopeIn: ["AuthController"],
         scopeOut: [],
-        boundaries: [],
         status: GoalStatus.TODO,
         version: 1,
         progress: [],
@@ -175,11 +103,11 @@ describe("Goal", () => {
       // Arrange
       const state = {
         id: "goal_123",
+        title: "Auth feature",
         objective: "Implement authentication",
         successCriteria: ["Users can log in"],
         scopeIn: ["AuthController"],
         scopeOut: [],
-        boundaries: [],
         status: GoalStatus.DOING,
         version: 2,
         progress: [],
@@ -207,6 +135,44 @@ describe("Goal", () => {
     });
   });
 
+  describe("apply() - GoalRefinedEvent", () => {
+    it("should apply GoalRefinedEvent event correctly", () => {
+      // Arrange
+      const state = {
+        id: "goal_123",
+        title: "Auth feature",
+        objective: "Implement authentication",
+        successCriteria: ["Users can log in"],
+        scopeIn: ["AuthController"],
+        scopeOut: [],
+        status: GoalStatus.TODO,
+        version: 1,
+        progress: [],
+      };
+
+      const event: GoalRefinedEvent = {
+        type: GoalEventType.REFINED,
+        aggregateId: "goal_123",
+        version: 2,
+        timestamp: new Date().toISOString(),
+        payload: {
+          status: GoalStatus.REFINED,
+          refinedAt: new Date().toISOString(),
+        },
+      };
+
+      // Act
+      Goal.apply(state, event);
+
+      // Assert
+      expect(state.status).toBe(GoalStatus.REFINED);
+      expect(state.version).toBe(2);
+      // Other fields should remain unchanged
+      expect(state.objective).toBe("Implement authentication");
+      expect(state.successCriteria).toEqual(["Users can log in"]);
+    });
+  });
+
   describe("rehydrate()", () => {
     it("should rehydrate from empty history", () => {
       // Act
@@ -228,11 +194,11 @@ describe("Goal", () => {
         version: 1,
         timestamp: new Date().toISOString(),
         payload: {
+          title: "Auth feature",
           objective: "Implement authentication",
           successCriteria: ["Users can log in", "Tokens are validated"],
           scopeIn: ["AuthController"],
           scopeOut: [],
-          boundaries: [],
           status: GoalStatus.TODO,
         },
       };
@@ -256,11 +222,11 @@ describe("Goal", () => {
         version: 1,
         timestamp: new Date().toISOString(),
         payload: {
+          title: "Auth feature",
           objective: "Implement authentication",
           successCriteria: ["Users can log in"],
           scopeIn: ["AuthController"],
           scopeOut: [],
-          boundaries: [],
           status: GoalStatus.TODO,
         },
       };
@@ -291,11 +257,11 @@ describe("Goal", () => {
       // Arrange
       const state = {
         id: "goal_123",
+        title: "Auth feature",
         objective: "Implement authentication",
         successCriteria: ["Users can log in"],
         scopeIn: ["AuthController"],
         scopeOut: [],
-        boundaries: [],
         status: GoalStatus.DOING,
         version: 2,
         note: undefined,
@@ -329,11 +295,11 @@ describe("Goal", () => {
       // Arrange
       const state = {
         id: "goal_123",
+        title: "Auth feature",
         objective: "Implement authentication",
         successCriteria: ["Users can log in"],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
         status: GoalStatus.DOING,
         version: 2,
         note: undefined,
@@ -366,11 +332,11 @@ describe("Goal", () => {
       // Arrange
       const state = {
         id: "goal_123",
+        title: "Auth feature",
         objective: "Implement authentication",
         successCriteria: ["Users can log in"],
         scopeIn: ["AuthController"],
         scopeOut: [],
-        boundaries: [],
         status: GoalStatus.PAUSED,
         version: 3,
         note: undefined,
@@ -403,11 +369,11 @@ describe("Goal", () => {
       // Arrange
       const state = {
         id: "goal_123",
+        title: "Auth feature",
         objective: "Implement authentication",
         successCriteria: ["Users can log in"],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
         status: GoalStatus.PAUSED,
         version: 3,
         note: undefined,
@@ -439,11 +405,11 @@ describe("Goal", () => {
       // Arrange
       const state = {
         id: "goal_123",
+        title: "Auth feature",
         objective: "Implement authentication",
         successCriteria: ["Users can log in"],
         scopeIn: ["AuthController"],
         scopeOut: [],
-        boundaries: [],
         status: GoalStatus.DOING,
         version: 2,
         note: undefined,
@@ -476,11 +442,11 @@ describe("Goal", () => {
       // Arrange
       const state = {
         id: "goal_123",
+        title: "Auth feature",
         objective: "Implement authentication",
         successCriteria: ["Users can log in"],
         scopeIn: [],
         scopeOut: [],
-        boundaries: [],
         status: GoalStatus.BLOCKED,
         version: 3,
         note: "Waiting for API",
@@ -514,11 +480,11 @@ describe("Goal", () => {
       // Arrange
       const state = {
         id: "goal_123",
+        title: "Auth feature",
         objective: "Implement authentication",
         successCriteria: ["Users can log in"],
         scopeIn: ["AuthController"],
         scopeOut: [],
-        boundaries: [],
         status: GoalStatus.INREVIEW,
         version: 3,
         note: undefined,
@@ -549,7 +515,7 @@ describe("Goal", () => {
   });
 
   describe("rehydrate() - full review workflow", () => {
-    it("should rehydrate through complete review workflow (TODO -> DOING -> IN_REVIEW -> QUALIFIED -> COMPLETED)", () => {
+    it("should rehydrate through complete review workflow (TODO -> REFINED -> DOING -> IN_REVIEW -> QUALIFIED -> COMPLETED)", () => {
       // Arrange
       const addedEvent: GoalAddedEvent = {
         type: GoalEventType.ADDED,
@@ -557,19 +523,30 @@ describe("Goal", () => {
         version: 1,
         timestamp: new Date().toISOString(),
         payload: {
+          title: "Auth feature",
           objective: "Implement authentication",
           successCriteria: ["Users can log in"],
           scopeIn: ["AuthController"],
           scopeOut: [],
-          boundaries: [],
           status: GoalStatus.TODO,
+        },
+      };
+
+      const refinedEvent: GoalRefinedEvent = {
+        type: GoalEventType.REFINED,
+        aggregateId: "goal_123",
+        version: 2,
+        timestamp: new Date().toISOString(),
+        payload: {
+          status: GoalStatus.REFINED,
+          refinedAt: new Date().toISOString(),
         },
       };
 
       const startedEvent: GoalStartedEvent = {
         type: GoalEventType.STARTED,
         aggregateId: "goal_123",
-        version: 2,
+        version: 3,
         timestamp: new Date().toISOString(),
         payload: {
           status: GoalStatus.DOING,
@@ -579,7 +556,7 @@ describe("Goal", () => {
       const submittedEvent: GoalSubmittedForReviewEvent = {
         type: GoalEventType.SUBMITTED_FOR_REVIEW,
         aggregateId: "goal_123",
-        version: 3,
+        version: 4,
         timestamp: new Date().toISOString(),
         payload: {
           status: GoalStatus.INREVIEW,
@@ -590,7 +567,7 @@ describe("Goal", () => {
       const qualifiedEvent: GoalQualifiedEvent = {
         type: GoalEventType.QUALIFIED,
         aggregateId: "goal_123",
-        version: 4,
+        version: 5,
         timestamp: new Date().toISOString(),
         payload: {
           status: GoalStatus.QUALIFIED,
@@ -601,7 +578,7 @@ describe("Goal", () => {
       const completedEvent: GoalCompletedEvent = {
         type: GoalEventType.COMPLETED,
         aggregateId: "goal_123",
-        version: 5,
+        version: 6,
         timestamp: new Date().toISOString(),
         payload: {
           status: GoalStatus.COMPLETED,
@@ -611,6 +588,7 @@ describe("Goal", () => {
       // Act
       const goal = Goal.rehydrate("goal_123", [
         addedEvent,
+        refinedEvent,
         startedEvent,
         submittedEvent,
         qualifiedEvent,
@@ -621,7 +599,7 @@ describe("Goal", () => {
       // Assert
       expect(state.objective).toBe("Implement authentication");
       expect(state.status).toBe(GoalStatus.COMPLETED);
-      expect(state.version).toBe(5);
+      expect(state.version).toBe(6);
     });
   });
 });

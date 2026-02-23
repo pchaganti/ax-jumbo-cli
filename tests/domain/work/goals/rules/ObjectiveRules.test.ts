@@ -6,9 +6,9 @@ import {
   ObjectiveRequiredRule,
   ObjectiveMaxLengthRule,
   OBJECTIVE_RULES,
-} from "../../../../../src/domain/work/goals/rules/ObjectiveRules";
-import { ValidationRuleSet } from "../../../../../src/domain/shared/validation/ValidationRule";
-import { GoalLimits } from "../../../../../src/domain/work/goals/Constants";
+} from "../../../../../src/domain/goals/rules/ObjectiveRules";
+import { ValidationRuleSet } from "../../../../../src/domain/validation/ValidationRule";
+import { GoalLimits } from "../../../../../src/domain/goals/Constants";
 
 describe("ObjectiveRules", () => {
   describe("ObjectiveRequiredRule", () => {
@@ -37,7 +37,7 @@ describe("ObjectiveRules", () => {
   describe("ObjectiveMaxLengthRule", () => {
     it("should pass for objective within limit", () => {
       const rule = new ObjectiveMaxLengthRule();
-      const objective = "a".repeat(500); // Exactly at limit
+      const objective = "a".repeat(GoalLimits.OBJECTIVE_MAX_LENGTH); // Exactly at limit
       const result = rule.validate(objective);
       expect(result.isValid).toBe(true);
       expect(result.errors).toEqual([]);
@@ -45,11 +45,11 @@ describe("ObjectiveRules", () => {
 
     it("should fail for objective exceeding limit", () => {
       const rule = new ObjectiveMaxLengthRule();
-      const objective = "a".repeat(501); // Over limit
+      const objective = "a".repeat(GoalLimits.OBJECTIVE_MAX_LENGTH + 1); // Over limit
       const result = rule.validate(objective);
       expect(result.isValid).toBe(false);
       expect(result.errors[0]).toContain("Objective must be less than");
-      expect(result.errors[0]).toContain("500");
+      expect(result.errors[0]).toContain(String(GoalLimits.OBJECTIVE_MAX_LENGTH));
     });
 
     it("should respect custom max length", () => {

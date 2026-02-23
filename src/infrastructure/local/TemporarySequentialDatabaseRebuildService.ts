@@ -4,7 +4,7 @@
  * Infrastructure implementation of database rebuild service with sequential handler execution.
  *
  * This service addresses a race condition during database rebuild where
- * cross-aggregate projection handlers (e.g., SessionSummaryProjectionHandler)
+ * cross-aggregate projection handlers
  * attempt to read from projections (e.g., goal_views) while primary handlers
  * are still writing to them.
  *
@@ -35,106 +35,108 @@ import {
   IDatabaseRebuildService,
   DatabaseRebuildResult,
 } from "../../application/maintenance/db/rebuild/IDatabaseRebuildService.js";
-import { IEventStore } from "../../application/shared/persistence/IEventStore.js";
-import { TemporarySequentialRebuildEventBus } from "../shared/messaging/TemporarySequentialRebuildEventBus.js";
-import { MigrationRunner } from "../shared/persistence/MigrationRunner.js";
-import { getNamespaceMigrations } from "../shared/persistence/migrations.config.js";
+import { IEventStore } from "../../application/persistence/IEventStore.js";
+import { TemporarySequentialRebuildEventBus } from "../messaging/TemporarySequentialRebuildEventBus.js";
+import { MigrationRunner } from "../persistence/MigrationRunner.js";
+import { getNamespaceMigrations } from "../persistence/migrations.config.js";
 
 // Projectors
-import { SqliteSessionStartedProjector } from "../work/sessions/start/SqliteSessionStartedProjector.js";
-import { SqliteSessionEndedProjector } from "../work/sessions/end/SqliteSessionEndedProjector.js";
-import { SqliteSessionSummaryProjectionStore } from "../work/sessions/get-context/SqliteSessionSummaryProjectionStore.js";
-import { SqliteGoalStatusReader } from "../work/goals/SqliteGoalStatusReader.js";
-import { SqliteDecisionSessionReader } from "../solution/decisions/get-context/SqliteDecisionSessionReader.js";
-import { SqliteGoalAddedProjector } from "../work/goals/add/SqliteGoalAddedProjector.js";
-import { SqliteGoalStartedProjector } from "../work/goals/start/SqliteGoalStartedProjector.js";
-import { SqliteGoalUpdatedProjector } from "../work/goals/update/SqliteGoalUpdatedProjector.js";
-import { SqliteGoalBlockedProjector } from "../work/goals/block/SqliteGoalBlockedProjector.js";
-import { SqliteGoalUnblockedProjector } from "../work/goals/unblock/SqliteGoalUnblockedProjector.js";
-import { SqliteGoalPausedProjector } from "../work/goals/pause/SqliteGoalPausedProjector.js";
-import { SqliteGoalResumedProjector } from "../work/goals/resume/SqliteGoalResumedProjector.js";
-import { SqliteGoalCompletedProjector } from "../work/goals/complete/SqliteGoalCompletedProjector.js";
-import { SqliteGoalResetProjector } from "../work/goals/reset/SqliteGoalResetProjector.js";
-import { SqliteGoalRemovedProjector } from "../work/goals/remove/SqliteGoalRemovedProjector.js";
-import { SqliteArchitectureDefinedProjector } from "../solution/architecture/define/SqliteArchitectureDefinedProjector.js";
-import { SqliteArchitectureUpdatedProjector } from "../solution/architecture/update/SqliteArchitectureUpdatedProjector.js";
-import { SqliteComponentAddedProjector } from "../solution/components/add/SqliteComponentAddedProjector.js";
-import { SqliteComponentUpdatedProjector } from "../solution/components/update/SqliteComponentUpdatedProjector.js";
-import { SqliteComponentDeprecatedProjector } from "../solution/components/deprecate/SqliteComponentDeprecatedProjector.js";
-import { SqliteComponentRemovedProjector } from "../solution/components/remove/SqliteComponentRemovedProjector.js";
-import { SqliteDependencyAddedProjector } from "../solution/dependencies/add/SqliteDependencyAddedProjector.js";
-import { SqliteDependencyUpdatedProjector } from "../solution/dependencies/update/SqliteDependencyUpdatedProjector.js";
-import { SqliteDependencyRemovedProjector } from "../solution/dependencies/remove/SqliteDependencyRemovedProjector.js";
-import { SqliteDecisionAddedProjector } from "../solution/decisions/add/SqliteDecisionAddedProjector.js";
-import { SqliteDecisionUpdatedProjector } from "../solution/decisions/update/SqliteDecisionUpdatedProjector.js";
-import { SqliteDecisionReversedProjector } from "../solution/decisions/reverse/SqliteDecisionReversedProjector.js";
-import { SqliteDecisionSupersededProjector } from "../solution/decisions/supersede/SqliteDecisionSupersededProjector.js";
-import { SqliteGuidelineAddedProjector } from "../solution/guidelines/add/SqliteGuidelineAddedProjector.js";
-import { SqliteGuidelineUpdatedProjector } from "../solution/guidelines/update/SqliteGuidelineUpdatedProjector.js";
-import { SqliteGuidelineRemovedProjector } from "../solution/guidelines/remove/SqliteGuidelineRemovedProjector.js";
-import { SqliteInvariantAddedProjector } from "../solution/invariants/add/SqliteInvariantAddedProjector.js";
-import { SqliteInvariantUpdatedProjector } from "../solution/invariants/update/SqliteInvariantUpdatedProjector.js";
-import { SqliteInvariantRemovedProjector } from "../solution/invariants/remove/SqliteInvariantRemovedProjector.js";
-import { SqliteProjectInitializedProjector } from "../project-knowledge/project/init/SqliteProjectInitializedProjector.js";
-import { SqliteProjectUpdatedProjector } from "../project-knowledge/project/update/SqliteProjectUpdatedProjector.js";
-import { SqliteAudiencePainAddedProjector } from "../project-knowledge/audience-pains/add/SqliteAudiencePainAddedProjector.js";
-import { SqliteAudiencePainUpdatedProjector } from "../project-knowledge/audience-pains/update/SqliteAudiencePainUpdatedProjector.js";
-import { SqliteAudiencePainResolvedProjector } from "../project-knowledge/audience-pains/resolve/SqliteAudiencePainResolvedProjector.js";
-import { SqliteAudienceAddedProjector } from "../project-knowledge/audiences/add/SqliteAudienceAddedProjector.js";
-import { SqliteAudienceUpdatedProjector } from "../project-knowledge/audiences/update/SqliteAudienceUpdatedProjector.js";
-import { SqliteAudienceRemovedProjector } from "../project-knowledge/audiences/remove/SqliteAudienceRemovedProjector.js";
-import { SqliteValuePropositionAddedProjector } from "../project-knowledge/value-propositions/add/SqliteValuePropositionAddedProjector.js";
-import { SqliteValuePropositionUpdatedProjector } from "../project-knowledge/value-propositions/update/SqliteValuePropositionUpdatedProjector.js";
-import { SqliteValuePropositionRemovedProjector } from "../project-knowledge/value-propositions/remove/SqliteValuePropositionRemovedProjector.js";
-import { SqliteRelationAddedProjector } from "../relations/add/SqliteRelationAddedProjector.js";
-import { SqliteRelationRemovedProjector } from "../relations/remove/SqliteRelationRemovedProjector.js";
+import { SqliteSessionStartedProjector } from "../context/sessions/start/SqliteSessionStartedProjector.js";
+import { SqliteSessionEndedProjector } from "../context/sessions/end/SqliteSessionEndedProjector.js";
+import { SqliteGoalAddedProjector } from "../context/goals/add/SqliteGoalAddedProjector.js";
+import { SqliteGoalStartedProjector } from "../context/goals/start/SqliteGoalStartedProjector.js";
+import { SqliteGoalUpdatedProjector } from "../context/goals/update/SqliteGoalUpdatedProjector.js";
+import { SqliteGoalBlockedProjector } from "../context/goals/block/SqliteGoalBlockedProjector.js";
+import { SqliteGoalUnblockedProjector } from "../context/goals/unblock/SqliteGoalUnblockedProjector.js";
+import { SqliteGoalPausedProjector } from "../context/goals/pause/SqliteGoalPausedProjector.js";
+import { SqliteGoalResumedProjector } from "../context/goals/resume/SqliteGoalResumedProjector.js";
+import { SqliteGoalCompletedProjector } from "../context/goals/complete/SqliteGoalCompletedProjector.js";
+import { SqliteGoalResetProjector } from "../context/goals/reset/SqliteGoalResetProjector.js";
+import { SqliteGoalRemovedProjector } from "../context/goals/remove/SqliteGoalRemovedProjector.js";
+import { SqliteGoalRefinedProjector } from "../context/goals/refine/SqliteGoalRefinedProjector.js";
+import { SqliteGoalProgressUpdatedProjector } from "../context/goals/update-progress/SqliteGoalProgressUpdatedProjector.js";
+import { SqliteGoalSubmittedForReviewProjector } from "../context/goals/review/SqliteGoalSubmittedForReviewProjector.js";
+import { SqliteGoalQualifiedProjector } from "../context/goals/qualify/SqliteGoalQualifiedProjector.js";
+import { SqliteArchitectureDefinedProjector } from "../context/architecture/define/SqliteArchitectureDefinedProjector.js";
+import { SqliteArchitectureUpdatedProjector } from "../context/architecture/update/SqliteArchitectureUpdatedProjector.js";
+import { SqliteComponentAddedProjector } from "../context/components/add/SqliteComponentAddedProjector.js";
+import { SqliteComponentUpdatedProjector } from "../context/components/update/SqliteComponentUpdatedProjector.js";
+import { SqliteComponentDeprecatedProjector } from "../context/components/deprecate/SqliteComponentDeprecatedProjector.js";
+import { SqliteComponentRemovedProjector } from "../context/components/remove/SqliteComponentRemovedProjector.js";
+import { SqliteDependencyAddedProjector } from "../context/dependencies/add/SqliteDependencyAddedProjector.js";
+import { SqliteDependencyUpdatedProjector } from "../context/dependencies/update/SqliteDependencyUpdatedProjector.js";
+import { SqliteDependencyRemovedProjector } from "../context/dependencies/remove/SqliteDependencyRemovedProjector.js";
+import { SqliteDecisionAddedProjector } from "../context/decisions/add/SqliteDecisionAddedProjector.js";
+import { SqliteDecisionUpdatedProjector } from "../context/decisions/update/SqliteDecisionUpdatedProjector.js";
+import { SqliteDecisionReversedProjector } from "../context/decisions/reverse/SqliteDecisionReversedProjector.js";
+import { SqliteDecisionSupersededProjector } from "../context/decisions/supersede/SqliteDecisionSupersededProjector.js";
+import { SqliteGuidelineAddedProjector } from "../context/guidelines/add/SqliteGuidelineAddedProjector.js";
+import { SqliteGuidelineUpdatedProjector } from "../context/guidelines/update/SqliteGuidelineUpdatedProjector.js";
+import { SqliteGuidelineRemovedProjector } from "../context/guidelines/remove/SqliteGuidelineRemovedProjector.js";
+import { SqliteInvariantAddedProjector } from "../context/invariants/add/SqliteInvariantAddedProjector.js";
+import { SqliteInvariantUpdatedProjector } from "../context/invariants/update/SqliteInvariantUpdatedProjector.js";
+import { SqliteInvariantRemovedProjector } from "../context/invariants/remove/SqliteInvariantRemovedProjector.js";
+import { SqliteProjectInitializedProjector } from "../context/project/init/SqliteProjectInitializedProjector.js";
+import { SqliteProjectUpdatedProjector } from "../context/project/update/SqliteProjectUpdatedProjector.js";
+import { SqliteAudiencePainAddedProjector } from "../context/audience-pains/add/SqliteAudiencePainAddedProjector.js";
+import { SqliteAudiencePainUpdatedProjector } from "../context/audience-pains/update/SqliteAudiencePainUpdatedProjector.js";
+import { SqliteAudienceAddedProjector } from "../context/audiences/add/SqliteAudienceAddedProjector.js";
+import { SqliteAudienceUpdatedProjector } from "../context/audiences/update/SqliteAudienceUpdatedProjector.js";
+import { SqliteAudienceRemovedProjector } from "../context/audiences/remove/SqliteAudienceRemovedProjector.js";
+import { SqliteValuePropositionAddedProjector } from "../context/value-propositions/add/SqliteValuePropositionAddedProjector.js";
+import { SqliteValuePropositionUpdatedProjector } from "../context/value-propositions/update/SqliteValuePropositionUpdatedProjector.js";
+import { SqliteValuePropositionRemovedProjector } from "../context/value-propositions/remove/SqliteValuePropositionRemovedProjector.js";
+import { SqliteRelationAddedProjector } from "../context/relations/add/SqliteRelationAddedProjector.js";
+import { SqliteRelationRemovedProjector } from "../context/relations/remove/SqliteRelationRemovedProjector.js";
 
 // Handlers
-import { SessionStartedEventHandler } from "../../application/work/sessions/start/SessionStartedEventHandler.js";
-import { SessionEndedEventHandler } from "../../application/work/sessions/end/SessionEndedEventHandler.js";
-import { SessionSummaryProjectionHandler } from "../../application/work/sessions/get-context/SessionSummaryProjectionHandler.js";
-import { GoalAddedEventHandler } from "../../application/work/goals/add/GoalAddedEventHandler.js";
-import { GoalStartedEventHandler } from "../../application/work/goals/start/GoalStartedEventHandler.js";
-import { GoalUpdatedEventHandler } from "../../application/work/goals/update/GoalUpdatedEventHandler.js";
-import { GoalBlockedEventHandler } from "../../application/work/goals/block/GoalBlockedEventHandler.js";
-import { GoalUnblockedEventHandler } from "../../application/work/goals/unblock/GoalUnblockedEventHandler.js";
-import { GoalPausedEventHandler } from "../../application/work/goals/pause/GoalPausedEventHandler.js";
-import { GoalResumedEventHandler } from "../../application/work/goals/resume/GoalResumedEventHandler.js";
-import { GoalCompletedEventHandler } from "../../application/work/goals/complete/GoalCompletedEventHandler.js";
-import { GoalResetEventHandler } from "../../application/work/goals/reset/GoalResetEventHandler.js";
-import { GoalRemovedEventHandler } from "../../application/work/goals/remove/GoalRemovedEventHandler.js";
-import { DecisionAddedEventHandler } from "../../application/solution/decisions/add/DecisionAddedEventHandler.js";
-import { DecisionUpdatedEventHandler } from "../../application/solution/decisions/update/DecisionUpdatedEventHandler.js";
-import { DecisionReversedEventHandler } from "../../application/solution/decisions/reverse/DecisionReversedEventHandler.js";
-import { DecisionSupersededEventHandler } from "../../application/solution/decisions/supersede/DecisionSupersededEventHandler.js";
-import { ArchitectureDefinedEventHandler } from "../../application/solution/architecture/define/ArchitectureDefinedEventHandler.js";
-import { ArchitectureUpdatedEventHandler } from "../../application/solution/architecture/update/ArchitectureUpdatedEventHandler.js";
-import { ComponentAddedEventHandler } from "../../application/solution/components/add/ComponentAddedEventHandler.js";
-import { ComponentUpdatedEventHandler } from "../../application/solution/components/update/ComponentUpdatedEventHandler.js";
-import { ComponentDeprecatedEventHandler } from "../../application/solution/components/deprecate/ComponentDeprecatedEventHandler.js";
-import { ComponentRemovedEventHandler } from "../../application/solution/components/remove/ComponentRemovedEventHandler.js";
-import { DependencyAddedEventHandler } from "../../application/solution/dependencies/add/DependencyAddedEventHandler.js";
-import { DependencyUpdatedEventHandler } from "../../application/solution/dependencies/update/DependencyUpdatedEventHandler.js";
-import { DependencyRemovedEventHandler } from "../../application/solution/dependencies/remove/DependencyRemovedEventHandler.js";
-import { GuidelineAddedEventHandler } from "../../application/solution/guidelines/add/GuidelineAddedEventHandler.js";
-import { GuidelineUpdatedEventHandler } from "../../application/solution/guidelines/update/GuidelineUpdatedEventHandler.js";
-import { GuidelineRemovedEventHandler } from "../../application/solution/guidelines/remove/GuidelineRemovedEventHandler.js";
-import { InvariantAddedEventHandler } from "../../application/solution/invariants/add/InvariantAddedEventHandler.js";
-import { InvariantUpdatedEventHandler } from "../../application/solution/invariants/update/InvariantUpdatedEventHandler.js";
-import { InvariantRemovedEventHandler } from "../../application/solution/invariants/remove/InvariantRemovedEventHandler.js";
-import { ProjectInitializedEventHandler } from "../../application/project-knowledge/project/init/ProjectInitializedEventHandler.js";
-import { ProjectUpdatedEventHandler } from "../../application/project-knowledge/project/update/ProjectUpdatedEventHandler.js";
-import { AudiencePainAddedEventHandler } from "../../application/project-knowledge/audience-pains/add/AudiencePainAddedEventHandler.js";
-import { AudiencePainUpdatedEventHandler } from "../../application/project-knowledge/audience-pains/update/AudiencePainUpdatedEventHandler.js";
-import { AudiencePainResolvedEventHandler } from "../../application/project-knowledge/audience-pains/resolve/AudiencePainResolvedEventHandler.js";
-import { AudienceAddedEventHandler } from "../../application/project-knowledge/audiences/add/AudienceAddedEventHandler.js";
-import { AudienceUpdatedEventHandler } from "../../application/project-knowledge/audiences/update/AudienceUpdatedEventHandler.js";
-import { AudienceRemovedEventHandler } from "../../application/project-knowledge/audiences/remove/AudienceRemovedEventHandler.js";
-import { ValuePropositionAddedEventHandler } from "../../application/project-knowledge/value-propositions/add/ValuePropositionAddedEventHandler.js";
-import { ValuePropositionUpdatedEventHandler } from "../../application/project-knowledge/value-propositions/update/ValuePropositionUpdatedEventHandler.js";
-import { ValuePropositionRemovedEventHandler } from "../../application/project-knowledge/value-propositions/remove/ValuePropositionRemovedEventHandler.js";
-import { RelationAddedEventHandler } from "../../application/relations/add/RelationAddedEventHandler.js";
-import { RelationRemovedEventHandler } from "../../application/relations/remove/RelationRemovedEventHandler.js";
+import { SessionStartedEventHandler } from "../../application/context/sessions/start/SessionStartedEventHandler.js";
+import { SessionEndedEventHandler } from "../../application/context/sessions/end/SessionEndedEventHandler.js";
+import { GoalAddedEventHandler } from "../../application/context/goals/add/GoalAddedEventHandler.js";
+import { GoalStartedEventHandler } from "../../application/context/goals/start/GoalStartedEventHandler.js";
+import { GoalUpdatedEventHandler } from "../../application/context/goals/update/GoalUpdatedEventHandler.js";
+import { GoalBlockedEventHandler } from "../../application/context/goals/block/GoalBlockedEventHandler.js";
+import { GoalUnblockedEventHandler } from "../../application/context/goals/unblock/GoalUnblockedEventHandler.js";
+import { GoalPausedEventHandler } from "../../application/context/goals/pause/GoalPausedEventHandler.js";
+import { GoalResumedEventHandler } from "../../application/context/goals/resume/GoalResumedEventHandler.js";
+import { GoalCompletedEventHandler } from "../../application/context/goals/complete/GoalCompletedEventHandler.js";
+import { GoalResetEventHandler } from "../../application/context/goals/reset/GoalResetEventHandler.js";
+import { GoalRemovedEventHandler } from "../../application/context/goals/remove/GoalRemovedEventHandler.js";
+import { GoalRefinedEventHandler } from "../../application/context/goals/refine/GoalRefinedEventHandler.js";
+import { GoalProgressUpdatedEventHandler } from "../../application/context/goals/update-progress/GoalProgressUpdatedEventHandler.js";
+import { GoalSubmittedForReviewEventHandler } from "../../application/context/goals/review/GoalSubmittedForReviewEventHandler.js";
+import { GoalQualifiedEventHandler } from "../../application/context/goals/qualify/GoalQualifiedEventHandler.js";
+import { DecisionAddedEventHandler } from "../../application/context/decisions/add/DecisionAddedEventHandler.js";
+import { DecisionUpdatedEventHandler } from "../../application/context/decisions/update/DecisionUpdatedEventHandler.js";
+import { DecisionReversedEventHandler } from "../../application/context/decisions/reverse/DecisionReversedEventHandler.js";
+import { DecisionSupersededEventHandler } from "../../application/context/decisions/supersede/DecisionSupersededEventHandler.js";
+import { ArchitectureDefinedEventHandler } from "../../application/context/architecture/define/ArchitectureDefinedEventHandler.js";
+import { ArchitectureUpdatedEventHandler } from "../../application/context/architecture/update/ArchitectureUpdatedEventHandler.js";
+import { ComponentAddedEventHandler } from "../../application/context/components/add/ComponentAddedEventHandler.js";
+import { ComponentUpdatedEventHandler } from "../../application/context/components/update/ComponentUpdatedEventHandler.js";
+import { ComponentDeprecatedEventHandler } from "../../application/context/components/deprecate/ComponentDeprecatedEventHandler.js";
+import { ComponentRemovedEventHandler } from "../../application/context/components/remove/ComponentRemovedEventHandler.js";
+import { DependencyAddedEventHandler } from "../../application/context/dependencies/add/DependencyAddedEventHandler.js";
+import { DependencyUpdatedEventHandler } from "../../application/context/dependencies/update/DependencyUpdatedEventHandler.js";
+import { DependencyRemovedEventHandler } from "../../application/context/dependencies/remove/DependencyRemovedEventHandler.js";
+import { GuidelineAddedEventHandler } from "../../application/context/guidelines/add/GuidelineAddedEventHandler.js";
+import { GuidelineUpdatedEventHandler } from "../../application/context/guidelines/update/GuidelineUpdatedEventHandler.js";
+import { GuidelineRemovedEventHandler } from "../../application/context/guidelines/remove/GuidelineRemovedEventHandler.js";
+import { InvariantAddedEventHandler } from "../../application/context/invariants/add/InvariantAddedEventHandler.js";
+import { InvariantUpdatedEventHandler } from "../../application/context/invariants/update/InvariantUpdatedEventHandler.js";
+import { InvariantRemovedEventHandler } from "../../application/context/invariants/remove/InvariantRemovedEventHandler.js";
+import { ProjectInitializedEventHandler } from "../../application/context/project/init/ProjectInitializedEventHandler.js";
+import { ProjectUpdatedEventHandler } from "../../application/context/project/update/ProjectUpdatedEventHandler.js";
+import { AudiencePainAddedEventHandler } from "../../application/context/audience-pains/add/AudiencePainAddedEventHandler.js";
+import { AudiencePainUpdatedEventHandler } from "../../application/context/audience-pains/update/AudiencePainUpdatedEventHandler.js";
+import { AudienceAddedEventHandler } from "../../application/context/audiences/add/AudienceAddedEventHandler.js";
+import { AudienceUpdatedEventHandler } from "../../application/context/audiences/update/AudienceUpdatedEventHandler.js";
+import { AudienceRemovedEventHandler } from "../../application/context/audiences/remove/AudienceRemovedEventHandler.js";
+import { ValuePropositionAddedEventHandler } from "../../application/context/value-propositions/add/ValuePropositionAddedEventHandler.js";
+import { ValuePropositionUpdatedEventHandler } from "../../application/context/value-propositions/update/ValuePropositionUpdatedEventHandler.js";
+import { ValuePropositionRemovedEventHandler } from "../../application/context/value-propositions/remove/ValuePropositionRemovedEventHandler.js";
+import { RelationAddedEventHandler } from "../../application/context/relations/add/RelationAddedEventHandler.js";
+import { RelationRemovedEventHandler } from "../../application/context/relations/remove/RelationRemovedEventHandler.js";
 
 export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebuildService {
   constructor(
@@ -182,9 +184,6 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     // Step 5: Create all projectors
     const sessionStartedProjector = new SqliteSessionStartedProjector(newDb);
     const sessionEndedProjector = new SqliteSessionEndedProjector(newDb);
-    const sessionSummaryProjectionStore = new SqliteSessionSummaryProjectionStore(newDb);
-    const goalStatusReader = new SqliteGoalStatusReader(newDb);
-    const decisionSessionReader = new SqliteDecisionSessionReader(newDb);
     const goalAddedProjector = new SqliteGoalAddedProjector(newDb);
     const goalStartedProjector = new SqliteGoalStartedProjector(newDb);
     const goalUpdatedProjector = new SqliteGoalUpdatedProjector(newDb);
@@ -195,6 +194,10 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     const goalCompletedProjector = new SqliteGoalCompletedProjector(newDb);
     const goalResetProjector = new SqliteGoalResetProjector(newDb);
     const goalRemovedProjector = new SqliteGoalRemovedProjector(newDb);
+    const goalRefinedProjector = new SqliteGoalRefinedProjector(newDb);
+    const goalProgressUpdatedProjector = new SqliteGoalProgressUpdatedProjector(newDb);
+    const goalSubmittedForReviewProjector = new SqliteGoalSubmittedForReviewProjector(newDb);
+    const goalQualifiedProjector = new SqliteGoalQualifiedProjector(newDb);
     const architectureDefinedProjector = new SqliteArchitectureDefinedProjector(newDb);
     const architectureUpdatedProjector = new SqliteArchitectureUpdatedProjector(newDb);
     const componentAddedProjector = new SqliteComponentAddedProjector(newDb);
@@ -218,8 +221,7 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     const projectUpdatedProjector = new SqliteProjectUpdatedProjector(newDb);
     const audiencePainAddedProjector = new SqliteAudiencePainAddedProjector(newDb);
     const audiencePainUpdatedProjector = new SqliteAudiencePainUpdatedProjector(newDb);
-    const audiencePainResolvedProjector = new SqliteAudiencePainResolvedProjector(newDb);
-    const audienceAddedProjector = new SqliteAudienceAddedProjector(newDb);
+const audienceAddedProjector = new SqliteAudienceAddedProjector(newDb);
     const audienceUpdatedProjector = new SqliteAudienceUpdatedProjector(newDb);
     const audienceRemovedProjector = new SqliteAudienceRemovedProjector(newDb);
     const valuePropositionAddedProjector = new SqliteValuePropositionAddedProjector(newDb);
@@ -231,12 +233,6 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     // Step 6: Create all handlers
     const sessionStartedEventHandler = new SessionStartedEventHandler(sessionStartedProjector);
     const sessionEndedEventHandler = new SessionEndedEventHandler(sessionEndedProjector);
-    const sessionSummaryProjectionHandler = new SessionSummaryProjectionHandler(
-      sequentialEventBus,
-      sessionSummaryProjectionStore,
-      goalStatusReader,
-      decisionSessionReader
-    );
     const goalAddedEventHandler = new GoalAddedEventHandler(goalAddedProjector);
     const goalStartedEventHandler = new GoalStartedEventHandler(goalStartedProjector);
     const goalUpdatedEventHandler = new GoalUpdatedEventHandler(goalUpdatedProjector);
@@ -247,6 +243,10 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     const goalCompletedEventHandler = new GoalCompletedEventHandler(goalCompletedProjector);
     const goalResetEventHandler = new GoalResetEventHandler(goalResetProjector);
     const goalRemovedEventHandler = new GoalRemovedEventHandler(goalRemovedProjector);
+    const goalRefinedEventHandler = new GoalRefinedEventHandler(goalRefinedProjector);
+    const goalProgressUpdatedEventHandler = new GoalProgressUpdatedEventHandler(goalProgressUpdatedProjector);
+    const goalSubmittedForReviewEventHandler = new GoalSubmittedForReviewEventHandler(goalSubmittedForReviewProjector);
+    const goalQualifiedEventHandler = new GoalQualifiedEventHandler(goalQualifiedProjector);
     const architectureDefinedEventHandler = new ArchitectureDefinedEventHandler(architectureDefinedProjector);
     const architectureUpdatedEventHandler = new ArchitectureUpdatedEventHandler(architectureUpdatedProjector);
     const componentAddedEventHandler = new ComponentAddedEventHandler(componentAddedProjector);
@@ -270,8 +270,7 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     const projectUpdatedEventHandler = new ProjectUpdatedEventHandler(projectUpdatedProjector);
     const audiencePainAddedEventHandler = new AudiencePainAddedEventHandler(audiencePainAddedProjector);
     const audiencePainUpdatedEventHandler = new AudiencePainUpdatedEventHandler(audiencePainUpdatedProjector);
-    const audiencePainResolvedEventHandler = new AudiencePainResolvedEventHandler(audiencePainResolvedProjector);
-    const audienceAddedEventHandler = new AudienceAddedEventHandler(audienceAddedProjector);
+const audienceAddedEventHandler = new AudienceAddedEventHandler(audienceAddedProjector);
     const audienceUpdatedEventHandler = new AudienceUpdatedEventHandler(audienceUpdatedProjector);
     const audienceRemovedEventHandler = new AudienceRemovedEventHandler(audienceRemovedProjector);
     const valuePropositionAddedEventHandler = new ValuePropositionAddedEventHandler(valuePropositionAddedProjector);
@@ -283,7 +282,6 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     // Step 7: Register all handlers to sequential bus
     sequentialEventBus.subscribe("SessionStartedEvent", sessionStartedEventHandler);
     sequentialEventBus.subscribe("SessionEndedEvent", sessionEndedEventHandler);
-    sessionSummaryProjectionHandler.subscribe();
     sequentialEventBus.subscribe("GoalAddedEvent", goalAddedEventHandler);
     sequentialEventBus.subscribe("GoalStartedEvent", goalStartedEventHandler);
     sequentialEventBus.subscribe("GoalUpdatedEvent", goalUpdatedEventHandler);
@@ -294,6 +292,10 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     sequentialEventBus.subscribe("GoalCompletedEvent", goalCompletedEventHandler);
     sequentialEventBus.subscribe("GoalResetEvent", goalResetEventHandler);
     sequentialEventBus.subscribe("GoalRemovedEvent", goalRemovedEventHandler);
+    sequentialEventBus.subscribe("GoalRefinedEvent", goalRefinedEventHandler);
+    sequentialEventBus.subscribe("GoalProgressUpdatedEvent", goalProgressUpdatedEventHandler);
+    sequentialEventBus.subscribe("GoalSubmittedForReviewEvent", goalSubmittedForReviewEventHandler);
+    sequentialEventBus.subscribe("GoalQualifiedEvent", goalQualifiedEventHandler);
     sequentialEventBus.subscribe("ArchitectureDefinedEvent", architectureDefinedEventHandler);
     sequentialEventBus.subscribe("ArchitectureUpdatedEvent", architectureUpdatedEventHandler);
     sequentialEventBus.subscribe("ComponentAddedEvent", componentAddedEventHandler);
@@ -317,8 +319,7 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     sequentialEventBus.subscribe("ProjectUpdatedEvent", projectUpdatedEventHandler);
     sequentialEventBus.subscribe("AudiencePainAddedEvent", audiencePainAddedEventHandler);
     sequentialEventBus.subscribe("AudiencePainUpdatedEvent", audiencePainUpdatedEventHandler);
-    sequentialEventBus.subscribe("AudiencePainResolvedEvent", audiencePainResolvedEventHandler);
-    sequentialEventBus.subscribe("AudienceAddedEvent", audienceAddedEventHandler);
+sequentialEventBus.subscribe("AudienceAddedEvent", audienceAddedEventHandler);
     sequentialEventBus.subscribe("AudienceUpdatedEvent", audienceUpdatedEventHandler);
     sequentialEventBus.subscribe("AudienceRemovedEvent", audienceRemovedEventHandler);
     sequentialEventBus.subscribe("ValuePropositionAddedEvent", valuePropositionAddedEventHandler);

@@ -14,59 +14,33 @@
  */
 
 import path from "path";
-import fs from "fs-extra";
 import { Host } from "./infrastructure/host/Host.js";
 import { AppRunner } from "./presentation/cli/AppRunner.js";
 import { CliVersionReader } from "./infrastructure/cli-metadata/query/CliVersionReader.js";
 import { IApplicationContainer } from "./application/host/IApplicationContainer.js";
+import { classifyCommand } from "./presentation/cli/commands/CommandClassifier.js";
+import { commands } from "./presentation/cli/commands/registry/generated-commands.js";
+import { ARGV } from "./presentation/cli/Constants.js";
+import { ProjectRootResolver } from "./infrastructure/context/project/ProjectRootResolver.js";
 
 /**
  * Determines if the invocation requires full infrastructure.
- *
- * Infrastructure is needed for:
- * - Banner command with existing project (to show project info)
- * - Command execution (except subcommand help)
- *
- * Infrastructure is NOT needed for:
- * - Root --help
- * - --version
- * - Banner command without existing project
- * - Subcommand --help
+ * Uses command metadata for classification.
  */
 async function needsInfrastructure(argv: string[]): Promise<boolean> {
-  const jumboRoot = path.join(process.cwd(), ".jumbo");
+  const classification = classifyCommand(argv, commands);
 
   // Bare 'jumbo' command - needs infra only if project exists
-  if (argv.length === 2) {
-    return fs.pathExists(jumboRoot);
+  if (argv.length === ARGV.NODE_AND_SCRIPT_ARG_COUNT) {
+    try {
+      new ProjectRootResolver().resolve();
+      return true;
+    } catch {
+      return false;
+    }
   }
 
-  // Root --help or --version
-  const isExplicitHelp = 
-    (argv.includes("--help") || argv.includes("-h")) 
-    && argv.length === 3;
-
-  const isVersion = 
-    argv.includes("--version") 
-    || argv.includes("-v");
-
-  if (isExplicitHelp || isVersion) {
-    return false;
-  }
-
-  // Subcommand --help
-  const isSubcommandHelp =
-    (argv.includes("--help") || argv.includes("-h")) 
-    && argv.length > 3;
-
-  if (isSubcommandHelp) {
-    return false;
-  }
-
-  // All other commands need infrastructure.
-  // Commands like 'project init' need infrastructure even without
-  // an existing .jumbo directory - the Host will create it.
-  return true;
+  return classification.requiresInfrastructure;
 }
 
 async function main(): Promise<void> {
@@ -82,7 +56,8 @@ async function main(): Promise<void> {
   let container: IApplicationContainer | null = null;
 
   if (requiresInfra) {
-    const jumboRoot = path.join(process.cwd(), ".jumbo");
+    const projectRoot = new ProjectRootResolver().resolveOrDefault();
+    const jumboRoot = path.join(projectRoot, ".jumbo");
     const host = new Host(jumboRoot);
     const builder = host.createBuilder();
     container = await builder.build();

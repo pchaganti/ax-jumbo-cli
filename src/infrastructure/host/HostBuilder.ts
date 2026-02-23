@@ -18,258 +18,466 @@
 
 import Database from "better-sqlite3";
 import { IApplicationContainer } from "../../application/host/IApplicationContainer.js";
-import { IEventStore } from "../../application/shared/persistence/IEventStore.js";
-import { IEventBus } from "../../application/shared/messaging/IEventBus.js";
-import { IClock } from "../../application/shared/system/IClock.js";
-import { IDatabaseRebuildService } from "../../application/maintenance/db/rebuild/IDatabaseRebuildService.js";
+import { IEventStore } from "../../application/persistence/IEventStore.js";
+import { IEventBus } from "../../application/messaging/IEventBus.js";
+import { IClock } from "../../application/time-and-date/IClock.js";
+import { RebuildDatabaseController } from "../../application/maintenance/db/rebuild/RebuildDatabaseController.js";
+import { LocalRebuildDatabaseGateway } from "../../application/maintenance/db/rebuild/LocalRebuildDatabaseGateway.js";
+import { RepairMaintenanceController } from "../../application/maintenance/repair/RepairMaintenanceController.js";
+import { LocalRepairMaintenanceGateway } from "../../application/maintenance/repair/LocalRepairMaintenanceGateway.js";
 
 // Infrastructure implementations
-import { FsEventStore } from "../shared/persistence/FsEventStore.js";
-import { InProcessEventBus } from "../shared/messaging/InProcessEventBus.js";
-import { SystemClock } from "../shared/system/SystemClock.js";
+import { ProjectRootResolver } from "../context/project/ProjectRootResolver.js";
+import { FsEventStore } from "../persistence/FsEventStore.js";
+import { InProcessEventBus } from "../messaging/InProcessEventBus.js";
+import { SystemClock } from "../time-and-date/SystemClock.js";
+import { FileLogger } from "../logging/FileLogger.js";
+import { LogLevel } from "../../application/logging/ILogger.js";
+import * as path from "path";
 // TEMPORARY: Use sequential rebuild service to avoid race conditions
 // TODO: Swap back to LocalDatabaseRebuildService when Epic/Feature/Task redesign is complete
 import { TemporarySequentialDatabaseRebuildService } from "../local/TemporarySequentialDatabaseRebuildService.js";
 
 // Session Event Stores - decomposed by use case
-import { FsSessionStartedEventStore } from "../work/sessions/start/FsSessionStartedEventStore.js";
-import { FsSessionEndedEventStore } from "../work/sessions/end/FsSessionEndedEventStore.js";
+import { FsSessionStartedEventStore } from "../context/sessions/start/FsSessionStartedEventStore.js";
+import { FsSessionEndedEventStore } from "../context/sessions/end/FsSessionEndedEventStore.js";
 // Goal Event Stores - decomposed by use case
-import { FsGoalAddedEventStore } from "../work/goals/add/FsGoalAddedEventStore.js";
-import { FsGoalStartedEventStore } from "../work/goals/start/FsGoalStartedEventStore.js";
-import { FsGoalUpdatedEventStore } from "../work/goals/update/FsGoalUpdatedEventStore.js";
-import { FsGoalBlockedEventStore } from "../work/goals/block/FsGoalBlockedEventStore.js";
-import { FsGoalUnblockedEventStore } from "../work/goals/unblock/FsGoalUnblockedEventStore.js";
-import { FsGoalPausedEventStore } from "../work/goals/pause/FsGoalPausedEventStore.js";
-import { FsGoalResumedEventStore } from "../work/goals/resume/FsGoalResumedEventStore.js";
-import { FsGoalCompletedEventStore } from "../work/goals/complete/FsGoalCompletedEventStore.js";
-import { FsGoalResetEventStore } from "../work/goals/reset/FsGoalResetEventStore.js";
-import { FsGoalRemovedEventStore } from "../work/goals/remove/FsGoalRemovedEventStore.js";
-import { FsGoalProgressUpdatedEventStore } from "../work/goals/update-progress/FsGoalProgressUpdatedEventStore.js";
+import { FsGoalAddedEventStore } from "../context/goals/add/FsGoalAddedEventStore.js";
+import { FsGoalStartedEventStore } from "../context/goals/start/FsGoalStartedEventStore.js";
+import { FsGoalUpdatedEventStore } from "../context/goals/update/FsGoalUpdatedEventStore.js";
+import { FsGoalBlockedEventStore } from "../context/goals/block/FsGoalBlockedEventStore.js";
+import { FsGoalUnblockedEventStore } from "../context/goals/unblock/FsGoalUnblockedEventStore.js";
+import { FsGoalPausedEventStore } from "../context/goals/pause/FsGoalPausedEventStore.js";
+import { FsGoalResumedEventStore } from "../context/goals/resume/FsGoalResumedEventStore.js";
+import { FsGoalCompletedEventStore } from "../context/goals/complete/FsGoalCompletedEventStore.js";
+import { FsGoalRefinedEventStore } from "../context/goals/refine/FsGoalRefinedEventStore.js";
+import { FsGoalResetEventStore } from "../context/goals/reset/FsGoalResetEventStore.js";
+import { FsGoalRemovedEventStore } from "../context/goals/remove/FsGoalRemovedEventStore.js";
+import { FsGoalProgressUpdatedEventStore } from "../context/goals/update-progress/FsGoalProgressUpdatedEventStore.js";
+// Decision Controllers
+import { AddDecisionCommandHandler } from "../../application/context/decisions/add/AddDecisionCommandHandler.js";
+import { LocalAddDecisionGateway } from "../../application/context/decisions/add/LocalAddDecisionGateway.js";
+import { AddDecisionController } from "../../application/context/decisions/add/AddDecisionController.js";
+import { LocalGetDecisionsGateway } from "../../application/context/decisions/get/LocalGetDecisionsGateway.js";
+import { GetDecisionsController } from "../../application/context/decisions/get/GetDecisionsController.js";
+import { ReverseDecisionCommandHandler } from "../../application/context/decisions/reverse/ReverseDecisionCommandHandler.js";
+import { LocalReverseDecisionGateway } from "../../application/context/decisions/reverse/LocalReverseDecisionGateway.js";
+import { ReverseDecisionController } from "../../application/context/decisions/reverse/ReverseDecisionController.js";
+import { SupersedeDecisionCommandHandler } from "../../application/context/decisions/supersede/SupersedeDecisionCommandHandler.js";
+import { LocalSupersedeDecisionGateway } from "../../application/context/decisions/supersede/LocalSupersedeDecisionGateway.js";
+import { SupersedeDecisionController } from "../../application/context/decisions/supersede/SupersedeDecisionController.js";
+import { UpdateDecisionCommandHandler } from "../../application/context/decisions/update/UpdateDecisionCommandHandler.js";
+import { LocalUpdateDecisionGateway } from "../../application/context/decisions/update/LocalUpdateDecisionGateway.js";
+import { UpdateDecisionController } from "../../application/context/decisions/update/UpdateDecisionController.js";
 // Decision Event Stores - decomposed by use case
-import { FsDecisionAddedEventStore } from "../solution/decisions/add/FsDecisionAddedEventStore.js";
-import { FsDecisionUpdatedEventStore } from "../solution/decisions/update/FsDecisionUpdatedEventStore.js";
-import { FsDecisionReversedEventStore } from "../solution/decisions/reverse/FsDecisionReversedEventStore.js";
-import { FsDecisionSupersededEventStore } from "../solution/decisions/supersede/FsDecisionSupersededEventStore.js";
+import { FsDecisionAddedEventStore } from "../context/decisions/add/FsDecisionAddedEventStore.js";
+import { FsDecisionUpdatedEventStore } from "../context/decisions/update/FsDecisionUpdatedEventStore.js";
+import { FsDecisionReversedEventStore } from "../context/decisions/reverse/FsDecisionReversedEventStore.js";
+import { FsDecisionSupersededEventStore } from "../context/decisions/supersede/FsDecisionSupersededEventStore.js";
 // Architecture Event Stores - decomposed by use case
-import { FsArchitectureDefinedEventStore } from "../solution/architecture/define/FsArchitectureDefinedEventStore.js";
-import { FsArchitectureUpdatedEventStore } from "../solution/architecture/update/FsArchitectureUpdatedEventStore.js";
+import { FsArchitectureDefinedEventStore } from "../context/architecture/define/FsArchitectureDefinedEventStore.js";
+import { FsArchitectureUpdatedEventStore } from "../context/architecture/update/FsArchitectureUpdatedEventStore.js";
 // Component Event Stores - decomposed by use case
-import { FsComponentAddedEventStore } from "../solution/components/add/FsComponentAddedEventStore.js";
-import { FsComponentUpdatedEventStore } from "../solution/components/update/FsComponentUpdatedEventStore.js";
-import { FsComponentDeprecatedEventStore } from "../solution/components/deprecate/FsComponentDeprecatedEventStore.js";
-import { FsComponentRemovedEventStore } from "../solution/components/remove/FsComponentRemovedEventStore.js";
+import { FsComponentAddedEventStore } from "../context/components/add/FsComponentAddedEventStore.js";
+import { FsComponentUpdatedEventStore } from "../context/components/update/FsComponentUpdatedEventStore.js";
+import { FsComponentDeprecatedEventStore } from "../context/components/deprecate/FsComponentDeprecatedEventStore.js";
+import { FsComponentRemovedEventStore } from "../context/components/remove/FsComponentRemovedEventStore.js";
+import { FsComponentRenamedEventStore } from "../context/components/rename/FsComponentRenamedEventStore.js";
+// Dependency Controllers
+import { AddDependencyCommandHandler } from "../../application/context/dependencies/add/AddDependencyCommandHandler.js";
+import { LocalAddDependencyGateway } from "../../application/context/dependencies/add/LocalAddDependencyGateway.js";
+import { AddDependencyController } from "../../application/context/dependencies/add/AddDependencyController.js";
+import { LocalGetDependenciesGateway } from "../../application/context/dependencies/get/LocalGetDependenciesGateway.js";
+import { GetDependenciesController } from "../../application/context/dependencies/get/GetDependenciesController.js";
+import { UpdateDependencyCommandHandler } from "../../application/context/dependencies/update/UpdateDependencyCommandHandler.js";
+import { LocalUpdateDependencyGateway } from "../../application/context/dependencies/update/LocalUpdateDependencyGateway.js";
+import { UpdateDependencyController } from "../../application/context/dependencies/update/UpdateDependencyController.js";
+import { RemoveDependencyCommandHandler } from "../../application/context/dependencies/remove/RemoveDependencyCommandHandler.js";
+import { LocalRemoveDependencyGateway } from "../../application/context/dependencies/remove/LocalRemoveDependencyGateway.js";
+import { RemoveDependencyController } from "../../application/context/dependencies/remove/RemoveDependencyController.js";
 // Dependency Event Stores - decomposed by use case
-import { FsDependencyAddedEventStore } from "../solution/dependencies/add/FsDependencyAddedEventStore.js";
-import { FsDependencyUpdatedEventStore } from "../solution/dependencies/update/FsDependencyUpdatedEventStore.js";
-import { FsDependencyRemovedEventStore } from "../solution/dependencies/remove/FsDependencyRemovedEventStore.js";
+import { FsDependencyAddedEventStore } from "../context/dependencies/add/FsDependencyAddedEventStore.js";
+import { FsDependencyUpdatedEventStore } from "../context/dependencies/update/FsDependencyUpdatedEventStore.js";
+import { FsDependencyRemovedEventStore } from "../context/dependencies/remove/FsDependencyRemovedEventStore.js";
+// Guideline Controllers
+import { AddGuidelineCommandHandler } from "../../application/context/guidelines/add/AddGuidelineCommandHandler.js";
+import { LocalAddGuidelineGateway } from "../../application/context/guidelines/add/LocalAddGuidelineGateway.js";
+import { AddGuidelineController } from "../../application/context/guidelines/add/AddGuidelineController.js";
+import { LocalUpdateGuidelineGateway } from "../../application/context/guidelines/update/LocalUpdateGuidelineGateway.js";
+import { UpdateGuidelineController } from "../../application/context/guidelines/update/UpdateGuidelineController.js";
+import { RemoveGuidelineCommandHandler } from "../../application/context/guidelines/remove/RemoveGuidelineCommandHandler.js";
+import { LocalRemoveGuidelineGateway } from "../../application/context/guidelines/remove/LocalRemoveGuidelineGateway.js";
+import { RemoveGuidelineController } from "../../application/context/guidelines/remove/RemoveGuidelineController.js";
+// Invariant Controllers
+import { AddInvariantCommandHandler } from "../../application/context/invariants/add/AddInvariantCommandHandler.js";
+import { LocalAddInvariantGateway } from "../../application/context/invariants/add/LocalAddInvariantGateway.js";
+import { AddInvariantController } from "../../application/context/invariants/add/AddInvariantController.js";
+import { RemoveInvariantCommandHandler } from "../../application/context/invariants/remove/RemoveInvariantCommandHandler.js";
+import { LocalRemoveInvariantGateway } from "../../application/context/invariants/remove/LocalRemoveInvariantGateway.js";
+import { RemoveInvariantController } from "../../application/context/invariants/remove/RemoveInvariantController.js";
+import { LocalGetInvariantsGateway } from "../../application/context/invariants/get/LocalGetInvariantsGateway.js";
+import { GetInvariantsController } from "../../application/context/invariants/get/GetInvariantsController.js";
+import { UpdateInvariantCommandHandler } from "../../application/context/invariants/update/UpdateInvariantCommandHandler.js";
+import { LocalUpdateInvariantGateway } from "../../application/context/invariants/update/LocalUpdateInvariantGateway.js";
+import { UpdateInvariantController } from "../../application/context/invariants/update/UpdateInvariantController.js";
 // Guideline Event Stores - decomposed by use case
-import { FsGuidelineAddedEventStore } from "../solution/guidelines/add/FsGuidelineAddedEventStore.js";
-import { FsGuidelineUpdatedEventStore } from "../solution/guidelines/update/FsGuidelineUpdatedEventStore.js";
-import { FsGuidelineRemovedEventStore } from "../solution/guidelines/remove/FsGuidelineRemovedEventStore.js";
+import { FsGuidelineAddedEventStore } from "../context/guidelines/add/FsGuidelineAddedEventStore.js";
+import { FsGuidelineUpdatedEventStore } from "../context/guidelines/update/FsGuidelineUpdatedEventStore.js";
+import { FsGuidelineRemovedEventStore } from "../context/guidelines/remove/FsGuidelineRemovedEventStore.js";
 // Invariant Event Stores - decomposed by use case
-import { FsInvariantAddedEventStore } from "../solution/invariants/add/FsInvariantAddedEventStore.js";
-import { FsInvariantUpdatedEventStore } from "../solution/invariants/update/FsInvariantUpdatedEventStore.js";
-import { FsInvariantRemovedEventStore } from "../solution/invariants/remove/FsInvariantRemovedEventStore.js";
+import { FsInvariantAddedEventStore } from "../context/invariants/add/FsInvariantAddedEventStore.js";
+import { FsInvariantUpdatedEventStore } from "../context/invariants/update/FsInvariantUpdatedEventStore.js";
+import { FsInvariantRemovedEventStore } from "../context/invariants/remove/FsInvariantRemovedEventStore.js";
 // Project Event Stores - decomposed by use case
-import { FsProjectInitializedEventStore } from "../project-knowledge/project/init/FsProjectInitializedEventStore.js";
-import { FsProjectUpdatedEventStore } from "../project-knowledge/project/update/FsProjectUpdatedEventStore.js";
+import { FsProjectInitializedEventStore } from "../context/project/init/FsProjectInitializedEventStore.js";
+import { FsProjectUpdatedEventStore } from "../context/project/update/FsProjectUpdatedEventStore.js";
+import { UpdateProjectCommandHandler } from "../../application/context/project/update/UpdateProjectCommandHandler.js";
+import { LocalUpdateProjectGateway } from "../../application/context/project/update/LocalUpdateProjectGateway.js";
+import { UpdateProjectController } from "../../application/context/project/update/UpdateProjectController.js";
 // Audience Event Stores - decomposed by use case
-import { FsAudienceAddedEventStore } from "../project-knowledge/audiences/add/FsAudienceAddedEventStore.js";
-import { FsAudienceUpdatedEventStore } from "../project-knowledge/audiences/update/FsAudienceUpdatedEventStore.js";
-import { FsAudienceRemovedEventStore } from "../project-knowledge/audiences/remove/FsAudienceRemovedEventStore.js";
+import { FsAudienceAddedEventStore } from "../context/audiences/add/FsAudienceAddedEventStore.js";
+import { FsAudienceUpdatedEventStore } from "../context/audiences/update/FsAudienceUpdatedEventStore.js";
+import { FsAudienceRemovedEventStore } from "../context/audiences/remove/FsAudienceRemovedEventStore.js";
 // AudiencePain Event Stores - decomposed by use case
-import { FsAudiencePainAddedEventStore } from "../project-knowledge/audience-pains/add/FsAudiencePainAddedEventStore.js";
-import { FsAudiencePainUpdatedEventStore } from "../project-knowledge/audience-pains/update/FsAudiencePainUpdatedEventStore.js";
-import { FsAudiencePainResolvedEventStore } from "../project-knowledge/audience-pains/resolve/FsAudiencePainResolvedEventStore.js";
+import { FsAudiencePainAddedEventStore } from "../context/audience-pains/add/FsAudiencePainAddedEventStore.js";
+import { FsAudiencePainUpdatedEventStore } from "../context/audience-pains/update/FsAudiencePainUpdatedEventStore.js";
 // ValueProposition Event Stores - decomposed by use case
-import { FsValuePropositionAddedEventStore } from "../project-knowledge/value-propositions/add/FsValuePropositionAddedEventStore.js";
-import { FsValuePropositionUpdatedEventStore } from "../project-knowledge/value-propositions/update/FsValuePropositionUpdatedEventStore.js";
-import { FsValuePropositionRemovedEventStore } from "../project-knowledge/value-propositions/remove/FsValuePropositionRemovedEventStore.js";
+import { FsValuePropositionAddedEventStore } from "../context/value-propositions/add/FsValuePropositionAddedEventStore.js";
+import { FsValuePropositionUpdatedEventStore } from "../context/value-propositions/update/FsValuePropositionUpdatedEventStore.js";
+import { FsValuePropositionRemovedEventStore } from "../context/value-propositions/remove/FsValuePropositionRemovedEventStore.js";
 // Relations Event Stores - decomposed by use case
-import { FsRelationAddedEventStore } from "../relations/add/FsRelationAddedEventStore.js";
-import { FsRelationRemovedEventStore } from "../relations/remove/FsRelationRemovedEventStore.js";
+import { FsRelationAddedEventStore } from "../context/relations/add/FsRelationAddedEventStore.js";
+import { FsRelationRemovedEventStore } from "../context/relations/remove/FsRelationRemovedEventStore.js";
 
 // Session Projection Stores - decomposed by use case
-import { SqliteSessionStartedProjector } from "../work/sessions/start/SqliteSessionStartedProjector.js";
-import { SqliteSessionEndedProjector } from "../work/sessions/end/SqliteSessionEndedProjector.js";
-import { SqliteActiveSessionReader } from "../work/sessions/end/SqliteActiveSessionReader.js";
-import { SqliteSessionListReader } from "../work/sessions/list/SqliteSessionListReader.js";
-import { SqliteSessionSummaryProjectionStore } from "../work/sessions/get-context/SqliteSessionSummaryProjectionStore.js";
-import { SqliteSessionSummaryReader } from "../work/sessions/get-context/SqliteSessionSummaryReader.js";
+import { SqliteSessionStartedProjector } from "../context/sessions/start/SqliteSessionStartedProjector.js";
+import { SqliteSessionEndedProjector } from "../context/sessions/end/SqliteSessionEndedProjector.js";
+import { SqliteActiveSessionReader } from "../context/sessions/end/SqliteActiveSessionReader.js";
+import { SqliteSessionViewReader } from "../context/sessions/get/SqliteSessionViewReader.js";
 // Goal Projection Stores - decomposed by use case
-import { SqliteGoalAddedProjector } from "../work/goals/add/SqliteGoalAddedProjector.js";
-import { SqliteGoalStartedProjector } from "../work/goals/start/SqliteGoalStartedProjector.js";
-import { SqliteGoalUpdatedProjector } from "../work/goals/update/SqliteGoalUpdatedProjector.js";
-import { SqliteGoalBlockedProjector } from "../work/goals/block/SqliteGoalBlockedProjector.js";
-import { SqliteGoalUnblockedProjector } from "../work/goals/unblock/SqliteGoalUnblockedProjector.js";
-import { SqliteGoalPausedProjector } from "../work/goals/pause/SqliteGoalPausedProjector.js";
-import { SqliteGoalResumedProjector } from "../work/goals/resume/SqliteGoalResumedProjector.js";
-import { SqliteGoalCompletedProjector } from "../work/goals/complete/SqliteGoalCompletedProjector.js";
-import { SqliteGoalResetProjector } from "../work/goals/reset/SqliteGoalResetProjector.js";
-import { SqliteGoalRemovedProjector } from "../work/goals/remove/SqliteGoalRemovedProjector.js";
-import { SqliteGoalProgressUpdatedProjector } from "../work/goals/update-progress/SqliteGoalProgressUpdatedProjector.js";
-import { SqliteGoalSubmittedForReviewProjector } from "../work/goals/review/SqliteGoalSubmittedForReviewProjector.js";
-import { SqliteGoalQualifiedProjector } from "../work/goals/qualify/SqliteGoalQualifiedProjector.js";
-import { SqliteGoalContextReader } from "../work/goals/get-context/SqliteGoalContextReader.js";
-import { SqliteGoalStatusReader } from "../work/goals/SqliteGoalStatusReader.js";
+import { SqliteGoalAddedProjector } from "../context/goals/add/SqliteGoalAddedProjector.js";
+import { SqliteGoalStartedProjector } from "../context/goals/start/SqliteGoalStartedProjector.js";
+import { SqliteGoalUpdatedProjector } from "../context/goals/update/SqliteGoalUpdatedProjector.js";
+import { SqliteGoalBlockedProjector } from "../context/goals/block/SqliteGoalBlockedProjector.js";
+import { SqliteGoalUnblockedProjector } from "../context/goals/unblock/SqliteGoalUnblockedProjector.js";
+import { SqliteGoalPausedProjector } from "../context/goals/pause/SqliteGoalPausedProjector.js";
+import { SqliteGoalResumedProjector } from "../context/goals/resume/SqliteGoalResumedProjector.js";
+import { SqliteGoalCompletedProjector } from "../context/goals/complete/SqliteGoalCompletedProjector.js";
+import { SqliteGoalRefinedProjector } from "../context/goals/refine/SqliteGoalRefinedProjector.js";
+import { SqliteGoalResetProjector } from "../context/goals/reset/SqliteGoalResetProjector.js";
+import { SqliteGoalRemovedProjector } from "../context/goals/remove/SqliteGoalRemovedProjector.js";
+import { SqliteGoalProgressUpdatedProjector } from "../context/goals/update-progress/SqliteGoalProgressUpdatedProjector.js";
+import { SqliteGoalSubmittedForReviewProjector } from "../context/goals/review/SqliteGoalSubmittedForReviewProjector.js";
+import { SqliteGoalQualifiedProjector } from "../context/goals/qualify/SqliteGoalQualifiedProjector.js";
+import { SqliteGoalContextAssembler } from "../context/SqliteGoalContextAssembler.js";
+import { SqliteGoalStatusReader } from "../context/goals/SqliteGoalStatusReader.js";
 // Decision Projection Stores - decomposed by use case
-import { SqliteDecisionAddedProjector } from "../solution/decisions/add/SqliteDecisionAddedProjector.js";
-import { SqliteDecisionUpdatedProjector } from "../solution/decisions/update/SqliteDecisionUpdatedProjector.js";
-import { SqliteDecisionReversedProjector } from "../solution/decisions/reverse/SqliteDecisionReversedProjector.js";
-import { SqliteDecisionSupersededProjector } from "../solution/decisions/supersede/SqliteDecisionSupersededProjector.js";
-import { SqliteDecisionContextReader } from "../solution/decisions/get-context/SqliteDecisionContextReader.js";
-import { SqliteDecisionSessionReader } from "../solution/decisions/get-context/SqliteDecisionSessionReader.js";
-import { SqliteDecisionListReader } from "../solution/decisions/list/SqliteDecisionListReader.js";
+import { SqliteDecisionAddedProjector } from "../context/decisions/add/SqliteDecisionAddedProjector.js";
+import { SqliteDecisionUpdatedProjector } from "../context/decisions/update/SqliteDecisionUpdatedProjector.js";
+import { SqliteDecisionReversedProjector } from "../context/decisions/reverse/SqliteDecisionReversedProjector.js";
+import { SqliteDecisionSupersededProjector } from "../context/decisions/supersede/SqliteDecisionSupersededProjector.js";
+import { SqliteDecisionViewReader } from "../context/decisions/get/SqliteDecisionViewReader.js";
 // Architecture Projection Stores - decomposed by use case
-import { SqliteArchitectureDefinedProjector } from "../solution/architecture/define/SqliteArchitectureDefinedProjector.js";
-import { SqliteArchitectureUpdatedProjector } from "../solution/architecture/update/SqliteArchitectureUpdatedProjector.js";
-import { SqliteArchitectureReader } from "../solution/architecture/SqliteArchitectureReader.js";
+import { SqliteArchitectureDefinedProjector } from "../context/architecture/define/SqliteArchitectureDefinedProjector.js";
+import { SqliteArchitectureUpdatedProjector } from "../context/architecture/update/SqliteArchitectureUpdatedProjector.js";
+import { SqliteArchitectureReader } from "../context/architecture/SqliteArchitectureReader.js";
 // Component Projection Stores - decomposed by use case
-import { SqliteComponentAddedProjector } from "../solution/components/add/SqliteComponentAddedProjector.js";
-import { SqliteComponentUpdatedProjector } from "../solution/components/update/SqliteComponentUpdatedProjector.js";
-import { SqliteComponentDeprecatedProjector } from "../solution/components/deprecate/SqliteComponentDeprecatedProjector.js";
-import { SqliteComponentRemovedProjector } from "../solution/components/remove/SqliteComponentRemovedProjector.js";
-import { SqliteComponentContextReader } from "../solution/components/get-context/SqliteComponentContextReader.js";
-import { SqliteComponentListReader } from "../solution/components/list/SqliteComponentListReader.js";
+import { SqliteComponentAddedProjector } from "../context/components/add/SqliteComponentAddedProjector.js";
+import { SqliteComponentUpdatedProjector } from "../context/components/update/SqliteComponentUpdatedProjector.js";
+import { SqliteComponentDeprecatedProjector } from "../context/components/deprecate/SqliteComponentDeprecatedProjector.js";
+import { SqliteComponentRemovedProjector } from "../context/components/remove/SqliteComponentRemovedProjector.js";
+import { SqliteComponentRenamedProjector } from "../context/components/rename/SqliteComponentRenamedProjector.js";
+import { SqliteComponentViewReader } from "../context/components/get/SqliteComponentViewReader.js";
+import { SqliteComponentReader } from "../context/components/get/SqliteComponentReader.js";
 // Dependency Projection Stores - decomposed by use case
-import { SqliteDependencyAddedProjector } from "../solution/dependencies/add/SqliteDependencyAddedProjector.js";
-import { SqliteDependencyUpdatedProjector } from "../solution/dependencies/update/SqliteDependencyUpdatedProjector.js";
-import { SqliteDependencyRemovedProjector } from "../solution/dependencies/remove/SqliteDependencyRemovedProjector.js";
-import { SqliteDependencyContextReader } from "../solution/dependencies/get-context/SqliteDependencyContextReader.js";
-import { SqliteDependencyListReader } from "../solution/dependencies/list/SqliteDependencyListReader.js";
+import { SqliteDependencyAddedProjector } from "../context/dependencies/add/SqliteDependencyAddedProjector.js";
+import { SqliteDependencyUpdatedProjector } from "../context/dependencies/update/SqliteDependencyUpdatedProjector.js";
+import { SqliteDependencyRemovedProjector } from "../context/dependencies/remove/SqliteDependencyRemovedProjector.js";
+import { SqliteDependencyViewReader } from "../context/dependencies/get/SqliteDependencyViewReader.js";
 // Guideline Projection Stores - decomposed by use case
-import { SqliteGuidelineAddedProjector } from "../solution/guidelines/add/SqliteGuidelineAddedProjector.js";
-import { SqliteGuidelineUpdatedProjector } from "../solution/guidelines/update/SqliteGuidelineUpdatedProjector.js";
-import { SqliteGuidelineRemovedProjector } from "../solution/guidelines/remove/SqliteGuidelineRemovedProjector.js";
-import { SqliteGuidelineContextReader } from "../solution/guidelines/get-context/SqliteGuidelineContextReader.js";
-import { SqliteGuidelineListReader } from "../solution/guidelines/list/SqliteGuidelineListReader.js";
+import { SqliteGuidelineAddedProjector } from "../context/guidelines/add/SqliteGuidelineAddedProjector.js";
+import { SqliteGuidelineUpdatedProjector } from "../context/guidelines/update/SqliteGuidelineUpdatedProjector.js";
+import { SqliteGuidelineRemovedProjector } from "../context/guidelines/remove/SqliteGuidelineRemovedProjector.js";
+import { SqliteGuidelineViewReader } from "../context/guidelines/get/SqliteGuidelineViewReader.js";
+import { LocalGetGuidelinesGateway } from "../../application/context/guidelines/get/LocalGetGuidelinesGateway.js";
+import { GetGuidelinesController } from "../../application/context/guidelines/get/GetGuidelinesController.js";
 // Invariant Projection Stores - decomposed by use case
-import { SqliteInvariantAddedProjector } from "../solution/invariants/add/SqliteInvariantAddedProjector.js";
-import { SqliteInvariantUpdatedProjector } from "../solution/invariants/update/SqliteInvariantUpdatedProjector.js";
-import { SqliteInvariantRemovedProjector } from "../solution/invariants/remove/SqliteInvariantRemovedProjector.js";
-import { SqliteInvariantContextReader } from "../solution/invariants/get-context/SqliteInvariantContextReader.js";
-import { SqliteInvariantListReader } from "../solution/invariants/list/SqliteInvariantListReader.js";
+import { SqliteInvariantAddedProjector } from "../context/invariants/add/SqliteInvariantAddedProjector.js";
+import { SqliteInvariantUpdatedProjector } from "../context/invariants/update/SqliteInvariantUpdatedProjector.js";
+import { SqliteInvariantRemovedProjector } from "../context/invariants/remove/SqliteInvariantRemovedProjector.js";
+import { SqliteInvariantViewReader } from "../context/invariants/get/SqliteInvariantViewReader.js";
 // Relations Projection Stores - decomposed by use case
-import { SqliteRelationAddedProjector } from "../relations/add/SqliteRelationAddedProjector.js";
-import { SqliteRelationRemovedProjector } from "../relations/remove/SqliteRelationRemovedProjector.js";
-import { SqliteRelationListReader } from "../relations/list/SqliteRelationListReader.js";
+import { SqliteRelationAddedProjector } from "../context/relations/add/SqliteRelationAddedProjector.js";
+import { SqliteRelationRemovedProjector } from "../context/relations/remove/SqliteRelationRemovedProjector.js";
+import { SqliteRelationViewReader } from "../context/relations/get/SqliteRelationViewReader.js";
 // AudiencePain Projection Stores - decomposed by use case
-import { SqliteAudiencePainAddedProjector } from "../project-knowledge/audience-pains/add/SqliteAudiencePainAddedProjector.js";
-import { SqliteAudiencePainUpdatedProjector } from "../project-knowledge/audience-pains/update/SqliteAudiencePainUpdatedProjector.js";
-import { SqliteAudiencePainResolvedProjector } from "../project-knowledge/audience-pains/resolve/SqliteAudiencePainResolvedProjector.js";
+import { SqliteAudiencePainAddedProjector } from "../context/audience-pains/add/SqliteAudiencePainAddedProjector.js";
+import { SqliteAudiencePainUpdatedProjector } from "../context/audience-pains/update/SqliteAudiencePainUpdatedProjector.js";
 // Audience Projection Stores - decomposed by use case
-import { SqliteAudienceAddedProjector } from "../project-knowledge/audiences/add/SqliteAudienceAddedProjector.js";
-import { SqliteAudienceUpdatedProjector } from "../project-knowledge/audiences/update/SqliteAudienceUpdatedProjector.js";
-import { SqliteAudienceRemovedProjector } from "../project-knowledge/audiences/remove/SqliteAudienceRemovedProjector.js";
+import { SqliteAudienceAddedProjector } from "../context/audiences/add/SqliteAudienceAddedProjector.js";
+import { SqliteAudienceUpdatedProjector } from "../context/audiences/update/SqliteAudienceUpdatedProjector.js";
+import { SqliteAudienceRemovedProjector } from "../context/audiences/remove/SqliteAudienceRemovedProjector.js";
 // ValueProposition Projection Stores - decomposed by use case
-import { SqliteValuePropositionAddedProjector } from "../project-knowledge/value-propositions/add/SqliteValuePropositionAddedProjector.js";
-import { SqliteValuePropositionUpdatedProjector } from "../project-knowledge/value-propositions/update/SqliteValuePropositionUpdatedProjector.js";
-import { SqliteValuePropositionRemovedProjector } from "../project-knowledge/value-propositions/remove/SqliteValuePropositionRemovedProjector.js";
+import { SqliteValuePropositionAddedProjector } from "../context/value-propositions/add/SqliteValuePropositionAddedProjector.js";
+import { SqliteValuePropositionUpdatedProjector } from "../context/value-propositions/update/SqliteValuePropositionUpdatedProjector.js";
+import { SqliteValuePropositionRemovedProjector } from "../context/value-propositions/remove/SqliteValuePropositionRemovedProjector.js";
 // Project Projection Stores - decomposed by use case
-import { SqliteProjectInitializedProjector } from "../project-knowledge/project/init/SqliteProjectInitializedProjector.js";
-import { SqliteProjectUpdatedProjector } from "../project-knowledge/project/update/SqliteProjectUpdatedProjector.js";
-import { SqliteProjectContextReader } from "../project-knowledge/project/query/SqliteProjectContextReader.js";
+import { SqliteProjectInitializedProjector } from "../context/project/init/SqliteProjectInitializedProjector.js";
+import { SqliteProjectUpdatedProjector } from "../context/project/update/SqliteProjectUpdatedProjector.js";
+import { SqliteProjectContextReader } from "../context/project/query/SqliteProjectContextReader.js";
 // Project Services
-import { AgentFileProtocol } from "../project-knowledge/project/init/AgentFileProtocol.js";
-import { InitializationProtocol } from "../../application/project-knowledge/project/init/InitializationProtocol.js";
-import { InitializeProjectCommandHandler } from "../../application/project-knowledge/project/init/InitializeProjectCommandHandler.js";
+import { AgentFileProtocol } from "../context/project/init/AgentFileProtocol.js";
+import { InitializeProjectCommandHandler } from "../../application/context/project/init/InitializeProjectCommandHandler.js";
+import { LocalPlanProjectInitGateway } from "../../application/context/project/init/LocalPlanProjectInitGateway.js";
+import { PlanProjectInitController } from "../../application/context/project/init/PlanProjectInitController.js";
+import { LocalInitializeProjectGateway } from "../../application/context/project/init/LocalInitializeProjectGateway.js";
+import { InitializeProjectController } from "../../application/context/project/init/InitializeProjectController.js";
 // Audience Context Reader
-import { SqliteAudienceContextReader } from "../project-knowledge/audiences/query/SqliteAudienceContextReader.js";
+import { SqliteAudienceContextReader } from "../context/audiences/query/SqliteAudienceContextReader.js";
 // AudiencePain Context Reader
-import { SqliteAudiencePainContextReader } from "../project-knowledge/audience-pains/query/SqliteAudiencePainContextReader.js";
+import { SqliteAudiencePainContextReader } from "../context/audience-pains/query/SqliteAudiencePainContextReader.js";
 // ValueProposition Context Reader
-import { SqliteValuePropositionContextReader } from "../project-knowledge/value-propositions/query/SqliteValuePropositionContextReader.js";
+import { SqliteValuePropositionContextReader } from "../context/value-propositions/query/SqliteValuePropositionContextReader.js";
 // CLI Version Reader
 import { CliVersionReader } from "../cli-metadata/query/CliVersionReader.js";
 // Solution Context Reader
-import { SqliteSolutionContextReader } from "../solution/SqliteSolutionContextReader.js";
+import { SqliteSolutionContextReader } from "../SqliteSolutionContextReader.js";
 // Settings Infrastructure
-import { FsSettingsReader } from "../shared/settings/FsSettingsReader.js";
-import { FsSettingsInitializer } from "../shared/settings/FsSettingsInitializer.js";
+import { FsSettingsReader } from "../settings/FsSettingsReader.js";
+import { FsSettingsInitializer } from "../settings/FsSettingsInitializer.js";
 
 // Event Handlers (Projection Handlers)
-import { SessionStartedEventHandler } from "../../application/work/sessions/start/SessionStartedEventHandler.js";
-import { SessionEndedEventHandler } from "../../application/work/sessions/end/SessionEndedEventHandler.js";
-import { SessionSummaryProjectionHandler } from "../../application/work/sessions/get-context/SessionSummaryProjectionHandler.js";
-import { GoalAddedEventHandler } from "../../application/work/goals/add/GoalAddedEventHandler.js";
-import { GoalStartedEventHandler } from "../../application/work/goals/start/GoalStartedEventHandler.js";
-import { GoalUpdatedEventHandler } from "../../application/work/goals/update/GoalUpdatedEventHandler.js";
-import { GoalBlockedEventHandler } from "../../application/work/goals/block/GoalBlockedEventHandler.js";
-import { GoalUnblockedEventHandler } from "../../application/work/goals/unblock/GoalUnblockedEventHandler.js";
-import { GoalPausedEventHandler } from "../../application/work/goals/pause/GoalPausedEventHandler.js";
-import { GoalResumedEventHandler } from "../../application/work/goals/resume/GoalResumedEventHandler.js";
-import { GoalCompletedEventHandler } from "../../application/work/goals/complete/GoalCompletedEventHandler.js";
-import { GoalResetEventHandler } from "../../application/work/goals/reset/GoalResetEventHandler.js";
-import { GoalRemovedEventHandler } from "../../application/work/goals/remove/GoalRemovedEventHandler.js";
-import { GoalProgressUpdatedEventHandler } from "../../application/work/goals/update-progress/GoalProgressUpdatedEventHandler.js";
-import { GoalSubmittedForReviewEventHandler } from "../../application/work/goals/review/GoalSubmittedForReviewEventHandler.js";
-import { GoalQualifiedEventHandler } from "../../application/work/goals/qualify/GoalQualifiedEventHandler.js";
+import { SessionStartedEventHandler } from "../../application/context/sessions/start/SessionStartedEventHandler.js";
+import { SessionEndedEventHandler } from "../../application/context/sessions/end/SessionEndedEventHandler.js";
+import { GoalAddedEventHandler } from "../../application/context/goals/add/GoalAddedEventHandler.js";
+import { GoalStartedEventHandler } from "../../application/context/goals/start/GoalStartedEventHandler.js";
+import { GoalUpdatedEventHandler } from "../../application/context/goals/update/GoalUpdatedEventHandler.js";
+import { GoalBlockedEventHandler } from "../../application/context/goals/block/GoalBlockedEventHandler.js";
+import { GoalUnblockedEventHandler } from "../../application/context/goals/unblock/GoalUnblockedEventHandler.js";
+import { GoalPausedEventHandler } from "../../application/context/goals/pause/GoalPausedEventHandler.js";
+import { GoalResumedEventHandler } from "../../application/context/goals/resume/GoalResumedEventHandler.js";
+import { GoalCompletedEventHandler } from "../../application/context/goals/complete/GoalCompletedEventHandler.js";
+import { GoalRefinedEventHandler } from "../../application/context/goals/refine/GoalRefinedEventHandler.js";
+import { GoalResetEventHandler } from "../../application/context/goals/reset/GoalResetEventHandler.js";
+import { GoalRemovedEventHandler } from "../../application/context/goals/remove/GoalRemovedEventHandler.js";
+import { GoalProgressUpdatedEventHandler } from "../../application/context/goals/update-progress/GoalProgressUpdatedEventHandler.js";
+import { GoalSubmittedForReviewEventHandler } from "../../application/context/goals/review/GoalSubmittedForReviewEventHandler.js";
+import { GoalQualifiedEventHandler } from "../../application/context/goals/qualify/GoalQualifiedEventHandler.js";
 // Decision Event Handlers - decomposed by use case
-import { DecisionAddedEventHandler } from "../../application/solution/decisions/add/DecisionAddedEventHandler.js";
-import { DecisionUpdatedEventHandler } from "../../application/solution/decisions/update/DecisionUpdatedEventHandler.js";
-import { DecisionReversedEventHandler } from "../../application/solution/decisions/reverse/DecisionReversedEventHandler.js";
-import { DecisionSupersededEventHandler } from "../../application/solution/decisions/supersede/DecisionSupersededEventHandler.js";
+import { DecisionAddedEventHandler } from "../../application/context/decisions/add/DecisionAddedEventHandler.js";
+import { DecisionUpdatedEventHandler } from "../../application/context/decisions/update/DecisionUpdatedEventHandler.js";
+import { DecisionReversedEventHandler } from "../../application/context/decisions/reverse/DecisionReversedEventHandler.js";
+import { DecisionSupersededEventHandler } from "../../application/context/decisions/supersede/DecisionSupersededEventHandler.js";
 // Architecture Event Handlers - decomposed by use case
-import { ArchitectureDefinedEventHandler } from "../../application/solution/architecture/define/ArchitectureDefinedEventHandler.js";
-import { ArchitectureUpdatedEventHandler } from "../../application/solution/architecture/update/ArchitectureUpdatedEventHandler.js";
+import { ArchitectureDefinedEventHandler } from "../../application/context/architecture/define/ArchitectureDefinedEventHandler.js";
+import { ArchitectureUpdatedEventHandler } from "../../application/context/architecture/update/ArchitectureUpdatedEventHandler.js";
 // Component Event Handlers - decomposed by use case
-import { ComponentAddedEventHandler } from "../../application/solution/components/add/ComponentAddedEventHandler.js";
-import { ComponentUpdatedEventHandler } from "../../application/solution/components/update/ComponentUpdatedEventHandler.js";
-import { ComponentDeprecatedEventHandler } from "../../application/solution/components/deprecate/ComponentDeprecatedEventHandler.js";
-import { ComponentRemovedEventHandler } from "../../application/solution/components/remove/ComponentRemovedEventHandler.js";
+import { ComponentAddedEventHandler } from "../../application/context/components/add/ComponentAddedEventHandler.js";
+import { ComponentUpdatedEventHandler } from "../../application/context/components/update/ComponentUpdatedEventHandler.js";
+import { ComponentDeprecatedEventHandler } from "../../application/context/components/deprecate/ComponentDeprecatedEventHandler.js";
+import { ComponentRemovedEventHandler } from "../../application/context/components/remove/ComponentRemovedEventHandler.js";
+import { ComponentRenamedEventHandler } from "../../application/context/components/rename/ComponentRenamedEventHandler.js";
 // Dependency Event Handlers - decomposed by use case
-import { DependencyAddedEventHandler } from "../../application/solution/dependencies/add/DependencyAddedEventHandler.js";
-import { DependencyUpdatedEventHandler } from "../../application/solution/dependencies/update/DependencyUpdatedEventHandler.js";
-import { DependencyRemovedEventHandler } from "../../application/solution/dependencies/remove/DependencyRemovedEventHandler.js";
+import { DependencyAddedEventHandler } from "../../application/context/dependencies/add/DependencyAddedEventHandler.js";
+import { DependencyUpdatedEventHandler } from "../../application/context/dependencies/update/DependencyUpdatedEventHandler.js";
+import { DependencyRemovedEventHandler } from "../../application/context/dependencies/remove/DependencyRemovedEventHandler.js";
 // Guideline Event Handlers - decomposed by use case
-import { GuidelineAddedEventHandler } from "../../application/solution/guidelines/add/GuidelineAddedEventHandler.js";
-import { GuidelineUpdatedEventHandler } from "../../application/solution/guidelines/update/GuidelineUpdatedEventHandler.js";
-import { GuidelineRemovedEventHandler } from "../../application/solution/guidelines/remove/GuidelineRemovedEventHandler.js";
+import { GuidelineAddedEventHandler } from "../../application/context/guidelines/add/GuidelineAddedEventHandler.js";
+import { GuidelineUpdatedEventHandler } from "../../application/context/guidelines/update/GuidelineUpdatedEventHandler.js";
+import { GuidelineRemovedEventHandler } from "../../application/context/guidelines/remove/GuidelineRemovedEventHandler.js";
 // Invariant Event Handlers - decomposed by use case
-import { InvariantAddedEventHandler } from "../../application/solution/invariants/add/InvariantAddedEventHandler.js";
-import { InvariantUpdatedEventHandler } from "../../application/solution/invariants/update/InvariantUpdatedEventHandler.js";
-import { InvariantRemovedEventHandler } from "../../application/solution/invariants/remove/InvariantRemovedEventHandler.js";
+import { InvariantAddedEventHandler } from "../../application/context/invariants/add/InvariantAddedEventHandler.js";
+import { InvariantUpdatedEventHandler } from "../../application/context/invariants/update/InvariantUpdatedEventHandler.js";
+import { InvariantRemovedEventHandler } from "../../application/context/invariants/remove/InvariantRemovedEventHandler.js";
 // Project Event Handlers - decomposed by use case
-import { ProjectInitializedEventHandler } from "../../application/project-knowledge/project/init/ProjectInitializedEventHandler.js";
-import { ProjectUpdatedEventHandler } from "../../application/project-knowledge/project/update/ProjectUpdatedEventHandler.js";
+import { ProjectInitializedEventHandler } from "../../application/context/project/init/ProjectInitializedEventHandler.js";
+import { ProjectUpdatedEventHandler } from "../../application/context/project/update/ProjectUpdatedEventHandler.js";
 // AudiencePain Event Handlers - decomposed by use case
-import { AudiencePainAddedEventHandler } from "../../application/project-knowledge/audience-pains/add/AudiencePainAddedEventHandler.js";
-import { AudiencePainUpdatedEventHandler } from "../../application/project-knowledge/audience-pains/update/AudiencePainUpdatedEventHandler.js";
-import { AudiencePainResolvedEventHandler } from "../../application/project-knowledge/audience-pains/resolve/AudiencePainResolvedEventHandler.js";
+import { AudiencePainAddedEventHandler } from "../../application/context/audience-pains/add/AudiencePainAddedEventHandler.js";
+import { AudiencePainUpdatedEventHandler } from "../../application/context/audience-pains/update/AudiencePainUpdatedEventHandler.js";
+import { UpdateAudiencePainCommandHandler } from "../../application/context/audience-pains/update/UpdateAudiencePainCommandHandler.js";
+import { LocalUpdateAudiencePainGateway } from "../../application/context/audience-pains/update/LocalUpdateAudiencePainGateway.js";
+import { UpdateAudiencePainController } from "../../application/context/audience-pains/update/UpdateAudiencePainController.js";
+import { LocalGetAudiencePainsGateway } from "../../application/context/audience-pains/list/LocalGetAudiencePainsGateway.js";
+import { GetAudiencePainsController } from "../../application/context/audience-pains/list/GetAudiencePainsController.js";
 // Audience Event Handlers - decomposed by use case
-import { AudienceAddedEventHandler } from "../../application/project-knowledge/audiences/add/AudienceAddedEventHandler.js";
-import { AudienceUpdatedEventHandler } from "../../application/project-knowledge/audiences/update/AudienceUpdatedEventHandler.js";
-import { AudienceRemovedEventHandler } from "../../application/project-knowledge/audiences/remove/AudienceRemovedEventHandler.js";
+import { AudienceAddedEventHandler } from "../../application/context/audiences/add/AudienceAddedEventHandler.js";
+import { AudienceUpdatedEventHandler } from "../../application/context/audiences/update/AudienceUpdatedEventHandler.js";
+import { AudienceRemovedEventHandler } from "../../application/context/audiences/remove/AudienceRemovedEventHandler.js";
+import { UpdateAudienceCommandHandler } from "../../application/context/audiences/update/UpdateAudienceCommandHandler.js";
+import { LocalUpdateAudienceGateway } from "../../application/context/audiences/update/LocalUpdateAudienceGateway.js";
+import { UpdateAudienceController } from "../../application/context/audiences/update/UpdateAudienceController.js";
 // ValueProposition Event Handlers - decomposed by use case
-import { ValuePropositionAddedEventHandler } from "../../application/project-knowledge/value-propositions/add/ValuePropositionAddedEventHandler.js";
-import { ValuePropositionUpdatedEventHandler } from "../../application/project-knowledge/value-propositions/update/ValuePropositionUpdatedEventHandler.js";
-import { ValuePropositionRemovedEventHandler } from "../../application/project-knowledge/value-propositions/remove/ValuePropositionRemovedEventHandler.js";
+import { ValuePropositionAddedEventHandler } from "../../application/context/value-propositions/add/ValuePropositionAddedEventHandler.js";
+import { ValuePropositionUpdatedEventHandler } from "../../application/context/value-propositions/update/ValuePropositionUpdatedEventHandler.js";
+import { ValuePropositionRemovedEventHandler } from "../../application/context/value-propositions/remove/ValuePropositionRemovedEventHandler.js";
+import { AddValuePropositionCommandHandler } from "../../application/context/value-propositions/add/AddValuePropositionCommandHandler.js";
+import { LocalAddValuePropositionGateway } from "../../application/context/value-propositions/add/LocalAddValuePropositionGateway.js";
+import { AddValuePropositionController } from "../../application/context/value-propositions/add/AddValuePropositionController.js";
+import { RemoveValuePropositionCommandHandler } from "../../application/context/value-propositions/remove/RemoveValuePropositionCommandHandler.js";
+import { LocalRemoveValuePropositionGateway } from "../../application/context/value-propositions/remove/LocalRemoveValuePropositionGateway.js";
+import { RemoveValuePropositionController } from "../../application/context/value-propositions/remove/RemoveValuePropositionController.js";
+import { LocalGetValuePropositionsGateway } from "../../application/context/value-propositions/get/LocalGetValuePropositionsGateway.js";
+import { GetValuePropositionsController } from "../../application/context/value-propositions/get/GetValuePropositionsController.js";
+import { UpdateValuePropositionCommandHandler } from "../../application/context/value-propositions/update/UpdateValuePropositionCommandHandler.js";
+import { LocalUpdateValuePropositionGateway } from "../../application/context/value-propositions/update/LocalUpdateValuePropositionGateway.js";
+import { UpdateValuePropositionController } from "../../application/context/value-propositions/update/UpdateValuePropositionController.js";
 // Relations Event Handlers - decomposed by use case
-import { RelationAddedEventHandler } from "../../application/relations/add/RelationAddedEventHandler.js";
-import { RelationRemovedEventHandler } from "../../application/relations/remove/RelationRemovedEventHandler.js";
+import { RelationAddedEventHandler } from "../../application/context/relations/add/RelationAddedEventHandler.js";
+import { AddRelationCommandHandler } from "../../application/context/relations/add/AddRelationCommandHandler.js";
+import { LocalAddRelationGateway } from "../../application/context/relations/add/LocalAddRelationGateway.js";
+import { AddRelationController } from "../../application/context/relations/add/AddRelationController.js";
+import { RelationRemovedEventHandler } from "../../application/context/relations/remove/RelationRemovedEventHandler.js";
+import { RemoveRelationCommandHandler } from "../../application/context/relations/remove/RemoveRelationCommandHandler.js";
+import { LocalRemoveRelationGateway } from "../../application/context/relations/remove/LocalRemoveRelationGateway.js";
+import { RemoveRelationController } from "../../application/context/relations/remove/RemoveRelationController.js";
+import { GetRelationsController } from "../../application/context/relations/get/GetRelationsController.js";
+import { LocalGetRelationsGateway } from "../../application/context/relations/get/LocalGetRelationsGateway.js";
+// Context
+import { GoalContextQueryHandler } from "../../application/context/goals/get/GoalContextQueryHandler.js";
 
 // Goal Controllers
-import { CompleteGoalController } from "../../application/work/goals/complete/CompleteGoalController.js";
-import { CompleteGoalCommandHandler } from "../../application/work/goals/complete/CompleteGoalCommandHandler.js";
-import { GetGoalContextQueryHandler } from "../../application/work/goals/get-context/GetGoalContextQueryHandler.js";
-import { ReviewGoalController } from "../../application/work/goals/review/ReviewGoalController.js";
-import { SubmitGoalForReviewCommandHandler } from "../../application/work/goals/review/SubmitGoalForReviewCommandHandler.js";
-import { FsGoalSubmittedForReviewEventStore } from "../work/goals/review/FsGoalSubmittedForReviewEventStore.js";
-import { QualifyGoalController } from "../../application/work/goals/qualify/QualifyGoalController.js";
-import { QualifyGoalCommandHandler } from "../../application/work/goals/qualify/QualifyGoalCommandHandler.js";
-import { FsGoalQualifiedEventStore } from "../work/goals/qualify/FsGoalQualifiedEventStore.js";
+import { AddGoalCommandHandler } from "../../application/context/goals/add/AddGoalCommandHandler.js";
+import { LocalAddGoalGateway } from "../../application/context/goals/add/LocalAddGoalGateway.js";
+import { AddGoalController } from "../../application/context/goals/add/AddGoalController.js";
+import { CompleteGoalController } from "../../application/context/goals/complete/CompleteGoalController.js";
+import { CompleteGoalCommandHandler } from "../../application/context/goals/complete/CompleteGoalCommandHandler.js";
+import { LocalCompleteGoalGateway } from "../../application/context/goals/complete/LocalCompleteGoalGateway.js";
+import { ReviewGoalController } from "../../application/context/goals/review/ReviewGoalController.js";
+import { SubmitGoalForReviewCommandHandler } from "../../application/context/goals/review/SubmitGoalForReviewCommandHandler.js";
+import { LocalReviewGoalGateway } from "../../application/context/goals/review/LocalReviewGoalGateway.js";
+import { FsGoalSubmittedForReviewEventStore } from "../context/goals/review/FsGoalSubmittedForReviewEventStore.js";
+import { QualifyGoalController } from "../../application/context/goals/qualify/QualifyGoalController.js";
+import { QualifyGoalCommandHandler } from "../../application/context/goals/qualify/QualifyGoalCommandHandler.js";
+import { LocalQualifyGoalGateway } from "../../application/context/goals/qualify/LocalQualifyGoalGateway.js";
+import { FsGoalQualifiedEventStore } from "../context/goals/qualify/FsGoalQualifiedEventStore.js";
+
+// BlockGoal Controller-Gateway
+import { RefineGoalCommandHandler } from "../../application/context/goals/refine/RefineGoalCommandHandler.js";
+import { LocalRefineGoalGateway } from "../../application/context/goals/refine/LocalRefineGoalGateway.js";
+import { RefineGoalController } from "../../application/context/goals/refine/RefineGoalController.js";
+import { BlockGoalCommandHandler } from "../../application/context/goals/block/BlockGoalCommandHandler.js";
+import { LocalBlockGoalGateway } from "../../application/context/goals/block/LocalBlockGoalGateway.js";
+import { BlockGoalController } from "../../application/context/goals/block/BlockGoalController.js";
+
+// UnblockGoal Controller-Gateway
+import { UnblockGoalCommandHandler } from "../../application/context/goals/unblock/UnblockGoalCommandHandler.js";
+import { LocalUnblockGoalGateway } from "../../application/context/goals/unblock/LocalUnblockGoalGateway.js";
+import { UnblockGoalController } from "../../application/context/goals/unblock/UnblockGoalController.js";
+
+// RemoveGoal Controller-Gateway
+import { RemoveGoalCommandHandler } from "../../application/context/goals/remove/RemoveGoalCommandHandler.js";
+import { LocalRemoveGoalGateway } from "../../application/context/goals/remove/LocalRemoveGoalGateway.js";
+import { RemoveGoalController } from "../../application/context/goals/remove/RemoveGoalController.js";
+
+// ResetGoal Controller-Gateway
+import { ResetGoalCommandHandler } from "../../application/context/goals/reset/ResetGoalCommandHandler.js";
+import { LocalResetGoalGateway } from "../../application/context/goals/reset/LocalResetGoalGateway.js";
+import { ResetGoalController } from "../../application/context/goals/reset/ResetGoalController.js";
+
+// UpdateGoal Controller-Gateway
+import { UpdateGoalCommandHandler } from "../../application/context/goals/update/UpdateGoalCommandHandler.js";
+import { LocalUpdateGoalGateway } from "../../application/context/goals/update/LocalUpdateGoalGateway.js";
+import { UpdateGoalController } from "../../application/context/goals/update/UpdateGoalController.js";
+
+// UpdateGoalProgress Controller-Gateway
+import { UpdateGoalProgressCommandHandler } from "../../application/context/goals/update-progress/UpdateGoalProgressCommandHandler.js";
+import { LocalUpdateGoalProgressGateway } from "../../application/context/goals/update-progress/LocalUpdateGoalProgressGateway.js";
+import { UpdateGoalProgressController } from "../../application/context/goals/update-progress/UpdateGoalProgressController.js";
+
+// StartGoal Controller-Gateway
+import { StartGoalCommandHandler } from "../../application/context/goals/start/StartGoalCommandHandler.js";
+import { LocalStartGoalGateway } from "../../application/context/goals/start/LocalStartGoalGateway.js";
+import { StartGoalController } from "../../application/context/goals/start/StartGoalController.js";
+
+// PauseGoal Controller-Gateway
+import { PauseGoalCommandHandler } from "../../application/context/goals/pause/PauseGoalCommandHandler.js";
+import { LocalPauseGoalGateway } from "../../application/context/goals/pause/LocalPauseGoalGateway.js";
+import { PauseGoalController } from "../../application/context/goals/pause/PauseGoalController.js";
+
+// GetGoals Controller-Gateway
+import { GetGoalsController } from "../../application/context/goals/get/GetGoalsController.js";
+import { LocalGetGoalsGateway } from "../../application/context/goals/get/LocalGetGoalsGateway.js";
+// ShowGoal Controller-Gateway
+import { ShowGoalController } from "../../application/context/goals/get/ShowGoalController.js";
+import { LocalShowGoalGateway } from "../../application/context/goals/get/LocalShowGoalGateway.js";
+
+// Session Controllers
+import { SessionStartController } from "../../application/context/sessions/start/SessionStartController.js";
+import { LocalStartSessionGateway } from "../../application/context/sessions/start/LocalStartSessionGateway.js";
+import { EndSessionController } from "../../application/context/sessions/end/EndSessionController.js";
+import { LocalEndSessionGateway } from "../../application/context/sessions/end/LocalEndSessionGateway.js";
+import { EndSessionCommandHandler } from "../../application/context/sessions/end/EndSessionCommandHandler.js";
+import { GetSessionsController } from "../../application/context/sessions/get/GetSessionsController.js";
+import { LocalGetSessionsGateway } from "../../application/context/sessions/get/LocalGetSessionsGateway.js";
+// Worker Controllers
+import { ViewWorkerController } from "../../application/context/host/workers/view/ViewWorkerController.js";
+import { LocalViewWorkerGateway } from "../../application/context/host/workers/view/LocalViewWorkerGateway.js";
+import { SessionContextQueryHandler } from "../../application/context/sessions/get/SessionContextQueryHandler.js";
+import { StartSessionCommandHandler } from "../../application/context/sessions/start/StartSessionCommandHandler.js";
+
+// Work Command Handlers
+import { PauseWorkCommandHandler } from "../../application/context/work/pause/PauseWorkCommandHandler.js";
+import { LocalPauseWorkGateway } from "../../application/context/work/pause/LocalPauseWorkGateway.js";
+import { PauseWorkController } from "../../application/context/work/pause/PauseWorkController.js";
+import { ResumeWorkController } from "../../application/context/work/resume/ResumeWorkController.js";
+import { LocalResumeWorkGateway } from "../../application/context/work/resume/LocalResumeWorkGateway.js";
+import { ResumeGoalCommandHandler } from "../../application/context/goals/resume/ResumeGoalCommandHandler.js";
+import { LocalResumeGoalGateway } from "../../application/context/goals/resume/LocalResumeGoalGateway.js";
+import { ResumeGoalController } from "../../application/context/goals/resume/ResumeGoalController.js";
+
+// Architecture Controllers
+import { AddAudiencePainCommandHandler } from "../../application/context/audience-pains/add/AddAudiencePainCommandHandler.js";
+import { LocalAddAudiencePainGateway } from "../../application/context/audience-pains/add/LocalAddAudiencePainGateway.js";
+import { AddAudiencePainController } from "../../application/context/audience-pains/add/AddAudiencePainController.js";
+import { DefineArchitectureController } from "../../application/context/architecture/define/DefineArchitectureController.js";
+import { LocalDefineArchitectureGateway } from "../../application/context/architecture/define/LocalDefineArchitectureGateway.js";
+import { UpdateArchitectureController } from "../../application/context/architecture/update/UpdateArchitectureController.js";
+import { LocalUpdateArchitectureGateway } from "../../application/context/architecture/update/LocalUpdateArchitectureGateway.js";
+import { GetArchitectureController } from "../../application/context/architecture/get/GetArchitectureController.js";
+import { LocalGetArchitectureGateway } from "../../application/context/architecture/get/LocalGetArchitectureGateway.js";
+
+// Component Controllers
+import { AddComponentCommandHandler } from "../../application/context/components/add/AddComponentCommandHandler.js";
+import { LocalAddComponentGateway } from "../../application/context/components/add/LocalAddComponentGateway.js";
+import { AddComponentController } from "../../application/context/components/add/AddComponentController.js";
+import { LocalGetComponentsGateway } from "../../application/context/components/list/LocalGetComponentsGateway.js";
+import { GetComponentsController } from "../../application/context/components/list/GetComponentsController.js";
+import { UpdateComponentCommandHandler } from "../../application/context/components/update/UpdateComponentCommandHandler.js";
+import { LocalUpdateComponentGateway } from "../../application/context/components/update/LocalUpdateComponentGateway.js";
+import { UpdateComponentController } from "../../application/context/components/update/UpdateComponentController.js";
+import { RenameComponentCommandHandler } from "../../application/context/components/rename/RenameComponentCommandHandler.js";
+import { LocalRenameComponentGateway } from "../../application/context/components/rename/LocalRenameComponentGateway.js";
+import { RenameComponentController } from "../../application/context/components/rename/RenameComponentController.js";
+import { LocalShowComponentGateway } from "../../application/context/components/show/LocalShowComponentGateway.js";
+import { ShowComponentController } from "../../application/context/components/show/ShowComponentController.js";
+import { DeprecateComponentCommandHandler } from "../../application/context/components/deprecate/DeprecateComponentCommandHandler.js";
+import { LocalDeprecateComponentGateway } from "../../application/context/components/deprecate/LocalDeprecateComponentGateway.js";
+import { DeprecateComponentController } from "../../application/context/components/deprecate/DeprecateComponentController.js";
+import { RemoveComponentCommandHandler } from "../../application/context/components/remove/RemoveComponentCommandHandler.js";
+import { LocalRemoveComponentGateway } from "../../application/context/components/remove/LocalRemoveComponentGateway.js";
+import { RemoveComponentController } from "../../application/context/components/remove/RemoveComponentController.js";
+
+// Audience Controllers
+import { AddAudienceCommandHandler } from "../../application/context/audiences/add/AddAudienceCommandHandler.js";
+import { LocalAddAudienceGateway } from "../../application/context/audiences/add/LocalAddAudienceGateway.js";
+import { AddAudienceController } from "../../application/context/audiences/add/AddAudienceController.js";
+import { ListAudiencesController } from "../../application/context/audiences/list/ListAudiencesController.js";
+import { LocalListAudiencesGateway } from "../../application/context/audiences/list/LocalListAudiencesGateway.js";
+import { RemoveAudienceCommandHandler } from "../../application/context/audiences/remove/RemoveAudienceCommandHandler.js";
+import { LocalRemoveAudienceGateway } from "../../application/context/audiences/remove/LocalRemoveAudienceGateway.js";
+import { RemoveAudienceController } from "../../application/context/audiences/remove/RemoveAudienceController.js";
 
 // Solution Context
-import { UnprimedBrownfieldQualifier } from "../../application/solution/UnprimedBrownfieldQualifier.js";
+import { UnprimedBrownfieldQualifier } from "../../application/UnprimedBrownfieldQualifier.js";
 
 // Worker Identity
 import { HostSessionKeyResolver } from "./session/HostSessionKeyResolver.js";
 import { FsWorkerIdentityRegistry } from "./workers/FsWorkerIdentityRegistry.js";
 
 // Goal Claims
-import { FsGoalClaimStore } from "../work/goals/claims/FsGoalClaimStore.js";
-import { GoalClaimPolicy } from "../../application/work/goals/claims/GoalClaimPolicy.js";
+import { FsGoalClaimStore } from "../context/goals/claims/FsGoalClaimStore.js";
+import { GoalClaimPolicy } from "../../application/context/goals/claims/GoalClaimPolicy.js";
 
 export class HostBuilder {
   private readonly rootDir: string;
@@ -293,10 +501,15 @@ export class HostBuilder {
     // STEP 1: Get Core Infrastructure
     // ============================================================
 
+    const projectRootResolver = new ProjectRootResolver();
     const eventStore = new FsEventStore(this.rootDir);
     const eventBus = new InProcessEventBus();
     const clock = new SystemClock();
     const cliVersionReader = new CliVersionReader();
+
+    // Create logger (writes to .jumbo/logs/jumbo.log)
+    const logFilePath = path.join(this.rootDir, "logs", "jumbo.log");
+    const logger = new FileLogger(logFilePath, LogLevel.DEBUG);
 
     // Initialize settings file if it doesn't exist
     const settingsInitializer = new FsSettingsInitializer(this.rootDir);
@@ -315,7 +528,7 @@ export class HostBuilder {
     const goalClaimStore = new FsGoalClaimStore(this.rootDir);
     const goalClaimPolicy = new GoalClaimPolicy(goalClaimStore, clock);
 
-    // Create database rebuild service
+    // Create database rebuild service and controller
     // TEMPORARY: Uses sequential event bus to avoid race conditions during rebuild
     // TODO: Swap back to LocalDatabaseRebuildService when Epic/Feature/Task redesign is complete
     const databaseRebuildService = new TemporarySequentialDatabaseRebuildService(
@@ -323,7 +536,8 @@ export class HostBuilder {
       this.db,
       eventStore
     );
-
+    const rebuildDatabaseGateway = new LocalRebuildDatabaseGateway(databaseRebuildService);
+    const rebuildDatabaseController = new RebuildDatabaseController(rebuildDatabaseGateway);
     // ============================================================
     // STEP 2: Create Domain Event Stores
     // ============================================================
@@ -340,6 +554,7 @@ export class HostBuilder {
     const goalPausedEventStore = new FsGoalPausedEventStore(this.rootDir);
     const goalResumedEventStore = new FsGoalResumedEventStore(this.rootDir);
     const goalCompletedEventStore = new FsGoalCompletedEventStore(this.rootDir);
+    const goalRefinedEventStore = new FsGoalRefinedEventStore(this.rootDir);
     const goalResetEventStore = new FsGoalResetEventStore(this.rootDir);
     const goalRemovedEventStore = new FsGoalRemovedEventStore(this.rootDir);
     const goalProgressUpdatedEventStore = new FsGoalProgressUpdatedEventStore(this.rootDir);
@@ -355,6 +570,7 @@ export class HostBuilder {
     const componentUpdatedEventStore = new FsComponentUpdatedEventStore(this.rootDir);
     const componentDeprecatedEventStore = new FsComponentDeprecatedEventStore(this.rootDir);
     const componentRemovedEventStore = new FsComponentRemovedEventStore(this.rootDir);
+    const componentRenamedEventStore = new FsComponentRenamedEventStore(this.rootDir);
     // Dependency Event Stores - decomposed by use case
     const dependencyAddedEventStore = new FsDependencyAddedEventStore(this.rootDir);
     const dependencyUpdatedEventStore = new FsDependencyUpdatedEventStore(this.rootDir);
@@ -379,6 +595,13 @@ export class HostBuilder {
     const projectUpdatedEventStore = new FsProjectUpdatedEventStore(this.rootDir);
     // Project Services
     const agentFileProtocol = new AgentFileProtocol();
+    const repairMaintenanceGateway = new LocalRepairMaintenanceGateway(
+      projectRootResolver,
+      agentFileProtocol,
+      settingsInitializer,
+      databaseRebuildService
+    );
+    const repairMaintenanceController = new RepairMaintenanceController(repairMaintenanceGateway);
     // Audience Event Stores - decomposed by use case
     const audienceAddedEventStore = new FsAudienceAddedEventStore(this.rootDir);
     const audienceUpdatedEventStore = new FsAudienceUpdatedEventStore(this.rootDir);
@@ -386,8 +609,7 @@ export class HostBuilder {
     // AudiencePain Event Stores - decomposed by use case
     const audiencePainAddedEventStore = new FsAudiencePainAddedEventStore(this.rootDir);
     const audiencePainUpdatedEventStore = new FsAudiencePainUpdatedEventStore(this.rootDir);
-    const audiencePainResolvedEventStore = new FsAudiencePainResolvedEventStore(this.rootDir);
-    // ValueProposition Event Stores - decomposed by use case
+// ValueProposition Event Stores - decomposed by use case
     const valuePropositionAddedEventStore = new FsValuePropositionAddedEventStore(this.rootDir);
     const valuePropositionUpdatedEventStore = new FsValuePropositionUpdatedEventStore(this.rootDir);
     const valuePropositionRemovedEventStore = new FsValuePropositionRemovedEventStore(this.rootDir);
@@ -404,9 +626,7 @@ export class HostBuilder {
     const sessionStartedProjector = new SqliteSessionStartedProjector(this.db);
     const sessionEndedProjector = new SqliteSessionEndedProjector(this.db);
     const activeSessionReader = new SqliteActiveSessionReader(this.db);
-    const sessionSummaryProjectionStore = new SqliteSessionSummaryProjectionStore(this.db);
-    const sessionSummaryReader = new SqliteSessionSummaryReader(this.db);
-    const sessionListReader = new SqliteSessionListReader(this.db);
+    const sessionViewReader = new SqliteSessionViewReader(this.db);
     // Goal Projection Stores - decomposed by use case
     const goalAddedProjector = new SqliteGoalAddedProjector(this.db);
     const goalStartedProjector = new SqliteGoalStartedProjector(this.db);
@@ -416,12 +636,12 @@ export class HostBuilder {
     const goalPausedProjector = new SqliteGoalPausedProjector(this.db);
     const goalResumedProjector = new SqliteGoalResumedProjector(this.db);
     const goalCompletedProjector = new SqliteGoalCompletedProjector(this.db);
+    const goalRefinedProjector = new SqliteGoalRefinedProjector(this.db);
     const goalResetProjector = new SqliteGoalResetProjector(this.db);
     const goalRemovedProjector = new SqliteGoalRemovedProjector(this.db);
     const goalProgressUpdatedProjector = new SqliteGoalProgressUpdatedProjector(this.db);
     const goalSubmittedForReviewProjector = new SqliteGoalSubmittedForReviewProjector(this.db);
     const goalQualifiedProjector = new SqliteGoalQualifiedProjector(this.db);
-    const goalContextReader = new SqliteGoalContextReader(this.db);
     const goalStatusReader = new SqliteGoalStatusReader(this.db);
 
     // Solution Category
@@ -429,40 +649,120 @@ export class HostBuilder {
     const architectureDefinedProjector = new SqliteArchitectureDefinedProjector(this.db);
     const architectureUpdatedProjector = new SqliteArchitectureUpdatedProjector(this.db);
     const architectureReader = new SqliteArchitectureReader(this.db);
-    const architectureViewer = architectureReader;
     // Component Projection Stores - decomposed by use case
     const componentAddedProjector = new SqliteComponentAddedProjector(this.db);
     const componentUpdatedProjector = new SqliteComponentUpdatedProjector(this.db);
     const componentDeprecatedProjector = new SqliteComponentDeprecatedProjector(this.db);
     const componentRemovedProjector = new SqliteComponentRemovedProjector(this.db);
-    const componentContextReader = new SqliteComponentContextReader(this.db);
-    const componentListReader = new SqliteComponentListReader(this.db);
+    const componentRenamedProjector = new SqliteComponentRenamedProjector(this.db);
+    const componentViewReader = new SqliteComponentViewReader(this.db);
+    const componentReader = new SqliteComponentReader(this.db);
     // Dependency Projection Stores - decomposed by use case
     const dependencyAddedProjector = new SqliteDependencyAddedProjector(this.db);
     const dependencyUpdatedProjector = new SqliteDependencyUpdatedProjector(this.db);
     const dependencyRemovedProjector = new SqliteDependencyRemovedProjector(this.db);
-    const dependencyContextReader = new SqliteDependencyContextReader(this.db);
-    const dependencyListReader = new SqliteDependencyListReader(this.db);
+    const dependencyViewReader = new SqliteDependencyViewReader(this.db);
     // Decision Projection Stores - decomposed by use case
     const decisionAddedProjector = new SqliteDecisionAddedProjector(this.db);
     const decisionUpdatedProjector = new SqliteDecisionUpdatedProjector(this.db);
     const decisionReversedProjector = new SqliteDecisionReversedProjector(this.db);
     const decisionSupersededProjector = new SqliteDecisionSupersededProjector(this.db);
-    const decisionContextReader = new SqliteDecisionContextReader(this.db);
-    const decisionSessionReader = new SqliteDecisionSessionReader(this.db);
-    const decisionListReader = new SqliteDecisionListReader(this.db);
+    const decisionViewReader = new SqliteDecisionViewReader(this.db);
     // Guideline Projection Stores - decomposed by use case
     const guidelineAddedProjector = new SqliteGuidelineAddedProjector(this.db);
     const guidelineUpdatedProjector = new SqliteGuidelineUpdatedProjector(this.db);
     const guidelineRemovedProjector = new SqliteGuidelineRemovedProjector(this.db);
-    const guidelineContextReader = new SqliteGuidelineContextReader(this.db);
-    const guidelineListReader = new SqliteGuidelineListReader(this.db);
+    const guidelineViewReader = new SqliteGuidelineViewReader(this.db);
+    const getGuidelinesGateway = new LocalGetGuidelinesGateway(guidelineViewReader);
+    const getGuidelinesController = new GetGuidelinesController(getGuidelinesGateway);
+    const addGuidelineCommandHandler = new AddGuidelineCommandHandler(
+      guidelineAddedEventStore,
+      eventBus
+    );
+    const addGuidelineGateway = new LocalAddGuidelineGateway(
+      addGuidelineCommandHandler
+    );
+    const addGuidelineController = new AddGuidelineController(
+      addGuidelineGateway
+    );
+
+    // UpdateGuideline Controller
+    const updateGuidelineGateway = new LocalUpdateGuidelineGateway(
+      guidelineUpdatedEventStore,
+      guidelineUpdatedEventStore,
+      guidelineUpdatedProjector,
+      eventBus
+    );
+    const updateGuidelineController = new UpdateGuidelineController(
+      updateGuidelineGateway
+    );
+
+    // RemoveGuideline Controller
+    const removeGuidelineCommandHandler = new RemoveGuidelineCommandHandler(
+      guidelineRemovedEventStore,
+      guidelineRemovedEventStore,
+      eventBus
+    );
+    const removeGuidelineGateway = new LocalRemoveGuidelineGateway(
+      removeGuidelineCommandHandler,
+      guidelineRemovedProjector
+    );
+    const removeGuidelineController = new RemoveGuidelineController(
+      removeGuidelineGateway
+    );
+
     // Invariant Projection Stores - decomposed by use case
     const invariantAddedProjector = new SqliteInvariantAddedProjector(this.db);
     const invariantUpdatedProjector = new SqliteInvariantUpdatedProjector(this.db);
     const invariantRemovedProjector = new SqliteInvariantRemovedProjector(this.db);
-    const invariantContextReader = new SqliteInvariantContextReader(this.db);
-    const invariantListReader = new SqliteInvariantListReader(this.db);
+    const invariantViewReader = new SqliteInvariantViewReader(this.db);
+
+    // AddInvariant Controller
+    const addInvariantCommandHandler = new AddInvariantCommandHandler(
+      invariantAddedEventStore,
+      invariantAddedProjector,
+      eventBus
+    );
+    const addInvariantGateway = new LocalAddInvariantGateway(
+      addInvariantCommandHandler
+    );
+    const addInvariantController = new AddInvariantController(
+      addInvariantGateway
+    );
+
+    // UpdateInvariant Controller
+    const updateInvariantCommandHandler = new UpdateInvariantCommandHandler(
+      invariantUpdatedEventStore,
+      invariantUpdatedEventStore,
+      eventBus
+    );
+    const updateInvariantGateway = new LocalUpdateInvariantGateway(
+      updateInvariantCommandHandler,
+      invariantUpdatedProjector
+    );
+    const updateInvariantController = new UpdateInvariantController(
+      updateInvariantGateway
+    );
+
+    // RemoveInvariant Controller
+    const removeInvariantCommandHandler = new RemoveInvariantCommandHandler(
+      invariantRemovedEventStore,
+      invariantRemovedEventStore,
+      invariantRemovedProjector,
+      eventBus
+    );
+    const removeInvariantGateway = new LocalRemoveInvariantGateway(
+      removeInvariantCommandHandler,
+      invariantRemovedProjector
+    );
+    const removeInvariantController = new RemoveInvariantController(
+      removeInvariantGateway
+    );
+
+    // GetInvariants Controller
+    const getInvariantsGateway = new LocalGetInvariantsGateway(invariantViewReader);
+    const getInvariantsController = new GetInvariantsController(getInvariantsGateway);
+
     // Solution Context - cross-cutting reader and qualifier
     const solutionContextReader = new SqliteSolutionContextReader(this.db);
     const unprimedBrownfieldQualifier = new UnprimedBrownfieldQualifier(solutionContextReader);
@@ -480,8 +780,7 @@ export class HostBuilder {
     // AudiencePain Projection Stores - decomposed by use case
     const audiencePainAddedProjector = new SqliteAudiencePainAddedProjector(this.db);
     const audiencePainUpdatedProjector = new SqliteAudiencePainUpdatedProjector(this.db);
-    const audiencePainResolvedProjector = new SqliteAudiencePainResolvedProjector(this.db);
-    const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
+const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     // ValueProposition Projection Stores - decomposed by use case
     const valuePropositionAddedProjector = new SqliteValuePropositionAddedProjector(this.db);
     const valuePropositionUpdatedProjector = new SqliteValuePropositionUpdatedProjector(this.db);
@@ -491,67 +790,580 @@ export class HostBuilder {
     // Relations Category - Projection Stores - decomposed by use case
     const relationAddedProjector = new SqliteRelationAddedProjector(this.db);
     const relationRemovedProjector = new SqliteRelationRemovedProjector(this.db);
-    const relationListReader = new SqliteRelationListReader(this.db);
+    const relationViewReader = new SqliteRelationViewReader(this.db);
 
     // ============================================================
     // STEP 4: Create Application Services / Controllers
     // ============================================================
 
+    // Goal Context Assembler - assembles context from relations
+    const goalContextAssembler = new SqliteGoalContextAssembler(
+      goalStartedProjector, // Implements IGoalReader (findById)
+      relationRemovedProjector, // Also implements IRelationReader
+      componentViewReader,
+      dependencyViewReader,
+      decisionViewReader,
+      invariantViewReader,
+      guidelineViewReader,
+      architectureReader
+    );
+    const goalContextQueryHandler = new GoalContextQueryHandler(
+      goalContextAssembler
+    );
+    // Project Controllers
+    const updateProjectCommandHandler = new UpdateProjectCommandHandler(
+      projectUpdatedEventStore,
+      eventBus,
+      projectUpdatedProjector
+    );
+    const updateProjectGateway = new LocalUpdateProjectGateway(
+      updateProjectCommandHandler,
+      projectUpdatedProjector
+    );
+    const updateProjectController = new UpdateProjectController(
+      updateProjectGateway
+    );
+
+    // Session Controllers
+    const sessionContextQueryHandler = new SessionContextQueryHandler(
+      sessionViewReader,
+      goalStatusReader,
+      decisionViewReader,
+      projectContextReader,
+      audienceContextReader,
+      audiencePainContextReader
+    );
+    const startSessionCommandHandler = new StartSessionCommandHandler(
+      sessionStartedEventStore,
+      eventBus
+    );
+    const startSessionGateway = new LocalStartSessionGateway(
+      sessionContextQueryHandler,
+      startSessionCommandHandler,
+      unprimedBrownfieldQualifier
+    );
+    const sessionStartController = new SessionStartController(
+      startSessionGateway
+    );
+    const getSessionsGateway = new LocalGetSessionsGateway(sessionViewReader);
+    const getSessionsController = new GetSessionsController(
+      getSessionsGateway
+    );
+    const endSessionCommandHandler = new EndSessionCommandHandler(
+      sessionEndedEventStore,
+      sessionEndedEventStore,
+      activeSessionReader,
+      eventBus
+    );
+    const endSessionGateway = new LocalEndSessionGateway(endSessionCommandHandler);
+    const endSessionController = new EndSessionController(endSessionGateway);
+
+    // Worker Controllers
+    const viewWorkerGateway = new LocalViewWorkerGateway(
+      workerIdentityReader,
+      settingsReader
+    );
+    const viewWorkerController = new ViewWorkerController(viewWorkerGateway);
+
     // Goal Controllers
+    const addGoalCommandHandler = new AddGoalCommandHandler(
+      goalAddedEventStore,
+      eventBus,
+      goalUpdatedEventStore,
+      goalUpdatedEventStore,
+      goalUpdatedProjector
+    );
+    const addGoalGateway = new LocalAddGoalGateway(addGoalCommandHandler);
+    const addGoalController = new AddGoalController(addGoalGateway);
+
     const completeGoalCommandHandler = new CompleteGoalCommandHandler(
       goalCompletedEventStore,
       goalCompletedEventStore,
       goalCompletedProjector,
       eventBus,
       goalClaimPolicy,
-      workerIdentityReader
+      workerIdentityReader,
+      goalContextQueryHandler
     );
-    const getGoalContextQueryHandler = new GetGoalContextQueryHandler(
-      goalContextReader,
-      componentContextReader,
-      dependencyContextReader,
-      decisionContextReader,
-      invariantContextReader,
-      guidelineContextReader,
-      architectureReader,
-      relationRemovedProjector
-    );
-    const completeGoalController = new CompleteGoalController(
+    const completeGoalGateway = new LocalCompleteGoalGateway(
       completeGoalCommandHandler,
       goalCompletedProjector,
       goalClaimPolicy,
       workerIdentityReader
     );
+    const completeGoalController = new CompleteGoalController(
+      completeGoalGateway
+    );
     // ReviewGoalController dependencies
     const submitGoalForReviewCommandHandler = new SubmitGoalForReviewCommandHandler(
       goalSubmittedForReviewEventStore,
       goalSubmittedForReviewEventStore,
-      goalContextReader,
+      goalStartedProjector,
       eventBus,
+      goalClaimPolicy,
+      workerIdentityReader,
+      goalContextQueryHandler
+    );
+    const reviewGoalGateway = new LocalReviewGoalGateway(
+      submitGoalForReviewCommandHandler,
+      goalStartedProjector,
       goalClaimPolicy,
       workerIdentityReader
     );
     const reviewGoalController = new ReviewGoalController(
-      submitGoalForReviewCommandHandler,
-      getGoalContextQueryHandler,
-      goalContextReader,
-      goalClaimPolicy,
-      workerIdentityReader
+      reviewGoalGateway
     );
     // QualifyGoalController dependencies
     const qualifyGoalCommandHandler = new QualifyGoalCommandHandler(
       goalQualifiedEventStore,
       goalQualifiedEventStore,
-      goalContextReader,
+      goalStartedProjector,
       eventBus,
+      goalClaimPolicy,
+      workerIdentityReader,
+      goalContextQueryHandler
+    );
+    const qualifyGoalGateway = new LocalQualifyGoalGateway(
+      qualifyGoalCommandHandler,
+      goalStartedProjector,
       goalClaimPolicy,
       workerIdentityReader
     );
     const qualifyGoalController = new QualifyGoalController(
-      qualifyGoalCommandHandler,
-      goalContextReader,
+      qualifyGoalGateway
+    );
+
+    // BlockGoal Controller
+    const blockGoalCommandHandler = new BlockGoalCommandHandler(
+      goalBlockedEventStore,
+      goalBlockedEventStore,
+      eventBus
+    );
+    const blockGoalGateway = new LocalBlockGoalGateway(
+      blockGoalCommandHandler
+    );
+    const blockGoalController = new BlockGoalController(
+      blockGoalGateway
+    );
+
+    // UnblockGoal Controller
+    const unblockGoalCommandHandler = new UnblockGoalCommandHandler(
+      goalUnblockedEventStore,
+      goalUnblockedEventStore,
+      eventBus
+    );
+    const unblockGoalGateway = new LocalUnblockGoalGateway(
+      unblockGoalCommandHandler
+    );
+    const unblockGoalController = new UnblockGoalController(
+      unblockGoalGateway
+    );
+
+    // StartGoal Controller
+    const startGoalCommandHandler = new StartGoalCommandHandler(
+      goalStartedEventStore,
+      goalStartedEventStore,
+      goalStartedProjector,
+      eventBus,
+      goalClaimPolicy,
+      workerIdentityReader,
+      settingsReader,
+      goalContextQueryHandler
+    );
+    const startGoalGateway = new LocalStartGoalGateway(
+      startGoalCommandHandler
+    );
+    const startGoalController = new StartGoalController(
+      startGoalGateway
+    );
+
+    // PauseGoal Controller
+    const pauseGoalCommandHandler = new PauseGoalCommandHandler(
+      goalPausedEventStore,
+      goalPausedEventStore,
+      goalPausedProjector,
+      eventBus
+    );
+    const pauseGoalGateway = new LocalPauseGoalGateway(
+      pauseGoalCommandHandler,
+      goalPausedProjector
+    );
+    const pauseGoalController = new PauseGoalController(
+      pauseGoalGateway
+    );
+
+    // RemoveGoal Controller
+    const removeGoalCommandHandler = new RemoveGoalCommandHandler(
+      goalRemovedEventStore,
+      goalRemovedEventStore,
+      goalRemovedProjector,
+      eventBus
+    );
+    const removeGoalGateway = new LocalRemoveGoalGateway(
+      removeGoalCommandHandler,
+      goalRemovedProjector
+    );
+    const removeGoalController = new RemoveGoalController(
+      removeGoalGateway
+    );
+
+    // ResetGoal Controller
+    const resetGoalCommandHandler = new ResetGoalCommandHandler(
+      goalResetEventStore,
+      goalResetEventStore,
+      goalResetProjector,
+      eventBus,
       goalClaimPolicy,
       workerIdentityReader
+    );
+    const resetGoalGateway = new LocalResetGoalGateway(
+      resetGoalCommandHandler,
+      goalResetProjector
+    );
+    const resetGoalController = new ResetGoalController(
+      resetGoalGateway
+    );
+
+    // UpdateGoal Controller
+    const updateGoalCommandHandler = new UpdateGoalCommandHandler(
+      goalUpdatedEventStore,
+      goalUpdatedEventStore,
+      goalUpdatedProjector,
+      eventBus
+    );
+    const updateGoalGateway = new LocalUpdateGoalGateway(
+      updateGoalCommandHandler
+    );
+    const updateGoalController = new UpdateGoalController(
+      updateGoalGateway
+    );
+
+    // UpdateGoalProgress Controller
+    const updateGoalProgressCommandHandler = new UpdateGoalProgressCommandHandler(
+      goalProgressUpdatedEventStore,
+      goalProgressUpdatedEventStore,
+      goalProgressUpdatedProjector,
+      eventBus,
+      goalContextQueryHandler
+    );
+    const updateGoalProgressGateway = new LocalUpdateGoalProgressGateway(
+      updateGoalProgressCommandHandler
+    );
+    const updateGoalProgressController = new UpdateGoalProgressController(
+      updateGoalProgressGateway
+    );
+
+    // RefineGoal Controller
+    const refineGoalCommandHandler = new RefineGoalCommandHandler(
+      goalRefinedEventStore,
+      goalRefinedEventStore,
+      goalRefinedProjector,
+      eventBus,
+      goalContextQueryHandler
+    );
+    const refineGoalGateway = new LocalRefineGoalGateway(
+      refineGoalCommandHandler
+    );
+    const refineGoalController = new RefineGoalController(
+      refineGoalGateway
+    );
+
+    // GetGoals Controller
+    const getGoalsGateway = new LocalGetGoalsGateway(goalStatusReader);
+    const getGoalsController = new GetGoalsController(getGoalsGateway);
+
+    // ShowGoal Controller
+    const showGoalGateway = new LocalShowGoalGateway(goalContextQueryHandler);
+    const showGoalController = new ShowGoalController(showGoalGateway);
+
+    // Work Controllers
+    const pauseWorkCommandHandler = new PauseWorkCommandHandler(
+      workerIdentityReader,
+      goalStatusReader,
+      goalPausedEventStore,
+      goalPausedEventStore,
+      goalPausedProjector,
+      eventBus,
+      logger
+    );
+    const pauseWorkGateway = new LocalPauseWorkGateway(pauseWorkCommandHandler);
+    const pauseWorkController = new PauseWorkController(pauseWorkGateway);
+    const resumeGoalCommandHandler = new ResumeGoalCommandHandler(
+      goalResumedEventStore,
+      goalResumedEventStore,
+      goalResumedProjector,
+      eventBus,
+      goalClaimPolicy,
+      workerIdentityReader,
+      settingsReader,
+      goalContextQueryHandler
+    );
+    const resumeGoalGateway = new LocalResumeGoalGateway(
+      resumeGoalCommandHandler
+    );
+    const resumeGoalController = new ResumeGoalController(
+      resumeGoalGateway
+    );
+    const resumeWorkGateway = new LocalResumeWorkGateway(
+      workerIdentityReader,
+      goalStatusReader,
+      resumeGoalCommandHandler,
+      sessionContextQueryHandler,
+      logger
+    );
+    const resumeWorkController = new ResumeWorkController(
+      resumeWorkGateway
+    );
+
+    // Architecture Controllers
+    const defineArchitectureGateway = new LocalDefineArchitectureGateway(
+      architectureDefinedEventStore,
+      architectureDefinedProjector,
+      eventBus
+    );
+    const defineArchitectureController = new DefineArchitectureController(
+      defineArchitectureGateway
+    );
+    const updateArchitectureGateway = new LocalUpdateArchitectureGateway(
+      architectureUpdatedEventStore,
+      architectureUpdatedEventStore,
+      eventBus
+    );
+    const updateArchitectureController = new UpdateArchitectureController(
+      updateArchitectureGateway
+    );
+    const getArchitectureGateway = new LocalGetArchitectureGateway(
+      architectureReader
+    );
+    const getArchitectureController = new GetArchitectureController(
+      getArchitectureGateway
+    );
+
+    // Decision Controllers
+    const addDecisionCommandHandler = new AddDecisionCommandHandler(
+      decisionAddedEventStore,
+      eventBus
+    );
+    const addDecisionGateway = new LocalAddDecisionGateway(
+      addDecisionCommandHandler
+    );
+    const addDecisionController = new AddDecisionController(
+      addDecisionGateway
+    );
+    const getDecisionsGateway = new LocalGetDecisionsGateway(
+      decisionViewReader
+    );
+    const getDecisionsController = new GetDecisionsController(
+      getDecisionsGateway
+    );
+    const reverseDecisionCommandHandler = new ReverseDecisionCommandHandler(
+      decisionReversedEventStore,
+      decisionReversedProjector,
+      eventBus
+    );
+    const reverseDecisionGateway = new LocalReverseDecisionGateway(
+      reverseDecisionCommandHandler
+    );
+    const reverseDecisionController = new ReverseDecisionController(
+      reverseDecisionGateway
+    );
+    const supersedeDecisionCommandHandler = new SupersedeDecisionCommandHandler(
+      decisionSupersededEventStore,
+      decisionSupersededProjector,
+      eventBus
+    );
+    const supersedeDecisionGateway = new LocalSupersedeDecisionGateway(
+      supersedeDecisionCommandHandler
+    );
+    const supersedeDecisionController = new SupersedeDecisionController(
+      supersedeDecisionGateway
+    );
+    const updateDecisionCommandHandler = new UpdateDecisionCommandHandler(
+      decisionUpdatedEventStore,
+      decisionUpdatedProjector,
+      eventBus
+    );
+    const updateDecisionGateway = new LocalUpdateDecisionGateway(
+      updateDecisionCommandHandler
+    );
+    const updateDecisionController = new UpdateDecisionController(
+      updateDecisionGateway
+    );
+
+    // Component Controllers
+    const addComponentCommandHandler = new AddComponentCommandHandler(
+      componentAddedEventStore,
+      eventBus,
+      componentAddedProjector
+    );
+    const addComponentGateway = new LocalAddComponentGateway(
+      addComponentCommandHandler,
+      componentUpdatedProjector
+    );
+    const addComponentController = new AddComponentController(
+      addComponentGateway
+    );
+    const getComponentsGateway = new LocalGetComponentsGateway(componentViewReader);
+    const getComponentsController = new GetComponentsController(getComponentsGateway);
+    const updateComponentCommandHandler = new UpdateComponentCommandHandler(
+      componentUpdatedEventStore,
+      eventBus,
+      componentUpdatedProjector
+    );
+    const updateComponentGateway = new LocalUpdateComponentGateway(
+      updateComponentCommandHandler,
+      componentUpdatedProjector
+    );
+    const updateComponentController = new UpdateComponentController(
+      updateComponentGateway
+    );
+    const renameComponentCommandHandler = new RenameComponentCommandHandler(
+      componentRenamedEventStore,
+      eventBus,
+      componentRenamedProjector
+    );
+    const renameComponentGateway = new LocalRenameComponentGateway(
+      renameComponentCommandHandler,
+      componentRenamedProjector
+    );
+    const renameComponentController = new RenameComponentController(
+      renameComponentGateway
+    );
+    const showComponentGateway = new LocalShowComponentGateway(
+      componentReader,
+      relationViewReader
+    );
+    const showComponentController = new ShowComponentController(
+      showComponentGateway
+    );
+    const deprecateComponentCommandHandler = new DeprecateComponentCommandHandler(
+      componentDeprecatedEventStore,
+      eventBus,
+      componentDeprecatedProjector
+    );
+    const deprecateComponentGateway = new LocalDeprecateComponentGateway(
+      deprecateComponentCommandHandler,
+      componentDeprecatedProjector
+    );
+    const deprecateComponentController = new DeprecateComponentController(
+      deprecateComponentGateway
+    );
+    const removeComponentCommandHandler = new RemoveComponentCommandHandler(
+      componentRemovedEventStore,
+      eventBus,
+      componentRemovedProjector
+    );
+    const removeComponentGateway = new LocalRemoveComponentGateway(
+      removeComponentCommandHandler,
+      componentRemovedProjector
+    );
+    const removeComponentController = new RemoveComponentController(
+      removeComponentGateway
+    );
+
+    // Dependency Controllers
+    const addDependencyCommandHandler = new AddDependencyCommandHandler(
+      dependencyAddedEventStore,
+      eventBus,
+      dependencyAddedProjector
+    );
+    const addDependencyGateway = new LocalAddDependencyGateway(
+      addDependencyCommandHandler
+    );
+    const addDependencyController = new AddDependencyController(
+      addDependencyGateway
+    );
+    const getDependenciesGateway = new LocalGetDependenciesGateway(
+      dependencyViewReader
+    );
+    const getDependenciesController = new GetDependenciesController(
+      getDependenciesGateway
+    );
+    const updateDependencyCommandHandler = new UpdateDependencyCommandHandler(
+      dependencyUpdatedEventStore,
+      dependencyUpdatedEventStore,
+      dependencyUpdatedProjector,
+      eventBus
+    );
+    const updateDependencyGateway = new LocalUpdateDependencyGateway(
+      updateDependencyCommandHandler,
+      dependencyUpdatedProjector
+    );
+    const updateDependencyController = new UpdateDependencyController(
+      updateDependencyGateway
+    );
+    const removeDependencyCommandHandler = new RemoveDependencyCommandHandler(
+      dependencyRemovedEventStore,
+      dependencyRemovedEventStore,
+      dependencyRemovedProjector,
+      eventBus
+    );
+    const removeDependencyGateway = new LocalRemoveDependencyGateway(
+      removeDependencyCommandHandler,
+      dependencyRemovedProjector
+    );
+    const removeDependencyController = new RemoveDependencyController(
+      removeDependencyGateway
+    );
+
+    // Audience Pain Controllers
+    const addAudiencePainCommandHandler = new AddAudiencePainCommandHandler(
+      audiencePainAddedEventStore,
+      eventBus
+    );
+    const addAudiencePainGateway = new LocalAddAudiencePainGateway(
+      addAudiencePainCommandHandler,
+      audiencePainUpdatedProjector
+    );
+    const addAudiencePainController = new AddAudiencePainController(
+      addAudiencePainGateway
+    );
+    const updateAudiencePainCommandHandler = new UpdateAudiencePainCommandHandler(
+      audiencePainUpdatedEventStore,
+      eventBus,
+      audiencePainUpdatedProjector
+    );
+    const updateAudiencePainGateway = new LocalUpdateAudiencePainGateway(
+      updateAudiencePainCommandHandler,
+      audiencePainUpdatedProjector
+    );
+    const updateAudiencePainController = new UpdateAudiencePainController(
+      updateAudiencePainGateway
+    );
+    const getAudiencePainsGateway = new LocalGetAudiencePainsGateway(audiencePainContextReader);
+    const getAudiencePainsController = new GetAudiencePainsController(getAudiencePainsGateway);
+
+    // Audience Controllers
+    const addAudienceCommandHandler = new AddAudienceCommandHandler(
+      audienceAddedEventStore,
+      eventBus
+    );
+    const addAudienceGateway = new LocalAddAudienceGateway(addAudienceCommandHandler);
+    const addAudienceController = new AddAudienceController(addAudienceGateway);
+    const listAudiencesGateway = new LocalListAudiencesGateway(audienceContextReader);
+    const listAudiencesController = new ListAudiencesController(listAudiencesGateway);
+    const removeAudienceCommandHandler = new RemoveAudienceCommandHandler(
+      audienceRemovedEventStore,
+      eventBus,
+      audienceRemovedProjector
+    );
+    const removeAudienceGateway = new LocalRemoveAudienceGateway(
+      removeAudienceCommandHandler,
+      audienceRemovedProjector
+    );
+    const removeAudienceController = new RemoveAudienceController(
+      removeAudienceGateway
+    );
+    const updateAudienceCommandHandler = new UpdateAudienceCommandHandler(
+      audienceUpdatedEventStore,
+      eventBus
+    );
+    const updateAudienceGateway = new LocalUpdateAudienceGateway(
+      updateAudienceCommandHandler,
+      audienceUpdatedProjector
+    );
+    const updateAudienceController = new UpdateAudienceController(
+      updateAudienceGateway
     );
 
     // Project Initialization Protocol
@@ -562,10 +1374,55 @@ export class HostBuilder {
       agentFileProtocol,
       settingsInitializer
     );
-    const initializationProtocol = new InitializationProtocol(
-      initializeProjectCommandHandler,
+    const localPlanProjectInitGateway = new LocalPlanProjectInitGateway(
       agentFileProtocol,
       settingsInitializer
+    );
+    const planProjectInitController = new PlanProjectInitController(
+      localPlanProjectInitGateway
+    );
+    const localInitializeProjectGateway = new LocalInitializeProjectGateway(
+      initializeProjectCommandHandler,
+      localPlanProjectInitGateway
+    );
+    const initializeProjectController = new InitializeProjectController(
+      localInitializeProjectGateway
+    );
+
+    // AddRelation Controller
+    const addRelationCommandHandler = new AddRelationCommandHandler(
+      relationAddedEventStore,
+      eventBus,
+      relationAddedProjector
+    );
+    const addRelationGateway = new LocalAddRelationGateway(
+      addRelationCommandHandler
+    );
+    const addRelationController = new AddRelationController(
+      addRelationGateway
+    );
+
+    // RemoveRelation Controller
+    const removeRelationCommandHandler = new RemoveRelationCommandHandler(
+      relationRemovedEventStore,
+      relationRemovedEventStore,
+      eventBus,
+      relationRemovedProjector
+    );
+    const removeRelationGateway = new LocalRemoveRelationGateway(
+      removeRelationCommandHandler,
+      relationRemovedProjector
+    );
+    const removeRelationController = new RemoveRelationController(
+      removeRelationGateway
+    );
+
+    // GetRelations Controller
+    const getRelationsGateway = new LocalGetRelationsGateway(
+      relationViewReader
+    );
+    const getRelationsController = new GetRelationsController(
+      getRelationsGateway
     );
 
     // ============================================================
@@ -575,12 +1432,6 @@ export class HostBuilder {
     // Work Category - Session Projection Handlers - using decomposed projectors
     const sessionStartedEventHandler = new SessionStartedEventHandler(sessionStartedProjector);
     const sessionEndedEventHandler = new SessionEndedEventHandler(sessionEndedProjector);
-    const sessionSummaryProjectionHandler = new SessionSummaryProjectionHandler(
-      eventBus,
-      sessionSummaryProjectionStore,
-      goalStatusReader,
-      decisionSessionReader
-    );
     const goalAddedEventHandler = new GoalAddedEventHandler(goalAddedProjector);
     const goalStartedEventHandler = new GoalStartedEventHandler(goalStartedProjector);
     const goalUpdatedEventHandler = new GoalUpdatedEventHandler(goalUpdatedProjector);
@@ -589,6 +1440,7 @@ export class HostBuilder {
     const goalPausedEventHandler = new GoalPausedEventHandler(goalPausedProjector);
     const goalResumedEventHandler = new GoalResumedEventHandler(goalResumedProjector);
     const goalCompletedEventHandler = new GoalCompletedEventHandler(goalCompletedProjector);
+    const goalRefinedEventHandler = new GoalRefinedEventHandler(goalRefinedProjector);
     const goalResetEventHandler = new GoalResetEventHandler(goalResetProjector);
     const goalRemovedEventHandler = new GoalRemovedEventHandler(goalRemovedProjector);
     const goalProgressUpdatedEventHandler = new GoalProgressUpdatedEventHandler(goalProgressUpdatedProjector);
@@ -604,6 +1456,7 @@ export class HostBuilder {
     const componentUpdatedEventHandler = new ComponentUpdatedEventHandler(componentUpdatedProjector);
     const componentDeprecatedEventHandler = new ComponentDeprecatedEventHandler(componentDeprecatedProjector);
     const componentRemovedEventHandler = new ComponentRemovedEventHandler(componentRemovedProjector);
+    const componentRenamedEventHandler = new ComponentRenamedEventHandler(componentRenamedProjector);
     // Dependency Event Handlers - decomposed by use case
     const dependencyAddedEventHandler = new DependencyAddedEventHandler(dependencyAddedProjector);
     const dependencyUpdatedEventHandler = new DependencyUpdatedEventHandler(dependencyUpdatedProjector);
@@ -629,11 +1482,52 @@ export class HostBuilder {
     // AudiencePain Event Handlers - decomposed by use case
     const audiencePainAddedEventHandler = new AudiencePainAddedEventHandler(audiencePainAddedProjector);
     const audiencePainUpdatedEventHandler = new AudiencePainUpdatedEventHandler(audiencePainUpdatedProjector);
-    const audiencePainResolvedEventHandler = new AudiencePainResolvedEventHandler(audiencePainResolvedProjector);
-    // Audience Event Handlers - decomposed by use case
+// Audience Event Handlers - decomposed by use case
     const audienceAddedEventHandler = new AudienceAddedEventHandler(audienceAddedProjector);
     const audienceUpdatedEventHandler = new AudienceUpdatedEventHandler(audienceUpdatedProjector);
     const audienceRemovedEventHandler = new AudienceRemovedEventHandler(audienceRemovedProjector);
+    // ValueProposition Controllers
+    const addValuePropositionCommandHandler = new AddValuePropositionCommandHandler(
+      valuePropositionAddedEventStore,
+      eventBus
+    );
+    const addValuePropositionGateway = new LocalAddValuePropositionGateway(
+      addValuePropositionCommandHandler,
+      valuePropositionUpdatedProjector
+    );
+    const addValuePropositionController = new AddValuePropositionController(
+      addValuePropositionGateway
+    );
+    const removeValuePropositionCommandHandler = new RemoveValuePropositionCommandHandler(
+      valuePropositionRemovedEventStore,
+      eventBus,
+      valuePropositionRemovedProjector
+    );
+    const removeValuePropositionGateway = new LocalRemoveValuePropositionGateway(
+      removeValuePropositionCommandHandler,
+      valuePropositionRemovedProjector
+    );
+    const removeValuePropositionController = new RemoveValuePropositionController(
+      removeValuePropositionGateway
+    );
+    const getValuePropositionsGateway = new LocalGetValuePropositionsGateway(
+      valuePropositionContextReader
+    );
+    const getValuePropositionsController = new GetValuePropositionsController(
+      getValuePropositionsGateway
+    );
+    const updateValuePropositionCommandHandler = new UpdateValuePropositionCommandHandler(
+      valuePropositionUpdatedEventStore,
+      eventBus,
+      valuePropositionUpdatedProjector
+    );
+    const updateValuePropositionGateway = new LocalUpdateValuePropositionGateway(
+      updateValuePropositionCommandHandler,
+      valuePropositionUpdatedProjector
+    );
+    const updateValuePropositionController = new UpdateValuePropositionController(
+      updateValuePropositionGateway
+    );
     // ValueProposition Event Handlers - decomposed by use case
     const valuePropositionAddedEventHandler = new ValuePropositionAddedEventHandler(valuePropositionAddedProjector);
     const valuePropositionUpdatedEventHandler = new ValuePropositionUpdatedEventHandler(valuePropositionUpdatedProjector);
@@ -651,9 +1545,6 @@ export class HostBuilder {
     eventBus.subscribe("SessionStartedEvent", sessionStartedEventHandler);
     eventBus.subscribe("SessionEndedEvent", sessionEndedEventHandler);
 
-    // Work Category - Session Summary (cross-aggregate projection)
-    sessionSummaryProjectionHandler.subscribe();
-
     // Work Category - Goal events
     eventBus.subscribe("GoalAddedEvent", goalAddedEventHandler);
     eventBus.subscribe("GoalStartedEvent", goalStartedEventHandler);
@@ -663,6 +1554,7 @@ export class HostBuilder {
     eventBus.subscribe("GoalPausedEvent", goalPausedEventHandler);
     eventBus.subscribe("GoalResumedEvent", goalResumedEventHandler);
     eventBus.subscribe("GoalCompletedEvent", goalCompletedEventHandler);
+    eventBus.subscribe("GoalRefinedEvent", goalRefinedEventHandler);
     eventBus.subscribe("GoalResetEvent", goalResetEventHandler);
     eventBus.subscribe("GoalRemovedEvent", goalRemovedEventHandler);
     eventBus.subscribe("GoalProgressUpdatedEvent", goalProgressUpdatedEventHandler);
@@ -678,6 +1570,7 @@ export class HostBuilder {
     eventBus.subscribe("ComponentUpdatedEvent", componentUpdatedEventHandler);
     eventBus.subscribe("ComponentDeprecatedEvent", componentDeprecatedEventHandler);
     eventBus.subscribe("ComponentRemovedEvent", componentRemovedEventHandler);
+    eventBus.subscribe("ComponentRenamedEvent", componentRenamedEventHandler);
 
     // Solution Category - Dependency events - decomposed by use case
     eventBus.subscribe("DependencyAddedEvent", dependencyAddedEventHandler);
@@ -707,7 +1600,7 @@ export class HostBuilder {
     // Project Knowledge Category - Audience Pain events - decomposed by use case
     eventBus.subscribe("AudiencePainAddedEvent", audiencePainAddedEventHandler);
     eventBus.subscribe("AudiencePainUpdatedEvent", audiencePainUpdatedEventHandler);
-    eventBus.subscribe("AudiencePainResolvedEvent", audiencePainResolvedEventHandler);
+
 
     // Project Knowledge Category - Audience events - decomposed by use case
     eventBus.subscribe("AudienceAddedEvent", audienceAddedEventHandler);
@@ -729,9 +1622,11 @@ export class HostBuilder {
 
     return {
       // Core Infrastructure
+      projectRootResolver,
       eventBus,
       eventStore,
       clock,
+      logger,
       settingsReader,
       settingsInitializer,
 
@@ -741,8 +1636,9 @@ export class HostBuilder {
       // Goal Claims
       goalClaimPolicy,
 
-      // Maintenance Services
-      databaseRebuildService,
+      // Maintenance Controllers
+      rebuildDatabaseController,
+      repairMaintenanceController,
 
       // CLI Version
       cliVersionReader,
@@ -759,6 +1655,7 @@ export class HostBuilder {
       goalPausedEventStore,
       goalResumedEventStore,
       goalCompletedEventStore,
+      goalRefinedEventStore,
       goalResetEventStore,
       goalRemovedEventStore,
       goalProgressUpdatedEventStore,
@@ -768,9 +1665,7 @@ export class HostBuilder {
       sessionStartedProjector,
       sessionEndedProjector,
       activeSessionReader,
-      sessionSummaryProjectionStore,
-      sessionSummaryReader,
-      sessionListReader,
+      sessionViewReader,
       // Goal Projection Stores - decomposed by use case
       goalAddedProjector,
       goalStartedProjector,
@@ -780,15 +1675,77 @@ export class HostBuilder {
       goalPausedProjector,
       goalResumedProjector,
       goalCompletedProjector,
+      goalRefinedProjector,
       goalResetProjector,
       goalRemovedProjector,
       goalProgressUpdatedProjector,
-      goalContextReader,
+      goalContextReader: goalStartedProjector,
+      goalContextAssembler,
+      goalContextQueryHandler,
       goalStatusReader,
+      // Session Controllers
+      sessionStartController,
+      endSessionController,
+      getSessionsController,
+      // Worker Controllers
+      viewWorkerController,
       // Goal Controllers
+      addGoalController,
+      startGoalController,
       completeGoalController,
       reviewGoalController,
       qualifyGoalController,
+      blockGoalController,
+      unblockGoalController,
+      getGoalsController,
+      showGoalController,
+      pauseGoalController,
+      resumeGoalController,
+      refineGoalController,
+      removeGoalController,
+      resetGoalController,
+      updateGoalController,
+      updateGoalProgressController,
+
+      // Decision Controllers
+      addDecisionController,
+      getDecisionsController,
+      reverseDecisionController,
+      supersedeDecisionController,
+      updateDecisionController,
+
+      // Work Controllers
+      pauseWorkController,
+      resumeWorkController,
+
+      // Audience Pain Controllers
+      addAudiencePainController,
+
+      // Audience Controllers
+      addAudienceController,
+      listAudiencesController,
+      removeAudienceController,
+      updateAudienceController,
+
+      // Architecture Controllers
+      defineArchitectureController,
+      updateArchitectureController,
+      getArchitectureController,
+
+      // Component Controllers
+      addComponentController,
+      getComponentsController,
+      updateComponentController,
+      renameComponentController,
+      showComponentController,
+      deprecateComponentController,
+      removeComponentController,
+
+      // Dependency Controllers
+      addDependencyController,
+      getDependenciesController,
+      updateDependencyController,
+      removeDependencyController,
 
       // Solution Category
       // Architecture Event Stores - decomposed by use case
@@ -797,7 +1754,7 @@ export class HostBuilder {
       // Component Event Stores - decomposed by use case
       componentAddedEventStore,
       componentUpdatedEventStore,
-      componentDeprecatedEventStore,
+      componentRenamedEventStore,
       componentRemovedEventStore,
       // Dependency Event Stores - decomposed by use case
       dependencyAddedEventStore,
@@ -820,40 +1777,45 @@ export class HostBuilder {
       architectureDefinedProjector,
       architectureUpdatedProjector,
       architectureReader,
-      architectureViewer,
       // Component Projection Stores - decomposed by use case
       componentAddedProjector,
       componentUpdatedProjector,
+      componentRenamedProjector,
       componentDeprecatedProjector,
       componentRemovedProjector,
-      componentContextReader,
-      componentListReader,
+      componentViewReader,
+      componentReader,
       // Dependency Projection Stores - decomposed by use case
       dependencyAddedProjector,
       dependencyUpdatedProjector,
       dependencyRemovedProjector,
-      dependencyContextReader,
-      dependencyListReader,
+      dependencyViewReader,
       // Decision Projection Stores - decomposed by use case
       decisionAddedProjector,
       decisionUpdatedProjector,
       decisionReversedProjector,
       decisionSupersededProjector,
-      decisionContextReader,
-      decisionSessionReader,
-      decisionListReader,
+      decisionViewReader,
       // Guideline Projection Stores - decomposed by use case
       guidelineAddedProjector,
       guidelineUpdatedProjector,
       guidelineRemovedProjector,
-      guidelineContextReader,
-      guidelineListReader,
+      guidelineViewReader,
+      // Guideline Controllers
+      addGuidelineController,
+      updateGuidelineController,
+      removeGuidelineController,
+      getGuidelinesController,
       // Invariant Projection Stores - decomposed by use case
       invariantAddedProjector,
       invariantUpdatedProjector,
       invariantRemovedProjector,
-      invariantContextReader,
-      invariantListReader,
+      invariantViewReader,
+      // Invariant Controllers
+      addInvariantController,
+      updateInvariantController,
+      removeInvariantController,
+      getInvariantsController,
       // Solution Context - cross-cutting reader and qualifier
       solutionContextReader,
       unprimedBrownfieldQualifier,
@@ -864,7 +1826,8 @@ export class HostBuilder {
       projectUpdatedEventStore,
       // Project Services
       agentFileProtocol,
-      initializationProtocol,
+      planProjectInitController,
+      initializeProjectController,
       // Audience Event Stores - decomposed by use case
       audienceAddedEventStore,
       audienceUpdatedEventStore,
@@ -872,14 +1835,14 @@ export class HostBuilder {
       // AudiencePain Event Stores - decomposed by use case
       audiencePainAddedEventStore,
       audiencePainUpdatedEventStore,
-      audiencePainResolvedEventStore,
-      // ValueProposition Event Stores - decomposed by use case
+// ValueProposition Event Stores - decomposed by use case
       valuePropositionAddedEventStore,
       valuePropositionUpdatedEventStore,
       valuePropositionRemovedEventStore,
       // Project Projection Stores - decomposed by use case
       projectInitializedProjector,
       projectUpdatedProjector,
+      updateProjectController,
       projectContextReader,
       // Audience Projection Stores - decomposed by use case
       audienceAddedProjector,
@@ -889,20 +1852,29 @@ export class HostBuilder {
       // AudiencePain Projection Stores - decomposed by use case
       audiencePainAddedProjector,
       audiencePainUpdatedProjector,
-      audiencePainResolvedProjector,
+      updateAudiencePainController,
+      getAudiencePainsController,
       audiencePainContextReader,
       // ValueProposition Projection Stores - decomposed by use case
       valuePropositionAddedProjector,
       valuePropositionUpdatedProjector,
       valuePropositionRemovedProjector,
       valuePropositionContextReader,
+      addValuePropositionController,
+      getValuePropositionsController,
+      removeValuePropositionController,
+      updateValuePropositionController,
 
+      // Relations Category - Controllers
+      addRelationController,
+      removeRelationController,
+      getRelationsController,
       // Relations Category - decomposed by use case
       relationAddedEventStore,
       relationRemovedEventStore,
       relationAddedProjector,
       relationRemovedProjector,
-      relationListReader,
+      relationViewReader,
     };
   }
 }

@@ -2,8 +2,8 @@
  * Tests for Component aggregate
  */
 
-import { Component } from "../../../../src/domain/solution/components/Component";
-import { ComponentEventType, ComponentStatus } from "../../../../src/domain/solution/components/Constants";
+import { Component } from "../../../../src/domain/components/Component";
+import { ComponentEventType, ComponentStatus } from "../../../../src/domain/components/Constants";
 
 describe("Component Aggregate", () => {
   describe("add()", () => {
@@ -248,6 +248,98 @@ describe("Component Aggregate", () => {
       expect(() => component.update()).toThrow(
         "At least one field must be provided to update"
       );
+    });
+  });
+
+  describe("rename()", () => {
+    it("should create ComponentRenamed event with new name", () => {
+      // Arrange
+      const component = Component.create("comp_123");
+      component.add("OldName", "service", "Description", "Responsibility", "path");
+
+      // Act
+      const event = component.rename("NewName");
+
+      // Assert
+      expect(event.type).toBe(ComponentEventType.RENAMED);
+      expect(event.aggregateId).toBe("comp_123");
+      expect(event.version).toBe(2);
+      expect(event.payload.name).toBe("NewName");
+      expect(event.timestamp).toBeDefined();
+    });
+
+    it("should throw error if component is already removed", () => {
+      // Arrange
+      const component = Component.create("comp_123");
+      component.add("UserController", "service", "Description", "Responsibility", "path");
+      component.deprecate("Old component");
+      component.remove();
+
+      // Act & Assert
+      expect(() => component.rename("NewName")).toThrow(
+        "Component has been removed"
+      );
+    });
+
+    it("should throw error if new name is same as current name", () => {
+      // Arrange
+      const component = Component.create("comp_123");
+      component.add("UserController", "service", "Description", "Responsibility", "path");
+
+      // Act & Assert
+      expect(() => component.rename("UserController")).toThrow(
+        "New name must be different from the current name"
+      );
+    });
+
+    it("should throw error if name is empty", () => {
+      // Arrange
+      const component = Component.create("comp_123");
+      component.add("UserController", "service", "Description", "Responsibility", "path");
+
+      // Act & Assert
+      expect(() => component.rename("")).toThrow(
+        "Component name must be provided"
+      );
+    });
+
+    it("should throw error if name is too long", () => {
+      // Arrange
+      const component = Component.create("comp_123");
+      component.add("UserController", "service", "Description", "Responsibility", "path");
+      const longName = "a".repeat(101); // Max is 100
+
+      // Act & Assert
+      expect(() => component.rename(longName)).toThrow(
+        "Component name must be less than 100 characters"
+      );
+    });
+
+    it("should update state after rename", () => {
+      // Arrange
+      const component = Component.create("comp_123");
+      component.add("OldName", "service", "Description", "Responsibility", "path");
+
+      // Act
+      component.rename("NewName");
+
+      // Assert - renaming again with same name should fail (proves state was updated)
+      expect(() => component.rename("NewName")).toThrow(
+        "New name must be different from the current name"
+      );
+    });
+
+    it("should increment version correctly", () => {
+      // Arrange
+      const component = Component.create("comp_123");
+      component.add("UserController", "service", "Description", "Responsibility", "path"); // version 1
+      component.update("New description"); // version 2
+
+      // Act
+      const event = component.rename("NewName");
+
+      // Assert
+      expect(event.version).toBe(3);
     });
   });
 
