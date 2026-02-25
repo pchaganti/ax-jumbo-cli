@@ -1,7 +1,7 @@
 import { BaseAggregate, AggregateState } from "../BaseAggregate.js";
 import { UUID } from "../BaseEvent.js";
 import { ValidationRuleSet } from "../validation/ValidationRule.js";
-import { GoalEvent, GoalAddedEvent, GoalRefinedEvent, GoalStartedEvent, GoalUpdatedEvent, GoalBlockedEvent, GoalUnblockedEvent, GoalCompletedEvent, GoalResetEvent, GoalRemovedEvent, GoalPausedEvent, GoalResumedEvent, GoalProgressUpdatedEvent, GoalSubmittedForReviewEvent, GoalQualifiedEvent } from "./EventIndex.js";
+import { GoalEvent, GoalAddedEvent, GoalRefinedEvent, GoalStartedEvent, GoalUpdatedEvent, GoalBlockedEvent, GoalUnblockedEvent, GoalCompletedEvent, GoalResetEvent, GoalRemovedEvent, GoalPausedEvent, GoalResumedEvent, GoalProgressUpdatedEvent, GoalSubmittedForReviewEvent, GoalQualifiedEvent, GoalRefinementStartedEvent, GoalCommittedEvent } from "./EventIndex.js";
 import { GoalEventType, GoalStatus, GoalStatusType } from "./Constants.js";
 import { GoalPausedReasonsType } from "./GoalPausedReasons.js";
 import { OBJECTIVE_RULES } from "./rules/ObjectiveRules.js";
@@ -24,6 +24,7 @@ import {
 } from "./rules/StateTransitionRules.js";
 import { CanSubmitForReviewRule } from "./rules/CanSubmitForReviewRule.js";
 import { CanQualifyRule } from "./rules/CanQualifyRule.js";
+import { CanCommitRule } from "./rules/CanCommitRule.js";
 
 // Domain state: business properties + aggregate metadata
 export interface GoalState extends AggregateState {
@@ -72,6 +73,20 @@ export class Goal extends BaseAggregate<GoalState, GoalEvent> {
 
       case GoalEventType.REFINED: {
         const e = event as GoalRefinedEvent;
+        state.status = e.payload.status;  // "refined"
+        state.version = e.version;
+        break;
+      }
+
+      case GoalEventType.REFINEMENT_STARTED: {
+        const e = event as GoalRefinementStartedEvent;
+        state.status = e.payload.status;  // "in-refinement"
+        state.version = e.version;
+        break;
+      }
+
+      case GoalEventType.COMMITTED: {
+        const e = event as GoalCommittedEvent;
         state.status = e.payload.status;  // "refined"
         state.version = e.version;
         break;
@@ -266,26 +281,57 @@ export class Goal extends BaseAggregate<GoalState, GoalEvent> {
   }
 
   /**
-   * Refines a goal after creation.
-   * Transitions status from "to-do" to "refined".
-   * A goal must be refined before it can be started.
+   * Starts refinement of a goal after creation.
+   * Transitions status from "to-do" to "in-refinement".
+   * Acquires a claim for the worker performing refinement.
    *
-   * @returns GoalRefined event
+   * @param claimInfo - Claim information for the worker starting refinement
+   * @returns GoalRefinementStartedEvent
    * @throws Error if goal is not in 'to-do' status
    */
-  refine(): GoalRefinedEvent {
+  refine(claimInfo: {
+    claimedBy: string;
+    claimedAt: string;
+    claimExpiresAt: string;
+  }): GoalRefinementStartedEvent {
     // State validation: can only refine from to-do status
     ValidationRuleSet.ensure(this.state, [new CanRefineRule()]);
 
     // Create and return event using BaseAggregate.makeEvent
     return this.makeEvent(
-      GoalEventType.REFINED,
+      GoalEventType.REFINEMENT_STARTED,
       {
-        status: GoalStatus.REFINED,
-        refinedAt: new Date().toISOString(),
+        status: GoalStatus.IN_REFINEMENT,
+        refinementStartedAt: new Date().toISOString(),
+        claimedBy: claimInfo.claimedBy,
+        claimedAt: claimInfo.claimedAt,
+        claimExpiresAt: claimInfo.claimExpiresAt,
       },
       Goal.apply
-    ) as GoalRefinedEvent;
+    ) as GoalRefinementStartedEvent;
+  }
+
+  /**
+   * Commits a goal after refinement is complete.
+   * Transitions status from "in-refinement" to "refined".
+   * Releases the claim held during refinement.
+   *
+   * @returns GoalCommittedEvent
+   * @throws Error if goal is not in 'in-refinement' status
+   */
+  commit(): GoalCommittedEvent {
+    // State validation: can only commit from in-refinement status
+    ValidationRuleSet.ensure(this.state, [new CanCommitRule()]);
+
+    // Create and return event using BaseAggregate.makeEvent
+    return this.makeEvent(
+      GoalEventType.COMMITTED,
+      {
+        status: GoalStatus.REFINED,
+        committedAt: new Date().toISOString(),
+      },
+      Goal.apply
+    ) as GoalCommittedEvent;
   }
 
   /**

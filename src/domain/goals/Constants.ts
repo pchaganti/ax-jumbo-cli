@@ -18,7 +18,9 @@ export const GoalEventType = {
   REMOVED: 'GoalRemovedEvent',
   PROGRESS_UPDATED: 'GoalProgressUpdatedEvent',
   SUBMITTED_FOR_REVIEW: 'GoalSubmittedForReviewEvent',
-  QUALIFIED: 'GoalQualifiedEvent'
+  QUALIFIED: 'GoalQualifiedEvent',
+  REFINEMENT_STARTED: 'GoalRefinementStartedEvent',
+  COMMITTED: 'GoalCommittedEvent'
 } as const;
 
 export type GoalEventTypeValue = typeof GoalEventType[keyof typeof GoalEventType];
@@ -33,6 +35,7 @@ export const GoalStatus = {
   COMPLETED: 'completed',
   INREVIEW: 'in-review',
   QUALIFIED: 'qualified',
+  IN_REFINEMENT: 'in-refinement',
 } as const;
 
 export type GoalStatusType = typeof GoalStatus[keyof typeof GoalStatus];
@@ -76,6 +79,8 @@ export const GoalErrorMessages = {
   // Review and qualification state transition errors
   CANNOT_SUBMIT_FOR_REVIEW_IN_STATUS: 'Cannot submit goal for review in {status} status. Goal must be in doing or blocked status.',
   CANNOT_QUALIFY_IN_STATUS: 'Cannot qualify goal in {status} status. Goal must be in-review.',
+  ALREADY_IN_REFINEMENT: 'Goal is already in refinement.',
+  CANNOT_COMMIT_IN_STATUS: 'Cannot commit goal in {status} status. Goal must be in in-refinement status.',
 } as const;
 
 // Numeric limits

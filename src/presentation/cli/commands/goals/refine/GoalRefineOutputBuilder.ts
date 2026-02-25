@@ -17,16 +17,16 @@ export class GoalRefineOutputBuilder {
   }
 
   /**
-   * Build output for goal refinement success (approval mode).
-   * Renders success message and LLM instruction to start the goal.
+   * Build output for goal refinement started success.
+   * Renders success message and LLM instruction to commit the goal.
    */
   buildSuccess(goalId: string, status: string): TerminalOutput {
     this.builder.reset();
-    this.builder.addPrompt("✓ Goal refined");
+    this.builder.addPrompt("✓ Goal refinement started");
     this.builder.addData({ goalId, status });
     this.builder.addPrompt(
-      "\n@LLM: Goal is now refined and ready to start.\n" +
-      `Run: jumbo goal start --id ${goalId}`
+      "\n@LLM: Goal refinement has started. Register relations and then commit.\n" +
+      `Run: jumbo goal commit --id ${goalId}`
     );
     return this.builder.build();
   }
@@ -81,20 +81,7 @@ export class GoalRefineOutputBuilder {
   }
 
   /**
-   * Build output for approval instruction (default mode).
-   * Renders LLM instruction to review and approve when ready.
-   */
-  buildApprovalInstruction(goalId: string): TerminalOutput {
-    this.builder.reset();
-    this.builder.addPrompt(
-      "\n@LLM: Review goal details above. When ready to approve refinement, run:\n" +
-      `  jumbo goal refine --id ${goalId} --approve`
-    );
-    return this.builder.build();
-  }
-
-  /**
-   * Build output for goal details and LLM refinement prompt (default/approve mode).
+   * Build output for goal details and LLM refinement prompt (default/interactive mode).
    * Renders goal details (ID, status, objective, criteria, scope) and LLM instructions
    * for comprehensive relation registration.
    */
@@ -185,7 +172,8 @@ export class GoalRefineOutputBuilder {
       "  - Decisions: Architectural patterns the implementation will apply\n" +
       "  - Components: Existing code this implementation will modify or depend on\n" +
       "  - Dependencies: External libraries the implementation will integrate\n" +
-      "\nDO NOT approve refinement until comprehensive relations are registered!"
+      "\nAfter registering relations, commit the refinement:\n" +
+      `  jumbo goal commit --id ${goal.goalId}`
     );
 
     return this.builder.build();

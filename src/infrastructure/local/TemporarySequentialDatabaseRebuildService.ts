@@ -57,6 +57,7 @@ import { SqliteGoalRefinedProjector } from "../context/goals/refine/SqliteGoalRe
 import { SqliteGoalProgressUpdatedProjector } from "../context/goals/update-progress/SqliteGoalProgressUpdatedProjector.js";
 import { SqliteGoalSubmittedForReviewProjector } from "../context/goals/review/SqliteGoalSubmittedForReviewProjector.js";
 import { SqliteGoalQualifiedProjector } from "../context/goals/qualify/SqliteGoalQualifiedProjector.js";
+import { SqliteGoalCommittedProjector } from "../context/goals/commit/SqliteGoalCommittedProjector.js";
 import { SqliteArchitectureDefinedProjector } from "../context/architecture/define/SqliteArchitectureDefinedProjector.js";
 import { SqliteArchitectureUpdatedProjector } from "../context/architecture/update/SqliteArchitectureUpdatedProjector.js";
 import { SqliteComponentAddedProjector } from "../context/components/add/SqliteComponentAddedProjector.js";
@@ -106,6 +107,8 @@ import { GoalRefinedEventHandler } from "../../application/context/goals/refine/
 import { GoalProgressUpdatedEventHandler } from "../../application/context/goals/update-progress/GoalProgressUpdatedEventHandler.js";
 import { GoalSubmittedForReviewEventHandler } from "../../application/context/goals/review/GoalSubmittedForReviewEventHandler.js";
 import { GoalQualifiedEventHandler } from "../../application/context/goals/qualify/GoalQualifiedEventHandler.js";
+import { GoalRefinementStartedEventHandler } from "../../application/context/goals/refine/GoalRefinementStartedEventHandler.js";
+import { GoalCommittedEventHandler } from "../../application/context/goals/commit/GoalCommittedEventHandler.js";
 import { DecisionAddedEventHandler } from "../../application/context/decisions/add/DecisionAddedEventHandler.js";
 import { DecisionUpdatedEventHandler } from "../../application/context/decisions/update/DecisionUpdatedEventHandler.js";
 import { DecisionReversedEventHandler } from "../../application/context/decisions/reverse/DecisionReversedEventHandler.js";
@@ -198,6 +201,7 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     const goalProgressUpdatedProjector = new SqliteGoalProgressUpdatedProjector(newDb);
     const goalSubmittedForReviewProjector = new SqliteGoalSubmittedForReviewProjector(newDb);
     const goalQualifiedProjector = new SqliteGoalQualifiedProjector(newDb);
+    const goalCommittedProjector = new SqliteGoalCommittedProjector(newDb);
     const architectureDefinedProjector = new SqliteArchitectureDefinedProjector(newDb);
     const architectureUpdatedProjector = new SqliteArchitectureUpdatedProjector(newDb);
     const componentAddedProjector = new SqliteComponentAddedProjector(newDb);
@@ -247,6 +251,8 @@ const audienceAddedProjector = new SqliteAudienceAddedProjector(newDb);
     const goalProgressUpdatedEventHandler = new GoalProgressUpdatedEventHandler(goalProgressUpdatedProjector);
     const goalSubmittedForReviewEventHandler = new GoalSubmittedForReviewEventHandler(goalSubmittedForReviewProjector);
     const goalQualifiedEventHandler = new GoalQualifiedEventHandler(goalQualifiedProjector);
+    const goalRefinementStartedEventHandler = new GoalRefinementStartedEventHandler(goalRefinedProjector);
+    const goalCommittedEventHandler = new GoalCommittedEventHandler(goalCommittedProjector);
     const architectureDefinedEventHandler = new ArchitectureDefinedEventHandler(architectureDefinedProjector);
     const architectureUpdatedEventHandler = new ArchitectureUpdatedEventHandler(architectureUpdatedProjector);
     const componentAddedEventHandler = new ComponentAddedEventHandler(componentAddedProjector);
@@ -296,6 +302,8 @@ const audienceAddedEventHandler = new AudienceAddedEventHandler(audienceAddedPro
     sequentialEventBus.subscribe("GoalProgressUpdatedEvent", goalProgressUpdatedEventHandler);
     sequentialEventBus.subscribe("GoalSubmittedForReviewEvent", goalSubmittedForReviewEventHandler);
     sequentialEventBus.subscribe("GoalQualifiedEvent", goalQualifiedEventHandler);
+    sequentialEventBus.subscribe("GoalRefinementStartedEvent", goalRefinementStartedEventHandler);
+    sequentialEventBus.subscribe("GoalCommittedEvent", goalCommittedEventHandler);
     sequentialEventBus.subscribe("ArchitectureDefinedEvent", architectureDefinedEventHandler);
     sequentialEventBus.subscribe("ArchitectureUpdatedEvent", architectureUpdatedEventHandler);
     sequentialEventBus.subscribe("ComponentAddedEvent", componentAddedEventHandler);

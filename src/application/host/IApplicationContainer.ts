@@ -68,6 +68,7 @@ import { ReviewGoalController } from "../context/goals/review/ReviewGoalControll
 import { IGoalSubmittedForReviewEventWriter } from "../context/goals/review/IGoalSubmittedForReviewEventWriter.js";
 import { IGoalSubmittedForReviewEventReader } from "../context/goals/review/IGoalSubmittedForReviewEventReader.js";
 import { QualifyGoalController } from "../context/goals/qualify/QualifyGoalController.js";
+import { CommitGoalController } from "../context/goals/commit/CommitGoalController.js";
 import { RefineGoalController } from "../context/goals/refine/RefineGoalController.js";
 import { ResetGoalController } from "../context/goals/reset/ResetGoalController.js";
 import { BlockGoalController } from "../context/goals/block/BlockGoalController.js";
@@ -81,6 +82,8 @@ import { UpdateGoalController } from "../context/goals/update/UpdateGoalControll
 import { UpdateGoalProgressController } from "../context/goals/update-progress/UpdateGoalProgressController.js";
 import { IGoalQualifiedEventWriter } from "../context/goals/qualify/IGoalQualifiedEventWriter.js";
 import { IGoalQualifiedEventReader } from "../context/goals/qualify/IGoalQualifiedEventReader.js";
+import { IGoalCommitEventWriter } from "../context/goals/commit/IGoalCommitEventWriter.js";
+import { IGoalCommitEventReader } from "../context/goals/commit/IGoalCommitEventReader.js";
 
 // Audience Pain Controllers
 import { AddAudiencePainController } from "../context/audience-pains/add/AddAudiencePainController.js";
@@ -349,6 +352,7 @@ export interface IApplicationContainer {
   goalProgressUpdatedEventStore: IGoalProgressUpdatedEventWriter & IGoalProgressUpdatedEventReader;
   goalSubmittedForReviewEventStore: IGoalSubmittedForReviewEventWriter & IGoalSubmittedForReviewEventReader;
   goalQualifiedEventStore: IGoalQualifiedEventWriter & IGoalQualifiedEventReader;
+  goalCommittedEventStore: IGoalCommitEventWriter & IGoalCommitEventReader;
 
   // Work Category - Session Projection Stores - decomposed by use case
   sessionStartedProjector: ISessionStartedProjector;
@@ -386,6 +390,7 @@ export interface IApplicationContainer {
   completeGoalController: CompleteGoalController;
   reviewGoalController: ReviewGoalController;
   qualifyGoalController: QualifyGoalController;
+  commitGoalController: CommitGoalController;
   blockGoalController: BlockGoalController;
   unblockGoalController: UnblockGoalController;
   getGoalsController: GetGoalsController;

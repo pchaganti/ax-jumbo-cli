@@ -167,50 +167,78 @@ describe("Goal Aggregate", () => {
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
 
       // Act
-      const event = goal.refine();
+      const event = goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
 
       // Assert
-      expect(event.type).toBe(GoalEventType.REFINED);
+      expect(event.type).toBe(GoalEventType.REFINEMENT_STARTED);
       expect(event.aggregateId).toBe("goal_123");
       expect(event.version).toBe(2);
-      expect(event.payload.status).toBe(GoalStatus.REFINED);
-      expect(event.payload.refinedAt).toBeDefined();
+      expect(event.payload.status).toBe(GoalStatus.IN_REFINEMENT);
+      expect(event.payload.refinementStartedAt).toBeDefined();
+      expect(event.payload.claimedBy).toBe("worker_test");
+      expect(event.payload.claimedAt).toBe("2025-01-01T00:00:00Z");
+      expect(event.payload.claimExpiresAt).toBe("2025-01-01T01:00:00Z");
       expect(event.timestamp).toBeDefined();
     });
 
-    it("should update aggregate state to refined after refine", () => {
+    it("should update aggregate state to in-refinement after refine", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
 
       // Act
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
 
       // Assert
       const snapshot = goal.snapshot;
-      expect(snapshot.status).toBe(GoalStatus.REFINED);
+      expect(snapshot.status).toBe(GoalStatus.IN_REFINEMENT);
       expect(snapshot.version).toBe(2);
     });
 
-    it("should throw error when refining already refined goal", () => {
+    it("should throw error when refining goal already in refinement", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine(); // First refine
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      }); // First refine → IN_REFINEMENT
 
       // Act & Assert
-      expect(() => goal.refine()).toThrow("Goal is already refined.");
+      expect(() => goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      })).toThrow("Goal is already in refinement.");
     });
 
     it("should throw error when refining a doing goal", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act & Assert
-      expect(() => goal.refine()).toThrow(
+      expect(() => goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      })).toThrow(
         "Cannot refine goal in doing status. Goal must be in to-do status."
       );
     });
@@ -221,7 +249,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
 
       // Act
       const event = goal.start();
@@ -229,7 +262,7 @@ describe("Goal Aggregate", () => {
       // Assert
       expect(event.type).toBe(GoalEventType.STARTED);
       expect(event.aggregateId).toBe("goal_123");
-      expect(event.version).toBe(3);
+      expect(event.version).toBe(4);
       expect(event.payload.status).toBe(GoalStatus.DOING);
       expect(event.timestamp).toBeDefined();
     });
@@ -238,7 +271,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
 
       // Act
       goal.start();
@@ -246,14 +284,19 @@ describe("Goal Aggregate", () => {
       // Assert
       const snapshot = goal.snapshot;
       expect(snapshot.status).toBe(GoalStatus.DOING);
-      expect(snapshot.version).toBe(3);
+      expect(snapshot.version).toBe(4);
     });
 
     it("should allow starting already-doing goal (idempotent)", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start(); // First start
 
       // Act - start again
@@ -279,7 +322,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.block("Waiting for API credentials");
 
@@ -551,7 +599,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act
@@ -561,7 +614,7 @@ describe("Goal Aggregate", () => {
       expect(event.type).toBe(GoalEventType.BLOCKED);
       expect(event.payload.status).toBe(GoalStatus.BLOCKED);
       expect(event.payload.note).toBe("Database server is down");
-      expect(event.version).toBe(4);
+      expect(event.version).toBe(5);
     });
 
     it("should throw error if note is not provided", () => {
@@ -619,7 +672,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.block("Database server is down");
 
@@ -630,7 +688,7 @@ describe("Goal Aggregate", () => {
       expect(event.type).toBe(GoalEventType.UNBLOCKED);
       expect(event.payload.status).toBe(GoalStatus.DOING);
       expect(event.payload.note).toBe("Server is back online");
-      expect(event.version).toBe(5);
+      expect(event.version).toBe(6);
     });
 
     it("should sanitize empty note to undefined", () => {
@@ -672,7 +730,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act & Assert
@@ -685,7 +748,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.block("Blocked");
 
@@ -696,7 +764,7 @@ describe("Goal Aggregate", () => {
       const snapshot = goal.snapshot;
       expect(snapshot.status).toBe(GoalStatus.DOING);
       expect(snapshot.note).toBe("Resolved");
-      expect(snapshot.version).toBe(5);
+      expect(snapshot.version).toBe(6);
     });
   });
 
@@ -776,7 +844,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act & Assert
@@ -789,7 +862,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.block("Waiting for API credentials");
 
@@ -981,17 +1059,22 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal1 = Goal.create("goal_123");
       const addedEvent = goal1.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      const refinedEvent = goal1.refine();
+      const refinedEvent = goal1.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      const committedEvent = goal1.commit();
       const startedEvent = goal1.start();
 
       // Act
-      const goal2 = Goal.rehydrate("goal_123", [addedEvent, refinedEvent, startedEvent]);
+      const goal2 = Goal.rehydrate("goal_123", [addedEvent, refinedEvent, committedEvent, startedEvent]);
 
       // Assert
       const snapshot = goal2.snapshot;
       expect(snapshot.objective).toBe("Implement authentication");
       expect(snapshot.status).toBe(GoalStatus.DOING);
-      expect(snapshot.version).toBe(3);
+      expect(snapshot.version).toBe(4);
     });
 
     it("should rebuild aggregate with GoalUpdatedEvent event", () => {
@@ -1034,7 +1117,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act
@@ -1043,7 +1131,7 @@ describe("Goal Aggregate", () => {
       // Assert
       expect(event.type).toBe(GoalEventType.PAUSED);
       expect(event.aggregateId).toBe("goal_123");
-      expect(event.version).toBe(4);
+      expect(event.version).toBe(5);
       expect(event.payload.status).toBe(GoalStatus.PAUSED);
       expect(event.payload.reason).toBe("ContextCompressed");
       expect(event.payload.note).toBeUndefined();
@@ -1054,7 +1142,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act
@@ -1065,7 +1158,7 @@ describe("Goal Aggregate", () => {
       expect(event.payload.status).toBe(GoalStatus.PAUSED);
       expect(event.payload.reason).toBe("Other");
       expect(event.payload.note).toBe("Need to switch priorities");
-      expect(event.version).toBe(4);
+      expect(event.version).toBe(5);
     });
 
     it("should throw error if goal is not in doing status", () => {
@@ -1083,7 +1176,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.pause("ContextCompressed");
 
@@ -1097,7 +1195,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       const longNote = "a".repeat(501); // Max is 500
 
@@ -1109,7 +1212,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act
@@ -1125,7 +1233,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.pause("ContextCompressed");
 
@@ -1135,7 +1248,7 @@ describe("Goal Aggregate", () => {
       // Assert
       expect(event.type).toBe(GoalEventType.RESUMED);
       expect(event.aggregateId).toBe("goal_123");
-      expect(event.version).toBe(5);
+      expect(event.version).toBe(6);
       expect(event.payload.status).toBe(GoalStatus.DOING);
       expect(event.payload.note).toBeUndefined();
       expect(event.timestamp).toBeDefined();
@@ -1145,7 +1258,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.pause("ContextCompressed");
 
@@ -1156,14 +1274,19 @@ describe("Goal Aggregate", () => {
       expect(event.type).toBe(GoalEventType.RESUMED);
       expect(event.payload.status).toBe(GoalStatus.DOING);
       expect(event.payload.note).toBe("Ready to continue");
-      expect(event.version).toBe(5);
+      expect(event.version).toBe(6);
     });
 
     it("should throw error if goal is not paused", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act & Assert
@@ -1176,7 +1299,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.pause("ContextCompressed");
       const longNote = "a".repeat(501); // Max is 500
@@ -1189,7 +1317,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.pause("ContextCompressed");
 
@@ -1206,7 +1339,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act
@@ -1215,7 +1353,7 @@ describe("Goal Aggregate", () => {
       // Assert
       expect(event.type).toBe(GoalEventType.SUBMITTED_FOR_REVIEW);
       expect(event.aggregateId).toBe("goal_123");
-      expect(event.version).toBe(4);
+      expect(event.version).toBe(5);
       expect(event.payload.status).toBe(GoalStatus.INREVIEW);
       expect(event.payload.submittedAt).toBeDefined();
       expect(event.timestamp).toBeDefined();
@@ -1225,7 +1363,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.block("Waiting for API credentials");
 
@@ -1235,14 +1378,19 @@ describe("Goal Aggregate", () => {
       // Assert
       expect(event.type).toBe(GoalEventType.SUBMITTED_FOR_REVIEW);
       expect(event.payload.status).toBe(GoalStatus.INREVIEW);
-      expect(event.version).toBe(5);
+      expect(event.version).toBe(6);
     });
 
     it("should transition goal to in-review status", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act
@@ -1251,7 +1399,7 @@ describe("Goal Aggregate", () => {
       // Assert
       const snapshot = goal.snapshot;
       expect(snapshot.status).toBe(GoalStatus.INREVIEW);
-      expect(snapshot.version).toBe(4);
+      expect(snapshot.version).toBe(5);
     });
 
     it("should throw error if goal is in to-do status", () => {
@@ -1269,7 +1417,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.pause("ContextCompressed");
 
@@ -1283,7 +1436,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.submitForReview();
 
@@ -1440,7 +1598,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.submitForReview();
 
@@ -1450,7 +1613,7 @@ describe("Goal Aggregate", () => {
       // Assert
       expect(event.type).toBe(GoalEventType.QUALIFIED);
       expect(event.aggregateId).toBe("goal_123");
-      expect(event.version).toBe(5);
+      expect(event.version).toBe(6);
       expect(event.payload.status).toBe(GoalStatus.QUALIFIED);
       expect(event.payload.qualifiedAt).toBeDefined();
       expect(event.timestamp).toBeDefined();
@@ -1460,7 +1623,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.submitForReview();
 
@@ -1470,7 +1638,7 @@ describe("Goal Aggregate", () => {
       // Assert
       const snapshot = goal.snapshot;
       expect(snapshot.status).toBe(GoalStatus.QUALIFIED);
-      expect(snapshot.version).toBe(5);
+      expect(snapshot.version).toBe(6);
     });
 
     it("should throw error if goal is in to-do status", () => {
@@ -1488,7 +1656,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
 
       // Act & Assert
@@ -1501,7 +1674,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.block("Waiting for API credentials");
 
@@ -1515,7 +1693,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.pause("ContextCompressed");
 
@@ -1529,7 +1712,12 @@ describe("Goal Aggregate", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
-      goal.refine();
+      goal.refine({
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      });
+      goal.commit();
       goal.start();
       goal.submitForReview();
       goal.qualify();

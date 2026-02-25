@@ -17,6 +17,14 @@ describe("RefineGoalCommandHandler", () => {
   let eventReader: IGoalRefineEventReader;
   let goalReader: IGoalRefineReader;
   let eventBus: IEventBus;
+  let claimPolicy: {
+    canClaim: jest.Mock;
+    prepareClaim: jest.Mock;
+    storeClaim: jest.Mock;
+    releaseClaim: jest.Mock;
+  };
+  let workerIdentityReader: { workerId: string };
+  let settingsReader: { read: jest.Mock };
   let goalContextQueryHandler: GoalContextQueryHandler;
   let handler: RefineGoalCommandHandler;
 
@@ -42,6 +50,27 @@ describe("RefineGoalCommandHandler", () => {
       publish: jest.fn().mockResolvedValue(undefined),
     };
 
+    // Mock claim policy
+    claimPolicy = {
+      canClaim: jest.fn().mockReturnValue({ allowed: true }),
+      prepareClaim: jest.fn().mockReturnValue({
+        goalId: "goal_123",
+        claimedBy: "worker_test",
+        claimedAt: "2025-01-01T00:00:00Z",
+        claimExpiresAt: "2025-01-01T01:00:00Z",
+      }),
+      storeClaim: jest.fn(),
+      releaseClaim: jest.fn(),
+    };
+
+    // Mock worker identity reader
+    workerIdentityReader = { workerId: "worker_test" };
+
+    // Mock settings reader
+    settingsReader = {
+      read: jest.fn().mockResolvedValue({ claims: { claimDurationMinutes: 60 } }),
+    };
+
     // Mock goal context query handler
     goalContextQueryHandler = {
       execute: jest.fn().mockImplementation(async (goalId: string) => ({
@@ -62,11 +91,14 @@ describe("RefineGoalCommandHandler", () => {
       eventReader,
       goalReader,
       eventBus,
+      claimPolicy as any,
+      workerIdentityReader as any,
+      settingsReader as any,
       goalContextQueryHandler
     );
   });
 
-  it("should refine goal and publish GoalRefinedEvent", async () => {
+  it("should refine goal and publish GoalRefinementStartedEvent", async () => {
     // Arrange
     const command: RefineGoalCommand = {
       goalId: "goal_123",
@@ -117,16 +149,20 @@ describe("RefineGoalCommandHandler", () => {
     // Verify event was appended to event store
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
     const appendedEvent = (eventWriter.append as jest.Mock).mock.calls[0][0];
-    expect(appendedEvent.type).toBe(GoalEventType.REFINED);
+    expect(appendedEvent.type).toBe(GoalEventType.REFINEMENT_STARTED);
     expect(appendedEvent.aggregateId).toBe("goal_123");
     expect(appendedEvent.version).toBe(2);
-    expect(appendedEvent.payload.status).toBe(GoalStatus.REFINED);
-    expect(appendedEvent.payload.refinedAt).toBeDefined();
+    expect(appendedEvent.payload.status).toBe(GoalStatus.IN_REFINEMENT);
+    expect(appendedEvent.payload.claimedBy).toBeDefined();
+    expect(appendedEvent.payload.refinementStartedAt).toBeDefined();
+
+    // Verify claim was stored
+    expect(claimPolicy.storeClaim).toHaveBeenCalled();
 
     // Verify event was published to event bus
     expect(eventBus.publish).toHaveBeenCalledTimes(1);
     const publishedEvent = (eventBus.publish as jest.Mock).mock.calls[0][0];
-    expect(publishedEvent.type).toBe(GoalEventType.REFINED);
+    expect(publishedEvent.type).toBe(GoalEventType.REFINEMENT_STARTED);
     expect(publishedEvent.aggregateId).toBe("goal_123");
   });
 

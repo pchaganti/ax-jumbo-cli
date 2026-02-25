@@ -1,35 +1,33 @@
-import { RefineGoalCommand } from "./RefineGoalCommand.js";
-import { IGoalRefineEventWriter } from "./IGoalRefineEventWriter.js";
-import { IGoalRefineEventReader } from "./IGoalRefineEventReader.js";
-import { IGoalRefineReader } from "./IGoalRefineReader.js";
+import { CommitGoalCommand } from "./CommitGoalCommand.js";
+import { IGoalCommitEventWriter } from "./IGoalCommitEventWriter.js";
+import { IGoalCommitEventReader } from "./IGoalCommitEventReader.js";
+import { IGoalCommitReader } from "./IGoalCommitReader.js";
 import { IEventBus } from "../../../messaging/IEventBus.js";
 import { Goal } from "../../../../domain/goals/Goal.js";
 import { GoalErrorMessages, formatErrorMessage } from "../../../../domain/goals/Constants.js";
 import { GoalClaimPolicy } from "../claims/GoalClaimPolicy.js";
 import { IWorkerIdentityReader } from "../../../host/workers/IWorkerIdentityReader.js";
-import { ISettingsReader } from "../../../settings/ISettingsReader.js";
 import { GoalContextQueryHandler } from "../get/GoalContextQueryHandler.js";
 import { ContextualGoalView } from "../get/ContextualGoalView.js";
 
 /**
- * Handles starting refinement of a goal (transitions to in-refinement).
+ * Handles committing a goal after refinement is complete.
  * Loads aggregate from event history, calls domain logic, persists event.
- * Validates and manages goal claims to prevent concurrent refinement.
+ * Releases the claim held during refinement.
  * Returns ContextualGoalView for presentation layer.
  */
-export class RefineGoalCommandHandler {
+export class CommitGoalCommandHandler {
   constructor(
-    private readonly eventWriter: IGoalRefineEventWriter,
-    private readonly eventReader: IGoalRefineEventReader,
-    private readonly goalReader: IGoalRefineReader,
+    private readonly eventWriter: IGoalCommitEventWriter,
+    private readonly eventReader: IGoalCommitEventReader,
+    private readonly goalReader: IGoalCommitReader,
     private readonly eventBus: IEventBus,
     private readonly claimPolicy: GoalClaimPolicy,
     private readonly workerIdentityReader: IWorkerIdentityReader,
-    private readonly settingsReader: ISettingsReader,
     private readonly goalContextQueryHandler: GoalContextQueryHandler
   ) {}
 
-  async execute(command: RefineGoalCommand): Promise<ContextualGoalView> {
+  async execute(command: CommitGoalCommand): Promise<ContextualGoalView> {
     // 1. Check goal exists (query projection for fast check)
     const view = await this.goalReader.findById(command.goalId);
     if (!view) {
@@ -38,10 +36,9 @@ export class RefineGoalCommandHandler {
       );
     }
 
-    // 2. Validate claim policy before refining
+    // 2. Validate claim ownership - only the claimant can commit a goal
     const workerId = this.workerIdentityReader.workerId;
     const claimValidation = this.claimPolicy.canClaim(command.goalId, workerId);
-
     if (!claimValidation.allowed) {
       throw new Error(
         formatErrorMessage(GoalErrorMessages.GOAL_CLAIMED_BY_ANOTHER_WORKER, {
@@ -54,28 +51,19 @@ export class RefineGoalCommandHandler {
     const history = await this.eventReader.readStream(command.goalId);
     const goal = Goal.rehydrate(command.goalId, history as any);
 
-    // 4. Prepare claim data before creating event (for embedding in event payload)
-    const settings = await this.settingsReader.read();
-    const claimDurationMs = settings.claims.claimDurationMinutes * 60 * 1000;
-    const claim = this.claimPolicy.prepareClaim(command.goalId, workerId, claimDurationMs);
+    // 4. Domain logic produces event (validates state)
+    const event = goal.commit();
 
-    // 5. Domain logic produces event with claim data (validates state)
-    const event = goal.refine({
-      claimedBy: claim.claimedBy,
-      claimedAt: claim.claimedAt,
-      claimExpiresAt: claim.claimExpiresAt,
-    });
-
-    // 6. Persist event to file store
+    // 5. Persist event to file store
     await this.eventWriter.append(event);
 
-    // 7. Store claim after successful persistence
-    this.claimPolicy.storeClaim(claim);
+    // 6. Release claim after successful persistence
+    this.claimPolicy.releaseClaim(command.goalId);
 
-    // 8. Publish event to bus (projections will update via subscriptions)
+    // 7. Publish event to bus (projections will update via subscriptions)
     await this.eventBus.publish(event);
 
-    // 9. Query goal context
+    // 8. Query goal context
     return this.goalContextQueryHandler.execute(command.goalId);
   }
 }

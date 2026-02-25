@@ -69,6 +69,14 @@ describe("StateTransitionRules", () => {
       expect(result.errors).toContain("Goal is already refined.");
     });
 
+    it("should fail when status is in-refinement", () => {
+      const rule = new CanRefineRule();
+      const state = createGoalState({ status: GoalStatus.IN_REFINEMENT });
+      const result = rule.validate(state);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("Goal is already in refinement.");
+    });
+
     it("should fail when status is doing", () => {
       const rule = new CanRefineRule();
       const state = createGoalState({ status: GoalStatus.DOING });
@@ -90,6 +98,14 @@ describe("StateTransitionRules", () => {
     it("should fail when status is to-do (must be refined first)", () => {
       const rule = new CanStartRule();
       const state = createGoalState({ status: GoalStatus.TODO });
+      const result = rule.validate(state);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("Cannot start goal. Goal must be refined first.");
+    });
+
+    it("should fail when status is in-refinement (must be refined first)", () => {
+      const rule = new CanStartRule();
+      const state = createGoalState({ status: GoalStatus.IN_REFINEMENT });
       const result = rule.validate(state);
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain("Cannot start goal. Goal must be refined first.");

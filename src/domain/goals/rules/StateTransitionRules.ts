@@ -17,6 +17,14 @@ export class CanRefineRule implements ValidationRule<GoalState> {
       };
     }
 
+    // Already in refinement - return specific error
+    if (state.status === GoalStatus.IN_REFINEMENT) {
+      return {
+        isValid: false,
+        errors: [GoalErrorMessages.ALREADY_IN_REFINEMENT],
+      };
+    }
+
     // Can only refine from TODO status
     if (state.status !== GoalStatus.TODO) {
       return {
@@ -68,7 +76,7 @@ export class CanStartRule implements ValidationRule<GoalState> {
     }
 
     // Goal must be refined before starting (or already doing for idempotency)
-    if (state.status === GoalStatus.TODO) {
+    if (state.status === GoalStatus.TODO || state.status === GoalStatus.IN_REFINEMENT) {
       return {
         isValid: false,
         errors: [GoalErrorMessages.CANNOT_START_NOT_REFINED],
