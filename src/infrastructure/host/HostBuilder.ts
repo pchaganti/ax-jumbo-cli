@@ -170,6 +170,7 @@ import { SqliteGoalProgressUpdatedProjector } from "../context/goals/update-prog
 import { SqliteGoalSubmittedForReviewProjector } from "../context/goals/review/SqliteGoalSubmittedForReviewProjector.js";
 import { SqliteGoalQualifiedProjector } from "../context/goals/qualify/SqliteGoalQualifiedProjector.js";
 import { SqliteGoalCommittedProjector } from "../context/goals/commit/SqliteGoalCommittedProjector.js";
+import { SqliteGoalRejectedProjector } from "../context/goals/reject/SqliteGoalRejectedProjector.js";
 import { SqliteGoalContextAssembler } from "../context/SqliteGoalContextAssembler.js";
 import { SqliteGoalStatusReader } from "../context/goals/SqliteGoalStatusReader.js";
 // Decision Projection Stores - decomposed by use case
@@ -266,6 +267,7 @@ import { GoalSubmittedForReviewEventHandler } from "../../application/context/go
 import { GoalQualifiedEventHandler } from "../../application/context/goals/qualify/GoalQualifiedEventHandler.js";
 import { GoalRefinementStartedEventHandler } from "../../application/context/goals/refine/GoalRefinementStartedEventHandler.js";
 import { GoalCommittedEventHandler } from "../../application/context/goals/commit/GoalCommittedEventHandler.js";
+import { GoalRejectedEventHandler } from "../../application/context/goals/reject/GoalRejectedEventHandler.js";
 // Decision Event Handlers - decomposed by use case
 import { DecisionAddedEventHandler } from "../../application/context/decisions/add/DecisionAddedEventHandler.js";
 import { DecisionUpdatedEventHandler } from "../../application/context/decisions/update/DecisionUpdatedEventHandler.js";
@@ -359,6 +361,11 @@ import { CommitGoalCommandHandler } from "../../application/context/goals/commit
 import { LocalCommitGoalGateway } from "../../application/context/goals/commit/LocalCommitGoalGateway.js";
 import { CommitGoalController } from "../../application/context/goals/commit/CommitGoalController.js";
 import { FsGoalCommittedEventStore } from "../context/goals/commit/FsGoalCommittedEventStore.js";
+// RejectGoal Controller-Gateway
+import { RejectGoalCommandHandler } from "../../application/context/goals/reject/RejectGoalCommandHandler.js";
+import { LocalRejectGoalGateway } from "../../application/context/goals/reject/LocalRejectGoalGateway.js";
+import { RejectGoalController } from "../../application/context/goals/reject/RejectGoalController.js";
+import { FsGoalRejectedEventStore } from "../context/goals/reject/FsGoalRejectedEventStore.js";
 
 // BlockGoal Controller-Gateway
 import { RefineGoalCommandHandler } from "../../application/context/goals/refine/RefineGoalCommandHandler.js";
@@ -569,6 +576,7 @@ export class HostBuilder {
     const goalSubmittedForReviewEventStore = new FsGoalSubmittedForReviewEventStore(this.rootDir);
     const goalQualifiedEventStore = new FsGoalQualifiedEventStore(this.rootDir);
     const goalCommittedEventStore = new FsGoalCommittedEventStore(this.rootDir);
+    const goalRejectedEventStore = new FsGoalRejectedEventStore(this.rootDir);
 
     // Solution Category
     // Architecture Event Stores - decomposed by use case
@@ -652,6 +660,7 @@ export class HostBuilder {
     const goalSubmittedForReviewProjector = new SqliteGoalSubmittedForReviewProjector(this.db);
     const goalQualifiedProjector = new SqliteGoalQualifiedProjector(this.db);
     const goalCommittedProjector = new SqliteGoalCommittedProjector(this.db);
+    const goalRejectedProjector = new SqliteGoalRejectedProjector(this.db);
     const goalStatusReader = new SqliteGoalStatusReader(this.db);
 
     // Solution Category
@@ -1098,6 +1107,23 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       commitGoalGateway
     );
 
+    // RejectGoal Controller
+    const rejectGoalCommandHandler = new RejectGoalCommandHandler(
+      goalRejectedEventStore,
+      goalRejectedEventStore,
+      goalRejectedProjector,
+      eventBus,
+      goalClaimPolicy,
+      workerIdentityReader,
+      goalContextQueryHandler
+    );
+    const rejectGoalGateway = new LocalRejectGoalGateway(
+      rejectGoalCommandHandler
+    );
+    const rejectGoalController = new RejectGoalController(
+      rejectGoalGateway
+    );
+
     // GetGoals Controller
     const getGoalsGateway = new LocalGetGoalsGateway(goalStatusReader);
     const getGoalsController = new GetGoalsController(getGoalsGateway);
@@ -1478,6 +1504,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     const goalQualifiedEventHandler = new GoalQualifiedEventHandler(goalQualifiedProjector);
     const goalRefinementStartedEventHandler = new GoalRefinementStartedEventHandler(goalRefinedProjector);
     const goalCommittedEventHandler = new GoalCommittedEventHandler(goalCommittedProjector);
+    const goalRejectedEventHandler = new GoalRejectedEventHandler(goalRejectedProjector);
 
     // Solution Category
     // Architecture Event Handlers - decomposed by use case
@@ -1594,6 +1621,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     eventBus.subscribe("GoalQualifiedEvent", goalQualifiedEventHandler);
     eventBus.subscribe("GoalRefinementStartedEvent", goalRefinementStartedEventHandler);
     eventBus.subscribe("GoalCommittedEvent", goalCommittedEventHandler);
+    eventBus.subscribe("GoalRejectedEvent", goalRejectedEventHandler);
 
     // Solution Category - Architecture events - decomposed by use case
     eventBus.subscribe("ArchitectureDefinedEvent", architectureDefinedEventHandler);
@@ -1696,6 +1724,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       goalSubmittedForReviewEventStore,
       goalQualifiedEventStore,
       goalCommittedEventStore,
+      goalRejectedEventStore,
       // Session Projection Stores - decomposed by use case
       sessionStartedProjector,
       sessionEndedProjector,
@@ -1731,6 +1760,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       reviewGoalController,
       qualifyGoalController,
       commitGoalController,
+      rejectGoalController,
       blockGoalController,
       unblockGoalController,
       getGoalsController,

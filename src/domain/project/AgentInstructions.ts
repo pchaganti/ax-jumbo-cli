@@ -24,13 +24,13 @@ Run \`jumbo session start\`
 
 ### After Compaction/Compression
 If a goal is actively being implemented.
-Run \`jumbo goal resume --goal-id {active-goal-id}\`
+Run \`jumbo goal resume --id {active-goal-id}\`
 
 ### Before Finishing a Session
 Run \`jumbo session end --focus {focus-description}\` --summary {summary-of-what-transpired}
 
 ### Before Starting Work on a Goal
-Run \`jumbo goal start --goal-id <id>\`
+Run \`jumbo goal start --id <id>\`
 
 ### Be Proactive
 Be vigilant in identifying insights, from your interactions with the user, that match the command types and ask the user if they would like you to register them with Jumbo.
@@ -124,7 +124,7 @@ This loads orientation context including:
 ### Working with Jumbo
 
 1. **Start each session**: Run \`jumbo session start\` to load orientation context
-2. **Start a goal**: Before working on a task, run \`jumbo goal start --goal-id <id>\` to load goal-specific context
+2. **Start a goal**: Before working on a task, run \`jumbo goal start --id <id>\` to load goal-specific context
 3. **Capture memories**: As you work, run jumbo commands to capture project knowledge:
    - \`jumbo component add\` - Track architectural components
    - \`jumbo decision add\` - Record architectural decisions (ADRs)

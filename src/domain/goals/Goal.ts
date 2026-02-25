@@ -1,7 +1,7 @@
 import { BaseAggregate, AggregateState } from "../BaseAggregate.js";
 import { UUID } from "../BaseEvent.js";
 import { ValidationRuleSet } from "../validation/ValidationRule.js";
-import { GoalEvent, GoalAddedEvent, GoalRefinedEvent, GoalStartedEvent, GoalUpdatedEvent, GoalBlockedEvent, GoalUnblockedEvent, GoalCompletedEvent, GoalResetEvent, GoalRemovedEvent, GoalPausedEvent, GoalResumedEvent, GoalProgressUpdatedEvent, GoalSubmittedForReviewEvent, GoalQualifiedEvent, GoalRefinementStartedEvent, GoalCommittedEvent } from "./EventIndex.js";
+import { GoalEvent, GoalAddedEvent, GoalRefinedEvent, GoalStartedEvent, GoalUpdatedEvent, GoalBlockedEvent, GoalUnblockedEvent, GoalCompletedEvent, GoalResetEvent, GoalRemovedEvent, GoalPausedEvent, GoalResumedEvent, GoalProgressUpdatedEvent, GoalSubmittedForReviewEvent, GoalQualifiedEvent, GoalRefinementStartedEvent, GoalCommittedEvent, GoalRejectedEvent } from "./EventIndex.js";
 import { GoalEventType, GoalStatus, GoalStatusType } from "./Constants.js";
 import { GoalPausedReasonsType } from "./GoalPausedReasons.js";
 import { OBJECTIVE_RULES } from "./rules/ObjectiveRules.js";
@@ -25,6 +25,7 @@ import {
 import { CanSubmitForReviewRule } from "./rules/CanSubmitForReviewRule.js";
 import { CanQualifyRule } from "./rules/CanQualifyRule.js";
 import { CanCommitRule } from "./rules/CanCommitRule.js";
+import { CanRejectRule } from "./rules/CanRejectRule.js";
 
 // Domain state: business properties + aggregate metadata
 export interface GoalState extends AggregateState {
@@ -137,7 +138,7 @@ export class Goal extends BaseAggregate<GoalState, GoalEvent> {
 
       case GoalEventType.UNBLOCKED: {
         const e = event as GoalUnblockedEvent;
-        state.status = e.payload.status;  // 'doing'
+        state.status = e.payload.status;  // 'unblocked'
         state.note = e.payload.note;       // Optional resolution note
         state.version = e.version;
         break;
@@ -192,6 +193,14 @@ export class Goal extends BaseAggregate<GoalState, GoalEvent> {
       case GoalEventType.QUALIFIED: {
         const e = event as GoalQualifiedEvent;
         state.status = e.payload.status;  // 'qualified'
+        state.version = e.version;
+        break;
+      }
+
+      case GoalEventType.REJECTED: {
+        const e = event as GoalRejectedEvent;
+        state.status = e.payload.status;  // 'rejected'
+        state.note = e.payload.auditFindings;  // Store audit findings as note
         state.version = e.version;
         break;
       }
@@ -446,8 +455,9 @@ export class Goal extends BaseAggregate<GoalState, GoalEvent> {
   }
 
   /**
-   * Unblocks a goal and resumes work.
-   * Transitions status from "blocked" to "doing".
+   * Unblocks a goal.
+   * Transitions status from "blocked" to "unblocked" (waiting state).
+   * The goal must be explicitly started via `goal start` to resume work.
    *
    * @param note - Optional resolution note explaining how the blocker was resolved
    * @returns GoalUnblocked event
@@ -469,7 +479,7 @@ export class Goal extends BaseAggregate<GoalState, GoalEvent> {
     return this.makeEvent(
       GoalEventType.UNBLOCKED,
       {
-        status: GoalStatus.DOING,
+        status: GoalStatus.UNBLOCKED,
         note: sanitizedNote,
       },
       Goal.apply
@@ -656,6 +666,35 @@ export class Goal extends BaseAggregate<GoalState, GoalEvent> {
       },
       Goal.apply
     ) as GoalQualifiedEvent;
+  }
+
+  /**
+   * Rejects a goal after failed QA review.
+   * Transitions status from "in-review" to "rejected".
+   * Records audit findings describing implementation problems that need fixing.
+   * The implementing agent can reference these findings when reworking.
+   *
+   * @param auditFindings - Description of implementation problems found during review
+   * @returns GoalRejected event
+   * @throws Error if goal is not in 'in-review' status or audit findings are invalid
+   */
+  reject(auditFindings: string): GoalRejectedEvent {
+    // 1. State validation: can only reject from in-review status
+    ValidationRuleSet.ensure(this.state, [new CanRejectRule()]);
+
+    // 2. Input validation: audit findings must be provided and valid
+    ValidationRuleSet.ensure(auditFindings, NOTE_RULES);
+
+    // 3. Create and return event using BaseAggregate.makeEvent
+    return this.makeEvent(
+      GoalEventType.REJECTED,
+      {
+        status: GoalStatus.REJECTED,
+        rejectedAt: new Date().toISOString(),
+        auditFindings,
+      },
+      Goal.apply
+    ) as GoalRejectedEvent;
   }
 
   /**

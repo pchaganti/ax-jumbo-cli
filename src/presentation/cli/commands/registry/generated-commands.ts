@@ -37,11 +37,13 @@ import { dependencyRemove, metadata as dependencyRemoveMeta } from '../../comman
 import { dependencyUpdate, metadata as dependencyUpdateMeta } from '../../commands/dependencies/update/dependency.update.js';
 import { goalAdd, metadata as goalAddMeta } from '../../commands/goals/add/goal.add.js';
 import { goalBlock, metadata as goalBlockMeta } from '../../commands/goals/block/goal.block.js';
+import { goalCommit, metadata as goalCommitMeta } from '../../commands/goals/commit/goal.commit.js';
 import { goalComplete, metadata as goalCompleteMeta } from '../../commands/goals/complete/goal.complete.js';
 import { goalsList, metadata as goalsListMeta } from '../../commands/goals/list/goals.list.js';
 import { goalPause, metadata as goalPauseMeta } from '../../commands/goals/pause/goal.pause.js';
 import { goalQualify, metadata as goalQualifyMeta } from '../../commands/goals/qualify/goal.qualify.js';
 import { goalRefine, metadata as goalRefineMeta } from '../../commands/goals/refine/goal.refine.js';
+import { goalReject, metadata as goalRejectMeta } from '../../commands/goals/reject/goal.reject.js';
 import { goalRemove, metadata as goalRemoveMeta } from '../../commands/goals/remove/goal.remove.js';
 import { goalReset, metadata as goalResetMeta } from '../../commands/goals/reset/goal.reset.js';
 import { goalResume, metadata as goalResumeMeta } from '../../commands/goals/resume/goal.resume.js';
@@ -220,6 +222,11 @@ export const commands: RegisteredCommand[] = [
     handler: goalBlock
   },
   {
+    path: 'goal commit',
+    metadata: goalCommitMeta,
+    handler: goalCommit
+  },
+  {
     path: 'goal complete',
     metadata: goalCompleteMeta,
     handler: goalComplete
@@ -243,6 +250,11 @@ export const commands: RegisteredCommand[] = [
     path: 'goal refine',
     metadata: goalRefineMeta,
     handler: goalRefine
+  },
+  {
+    path: 'goal reject',
+    metadata: goalRejectMeta,
+    handler: goalReject
   },
   {
     path: 'goal remove',

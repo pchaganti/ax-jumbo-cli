@@ -663,7 +663,7 @@ describe("Goal Aggregate", () => {
       expect(event.type).toBe(GoalEventType.UNBLOCKED);
       expect(event.aggregateId).toBe("goal_123");
       expect(event.version).toBe(3);
-      expect(event.payload.status).toBe(GoalStatus.DOING);
+      expect(event.payload.status).toBe(GoalStatus.UNBLOCKED);
       expect(event.payload.note).toBeUndefined();
       expect(event.timestamp).toBeDefined();
     });
@@ -686,7 +686,7 @@ describe("Goal Aggregate", () => {
 
       // Assert
       expect(event.type).toBe(GoalEventType.UNBLOCKED);
-      expect(event.payload.status).toBe(GoalStatus.DOING);
+      expect(event.payload.status).toBe(GoalStatus.UNBLOCKED);
       expect(event.payload.note).toBe("Server is back online");
       expect(event.version).toBe(6);
     });
@@ -744,7 +744,7 @@ describe("Goal Aggregate", () => {
       );
     });
 
-    it("should transition goal back to doing status", () => {
+    it("should transition goal to unblocked status", () => {
       // Arrange
       const goal = Goal.create("goal_123");
       goal.add("Auth feature", "Implement authentication", ["Users can log in"]);
@@ -762,7 +762,7 @@ describe("Goal Aggregate", () => {
 
       // Assert
       const snapshot = goal.snapshot;
-      expect(snapshot.status).toBe(GoalStatus.DOING);
+      expect(snapshot.status).toBe(GoalStatus.UNBLOCKED);
       expect(snapshot.note).toBe("Resolved");
       expect(snapshot.version).toBe(6);
     });

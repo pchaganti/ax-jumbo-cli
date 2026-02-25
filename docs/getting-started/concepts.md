@@ -41,7 +41,7 @@ When you start a goal, Jumbo delivers a context packet containing everything you
 
 ```bash
 > jumbo goal add --objective "Add dark mode" --criteria "Toggle works" "Persists preference"
-jumbo goal start --goal-id <id>
+jumbo goal start --id <id>
 ```
 
 ---

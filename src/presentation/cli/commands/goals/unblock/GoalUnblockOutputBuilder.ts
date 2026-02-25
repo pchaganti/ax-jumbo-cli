@@ -21,8 +21,8 @@ export class GoalUnblockOutputBuilder {
    */
   buildSuccess(goalId: string, resolution?: string): TerminalOutput {
     this.builder.reset();
-    this.builder.addPrompt("✓ Goal unblocked");
-    const data: Record<string, string> = { goalId };
+    this.builder.addPrompt("✓ Goal unblocked — run 'jumbo goal start' to resume work");
+    const data: Record<string, string> = { goalId, status: "unblocked" };
     if (resolution) {
       data.resolution = resolution;
     }

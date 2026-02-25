@@ -16,7 +16,7 @@ When `jumbo goal start` is run, the goal's registered relations determine what c
 ### 1. Initiate Refinement
 
 ```bash
-jumbo goal refine --goal-id <goal-id>
+jumbo goal refine --id <goal-id>
 ```
 
 Review the goal's objective, criteria, and scope.
@@ -93,7 +93,7 @@ During entity exploration, you may discover:
 Update the goal accordingly:
 
 ```bash
-jumbo goal update --goal-id <goal-id> \
+jumbo goal update --id <goal-id> \
   --criteria "Updated criteria" \
   --scope-in "additional/file/path.ts"
   --scope-out "namespace/"
@@ -118,7 +118,7 @@ Before approving, verify ALL of the following:
 Only after completing all verification checks:
 
 ```bash
-jumbo goal refine --goal-id <goal-id> --approve
+jumbo goal refine --id <goal-id> --approve
 ```
 
 ## Rules

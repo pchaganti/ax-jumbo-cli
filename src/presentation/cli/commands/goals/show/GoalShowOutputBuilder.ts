@@ -38,6 +38,10 @@ export class GoalShowOutputBuilder {
         return "in-review (awaiting QA)";
       case "qualified":
         return "qualified (ready for completion)";
+      case "rejected":
+        return "rejected (needs rework)";
+      case "unblocked":
+        return "unblocked (ready to resume)";
       default:
         return status;
     }

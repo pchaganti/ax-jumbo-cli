@@ -139,7 +139,7 @@ function isSubcommandHelp(argv: string[]): boolean {
  * Examples:
  * - ["node", "cli.js", "project", "init"] -> "project init"
  * - ["node", "cli.js", "init"] -> "project init" (via alias)
- * - ["node", "cli.js", "goal", "start", "--goal-id", "123"] -> "goal start"
+ * - ["node", "cli.js", "goal", "start", "--id", "123"] -> "goal start"
  */
 function resolveCommandPath(
   argv: string[],

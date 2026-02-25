@@ -83,7 +83,8 @@ export class CanStartRule implements ValidationRule<GoalState> {
       };
     }
 
-    // Valid statuses: REFINED (first start) or DOING (idempotent)
+    // Valid statuses: REFINED (first start), DOING (idempotent), REJECTED (rework),
+    // UNBLOCKED (after unblocking), INREVIEW, QUALIFIED, PAUSED
     return { isValid: true, errors: [] };
   }
 }
@@ -157,14 +158,14 @@ export class CanUpdateRule implements ValidationRule<GoalState> {
 
 /**
  * Validates that a goal can be blocked from its current status.
- * A goal can only be blocked if it's in 'to-do' or 'doing' status.
+ * A goal can be blocked if it's in 'to-do', 'doing', or 'in-review' status.
  * Cannot block a goal that is already blocked or completed.
  */
 export class CanBlockRule implements ValidationRule<GoalState> {
   validate(state: GoalState): ValidationResult {
-    // Valid statuses to block from: TODO, DOING
+    // Valid statuses to block from: TODO, DOING, INREVIEW
     // Invalid statuses: BLOCKED (already blocked), COMPLETED (can't block completed)
-    const validStatuses: string[] = [GoalStatus.TODO, GoalStatus.DOING];
+    const validStatuses: string[] = [GoalStatus.TODO, GoalStatus.DOING, GoalStatus.INREVIEW];
     const isValid = validStatuses.includes(state.status);
 
     return {

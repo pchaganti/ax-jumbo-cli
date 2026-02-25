@@ -118,7 +118,7 @@ export class SessionStartTextRenderer {
       "For example, \"I can see we've recently worked on X, Y, Z. ",
       "Everything was completed without blockers. Goals A, B, and N ",
       "are planned. Do you want to start with A, or something else?\"",
-      "IMPORTANT: Run 'jumbo goal start --goal-id <id>' before doing any work!",
+      "IMPORTANT: Run 'jumbo goal start --id <id>' before doing any work!",
     ];
 
     return llmInstruction.join("\n");
@@ -165,7 +165,7 @@ export class SessionStartTextRenderer {
       return {
         count: 0,
         message:
-          "No goals currently in progress. Use 'jumbo goal start --goal-id <id>' to begin working on a goal.",
+          "No goals currently in progress. Use 'jumbo goal start --id <id>' to begin working on a goal.",
       };
     }
 
@@ -258,7 +258,7 @@ export class SessionStartTextRenderer {
 
     const llmInstruction =
       context.context.pausedGoals.length > 0
-        ? "\n\n@LLM: Goals were paused. To resume a paused goal, run:\n  jumbo goal resume --goal-id <goal-id>"
+        ? "\n\n@LLM: Goals were paused. To resume a paused goal, run:\n  jumbo goal resume --id <goal-id>"
         : undefined;
 
     return { data: contextData, llmInstruction };

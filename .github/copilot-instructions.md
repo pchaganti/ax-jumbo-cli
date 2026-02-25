@@ -11,13 +11,13 @@ Run `jumbo session start`
 
 ### After Compaction/Compression
 If a goal is actively being implemented.  
-Run `jumbo goal resume --goal-id {active-goal-id}`
+Run `jumbo goal resume --id {active-goal-id}`
 
 ### Before Finishing a Session
 Run `jumbo session end --focus {focus-description}` --summary {summary-of-what-transpired}
 
 ### Before Starting Work on a Goal
-Run `jumbo goal start --goal-id <id>`
+Run `jumbo goal start --id <id>`
 
 ### Be Proactive
 Be vigilant in identifying insights, from your interactions with the user, that match the command types and ask the user if they would like you to register them with Jumbo.

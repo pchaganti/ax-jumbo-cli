@@ -35,6 +35,10 @@ export class GoalListOutputBuilder {
         return "[IN-REVIEW]";
       case "qualified":
         return "[QUALIFIED]";
+      case "rejected":
+        return "[REJECTED]";
+      case "unblocked":
+        return "[UNBLOCKED]";
       default:
         return `[${status.toUpperCase()}]`;
     }
@@ -73,8 +77,9 @@ export class GoalListOutputBuilder {
       "paused": 2,
       "doing": 3,
       "blocked": 4,
-      "refined": 5,
-      "to-do": 6
+      "unblocked": 5,
+      "refined": 6,
+      "to-do": 7
     };
 
     const sortedGoals = [...activeGoals].sort((a: GoalView, b: GoalView) => {
@@ -117,8 +122,9 @@ export class GoalListOutputBuilder {
       "paused": 2,
       "doing": 3,
       "blocked": 4,
-      "refined": 5,
-      "to-do": 6
+      "unblocked": 5,
+      "refined": 6,
+      "to-do": 7
     };
 
     const sortedGoals = [...activeGoals].sort((a: GoalView, b: GoalView) => {

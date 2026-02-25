@@ -122,7 +122,7 @@ describe("SessionStartTextRenderer", () => {
 
       expect(result).toContain("@LLM:");
       expect(result).toContain("Goals were paused");
-      expect(result).toContain("jumbo goal resume --goal-id");
+      expect(result).toContain("jumbo goal resume --id");
     });
 
     it("should not include @LLM resume prompt when no goals are paused", () => {

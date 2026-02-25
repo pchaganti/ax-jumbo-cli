@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Goals must be submitted for review with `jumbo goal review` after work is done
   - After review, goals must be qualified with `jumbo goal qualify`
   - Only goals with `qualified` status can be completed with `jumbo goal complete`
-  - **Migration**: If you have goals in `doing` status that you want to complete, you'll need to first run `jumbo goal review --goal-id <id>` then `jumbo goal qualify --goal-id <id>` before completing them
+  - **Migration**: If you have goals in `doing` status that you want to complete, you'll need to first run `jumbo goal review --id <id>` then `jumbo goal qualify --id <id>` before completing them
 
 - **Command renamed**: The `jumbo goal updateProgress` command has been renamed to `jumbo goal update-progress` (kebab-case) for consistency with other multi-word commands.
   - Old command: `jumbo goal updateProgress` (no longer works)
@@ -35,16 +35,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Goal review workflow**: New two-step quality assurance workflow for goals before completion:
-  - `jumbo goal review --goal-id <id>` - Submit a goal for review (transitions from `doing` to `in-review`)
-  - `jumbo goal qualify --goal-id <id>` - Qualify a reviewed goal (transitions from `in-review` to `qualified`)
+  - `jumbo goal review --id <id>` - Submit a goal for review (transitions from `doing` to `in-review`)
+  - `jumbo goal qualify --id <id>` - Qualify a reviewed goal (transitions from `in-review` to `qualified`)
   - Goals in `in-review` or `qualified` status are included in session context
 
 - **Goal pause/resume**: Goals can now be paused and resumed independently of sessions:
-  - `jumbo goal pause --goal-id <id>` - Pause work on a goal
-  - `jumbo goal resume --goal-id <id>` - Resume a paused goal
+  - `jumbo goal pause --id <id>` - Pause work on a goal
+  - `jumbo goal resume --id <id>` - Resume a paused goal
   - Paused goals are included in session context and goals list
 
-- **Goal progress tracking**: Track progress notes on goals with `jumbo goal update-progress --goal-id <id> --progress <text>`
+- **Goal progress tracking**: Track progress notes on goals with `jumbo goal update-progress --id <id> --progress <text>`
 
 - **Worker identification**: The system now tracks which worker (agent/user) is working on each goal, enabling proper claim management across sessions
 
