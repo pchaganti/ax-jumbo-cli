@@ -75,9 +75,13 @@ export async function goalRefine(
 
     // 2. Branch based on mode
     if (options.interactive) {
-      // Interactive mode: renderGoalDetails + runInteractiveRelationFlow + transition
+      // Interactive mode: renderGoalDetails + transition + runInteractiveRelationFlow
       const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);
       renderer.info(detailsOutput.toHumanReadable());
+
+      const response = await container.refineGoalController.handle({ goalId: options.id });
+      const successOutput = outputBuilder.buildSuccess(response.goalId, response.status);
+      renderer.info(successOutput.toHumanReadable());
 
       const createdRelations = await runInteractiveRelationFlow(options.id, container);
 
@@ -86,10 +90,6 @@ export async function goalRefine(
         const relationsOutput = outputBuilder.buildCreatedRelations(createdRelations);
         renderer.info(relationsOutput.toHumanReadable());
       }
-
-      const response = await container.refineGoalController.handle({ goalId: options.id });
-      const successOutput = outputBuilder.buildSuccess(response.goalId, response.status);
-      renderer.info(successOutput.toHumanReadable());
     } else {
       // Default mode: renderGoalDetails + transition to in-refinement
       const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);

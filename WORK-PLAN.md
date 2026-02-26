@@ -486,14 +486,7 @@ jumbo goal add
  goal_5860f626-a3a9-4791-9b10-a81c9bb4eb2a
 
 # Goal 14
-jumbo goal add
-  --title "G14: Prerequisite enforcement per work mode"
-  --objective "Implement mode-specific prerequisite satisfaction rules: plan requires prereqs at REFINED+, implement requires prereqs at SUBMITTED+, review and codify have no prerequisite checks."
-  --criteria "Plan mode skips goals whose prerequisites are not yet REFINED"
-  --criteria "Implement mode skips goals whose prerequisites are not yet SUBMITTED"
-  --criteria "Review and codify modes ignore prerequisites"
-  --criteria "State ordering is explicit and testable"
-  --prerequisite-goals GOAL_10_ID GOAL_11_ID GOAL_12_ID GOAL_13_ID
+jumbo goal add --title "G14: Prerequisite enforcement" --objective "Implement prerequisite satisfaction rules: 'jumbo goal start' requires prereqs at SUBMITTED+, review and codify have no prerequisite checks." --criteria "'jumbo goal start' rejects goals whose prerequisites are not yet APPROVED, CODIFYING or DONE" --criteria "Review and codify modes ignore prerequisites" --criteria "State ordering is explicit and testable"
 
 # Goal 15
 jumbo goal add --title "G15: Update goal reset for new states" --objective "Extend 'jumbo goal reset' to handle all new states, restricting reset target to the goal's last waiting state — resetting to an in-progress state is not permitted." --criteria "'jumbo goal reset' works for goals in any of the new states" --criteria "Reset target is restricted to the goal's last waiting state" --criteria "Resetting to an in-progress state is rejected with a deterministic error" --criteria "Active claims are released on reset" --prerequisite-goals goal_39ea9943-371b-4078-a92b-dab5590cf1b1 --previous-goal goal_5860f626-a3a9-4791-9b10-a81c9bb4eb2a

@@ -484,6 +484,8 @@ import { LocalAddComponentGateway } from "../../application/context/components/a
 import { AddComponentController } from "../../application/context/components/add/AddComponentController.js";
 import { LocalGetComponentsGateway } from "../../application/context/components/list/LocalGetComponentsGateway.js";
 import { GetComponentsController } from "../../application/context/components/list/GetComponentsController.js";
+import { LocalSearchComponentsGateway } from "../../application/context/components/search/LocalSearchComponentsGateway.js";
+import { SearchComponentsController } from "../../application/context/components/search/SearchComponentsController.js";
 import { UpdateComponentCommandHandler } from "../../application/context/components/update/UpdateComponentCommandHandler.js";
 import { LocalUpdateComponentGateway } from "../../application/context/components/update/LocalUpdateComponentGateway.js";
 import { UpdateComponentController } from "../../application/context/components/update/UpdateComponentController.js";
@@ -1338,6 +1340,8 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     );
     const getComponentsGateway = new LocalGetComponentsGateway(componentViewReader);
     const getComponentsController = new GetComponentsController(getComponentsGateway);
+    const searchComponentsGateway = new LocalSearchComponentsGateway(componentViewReader);
+    const searchComponentsController = new SearchComponentsController(searchComponentsGateway);
     const updateComponentCommandHandler = new UpdateComponentCommandHandler(
       componentUpdatedEventStore,
       eventBus,
@@ -1896,6 +1900,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       // Component Controllers
       addComponentController,
       getComponentsController,
+      searchComponentsController,
       updateComponentController,
       renameComponentController,
       showComponentController,

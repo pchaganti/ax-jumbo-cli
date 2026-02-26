@@ -143,9 +143,15 @@ export class GoalRefineOutputBuilder {
       "  jumbo invariants list    - Non-negotiable constraints\n" +
       "  jumbo guidelines list    - Recommended practices\n" +
       "  jumbo decisions list     - Architectural decisions\n" +
-      "  jumbo components list    - System components\n" +
+      "  jumbo components search  - Search components (preferred over list)\n" +
       "  jumbo dependencies list  - External dependencies\n" +
-      "  jumbo architecture view  - Architecture overview"
+      "  jumbo architecture view  - Architecture overview\n" +
+      "\nComponent search (use targeted searches to reduce token cost):\n" +
+      "  jumbo components search --name <substring>     Substring match (or use * wildcards: Auth*, *Service)\n" +
+      "  jumbo components search --type <type>           Exact type: service, lib, api, db, ui, etc.\n" +
+      "  jumbo components search --query <text>          Free-text across description and responsibility\n" +
+      "  jumbo components search --output compact        Compact output: id, name, type only\n" +
+      "  jumbo components list                           Full dump (use only if search is insufficient)"
     );
 
     // Relation add syntax

@@ -86,6 +86,15 @@ export class GoalCodifyOutputBuilder {
       "  Add: jumbo relation add --from-type <type> --from-id <id> --to-type <type> --to-id <id> --type <type> --strength <level>"
     );
 
+    this.builder.addPrompt(
+      "## Update Documentation\n" +
+      "@LLM: Did you make any changes that should be reflected in the user documentation?\n" +
+      "Did the changes introduce any new features, modify existing behavior, or fix bugs that users should be aware of?\n" +
+      "If yes to either, then:\n" +
+      "  - Propose updates to the ~/docs/*\n" +
+      "  - Update the CHANGELOG.md\n"
+    );
+
     // Next step
     this.builder.addPrompt(
       "## Next Step\n" +

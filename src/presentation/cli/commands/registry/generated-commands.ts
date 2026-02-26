@@ -24,6 +24,7 @@ import { componentDeprecate, metadata as componentDeprecateMeta } from '../../co
 import { componentsList, metadata as componentsListMeta } from '../../commands/components/list/components.list.js';
 import { componentRemove, metadata as componentRemoveMeta } from '../../commands/components/remove/component.remove.js';
 import { componentRename, metadata as componentRenameMeta } from '../../commands/components/rename/component.rename.js';
+import { componentsSearch, metadata as componentsSearchMeta } from '../../commands/components/search/components.search.js';
 import { componentShow, metadata as componentShowMeta } from '../../commands/components/show/component.show.js';
 import { componentUpdate, metadata as componentUpdateMeta } from '../../commands/components/update/component.update.js';
 import { decisionAdd, metadata as decisionAddMeta } from '../../commands/decisions/add/decision.add.js';
@@ -159,6 +160,11 @@ export const commands: RegisteredCommand[] = [
     path: 'component rename',
     metadata: componentRenameMeta,
     handler: componentRename
+  },
+  {
+    path: 'components search',
+    metadata: componentsSearchMeta,
+    handler: componentsSearch
   },
   {
     path: 'component show',

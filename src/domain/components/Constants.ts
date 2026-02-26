@@ -63,6 +63,10 @@ export const ComponentLimits = {
   DEPRECATION_REASON_MAX_LENGTH: 500
 } as const;
 
+// Validation arrays derived from constants (no magic strings)
+export const VALID_COMPONENT_TYPES: readonly string[] = Object.values(ComponentType);
+export const VALID_COMPONENT_STATUSES: readonly string[] = Object.values(ComponentStatus);
+
 // Helper function
 export function formatErrorMessage(
   template: string,

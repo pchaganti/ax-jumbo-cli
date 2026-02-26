@@ -177,7 +177,7 @@ export class GoalResumeOutputBuilder {
     this.builder.addPrompt(
       "=".repeat(80) + "\n" +
       "🚀 IMPORTANT NEXT STEP\n" +
-      `Run: jumbo goal review --id ${goal.goalId}\n` +
+      `Run: jumbo goal submit --id ${goal.goalId}\n` +
       "=".repeat(80)
     );
 

@@ -139,6 +139,7 @@ import { IArchitectureReader } from "../context/architecture/IArchitectureReader
 import { GetArchitectureController } from "../context/architecture/get/GetArchitectureController.js";
 import { AddComponentController } from "../context/components/add/AddComponentController.js";
 import { GetComponentsController } from "../context/components/list/GetComponentsController.js";
+import { SearchComponentsController } from "../context/components/search/SearchComponentsController.js";
 import { UpdateComponentController } from "../context/components/update/UpdateComponentController.js";
 import { RenameComponentController } from "../context/components/rename/RenameComponentController.js";
 import { IComponentAddedProjector } from "../context/components/add/IComponentAddedProjector.js";
@@ -457,6 +458,7 @@ export interface IApplicationContainer {
   // Component Controllers
   addComponentController: AddComponentController;
   getComponentsController: GetComponentsController;
+  searchComponentsController: SearchComponentsController;
   updateComponentController: UpdateComponentController;
   renameComponentController: RenameComponentController;
 
