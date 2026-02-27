@@ -12,7 +12,7 @@
  * Command option definition
  */
 export interface CommandOption {
-  /** Option flags (e.g., "--goal-id <goalId>" or "-g, --goal-id <goalId>") */
+  /** Option flags (e.g., "--id <goalId>" or "-g, --id <goalId>") */
   flags: string;
   /** Human-readable description of what this option does */
   description: string;

@@ -89,7 +89,7 @@ Create a goal directly:
 *NOTE: Agents should do this automatially if the Jumbo workflow is used. It can be useful to utilize Jumbo as a backlog to track your work. If you want to implement a goal manually, this command can be used in parallel without disrupting your agent flow. When ready to work on a goal:*
 
 ```bash
-> jumbo goal start --goal-id goal_abc123
+> jumbo goal start --id goal_abc123
 ```
 
 This:
@@ -108,7 +108,7 @@ Your AI agent receives all relevant project knowledge to begin work immediately.
 Display complete goal information:
 
 ```bash
-> jumbo goal show --goal-id goal_abc123
+> jumbo goal show --id goal_abc123
 ```
 
 Output includes:
@@ -128,19 +128,19 @@ Output includes:
 Modify goal properties without changing status:
 
 ```bash
-> jumbo goal update --goal-id goal_abc123 --objective "Updated objective"
+> jumbo goal update --id goal_abc123 --objective "Updated objective"
 ```
 
 Update criteria:
 
 ```bash
-> jumbo goal update --goal-id goal_abc123 --criteria "New criterion 1" "New criterion 2"
+> jumbo goal update --id goal_abc123 --criteria "New criterion 1" "New criterion 2"
 ```
 
 Update multiple fields:
 
 ```bash
-> jumbo goal update --goal-id goal_abc123 --objective "New objective" --scope-in "ComponentA"
+> jumbo goal update --id goal_abc123 --objective "New objective" --scope-in "ComponentA"
 ```
 
 Partial updates are supported—only specified fields change.
@@ -153,7 +153,7 @@ Partial updates are supported—only specified fields change.
 When progress is impeded:
 
 ```bash
-> jumbo goal block --goal-id goal_abc123 --note "Waiting for API credentials"
+> jumbo goal block --id goal_abc123 --note "Waiting for API credentials"
 ```
 
 The blocker reason is recorded for future reference. This preserves context about why work stopped.
@@ -166,13 +166,13 @@ The blocker reason is recorded for future reference. This preserves context abou
 When the blocker is resolved:
 
 ```bash
-> jumbo goal unblock --goal-id goal_abc123
+> jumbo goal unblock --id goal_abc123
 ```
 
 Add a resolution note:
 
 ```bash
-> jumbo goal unblock --goal-id goal_abc123 --note "Credentials received from DevOps"
+> jumbo goal unblock --id goal_abc123 --note "Credentials received from DevOps"
 ```
 
 The goal returns to `doing` status.
@@ -185,7 +185,7 @@ The goal returns to `doing` status.
 When success criteria are met:
 
 ```bash
-> jumbo goal complete --goal-id goal_abc123
+> jumbo goal complete --id goal_abc123
 ```
 
 Jumbo prompts your AI agent to reflect on lessons learned and suggest knowledge to capture (invariants, guidelines, decisions).
@@ -200,7 +200,7 @@ If the goal is chained to another goal, Jumbo suggests the next goal to start.
 Return to an in-progress goal in a new session:
 
 ```bash
-> jumbo goal resume --goal-id goal_abc123
+> jumbo goal resume --id goal_abc123
 ```
 
 This reloads the goal context without changing status. Use this when:
@@ -219,7 +219,7 @@ This reloads the goal context without changing status. Use this when:
 Move a goal back to `to-do` status:
 
 ```bash
-> jumbo goal reset --goal-id goal_abc123
+> jumbo goal reset --id goal_abc123
 ```
 
 Use this to:
@@ -237,7 +237,7 @@ Use this to:
 Remove a goal from active tracking:
 
 ```bash
-> jumbo goal remove --goal-id goal_abc123
+> jumbo goal remove --id goal_abc123
 ```
 
 Event history is preserved; only the active view is removed.

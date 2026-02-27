@@ -17,6 +17,7 @@ import { IEventStore } from "../persistence/IEventStore.js";
 import { IEventBus } from "../messaging/IEventBus.js";
 import { IClock } from "../time-and-date/IClock.js";
 import { RebuildDatabaseController } from "../maintenance/db/rebuild/RebuildDatabaseController.js";
+import { UpgradeCommandHandler } from "../maintenance/upgrade/UpgradeCommandHandler.js";
 import { RepairMaintenanceController } from "../maintenance/repair/RepairMaintenanceController.js";
 import { ILogger } from "../logging/ILogger.js";
 import { IProjectRootResolver } from "../context/project/IProjectRootResolver.js";
@@ -63,11 +64,11 @@ import { ViewWorkerController } from "../context/host/workers/view/ViewWorkerCon
 // Goal Controllers
 import { AddGoalController } from "../context/goals/add/AddGoalController.js";
 import { StartGoalController } from "../context/goals/start/StartGoalController.js";
-import { CompleteGoalController } from "../context/goals/complete/CompleteGoalController.js";
 import { ReviewGoalController } from "../context/goals/review/ReviewGoalController.js";
 import { IGoalSubmittedForReviewEventWriter } from "../context/goals/review/IGoalSubmittedForReviewEventWriter.js";
 import { IGoalSubmittedForReviewEventReader } from "../context/goals/review/IGoalSubmittedForReviewEventReader.js";
 import { QualifyGoalController } from "../context/goals/qualify/QualifyGoalController.js";
+import { CommitGoalController } from "../context/goals/commit/CommitGoalController.js";
 import { RefineGoalController } from "../context/goals/refine/RefineGoalController.js";
 import { ResetGoalController } from "../context/goals/reset/ResetGoalController.js";
 import { BlockGoalController } from "../context/goals/block/BlockGoalController.js";
@@ -81,6 +82,24 @@ import { UpdateGoalController } from "../context/goals/update/UpdateGoalControll
 import { UpdateGoalProgressController } from "../context/goals/update-progress/UpdateGoalProgressController.js";
 import { IGoalQualifiedEventWriter } from "../context/goals/qualify/IGoalQualifiedEventWriter.js";
 import { IGoalQualifiedEventReader } from "../context/goals/qualify/IGoalQualifiedEventReader.js";
+import { IGoalCommitEventWriter } from "../context/goals/commit/IGoalCommitEventWriter.js";
+import { IGoalCommitEventReader } from "../context/goals/commit/IGoalCommitEventReader.js";
+import { RejectGoalController } from "../context/goals/reject/RejectGoalController.js";
+import { IGoalRejectedEventWriter } from "../context/goals/reject/IGoalRejectedEventWriter.js";
+import { IGoalRejectedEventReader } from "../context/goals/reject/IGoalRejectedEventReader.js";
+import { SubmitGoalController } from "../context/goals/submit/SubmitGoalController.js";
+import { IGoalSubmittedEventWriter } from "../context/goals/submit/IGoalSubmittedEventWriter.js";
+import { IGoalSubmittedEventReader } from "../context/goals/submit/IGoalSubmittedEventReader.js";
+import { CodifyGoalController } from "../context/goals/codify/CodifyGoalController.js";
+import { IGoalCodifyingStartedEventWriter } from "../context/goals/codify/IGoalCodifyingStartedEventWriter.js";
+import { IGoalCodifyingStartedEventReader } from "../context/goals/codify/IGoalCodifyingStartedEventReader.js";
+import { IGoalCodifyingStartedProjector } from "../context/goals/codify/IGoalCodifyingStartedProjector.js";
+import { IGoalCodifyReader } from "../context/goals/codify/IGoalCodifyReader.js";
+import { CloseGoalController } from "../context/goals/close/CloseGoalController.js";
+import { IGoalClosedEventWriter } from "../context/goals/close/IGoalClosedEventWriter.js";
+import { IGoalClosedEventReader } from "../context/goals/close/IGoalClosedEventReader.js";
+import { IGoalClosedProjector } from "../context/goals/close/IGoalClosedProjector.js";
+import { IGoalCloseReader } from "../context/goals/close/IGoalCloseReader.js";
 
 // Audience Pain Controllers
 import { AddAudiencePainController } from "../context/audience-pains/add/AddAudiencePainController.js";
@@ -120,6 +139,7 @@ import { IArchitectureReader } from "../context/architecture/IArchitectureReader
 import { GetArchitectureController } from "../context/architecture/get/GetArchitectureController.js";
 import { AddComponentController } from "../context/components/add/AddComponentController.js";
 import { GetComponentsController } from "../context/components/list/GetComponentsController.js";
+import { SearchComponentsController } from "../context/components/search/SearchComponentsController.js";
 import { UpdateComponentController } from "../context/components/update/UpdateComponentController.js";
 import { RenameComponentController } from "../context/components/rename/RenameComponentController.js";
 import { IComponentAddedProjector } from "../context/components/add/IComponentAddedProjector.js";
@@ -327,6 +347,7 @@ export interface IApplicationContainer {
   // Maintenance Controllers
   rebuildDatabaseController: RebuildDatabaseController;
   repairMaintenanceController: RepairMaintenanceController;
+  upgradeCommandHandler: UpgradeCommandHandler;
 
   // CLI Version
   cliVersionReader: ICliVersionReader;
@@ -349,6 +370,11 @@ export interface IApplicationContainer {
   goalProgressUpdatedEventStore: IGoalProgressUpdatedEventWriter & IGoalProgressUpdatedEventReader;
   goalSubmittedForReviewEventStore: IGoalSubmittedForReviewEventWriter & IGoalSubmittedForReviewEventReader;
   goalQualifiedEventStore: IGoalQualifiedEventWriter & IGoalQualifiedEventReader;
+  goalCommittedEventStore: IGoalCommitEventWriter & IGoalCommitEventReader;
+  goalRejectedEventStore: IGoalRejectedEventWriter & IGoalRejectedEventReader;
+  goalSubmittedEventStore: IGoalSubmittedEventWriter & IGoalSubmittedEventReader;
+  goalCodifyingStartedEventStore: IGoalCodifyingStartedEventWriter & IGoalCodifyingStartedEventReader;
+  goalClosedEventStore: IGoalClosedEventWriter & IGoalClosedEventReader;
 
   // Work Category - Session Projection Stores - decomposed by use case
   sessionStartedProjector: ISessionStartedProjector;
@@ -368,6 +394,8 @@ export interface IApplicationContainer {
   goalResetProjector: IGoalResetProjector & IGoalResetReader;
   goalRemovedProjector: IGoalRemovedProjector & IGoalRemoveReader;
   goalProgressUpdatedProjector: IGoalProgressUpdatedProjector & IGoalProgressUpdateReader;
+  goalCodifyingStartedProjector: IGoalCodifyingStartedProjector & IGoalCodifyReader;
+  goalClosedProjector: IGoalClosedProjector & IGoalCloseReader;
   goalContextReader: IGoalReader;
   goalContextAssembler: IGoalContextAssembler;
   goalContextQueryHandler: GoalContextQueryHandler;
@@ -383,9 +411,13 @@ export interface IApplicationContainer {
   // Goal Controllers
   addGoalController: AddGoalController;
   startGoalController: StartGoalController;
-  completeGoalController: CompleteGoalController;
   reviewGoalController: ReviewGoalController;
   qualifyGoalController: QualifyGoalController;
+  commitGoalController: CommitGoalController;
+  rejectGoalController: RejectGoalController;
+  submitGoalController: SubmitGoalController;
+  codifyGoalController: CodifyGoalController;
+  closeGoalController: CloseGoalController;
   blockGoalController: BlockGoalController;
   unblockGoalController: UnblockGoalController;
   getGoalsController: GetGoalsController;
@@ -426,6 +458,7 @@ export interface IApplicationContainer {
   // Component Controllers
   addComponentController: AddComponentController;
   getComponentsController: GetComponentsController;
+  searchComponentsController: SearchComponentsController;
   updateComponentController: UpdateComponentController;
   renameComponentController: RenameComponentController;
 

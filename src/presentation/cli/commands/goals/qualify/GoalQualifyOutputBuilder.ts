@@ -8,12 +8,28 @@ import { QualifyGoalResponse } from '../../../../../application/context/goals/qu
  *
  * Pattern: Output builders contain ALL prompt and output content.
  * Command files must not duplicate or add additional output after calling the builder.
+ *
+ * @deprecated Use GoalApproveOutputBuilder instead. This command is deprecated
+ * in favor of 'jumbo goal approve'.
  */
 export class GoalQualifyOutputBuilder {
   private builder: TerminalOutputBuilder;
 
   constructor() {
     this.builder = new TerminalOutputBuilder();
+  }
+
+  /**
+   * Build deprecation warning output.
+   * Advises users to switch to 'jumbo goal approve'.
+   */
+  buildDeprecationWarning(): TerminalOutput {
+    this.builder.reset();
+    this.builder.addPrompt(
+      "⚠ Deprecation Notice: 'jumbo goal qualify' is deprecated. Use 'jumbo goal approve' instead.\n" +
+      "---"
+    );
+    return this.builder.build();
   }
 
   /**
@@ -31,17 +47,17 @@ export class GoalQualifyOutputBuilder {
       `Status: ${response.status}\n` +
       "---\n\n" +
       "## QA Review Passed\n" +
-      "The goal has been verified and qualified for completion.\n" +
+      "The goal has been verified and approved for codification.\n" +
       "---"
     );
 
     // Next steps
     let nextSteps = "## Next Steps\n" +
-                    "Complete the goal:\n" +
-                    `  Run: jumbo goal complete --id ${response.goalId}`;
+                    "Codify the goal:\n" +
+                    `  Run: jumbo goal codify --id ${response.goalId}`;
 
     if (response.nextGoalId) {
-      nextSteps += "\n\nAfter completion, the next goal in the queue is:\n" +
+      nextSteps += "\n\nAfter closing, the next goal in the queue is:\n" +
                    `  Goal ID: ${response.nextGoalId}`;
     }
 

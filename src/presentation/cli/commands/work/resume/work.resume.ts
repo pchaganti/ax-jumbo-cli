@@ -114,7 +114,7 @@ function renderResumeInstruction(sessionContext: EnrichedSessionContext): string
 
   if (sessionContext.instructions.includes("paused-goals-context")) {
     lines.push(
-      "IMPORTANT: There are paused goals. Run 'jumbo goal resume --goal-id <id>' to resume a specific goal."
+      "IMPORTANT: There are paused goals. Run 'jumbo goal resume --id <id>' to resume a specific goal."
     );
   }
 

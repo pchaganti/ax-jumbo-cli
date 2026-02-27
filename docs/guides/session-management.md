@@ -82,12 +82,12 @@ The focus and summary become orientation context for your next session.
 jumbo session start
 
 # Pick a goal to work on
-jumbo goal start --goal-id <id>
+jumbo goal start --id <id>
 
 # Work with your AI agent...
 
 # Complete the goal when done
-jumbo goal complete --goal-id <id>
+jumbo goal complete --id <id>
 
 # End of day: End the session
 jumbo session end --focus "Completed user authentication module"
@@ -100,14 +100,14 @@ jumbo session end --focus "Completed user authentication module"
 jumbo session start
 
 # Work on first goal
-jumbo goal start --goal-id goal_123
+jumbo goal start --id goal_123
 # ... complete work ...
-jumbo goal complete --goal-id goal_123
+jumbo goal complete --id goal_123
 
 # Start another goal in the same session
-jumbo goal start --goal-id goal_456
+jumbo goal start --id goal_456
 # ... complete work ...
-jumbo goal complete --goal-id goal_456
+jumbo goal complete --id goal_456
 
 # End session with summary of all work
 jumbo session end --focus "Completed auth and added user profiles"
@@ -120,7 +120,7 @@ jumbo session end --focus "Completed auth and added user profiles"
 jumbo session start
 
 # Resume an in-progress goal (already in 'doing' status)
-jumbo goal resume --goal-id goal_789
+jumbo goal resume --id goal_789
 ```
 
 ---

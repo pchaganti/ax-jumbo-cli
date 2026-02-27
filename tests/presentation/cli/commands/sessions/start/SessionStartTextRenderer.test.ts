@@ -122,7 +122,7 @@ describe("SessionStartTextRenderer", () => {
 
       expect(result).toContain("@LLM:");
       expect(result).toContain("Goals were paused");
-      expect(result).toContain("jumbo goal resume --goal-id");
+      expect(result).toContain("jumbo goal resume --id");
     });
 
     it("should not include @LLM resume prompt when no goals are paused", () => {
@@ -200,7 +200,7 @@ describe("SessionStartTextRenderer", () => {
     it("should produce blocks for all context sections", () => {
       const context = createContext({
         activeGoals: [{ goalId: "g1", objective: "Active task", status: "doing" } as GoalView],
-        plannedGoals: [{ goalId: "g2", objective: "Planned task", status: "to-do" } as GoalView],
+        plannedGoals: [{ goalId: "g2", objective: "Planned task", status: "defined" } as GoalView],
       });
 
       const result = renderer.render(context);

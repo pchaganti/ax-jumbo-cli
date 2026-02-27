@@ -24,6 +24,7 @@ import { componentDeprecate, metadata as componentDeprecateMeta } from '../../co
 import { componentsList, metadata as componentsListMeta } from '../../commands/components/list/components.list.js';
 import { componentRemove, metadata as componentRemoveMeta } from '../../commands/components/remove/component.remove.js';
 import { componentRename, metadata as componentRenameMeta } from '../../commands/components/rename/component.rename.js';
+import { componentsSearch, metadata as componentsSearchMeta } from '../../commands/components/search/components.search.js';
 import { componentShow, metadata as componentShowMeta } from '../../commands/components/show/component.show.js';
 import { componentUpdate, metadata as componentUpdateMeta } from '../../commands/components/update/component.update.js';
 import { decisionAdd, metadata as decisionAddMeta } from '../../commands/decisions/add/decision.add.js';
@@ -36,18 +37,23 @@ import { dependenciesList, metadata as dependenciesListMeta } from '../../comman
 import { dependencyRemove, metadata as dependencyRemoveMeta } from '../../commands/dependencies/remove/dependency.remove.js';
 import { dependencyUpdate, metadata as dependencyUpdateMeta } from '../../commands/dependencies/update/dependency.update.js';
 import { goalAdd, metadata as goalAddMeta } from '../../commands/goals/add/goal.add.js';
+import { goalApprove, metadata as goalApproveMeta } from '../../commands/goals/approve/goal.approve.js';
 import { goalBlock, metadata as goalBlockMeta } from '../../commands/goals/block/goal.block.js';
-import { goalComplete, metadata as goalCompleteMeta } from '../../commands/goals/complete/goal.complete.js';
+import { goalClose, metadata as goalCloseMeta } from '../../commands/goals/close/goal.close.js';
+import { goalCodify, metadata as goalCodifyMeta } from '../../commands/goals/codify/goal.codify.js';
+import { goalCommit, metadata as goalCommitMeta } from '../../commands/goals/commit/goal.commit.js';
 import { goalsList, metadata as goalsListMeta } from '../../commands/goals/list/goals.list.js';
 import { goalPause, metadata as goalPauseMeta } from '../../commands/goals/pause/goal.pause.js';
 import { goalQualify, metadata as goalQualifyMeta } from '../../commands/goals/qualify/goal.qualify.js';
 import { goalRefine, metadata as goalRefineMeta } from '../../commands/goals/refine/goal.refine.js';
+import { goalReject, metadata as goalRejectMeta } from '../../commands/goals/reject/goal.reject.js';
 import { goalRemove, metadata as goalRemoveMeta } from '../../commands/goals/remove/goal.remove.js';
 import { goalReset, metadata as goalResetMeta } from '../../commands/goals/reset/goal.reset.js';
 import { goalResume, metadata as goalResumeMeta } from '../../commands/goals/resume/goal.resume.js';
 import { goalReview, metadata as goalReviewMeta } from '../../commands/goals/review/goal.review.js';
 import { goalShow, metadata as goalShowMeta } from '../../commands/goals/show/goal.show.js';
 import { goalStart, metadata as goalStartMeta } from '../../commands/goals/start/goal.start.js';
+import { goalSubmit, metadata as goalSubmitMeta } from '../../commands/goals/submit/goal.submit.js';
 import { goalUnblock, metadata as goalUnblockMeta } from '../../commands/goals/unblock/goal.unblock.js';
 import { goalUpdate, metadata as goalUpdateMeta } from '../../commands/goals/update/goal.update.js';
 import { goalUpdateProgress, metadata as goalUpdateProgressMeta } from '../../commands/goals/update-progress/goal.update-progress.js';
@@ -62,6 +68,7 @@ import { invariantRemove, metadata as invariantRemoveMeta } from '../../commands
 import { invariantUpdate, metadata as invariantUpdateMeta } from '../../commands/invariants/update/invariant.update.js';
 import { dbRebuild, metadata as dbRebuildMeta } from '../../commands/maintenance/db/rebuild/db.rebuild.js';
 import { maintenanceRepair, metadata as maintenanceRepairMeta } from '../../commands/maintenance/repair/maintenance.repair.js';
+import { dbUpgrade, metadata as dbUpgradeMeta } from '../../commands/maintenance/upgrade/db.upgrade.js';
 import { projectInit, metadata as projectInitMeta } from '../../commands/project/init/project.init.js';
 import { projectUpdate, metadata as projectUpdateMeta } from '../../commands/project/update/project.update.js';
 import { relationAdd, metadata as relationAddMeta } from '../../commands/relations/add/relation.add.js';
@@ -155,6 +162,11 @@ export const commands: RegisteredCommand[] = [
     handler: componentRename
   },
   {
+    path: 'components search',
+    metadata: componentsSearchMeta,
+    handler: componentsSearch
+  },
+  {
     path: 'component show',
     metadata: componentShowMeta,
     handler: componentShow
@@ -215,14 +227,29 @@ export const commands: RegisteredCommand[] = [
     handler: goalAdd
   },
   {
+    path: 'goal approve',
+    metadata: goalApproveMeta,
+    handler: goalApprove
+  },
+  {
     path: 'goal block',
     metadata: goalBlockMeta,
     handler: goalBlock
   },
   {
-    path: 'goal complete',
-    metadata: goalCompleteMeta,
-    handler: goalComplete
+    path: 'goal close',
+    metadata: goalCloseMeta,
+    handler: goalClose
+  },
+  {
+    path: 'goal codify',
+    metadata: goalCodifyMeta,
+    handler: goalCodify
+  },
+  {
+    path: 'goal commit',
+    metadata: goalCommitMeta,
+    handler: goalCommit
   },
   {
     path: 'goals list',
@@ -243,6 +270,11 @@ export const commands: RegisteredCommand[] = [
     path: 'goal refine',
     metadata: goalRefineMeta,
     handler: goalRefine
+  },
+  {
+    path: 'goal reject',
+    metadata: goalRejectMeta,
+    handler: goalReject
   },
   {
     path: 'goal remove',
@@ -273,6 +305,11 @@ export const commands: RegisteredCommand[] = [
     path: 'goal start',
     metadata: goalStartMeta,
     handler: goalStart
+  },
+  {
+    path: 'goal submit',
+    metadata: goalSubmitMeta,
+    handler: goalSubmit
   },
   {
     path: 'goal unblock',
@@ -343,6 +380,11 @@ export const commands: RegisteredCommand[] = [
     path: 'maintenance repair',
     metadata: maintenanceRepairMeta,
     handler: maintenanceRepair
+  },
+  {
+    path: 'db upgrade',
+    metadata: dbUpgradeMeta,
+    handler: dbUpgrade
   },
   {
     path: 'project init',

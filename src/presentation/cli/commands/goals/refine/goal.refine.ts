@@ -1,8 +1,8 @@
 /**
  * CLI Command: jumbo goal refine
  *
- * Refines a goal (transitions status from 'to-do' to 'refined').
- * Goals must be refined before they can be started.
+ * Starts refinement of a goal (transitions status from 'defined' to 'in-refinement').
+ * Goals must be refined and committed before they can be started.
  *
  * In interactive mode, prompts to register relations with components,
  * dependencies, and other entities.
@@ -23,7 +23,7 @@ import { GoalRefineOutputBuilder } from "./GoalRefineOutputBuilder.js";
  * Command metadata for auto-registration
  */
 export const metadata: CommandMetadata = {
-  description: "Refine a goal by displaying details and prompting for approval before transitioning to 'refined' status",
+  description: "Start refinement of a goal by displaying details and transitioning to 'in-refinement' status",
   category: "work",
   requiredOptions: [
     {
@@ -35,27 +35,19 @@ export const metadata: CommandMetadata = {
     {
       flags: "--interactive",
       description: "Guided refinement with prompts to register relations"
-    },
-    {
-      flags: "--approve",
-      description: "Approve the goal refinement without interactive prompts"
     }
   ],
   examples: [
     {
       command: "jumbo goal refine --id goal_abc123",
-      description: "Display goal details for review (interactive mode)"
-    },
-    {
-      command: "jumbo goal refine --id goal_abc123 --approve",
-      description: "Approve and refine the goal without prompts"
+      description: "Start refinement and display goal details for review"
     },
     {
       command: "jumbo goal refine --id goal_abc123 --interactive",
       description: "Refine with interactive prompts to register relations"
     }
   ],
-  related: ["goal add", "goal start", "relation add"]
+  related: ["goal add", "goal commit", "goal start", "relation add"]
 };
 
 /**
@@ -66,7 +58,6 @@ export async function goalRefine(
   options: {
     id: string;
     interactive?: boolean;
-    approve?: boolean;
   },
   container: IApplicationContainer
 ) {
@@ -74,7 +65,7 @@ export async function goalRefine(
   const outputBuilder = new GoalRefineOutputBuilder();
 
   try {
-    // 1. Verify goal exists and is in to-do status
+    // 1. Verify goal exists and is in defined status
     const goalView = await container.goalContextReader.findById(options.id);
     if (!goalView) {
       const output = outputBuilder.buildGoalNotFoundError(options.id);
@@ -84,9 +75,13 @@ export async function goalRefine(
 
     // 2. Branch based on mode
     if (options.interactive) {
-      // Interactive mode: renderGoalDetails + runInteractiveRelationFlow + approveGoal
+      // Interactive mode: renderGoalDetails + transition + runInteractiveRelationFlow
       const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);
       renderer.info(detailsOutput.toHumanReadable());
+
+      const response = await container.refineGoalController.handle({ goalId: options.id });
+      const successOutput = outputBuilder.buildSuccess(response.goalId, response.status);
+      renderer.info(successOutput.toHumanReadable());
 
       const createdRelations = await runInteractiveRelationFlow(options.id, container);
 
@@ -95,26 +90,14 @@ export async function goalRefine(
         const relationsOutput = outputBuilder.buildCreatedRelations(createdRelations);
         renderer.info(relationsOutput.toHumanReadable());
       }
-
-      const response = await container.refineGoalController.handle({ goalId: options.id });
-      const successOutput = outputBuilder.buildSuccess(response.goalId, response.status);
-      renderer.info(successOutput.toHumanReadable());
-    } else if (options.approve) {
-      // Approve mode: renderGoalDetails + renderLlmRefinementPrompt + approveGoal
-      const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);
-      renderer.info(detailsOutput.toHumanReadable());
-
-      const response = await container.refineGoalController.handle({ goalId: options.id });
-      const successOutput = outputBuilder.buildSuccess(response.goalId, response.status);
-      renderer.info(successOutput.toHumanReadable());
     } else {
-      // Default mode: renderGoalDetails + renderLlmRefinementPrompt + show approval instruction (no status change)
+      // Default mode: renderGoalDetails + transition to in-refinement
       const detailsOutput = outputBuilder.buildGoalDetailsAndRefinementPrompt(goalView);
       renderer.info(detailsOutput.toHumanReadable());
 
-      // Show approval instruction
-      const approvalOutput = outputBuilder.buildApprovalInstruction(options.id);
-      renderer.info(approvalOutput.toHumanReadable());
+      const response = await container.refineGoalController.handle({ goalId: options.id });
+      const successOutput = outputBuilder.buildSuccess(response.goalId, response.status);
+      renderer.info(successOutput.toHumanReadable());
     }
 
   } catch (error) {

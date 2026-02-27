@@ -16,7 +16,7 @@ description: Use when a Jumbo goal needs QA review after implementation. Runs th
 ### 1. Initiate Review
 
 ```bash
-jumbo goal review --goal-id <goal-id>
+jumbo goal review --id <goal-id>
 ```
 
 Read the entire output carefully. It contains the verification criteria assembled from the goal's relations.
@@ -29,7 +29,7 @@ For each success criterion listed in the output:
 2. Read the relevant code
 3. Confirm the criterion is **fully** met — not partially, not approximately
 
-If ANY criterion is not met: fix the issue, then re-run `jumbo goal review --goal-id <goal-id>`.
+If ANY criterion is not met: fix the issue, then re-run `jumbo goal review --id <goal-id>`.
 
 ### 3. Verify Scope Compliance
 
@@ -38,7 +38,7 @@ If the review output includes scope sections:
 - **In Scope**: Confirm all work was done within the listed files/areas. No under-delivery.
 - **Out of Scope**: Confirm no work leaked into excluded areas. No over-delivery.
 
-If scope is violated: adjust the implementation, then re-run `jumbo goal review --goal-id <goal-id>`.
+If scope is violated: adjust the implementation, then re-run `jumbo goal review --id <goal-id>`.
 
 ### 4. Verify Architecture Alignment
 
@@ -48,7 +48,7 @@ If the review output includes architecture:
 - **Design patterns**: Were prescribed patterns applied where applicable?
 - **Principles**: Do all new artifacts reflect the listed principles?
 
-If architecture is misaligned: fix it, then re-run `jumbo goal review --goal-id <goal-id>`.
+If architecture is misaligned: fix it, then re-run `jumbo goal review --id <goal-id>`.
 
 ### 5. Verify Related Entities
 
@@ -60,7 +60,7 @@ For each category in the review output:
 - **Invariants**: Does the implementation adhere to every listed invariant? This is non-negotiable.
 - **Guidelines**: Does the implementation follow listed guidelines?
 
-If ANY entity constraint is violated: fix the issue, then re-run `jumbo goal review --goal-id <goal-id>`.
+If ANY entity constraint is violated: fix the issue, then re-run `jumbo goal review --id <goal-id>`.
 
 ### 6. Run Tests
 
@@ -68,14 +68,14 @@ If ANY entity constraint is violated: fix the issue, then re-run `jumbo goal rev
 npm test
 ```
 
-All tests must pass. If tests fail: fix them, then re-run `jumbo goal review --goal-id <goal-id>`.
+All tests must pass. If tests fail: fix them, then re-run `jumbo goal review --id <goal-id>`.
 
 ### 7. Qualify or Re-Review
 
 **If ALL checks pass** (criteria, scope, architecture, entities, tests):
 
 ```bash
-jumbo goal qualify --goal-id <goal-id>
+jumbo goal qualify --id <goal-id>
 ```
 
 **If ANY check failed**: fix, then loop back to step 1.

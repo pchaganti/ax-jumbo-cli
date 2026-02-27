@@ -2,7 +2,7 @@
  * CLI Command: jumbo goal qualify
  *
  * Qualifies a goal after successful QA review.
- * Transitions goal from 'in-review' to 'qualified' status and renders completion instructions.
+ * Transitions goal from 'in-review' to 'approved' status and renders codification instructions.
  */
 
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
@@ -43,13 +43,17 @@ export async function goalQualify(
   const renderer = Renderer.getInstance();
 
   try {
-    // 1. Execute via controller
+    // 1. Emit deprecation warning
+    const outputBuilder = new GoalQualifyOutputBuilder();
+    const warning = outputBuilder.buildDeprecationWarning();
+    renderer.info(warning.toHumanReadable());
+
+    // 2. Execute via controller
     const response = await container.qualifyGoalController.handle({
       goalId: options.id,
     });
 
-    // 2. Build and render output using builder pattern
-    const outputBuilder = new GoalQualifyOutputBuilder();
+    // 3. Build and render output using builder pattern
     const output = outputBuilder.buildSuccess(response);
 
     renderer.info(output.toHumanReadable());

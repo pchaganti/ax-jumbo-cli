@@ -57,6 +57,7 @@ import { SqliteGoalRefinedProjector } from "../context/goals/refine/SqliteGoalRe
 import { SqliteGoalProgressUpdatedProjector } from "../context/goals/update-progress/SqliteGoalProgressUpdatedProjector.js";
 import { SqliteGoalSubmittedForReviewProjector } from "../context/goals/review/SqliteGoalSubmittedForReviewProjector.js";
 import { SqliteGoalQualifiedProjector } from "../context/goals/qualify/SqliteGoalQualifiedProjector.js";
+import { SqliteGoalCommittedProjector } from "../context/goals/commit/SqliteGoalCommittedProjector.js";
 import { SqliteArchitectureDefinedProjector } from "../context/architecture/define/SqliteArchitectureDefinedProjector.js";
 import { SqliteArchitectureUpdatedProjector } from "../context/architecture/update/SqliteArchitectureUpdatedProjector.js";
 import { SqliteComponentAddedProjector } from "../context/components/add/SqliteComponentAddedProjector.js";
@@ -88,6 +89,13 @@ import { SqliteValuePropositionUpdatedProjector } from "../context/value-proposi
 import { SqliteValuePropositionRemovedProjector } from "../context/value-propositions/remove/SqliteValuePropositionRemovedProjector.js";
 import { SqliteRelationAddedProjector } from "../context/relations/add/SqliteRelationAddedProjector.js";
 import { SqliteRelationRemovedProjector } from "../context/relations/remove/SqliteRelationRemovedProjector.js";
+import { SqliteGoalRejectedProjector } from "../context/goals/reject/SqliteGoalRejectedProjector.js";
+import { SqliteGoalSubmittedProjector } from "../context/goals/submit/SqliteGoalSubmittedProjector.js";
+import { SqliteGoalCodifyingStartedProjector } from "../context/goals/codify/SqliteGoalCodifyingStartedProjector.js";
+import { SqliteGoalClosedProjector } from "../context/goals/close/SqliteGoalClosedProjector.js";
+import { SqliteGoalApprovedProjector } from "../context/goals/approve/SqliteGoalApprovedProjector.js";
+import { SqliteGoalStatusMigratedProjector } from "../context/goals/migrate/SqliteGoalStatusMigratedProjector.js";
+import { SqliteComponentRenamedProjector } from "../context/components/rename/SqliteComponentRenamedProjector.js";
 
 // Handlers
 import { SessionStartedEventHandler } from "../../application/context/sessions/start/SessionStartedEventHandler.js";
@@ -106,6 +114,8 @@ import { GoalRefinedEventHandler } from "../../application/context/goals/refine/
 import { GoalProgressUpdatedEventHandler } from "../../application/context/goals/update-progress/GoalProgressUpdatedEventHandler.js";
 import { GoalSubmittedForReviewEventHandler } from "../../application/context/goals/review/GoalSubmittedForReviewEventHandler.js";
 import { GoalQualifiedEventHandler } from "../../application/context/goals/qualify/GoalQualifiedEventHandler.js";
+import { GoalRefinementStartedEventHandler } from "../../application/context/goals/refine/GoalRefinementStartedEventHandler.js";
+import { GoalCommittedEventHandler } from "../../application/context/goals/commit/GoalCommittedEventHandler.js";
 import { DecisionAddedEventHandler } from "../../application/context/decisions/add/DecisionAddedEventHandler.js";
 import { DecisionUpdatedEventHandler } from "../../application/context/decisions/update/DecisionUpdatedEventHandler.js";
 import { DecisionReversedEventHandler } from "../../application/context/decisions/reverse/DecisionReversedEventHandler.js";
@@ -137,6 +147,13 @@ import { ValuePropositionUpdatedEventHandler } from "../../application/context/v
 import { ValuePropositionRemovedEventHandler } from "../../application/context/value-propositions/remove/ValuePropositionRemovedEventHandler.js";
 import { RelationAddedEventHandler } from "../../application/context/relations/add/RelationAddedEventHandler.js";
 import { RelationRemovedEventHandler } from "../../application/context/relations/remove/RelationRemovedEventHandler.js";
+import { GoalRejectedEventHandler } from "../../application/context/goals/reject/GoalRejectedEventHandler.js";
+import { GoalSubmittedEventHandler } from "../../application/context/goals/submit/GoalSubmittedEventHandler.js";
+import { GoalCodifyingStartedEventHandler } from "../../application/context/goals/codify/GoalCodifyingStartedEventHandler.js";
+import { GoalClosedEventHandler } from "../../application/context/goals/close/GoalClosedEventHandler.js";
+import { GoalApprovedEventHandler } from "../../application/context/goals/approve/GoalApprovedEventHandler.js";
+import { GoalStatusMigratedEventHandler } from "../../application/context/goals/migrate/GoalStatusMigratedEventHandler.js";
+import { ComponentRenamedEventHandler } from "../../application/context/components/rename/ComponentRenamedEventHandler.js";
 
 export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebuildService {
   constructor(
@@ -198,6 +215,7 @@ export class TemporarySequentialDatabaseRebuildService implements IDatabaseRebui
     const goalProgressUpdatedProjector = new SqliteGoalProgressUpdatedProjector(newDb);
     const goalSubmittedForReviewProjector = new SqliteGoalSubmittedForReviewProjector(newDb);
     const goalQualifiedProjector = new SqliteGoalQualifiedProjector(newDb);
+    const goalCommittedProjector = new SqliteGoalCommittedProjector(newDb);
     const architectureDefinedProjector = new SqliteArchitectureDefinedProjector(newDb);
     const architectureUpdatedProjector = new SqliteArchitectureUpdatedProjector(newDb);
     const componentAddedProjector = new SqliteComponentAddedProjector(newDb);
@@ -229,6 +247,13 @@ const audienceAddedProjector = new SqliteAudienceAddedProjector(newDb);
     const valuePropositionRemovedProjector = new SqliteValuePropositionRemovedProjector(newDb);
     const relationAddedProjector = new SqliteRelationAddedProjector(newDb);
     const relationRemovedProjector = new SqliteRelationRemovedProjector(newDb);
+    const goalRejectedProjector = new SqliteGoalRejectedProjector(newDb);
+    const goalSubmittedProjector = new SqliteGoalSubmittedProjector(newDb);
+    const goalCodifyingStartedProjector = new SqliteGoalCodifyingStartedProjector(newDb);
+    const goalClosedProjector = new SqliteGoalClosedProjector(newDb);
+    const goalApprovedProjector = new SqliteGoalApprovedProjector(newDb);
+    const goalStatusMigratedProjector = new SqliteGoalStatusMigratedProjector(newDb);
+    const componentRenamedProjector = new SqliteComponentRenamedProjector(newDb);
 
     // Step 6: Create all handlers
     const sessionStartedEventHandler = new SessionStartedEventHandler(sessionStartedProjector);
@@ -247,6 +272,8 @@ const audienceAddedProjector = new SqliteAudienceAddedProjector(newDb);
     const goalProgressUpdatedEventHandler = new GoalProgressUpdatedEventHandler(goalProgressUpdatedProjector);
     const goalSubmittedForReviewEventHandler = new GoalSubmittedForReviewEventHandler(goalSubmittedForReviewProjector);
     const goalQualifiedEventHandler = new GoalQualifiedEventHandler(goalQualifiedProjector);
+    const goalRefinementStartedEventHandler = new GoalRefinementStartedEventHandler(goalRefinedProjector);
+    const goalCommittedEventHandler = new GoalCommittedEventHandler(goalCommittedProjector);
     const architectureDefinedEventHandler = new ArchitectureDefinedEventHandler(architectureDefinedProjector);
     const architectureUpdatedEventHandler = new ArchitectureUpdatedEventHandler(architectureUpdatedProjector);
     const componentAddedEventHandler = new ComponentAddedEventHandler(componentAddedProjector);
@@ -278,6 +305,13 @@ const audienceAddedEventHandler = new AudienceAddedEventHandler(audienceAddedPro
     const valuePropositionRemovedEventHandler = new ValuePropositionRemovedEventHandler(valuePropositionRemovedProjector);
     const relationAddedEventHandler = new RelationAddedEventHandler(relationAddedProjector);
     const relationRemovedEventHandler = new RelationRemovedEventHandler(relationRemovedProjector);
+    const goalRejectedEventHandler = new GoalRejectedEventHandler(goalRejectedProjector);
+    const goalSubmittedEventHandler = new GoalSubmittedEventHandler(goalSubmittedProjector);
+    const goalCodifyingStartedEventHandler = new GoalCodifyingStartedEventHandler(goalCodifyingStartedProjector);
+    const goalClosedEventHandler = new GoalClosedEventHandler(goalClosedProjector);
+    const goalApprovedEventHandler = new GoalApprovedEventHandler(goalApprovedProjector);
+    const goalStatusMigratedEventHandler = new GoalStatusMigratedEventHandler(goalStatusMigratedProjector);
+    const componentRenamedEventHandler = new ComponentRenamedEventHandler(componentRenamedProjector);
 
     // Step 7: Register all handlers to sequential bus
     sequentialEventBus.subscribe("SessionStartedEvent", sessionStartedEventHandler);
@@ -296,6 +330,8 @@ const audienceAddedEventHandler = new AudienceAddedEventHandler(audienceAddedPro
     sequentialEventBus.subscribe("GoalProgressUpdatedEvent", goalProgressUpdatedEventHandler);
     sequentialEventBus.subscribe("GoalSubmittedForReviewEvent", goalSubmittedForReviewEventHandler);
     sequentialEventBus.subscribe("GoalQualifiedEvent", goalQualifiedEventHandler);
+    sequentialEventBus.subscribe("GoalRefinementStartedEvent", goalRefinementStartedEventHandler);
+    sequentialEventBus.subscribe("GoalCommittedEvent", goalCommittedEventHandler);
     sequentialEventBus.subscribe("ArchitectureDefinedEvent", architectureDefinedEventHandler);
     sequentialEventBus.subscribe("ArchitectureUpdatedEvent", architectureUpdatedEventHandler);
     sequentialEventBus.subscribe("ComponentAddedEvent", componentAddedEventHandler);
@@ -327,6 +363,13 @@ sequentialEventBus.subscribe("AudienceAddedEvent", audienceAddedEventHandler);
     sequentialEventBus.subscribe("ValuePropositionRemovedEvent", valuePropositionRemovedEventHandler);
     sequentialEventBus.subscribe("RelationAddedEvent", relationAddedEventHandler);
     sequentialEventBus.subscribe("RelationRemovedEvent", relationRemovedEventHandler);
+    sequentialEventBus.subscribe("GoalRejectedEvent", goalRejectedEventHandler);
+    sequentialEventBus.subscribe("GoalSubmittedEvent", goalSubmittedEventHandler);
+    sequentialEventBus.subscribe("GoalCodifyingStartedEvent", goalCodifyingStartedEventHandler);
+    sequentialEventBus.subscribe("GoalClosedEvent", goalClosedEventHandler);
+    sequentialEventBus.subscribe("GoalApprovedEvent", goalApprovedEventHandler);
+    sequentialEventBus.subscribe("GoalStatusMigratedEvent", goalStatusMigratedEventHandler);
+    sequentialEventBus.subscribe("ComponentRenamedEvent", componentRenamedEventHandler);
 
     // Step 8: Get all events from event store (file-based, still intact)
     const events = await this.eventStore.getAllEvents();

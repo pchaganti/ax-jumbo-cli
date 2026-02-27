@@ -15,4 +15,4 @@ Use the `auto-jumbo-session` skill to automatically load project context at the 
 
 - Start session: `jumbo session start`
 - End session: `jumbo session end --focus "description" --summary "details"`
-- Start goal: `jumbo goal start --goal-id <id>`
+- Start goal: `jumbo goal start --id <id>`

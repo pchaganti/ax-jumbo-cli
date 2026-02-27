@@ -1,10 +1,10 @@
 import { ValidationRule, ValidationResult } from "../../validation/ValidationRule.js";
 import { GoalState } from "../Goal.js";
-import { GoalStatus, GoalErrorMessages, formatErrorMessage } from "../Constants.js";
+import { GoalStatus, GoalErrorMessages, formatErrorMessage, WAITING_STATES } from "../Constants.js";
 
 /**
  * Validates that a goal can be refined (transition to 'refined' status).
- * A goal can only be refined if it's in 'to-do' status.
+ * A goal can only be refined if it's in 'defined' status.
  * Cannot refine a goal that is already refined or in any other status.
  */
 export class CanRefineRule implements ValidationRule<GoalState> {
@@ -15,6 +15,11 @@ export class CanRefineRule implements ValidationRule<GoalState> {
         isValid: false,
         errors: [GoalErrorMessages.ALREADY_REFINED],
       };
+    }
+
+    // Already in refinement - allow for idempotent re-entry (claim validation happens at application layer)
+    if (state.status === GoalStatus.IN_REFINEMENT) {
+      return { isValid: true, errors: [] };
     }
 
     // Can only refine from TODO status
@@ -49,7 +54,7 @@ export class CanAddRule implements ValidationRule<GoalState> {
 /**
  * Validates that a goal can be started (transition to 'doing' status).
  * A goal can be started if it's in 'refined' or 'doing' (idempotent) status.
- * Cannot start a goal that is blocked, completed, or not yet refined.
+ * Cannot start a goal that is blocked, done, or not yet refined.
  */
 export class CanStartRule implements ValidationRule<GoalState> {
   validate(state: GoalState): ValidationResult {
@@ -60,7 +65,7 @@ export class CanStartRule implements ValidationRule<GoalState> {
       };
     }
 
-    if (state.status === GoalStatus.COMPLETED) {
+    if (state.status === GoalStatus.DONE) {
       return {
         isValid: false,
         errors: [GoalErrorMessages.CANNOT_START_COMPLETED],
@@ -68,22 +73,23 @@ export class CanStartRule implements ValidationRule<GoalState> {
     }
 
     // Goal must be refined before starting (or already doing for idempotency)
-    if (state.status === GoalStatus.TODO) {
+    if (state.status === GoalStatus.TODO || state.status === GoalStatus.IN_REFINEMENT) {
       return {
         isValid: false,
         errors: [GoalErrorMessages.CANNOT_START_NOT_REFINED],
       };
     }
 
-    // Valid statuses: REFINED (first start) or DOING (idempotent)
+    // Valid statuses: REFINED (first start), DOING (idempotent), REJECTED (rework),
+    // UNBLOCKED (after unblocking), INREVIEW, QUALIFIED, PAUSED
     return { isValid: true, errors: [] };
   }
 }
 
 /**
  * Validates that a goal can be completed.
- * A goal can only be completed if it is in 'qualified' status.
- * Cannot complete a goal that hasn't been qualified or is already completed.
+ * A goal can only be completed if it is in 'approved' status.
+ * Cannot complete a goal that hasn't been approved or is already done.
  */
 export class CanCompleteRule implements ValidationRule<GoalState> {
   validate(state: GoalState): ValidationResult {
@@ -106,12 +112,15 @@ export class CanCompleteRule implements ValidationRule<GoalState> {
 }
 
 /**
- * Validates that a goal can be reset (transition back to 'to-do' status).
- * A goal can be reset from 'doing' or 'completed' status.
- * Cannot reset a blocked goal (to preserve blocker context) or one already in 'to-do'.
+ * Validates that a goal can be reset to its last waiting state.
+ * A goal can be reset from in-progress states (IN_REFINEMENT, DOING, IN_REVIEW, CODIFYING)
+ * and terminal states (DONE).
+ * Cannot reset a blocked goal (to preserve blocker context).
+ * Cannot reset a goal already in a waiting state.
  */
 export class CanResetRule implements ValidationRule<GoalState> {
   validate(state: GoalState): ValidationResult {
+    // Blocked goals require explicit unblock to preserve blocker context
     if (state.status === GoalStatus.BLOCKED) {
       return {
         isValid: false,
@@ -119,24 +128,29 @@ export class CanResetRule implements ValidationRule<GoalState> {
       };
     }
 
-    if (state.status === GoalStatus.TODO) {
+    // Goals already in a waiting state cannot be reset
+    if (WAITING_STATES.has(state.status)) {
       return {
         isValid: false,
-        errors: [GoalErrorMessages.ALREADY_TODO],
+        errors: [formatErrorMessage(
+          GoalErrorMessages.CANNOT_RESET_WAITING_STATE,
+          { status: state.status }
+        )],
       };
     }
 
+    // In-progress and terminal states are valid for reset
     return { isValid: true, errors: [] };
   }
 }
 
 /**
  * Validates that a goal can be updated.
- * A goal cannot be updated if it's completed.
+ * A goal cannot be updated if it's done.
  */
 export class CanUpdateRule implements ValidationRule<GoalState> {
   validate(state: GoalState): ValidationResult {
-    if (state.status === GoalStatus.COMPLETED) {
+    if (state.status === GoalStatus.DONE) {
       return {
         isValid: false,
         errors: [GoalErrorMessages.CANNOT_UPDATE_COMPLETED],
@@ -149,14 +163,14 @@ export class CanUpdateRule implements ValidationRule<GoalState> {
 
 /**
  * Validates that a goal can be blocked from its current status.
- * A goal can only be blocked if it's in 'to-do' or 'doing' status.
- * Cannot block a goal that is already blocked or completed.
+ * A goal can be blocked if it's in 'defined', 'doing', 'in-review', or 'codifying' status.
+ * Cannot block a goal that is already blocked or done.
  */
 export class CanBlockRule implements ValidationRule<GoalState> {
   validate(state: GoalState): ValidationResult {
-    // Valid statuses to block from: TODO, DOING
-    // Invalid statuses: BLOCKED (already blocked), COMPLETED (can't block completed)
-    const validStatuses: string[] = [GoalStatus.TODO, GoalStatus.DOING];
+    // Valid statuses to block from: DEFINED, DOING, INREVIEW, CODIFYING
+    // Invalid statuses: BLOCKED (already blocked), DONE (can't block terminal)
+    const validStatuses: string[] = [GoalStatus.TODO, GoalStatus.DOING, GoalStatus.INREVIEW, GoalStatus.CODIFYING];
     const isValid = validStatuses.includes(state.status);
 
     return {

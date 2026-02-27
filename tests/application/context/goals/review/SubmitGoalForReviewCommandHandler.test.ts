@@ -15,6 +15,7 @@ import { IGoalClaimStore } from "../../../../../src/application/context/goals/cl
 import { IClock } from "../../../../../src/application/time-and-date/IClock";
 import { IWorkerIdentityReader } from "../../../../../src/application/host/workers/IWorkerIdentityReader";
 import { createWorkerId } from "../../../../../src/application/host/workers/WorkerId";
+import { ISettingsReader } from "../../../../../src/application/settings/ISettingsReader";
 import { GoalContextQueryHandler } from "../../../../../src/application/context/goals/get/GoalContextQueryHandler";
 
 describe("SubmitGoalForReviewCommandHandler", () => {
@@ -26,6 +27,7 @@ describe("SubmitGoalForReviewCommandHandler", () => {
   let clock: IClock;
   let claimPolicy: GoalClaimPolicy;
   let workerIdentityReader: IWorkerIdentityReader;
+  let settingsReader: ISettingsReader;
   let goalContextQueryHandler: GoalContextQueryHandler;
   let handler: SubmitGoalForReviewCommandHandler;
 
@@ -73,6 +75,13 @@ describe("SubmitGoalForReviewCommandHandler", () => {
       workerId: testWorkerId,
     };
 
+    // Mock settings reader
+    settingsReader = {
+      read: jest.fn().mockResolvedValue({
+        claims: { claimDurationMinutes: 120 },
+      }),
+    };
+
     // Mock goal context query handler - returns context with the goalId from the request
     goalContextQueryHandler = {
       execute: jest.fn().mockImplementation(async (goalId: string) => ({
@@ -95,33 +104,33 @@ describe("SubmitGoalForReviewCommandHandler", () => {
       eventBus,
       claimPolicy,
       workerIdentityReader,
+      settingsReader,
       goalContextQueryHandler
     );
   });
 
-  it("should submit goal for review from doing status and publish GoalSubmittedForReviewEvent", async () => {
+  it("should submit goal for review from submitted status, acquire reviewer claim, and publish GoalSubmittedForReviewEvent", async () => {
     // Arrange
     const command: SubmitGoalForReviewCommand = {
       goalId: "goal_123",
     };
 
-    // Mock projection exists
+    // Mock projection exists (submitted status - after goal submit)
     const mockView: GoalView = {
       goalId: "goal_123",
       objective: "Implement authentication",
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      
-      status: GoalStatus.DOING,
-      version: 2,
+      status: GoalStatus.SUBMITTED,
+      version: 4,
       createdAt: "2025-01-01T00:00:00Z",
       updatedAt: "2025-01-01T00:00:00Z",
       progress: [],
     };
     (goalReader.findById as jest.Mock).mockResolvedValue(mockView);
 
-    // Mock event history (GoalAddedEvent, GoalStartedEvent)
+    // Mock event history (GoalAddedEvent, GoalRefinedEvent, GoalStartedEvent, GoalSubmittedEvent)
     const mockHistory = [
       {
         type: GoalEventType.ADDED,
@@ -133,17 +142,31 @@ describe("SubmitGoalForReviewCommandHandler", () => {
           successCriteria: ["Users can log in"],
           scopeIn: [],
           scopeOut: [],
-          
           status: GoalStatus.TODO,
         },
       },
       {
-        type: GoalEventType.STARTED,
+        type: GoalEventType.REFINED,
         aggregateId: "goal_123",
         version: 2,
         timestamp: "2025-01-01T01:00:00Z",
+        payload: { status: GoalStatus.REFINED },
+      },
+      {
+        type: GoalEventType.STARTED,
+        aggregateId: "goal_123",
+        version: 3,
+        timestamp: "2025-01-01T02:00:00Z",
+        payload: { status: GoalStatus.DOING },
+      },
+      {
+        type: GoalEventType.SUBMITTED,
+        aggregateId: "goal_123",
+        version: 4,
+        timestamp: "2025-01-01T03:00:00Z",
         payload: {
-          status: GoalStatus.DOING,
+          status: GoalStatus.SUBMITTED,
+          submittedAt: "2025-01-01T03:00:00Z",
         },
       },
     ];
@@ -160,87 +183,22 @@ describe("SubmitGoalForReviewCommandHandler", () => {
     const appendedEvent = (eventWriter.append as jest.Mock).mock.calls[0][0];
     expect(appendedEvent.type).toBe(GoalEventType.SUBMITTED_FOR_REVIEW);
     expect(appendedEvent.aggregateId).toBe("goal_123");
-    expect(appendedEvent.version).toBe(3);
+    expect(appendedEvent.version).toBe(5);
     expect(appendedEvent.payload.status).toBe(GoalStatus.INREVIEW);
     expect(appendedEvent.payload.submittedAt).toBeDefined();
+    // Verify reviewer claim is embedded in event
+    expect(appendedEvent.payload.claimedBy).toBe(testWorkerId);
+    expect(appendedEvent.payload.claimedAt).toBeDefined();
+    expect(appendedEvent.payload.claimExpiresAt).toBeDefined();
+
+    // Verify reviewer claim was stored
+    expect(claimStore.setClaim).toHaveBeenCalledTimes(1);
 
     // Verify event was published to event bus
     expect(eventBus.publish).toHaveBeenCalledTimes(1);
     const publishedEvent = (eventBus.publish as jest.Mock).mock.calls[0][0];
     expect(publishedEvent.type).toBe(GoalEventType.SUBMITTED_FOR_REVIEW);
     expect(publishedEvent.aggregateId).toBe("goal_123");
-  });
-
-  it("should submit goal for review from blocked status", async () => {
-    // Arrange
-    const command: SubmitGoalForReviewCommand = {
-      goalId: "goal_456",
-    };
-
-    // Mock projection exists (blocked status)
-    const mockView: GoalView = {
-      goalId: "goal_456",
-      objective: "Fix critical bug",
-      successCriteria: ["Bug is resolved"],
-      scopeIn: [],
-      scopeOut: [],
-      
-      status: GoalStatus.BLOCKED,
-      version: 3,
-      createdAt: "2025-01-01T00:00:00Z",
-      updatedAt: "2025-01-01T00:00:00Z",
-      note: "Waiting for dependencies",
-      progress: [],
-    };
-    (goalReader.findById as jest.Mock).mockResolvedValue(mockView);
-
-    // Mock event history (GoalAddedEvent, GoalStartedEvent, GoalBlockedEvent)
-    const mockHistory = [
-      {
-        type: GoalEventType.ADDED,
-        aggregateId: "goal_456",
-        version: 1,
-        timestamp: "2025-01-01T00:00:00Z",
-        payload: {
-          objective: "Fix critical bug",
-          successCriteria: ["Bug is resolved"],
-          scopeIn: [],
-          scopeOut: [],
-          
-          status: GoalStatus.TODO,
-        },
-      },
-      {
-        type: GoalEventType.STARTED,
-        aggregateId: "goal_456",
-        version: 2,
-        timestamp: "2025-01-01T01:00:00Z",
-        payload: {
-          status: GoalStatus.DOING,
-        },
-      },
-      {
-        type: GoalEventType.BLOCKED,
-        aggregateId: "goal_456",
-        version: 3,
-        timestamp: "2025-01-01T02:00:00Z",
-        payload: {
-          status: GoalStatus.BLOCKED,
-          note: "Waiting for dependencies",
-        },
-      },
-    ];
-    (eventReader.readStream as jest.Mock).mockResolvedValue(mockHistory);
-
-    // Act
-    const result = await handler.execute(command);
-
-    // Assert
-    expect(result.goal.goalId).toBe("goal_456");
-    expect(eventWriter.append).toHaveBeenCalledTimes(1);
-    const appendedEvent = (eventWriter.append as jest.Mock).mock.calls[0][0];
-    expect(appendedEvent.type).toBe(GoalEventType.SUBMITTED_FOR_REVIEW);
-    expect(appendedEvent.payload.status).toBe(GoalStatus.INREVIEW);
   });
 
   it("should throw error if goal not found", async () => {
@@ -301,11 +259,11 @@ describe("SubmitGoalForReviewCommandHandler", () => {
 
     // Act & Assert
     await expect(handler.execute(command)).rejects.toThrow(
-      "Cannot submit goal for review in to-do status. Goal must be in doing or blocked status."
+      "Cannot submit goal for review in defined status. Goal must be in submitted status."
     );
   });
 
-  it("should throw error if goal is already in-review", async () => {
+  it("should allow idempotent re-entry when goal is already in-review with no active claim", async () => {
     // Arrange
     const command: SubmitGoalForReviewCommand = {
       goalId: "goal_999",
@@ -318,7 +276,7 @@ describe("SubmitGoalForReviewCommandHandler", () => {
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      
+
       status: GoalStatus.INREVIEW,
       version: 3,
       createdAt: "2025-01-01T00:00:00Z",
@@ -327,7 +285,7 @@ describe("SubmitGoalForReviewCommandHandler", () => {
     };
     (goalReader.findById as jest.Mock).mockResolvedValue(mockView);
 
-    // Mock event history (GoalAddedEvent, GoalStartedEvent, GoalSubmittedForReviewEvent)
+    // Mock event history (GoalAddedEvent, GoalStartedEvent, GoalSubmittedEvent, GoalSubmittedForReviewEvent)
     const mockHistory = [
       {
         type: GoalEventType.ADDED,
@@ -339,23 +297,40 @@ describe("SubmitGoalForReviewCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          
+
           status: GoalStatus.TODO,
         },
       },
       {
-        type: GoalEventType.STARTED,
+        type: GoalEventType.REFINED,
         aggregateId: "goal_999",
         version: 2,
+        timestamp: "2025-01-01T00:30:00Z",
+        payload: { status: GoalStatus.REFINED },
+      },
+      {
+        type: GoalEventType.STARTED,
+        aggregateId: "goal_999",
+        version: 3,
         timestamp: "2025-01-01T01:00:00Z",
         payload: {
           status: GoalStatus.DOING,
         },
       },
       {
+        type: GoalEventType.SUBMITTED,
+        aggregateId: "goal_999",
+        version: 4,
+        timestamp: "2025-01-01T01:30:00Z",
+        payload: {
+          status: GoalStatus.SUBMITTED,
+          submittedAt: "2025-01-01T01:30:00Z",
+        },
+      },
+      {
         type: GoalEventType.SUBMITTED_FOR_REVIEW,
         aggregateId: "goal_999",
-        version: 3,
+        version: 5,
         timestamp: "2025-01-01T02:00:00Z",
         payload: {
           status: GoalStatus.INREVIEW,
@@ -365,10 +340,15 @@ describe("SubmitGoalForReviewCommandHandler", () => {
     ];
     (eventReader.readStream as jest.Mock).mockResolvedValue(mockHistory);
 
-    // Act & Assert
-    await expect(handler.execute(command)).rejects.toThrow(
-      "Cannot submit goal for review in in-review status. Goal must be in doing or blocked status."
-    );
+    // Act - should succeed (idempotent re-entry, no active claim)
+    const result = await handler.execute(command);
+
+    // Assert
+    expect(result.goal.goalId).toBe("goal_999");
+    expect(eventWriter.append).toHaveBeenCalledTimes(1);
+    const appendedEvent = (eventWriter.append as jest.Mock).mock.calls[0][0];
+    expect(appendedEvent.type).toBe(GoalEventType.SUBMITTED_FOR_REVIEW);
+    expect(appendedEvent.payload.status).toBe(GoalStatus.INREVIEW);
   });
 
   it("should throw error if goal is already completed", async () => {
@@ -452,7 +432,7 @@ describe("SubmitGoalForReviewCommandHandler", () => {
 
     // Act & Assert
     await expect(handler.execute(command)).rejects.toThrow(
-      "Cannot submit goal for review in completed status. Goal must be in doing or blocked status."
+      "Cannot submit goal for review in done status. Goal must be in submitted status."
     );
   });
 
@@ -469,9 +449,8 @@ describe("SubmitGoalForReviewCommandHandler", () => {
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      
-      status: GoalStatus.DOING,
-      version: 2,
+      status: GoalStatus.SUBMITTED,
+      version: 4,
       createdAt: "2025-01-01T00:00:00Z",
       updatedAt: "2025-01-01T00:00:00Z",
       progress: [],
@@ -497,22 +476,21 @@ describe("SubmitGoalForReviewCommandHandler", () => {
     expect(eventBus.publish).not.toHaveBeenCalled();
   });
 
-  it("should allow submission if claim has expired", async () => {
+  it("should allow review if claim has expired", async () => {
     // Arrange
     const command: SubmitGoalForReviewCommand = {
       goalId: "goal_123",
     };
 
-    // Mock projection exists (doing status)
+    // Mock projection exists (submitted status)
     const mockView: GoalView = {
       goalId: "goal_123",
       objective: "Implement authentication",
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      
-      status: GoalStatus.DOING,
-      version: 2,
+      status: GoalStatus.SUBMITTED,
+      version: 4,
       createdAt: "2025-01-01T00:00:00Z",
       updatedAt: "2025-01-01T00:00:00Z",
       progress: [],
@@ -540,17 +518,31 @@ describe("SubmitGoalForReviewCommandHandler", () => {
           successCriteria: ["Users can log in"],
           scopeIn: [],
           scopeOut: [],
-          
           status: GoalStatus.TODO,
         },
       },
       {
-        type: GoalEventType.STARTED,
+        type: GoalEventType.REFINED,
         aggregateId: "goal_123",
         version: 2,
         timestamp: "2025-01-01T01:00:00Z",
+        payload: { status: GoalStatus.REFINED },
+      },
+      {
+        type: GoalEventType.STARTED,
+        aggregateId: "goal_123",
+        version: 3,
+        timestamp: "2025-01-01T02:00:00Z",
+        payload: { status: GoalStatus.DOING },
+      },
+      {
+        type: GoalEventType.SUBMITTED,
+        aggregateId: "goal_123",
+        version: 4,
+        timestamp: "2025-01-01T03:00:00Z",
         payload: {
-          status: GoalStatus.DOING,
+          status: GoalStatus.SUBMITTED,
+          submittedAt: "2025-01-01T03:00:00Z",
         },
       },
     ];
@@ -564,37 +556,74 @@ describe("SubmitGoalForReviewCommandHandler", () => {
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
   });
 
-  it("should allow submission if current worker owns the claim", async () => {
+  it("should reject re-entry when goal is IN_REVIEW with active claim from another worker", async () => {
     // Arrange
     const command: SubmitGoalForReviewCommand = {
       goalId: "goal_123",
     };
 
-    // Mock projection exists (doing status)
+    // Mock projection exists (in-review status)
     const mockView: GoalView = {
       goalId: "goal_123",
       objective: "Implement authentication",
       successCriteria: ["Users can log in"],
       scopeIn: [],
       scopeOut: [],
-      
-      status: GoalStatus.DOING,
-      version: 2,
+      status: GoalStatus.INREVIEW,
+      version: 5,
       createdAt: "2025-01-01T00:00:00Z",
       updatedAt: "2025-01-01T00:00:00Z",
       progress: [],
     };
     (goalReader.findById as jest.Mock).mockResolvedValue(mockView);
 
-    // Mock claim owned by current worker
+    // Mock active claim from another worker
+    const otherWorkerId = createWorkerId("other-worker-id");
     (claimStore.getClaim as jest.Mock).mockReturnValue({
       goalId: "goal_123",
-      claimedBy: testWorkerId,
-      claimedAt: "2025-01-15T09:00:00.000Z",
-      claimExpiresAt: "2025-01-15T11:00:00.000Z",
+      claimedBy: otherWorkerId,
+      claimedAt: "2025-01-15T09:30:00.000Z",
+      claimExpiresAt: "2025-01-15T11:00:00.000Z", // Active
     });
 
-    // Mock event history
+    // Act & Assert
+    await expect(handler.execute(command)).rejects.toThrow(
+      "Goal is claimed by another worker. Claim expires at 2025-01-15T11:00:00.000Z."
+    );
+    expect(eventWriter.append).not.toHaveBeenCalled();
+  });
+
+  it("should allow re-entry when goal is IN_REVIEW with expired claim (crash recovery)", async () => {
+    // Arrange
+    const command: SubmitGoalForReviewCommand = {
+      goalId: "goal_123",
+    };
+
+    // Mock projection exists (in-review status)
+    const mockView: GoalView = {
+      goalId: "goal_123",
+      objective: "Implement authentication",
+      successCriteria: ["Users can log in"],
+      scopeIn: [],
+      scopeOut: [],
+      status: GoalStatus.INREVIEW,
+      version: 5,
+      createdAt: "2025-01-01T00:00:00Z",
+      updatedAt: "2025-01-01T00:00:00Z",
+      progress: [],
+    };
+    (goalReader.findById as jest.Mock).mockResolvedValue(mockView);
+
+    // Mock expired claim (crash recovery)
+    const otherWorkerId = createWorkerId("crashed-worker-id");
+    (claimStore.getClaim as jest.Mock).mockReturnValue({
+      goalId: "goal_123",
+      claimedBy: otherWorkerId,
+      claimedAt: "2025-01-15T07:00:00.000Z",
+      claimExpiresAt: "2025-01-15T09:00:00.000Z", // Expired
+    });
+
+    // Mock event history to IN_REVIEW state
     const mockHistory = [
       {
         type: GoalEventType.ADDED,
@@ -606,17 +635,41 @@ describe("SubmitGoalForReviewCommandHandler", () => {
           successCriteria: ["Users can log in"],
           scopeIn: [],
           scopeOut: [],
-          
           status: GoalStatus.TODO,
         },
       },
       {
-        type: GoalEventType.STARTED,
+        type: GoalEventType.REFINED,
         aggregateId: "goal_123",
         version: 2,
         timestamp: "2025-01-01T01:00:00Z",
+        payload: { status: GoalStatus.REFINED },
+      },
+      {
+        type: GoalEventType.STARTED,
+        aggregateId: "goal_123",
+        version: 3,
+        timestamp: "2025-01-01T02:00:00Z",
+        payload: { status: GoalStatus.DOING },
+      },
+      {
+        type: GoalEventType.SUBMITTED,
+        aggregateId: "goal_123",
+        version: 4,
+        timestamp: "2025-01-01T03:00:00Z",
         payload: {
-          status: GoalStatus.DOING,
+          status: GoalStatus.SUBMITTED,
+          submittedAt: "2025-01-01T03:00:00Z",
+        },
+      },
+      {
+        type: GoalEventType.SUBMITTED_FOR_REVIEW,
+        aggregateId: "goal_123",
+        version: 5,
+        timestamp: "2025-01-01T04:00:00Z",
+        payload: {
+          status: GoalStatus.INREVIEW,
+          submittedAt: "2025-01-01T04:00:00Z",
         },
       },
     ];
@@ -625,9 +678,13 @@ describe("SubmitGoalForReviewCommandHandler", () => {
     // Act
     const result = await handler.execute(command);
 
-    // Assert
+    // Assert - re-entry succeeds
     expect(result.goal.goalId).toBe("goal_123");
     expect(eventWriter.append).toHaveBeenCalledTimes(1);
+    const appendedEvent = (eventWriter.append as jest.Mock).mock.calls[0][0];
+    expect(appendedEvent.type).toBe(GoalEventType.SUBMITTED_FOR_REVIEW);
+    expect(appendedEvent.payload.status).toBe(GoalStatus.INREVIEW);
+    expect(appendedEvent.payload.claimedBy).toBe(testWorkerId);
   });
 
   it("should propagate errors if event store fails", async () => {
@@ -636,16 +693,15 @@ describe("SubmitGoalForReviewCommandHandler", () => {
       goalId: "goal_123",
     };
 
-    // Mock projection exists (doing status)
+    // Mock projection exists (submitted status)
     const mockView: GoalView = {
       goalId: "goal_123",
       objective: "Test goal",
       successCriteria: ["Criterion"],
       scopeIn: [],
       scopeOut: [],
-      
-      status: GoalStatus.DOING,
-      version: 2,
+      status: GoalStatus.SUBMITTED,
+      version: 4,
       createdAt: "2025-01-01T00:00:00Z",
       updatedAt: "2025-01-01T00:00:00Z",
       progress: [],
@@ -664,17 +720,31 @@ describe("SubmitGoalForReviewCommandHandler", () => {
           successCriteria: ["Criterion"],
           scopeIn: [],
           scopeOut: [],
-          
           status: GoalStatus.TODO,
         },
       },
       {
-        type: GoalEventType.STARTED,
+        type: GoalEventType.REFINED,
         aggregateId: "goal_123",
         version: 2,
         timestamp: "2025-01-01T01:00:00Z",
+        payload: { status: GoalStatus.REFINED },
+      },
+      {
+        type: GoalEventType.STARTED,
+        aggregateId: "goal_123",
+        version: 3,
+        timestamp: "2025-01-01T02:00:00Z",
+        payload: { status: GoalStatus.DOING },
+      },
+      {
+        type: GoalEventType.SUBMITTED,
+        aggregateId: "goal_123",
+        version: 4,
+        timestamp: "2025-01-01T03:00:00Z",
         payload: {
-          status: GoalStatus.DOING,
+          status: GoalStatus.SUBMITTED,
+          submittedAt: "2025-01-01T03:00:00Z",
         },
       },
     ];
