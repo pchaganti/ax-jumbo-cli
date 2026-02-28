@@ -24,8 +24,8 @@ import { IClock } from "../../application/time-and-date/IClock.js";
 import { RebuildDatabaseController } from "../../application/maintenance/db/rebuild/RebuildDatabaseController.js";
 import { UpgradeCommandHandler } from "../../application/maintenance/upgrade/UpgradeCommandHandler.js";
 import { LocalRebuildDatabaseGateway } from "../../application/maintenance/db/rebuild/LocalRebuildDatabaseGateway.js";
-import { RepairMaintenanceController } from "../../application/maintenance/repair/RepairMaintenanceController.js";
-import { LocalRepairMaintenanceGateway } from "../../application/maintenance/repair/LocalRepairMaintenanceGateway.js";
+import { RepairController } from "../../application/repair/RepairController.js";
+import { LocalRepairGateway } from "../../application/repair/LocalRepairGateway.js";
 
 // Infrastructure implementations
 import { ProjectRootResolver } from "../context/project/ProjectRootResolver.js";
@@ -649,13 +649,13 @@ export class HostBuilder {
     const projectUpdatedEventStore = new FsProjectUpdatedEventStore(this.rootDir);
     // Project Services
     const agentFileProtocol = new AgentFileProtocol();
-    const repairMaintenanceGateway = new LocalRepairMaintenanceGateway(
+    const repairGateway = new LocalRepairGateway(
       projectRootResolver,
       agentFileProtocol,
       settingsInitializer,
       databaseRebuildService
     );
-    const repairMaintenanceController = new RepairMaintenanceController(repairMaintenanceGateway);
+    const repairController = new RepairController(repairGateway);
     // Audience Event Stores - decomposed by use case
     const audienceAddedEventStore = new FsAudienceAddedEventStore(this.rootDir);
     const audienceUpdatedEventStore = new FsAudienceUpdatedEventStore(this.rootDir);
@@ -1798,7 +1798,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
 
       // Maintenance Controllers
       rebuildDatabaseController,
-      repairMaintenanceController,
+      repairController,
       upgradeCommandHandler,
 
       // CLI Version
