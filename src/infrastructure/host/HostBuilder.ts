@@ -518,7 +518,7 @@ import { UnprimedBrownfieldQualifier } from "../../application/UnprimedBrownfiel
 
 // Worker Identity
 import { HostSessionKeyResolver } from "./session/HostSessionKeyResolver.js";
-import { FsWorkerIdentityRegistry } from "./workers/FsWorkerIdentityRegistry.js";
+import { SqliteWorkerIdentityRegistry } from "./workers/SqliteWorkerIdentityRegistry.js";
 
 // Goal Claims
 import { SqliteGoalClaimStore } from "../context/goals/claims/SqliteGoalClaimStore.js";
@@ -564,8 +564,8 @@ export class HostBuilder {
 
     // Create worker identity components
     const hostSessionKeyResolver = new HostSessionKeyResolver();
-    const workerIdentityReader = new FsWorkerIdentityRegistry(
-      this.rootDir,
+    const workerIdentityReader = new SqliteWorkerIdentityRegistry(
+      this.db,
       hostSessionKeyResolver
     );
 
