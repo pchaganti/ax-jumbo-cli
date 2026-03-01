@@ -41,6 +41,7 @@ export interface GoalState extends AggregateState {
   status: GoalStatusType;
   version: number;
   note?: string;  // Optional: populated when blocked or completed
+  reviewIssues?: string;  // Optional: populated when rejected with review findings
   progress: string[];  // Tracks completed sub-tasks (append-only)
   nextGoalId?: UUID;
   prerequisiteGoals?: UUID[];
@@ -181,6 +182,7 @@ export class Goal extends BaseAggregate<GoalState, GoalEvent> {
         const e = event as GoalResetEvent;
         state.status = e.payload.status;  // Dynamic target waiting state
         state.note = undefined;            // Clear any notes from previous states
+        state.reviewIssues = undefined;    // Clear review issues from previous rejection
         state.lastWaitingStatus = undefined; // Clear tracking on reset
         state.version = e.version;
         break;
@@ -215,7 +217,7 @@ export class Goal extends BaseAggregate<GoalState, GoalEvent> {
         const e = event as GoalRejectedEvent;
         state.status = e.payload.status;  // 'rejected'
         // Backward compatibility: legacy persisted events use 'auditFindings'
-        state.note = e.payload.reviewIssues ?? e.payload.auditFindings;
+        state.reviewIssues = e.payload.reviewIssues ?? e.payload.auditFindings;
         state.version = e.version;
         break;
       }
