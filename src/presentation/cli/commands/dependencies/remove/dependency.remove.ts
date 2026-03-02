@@ -13,7 +13,7 @@ import { Renderer } from "../../../rendering/Renderer.js";
  * Command metadata for auto-registration
  */
 export const metadata: CommandMetadata = {
-  description: "Remove an external dependency from the project",
+  description: "Remove a third-party dependency from the project",
   category: "solution",
   requiredOptions: [
     {
@@ -30,7 +30,7 @@ export const metadata: CommandMetadata = {
   examples: [
     {
       command: "jumbo dependency remove --id dep_abc123",
-      description: "Remove an external dependency from the project"
+      description: "Remove a third-party dependency from the project"
     },
     {
       command: "jumbo dependency remove --id dep_abc123 --reason 'Migrated to MongoDB'",
@@ -38,7 +38,7 @@ export const metadata: CommandMetadata = {
     },
     {
       command: "jumbo relation remove --id relation_abc123",
-      description: "Legacy component coupling relations are managed with relation commands"
+      description: "Component coupling records are managed with relation commands"
     }
   ],
   related: ["dependency add", "dependency update", "relation remove"]

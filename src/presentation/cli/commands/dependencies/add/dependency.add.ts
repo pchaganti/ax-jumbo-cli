@@ -15,7 +15,7 @@ import { Renderer } from "../../../rendering/Renderer.js";
  * Command metadata for auto-registration
  */
 export const metadata: CommandMetadata = {
-  description: "Register an external dependency",
+  description: "Register a third-party dependency (package or service)",
   category: "solution",
   options: [
     {
@@ -36,11 +36,11 @@ export const metadata: CommandMetadata = {
     },
     {
       flags: "--consumer-id <consumerId>",
-      description: "Legacy (deprecated): source component ID to map as relation"
+      description: "Legacy (deprecated, removed in v3.0.0): source component ID to map as relation"
     },
     {
       flags: "--provider-id <providerId>",
-      description: "Legacy (deprecated): target component ID to map as relation"
+      description: "Legacy (deprecated, removed in v3.0.0): target component ID to map as relation"
     },
     {
       flags: "--endpoint <endpoint>",
@@ -54,18 +54,22 @@ export const metadata: CommandMetadata = {
   examples: [
     {
       command: "jumbo dependency add --name Express --ecosystem npm --package-name express --version-constraint ^4.18.0",
-      description: "Register an external dependency"
+      description: "Register an npm package dependency"
+    },
+    {
+      command: "jumbo dependency add --name StripeAPI --ecosystem service --package-name stripe-api --version-constraint 2023-10-16",
+      description: "Register a non-database external service dependency"
     },
     {
       command: "jumbo dependency add --consumer-id UserController --provider-id AuthMiddleware --endpoint /api/auth/verify --contract IAuthVerifier",
-      description: "Legacy compatibility path (deprecated): maps component coupling to relation"
+      description: "Legacy compatibility path (deprecated, removed in v3.0.0): maps component coupling to relation"
     }
   ],
   related: ["dependency update", "dependency remove", "relation add"]
 };
 
 const LEGACY_FLAGS_WARNING =
-  "[DEPRECATION] --consumer-id/--provider-id are deprecated. Use 'jumbo relation add --from-type component --from-id <id> --to-type component --to-id <id> --type depends_on --description <text>'.";
+  "[DEPRECATION] --consumer-id/--provider-id are deprecated and will be removed in v3.0.0. Use 'jumbo relation add --from-type component --from-id <id> --to-type component --to-id <id> --type depends_on --description <text>'.";
 
 function warnLegacyFlags(): void {
   process.stderr.write(`${LEGACY_FLAGS_WARNING}\n`);

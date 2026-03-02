@@ -18,7 +18,7 @@ import { DependencyView } from "../../../../../application/context/dependencies/
  * Command metadata for auto-registration
  */
 export const metadata: CommandMetadata = {
-  description: "List dependencies",
+  description: "List third-party dependencies (packages/services)",
   category: "solution",
   options: [
     {
@@ -35,11 +35,11 @@ export const metadata: CommandMetadata = {
     },
     {
       flags: "--consumer <componentId>",
-      description: "Legacy filter (compatibility): former consumer component ID",
+      description: "Legacy filter (deprecated, removed in v3.0.0): former consumer component ID",
     },
     {
       flags: "--provider <componentId>",
-      description: "Legacy filter (compatibility): former provider component ID",
+      description: "Legacy filter (deprecated, removed in v3.0.0): former provider component ID",
     },
   ],
   examples: [
@@ -53,10 +53,10 @@ export const metadata: CommandMetadata = {
     },
     {
       command: "jumbo dependencies list --consumer comp_123 --provider comp_456 --format json",
-      description: "Legacy compatibility filter for historical coupling records",
+      description: "Legacy compatibility filter for historical coupling records (deprecated, removed in v3.0.0)",
     },
   ],
-  related: ["dependency add", "dependency update", "dependency remove"],
+  related: ["dependency add", "dependency update", "dependency remove", "relation list"],
 };
 
 /**

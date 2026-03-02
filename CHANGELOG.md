@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Repair command promoted to top-level**: `jumbo repair` is now the primary command path (previously `jumbo maintenance repair`). The command is more discoverable and ergonomic as a top-level command.
+- **Dependency model clarification**: Dependency commands/documentation now define dependencies as third-party software/services (packages or external APIs). Component coupling is documented under relation commands (`depends_on`).
+- **Legacy coupling flag deprecation timeline**: `--consumer-id` and `--provider-id` compatibility flags on `jumbo dependency add` are now explicitly marked deprecated with planned removal in `v3.0.0`.
+
+### Compatibility
+
+- **Backward compatibility in v2.x**: Legacy `--consumer-id` / `--provider-id` behavior remains available during `v2.x` and maps to relations for migration safety.
+- **Upgrade safety**: `jumbo db upgrade --from v1 --to v2` remains idempotent. Re-running a successful migration produces no additional status migrations.
+
+### Deprecation Risk Assessment
+
+- **Breaking risk now**: Low. Existing scripts continue to run in `v2.x`, but emit deprecation warnings.
+- **Breaking risk at v3.0.0**: High for unattended scripts that still use legacy coupling flags. Migrate these scripts to `jumbo relation add --type depends_on` before adopting `v3.0.0`.
 
 ### Fixed
 

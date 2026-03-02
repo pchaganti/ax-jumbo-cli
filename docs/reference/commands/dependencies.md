@@ -1,54 +1,61 @@
 ---
 title: Dependency Commands Reference
-description: Complete reference for managing dependency relationships between components.
+description: Complete reference for registering third-party package and service dependencies.
 sidebar:
   order: 9
 ---
 
 # Dependency Commands Reference
 
-Track dependency relationships between components — which components consume which providers.
+Register third-party dependencies your project relies on, such as packages (`better-sqlite3`) and external services (for example Stripe API).
+
+Component-to-component coupling is tracked with `jumbo relation add --type depends_on`, not dependency commands.
 
 ---
 
 ## jumbo dependency add
 
-Add a dependency relationship between two components.
+Add a third-party dependency.
 
 ### Synopsis
 
 ```bash
-> jumbo dependency add --consumer-id <id> --provider-id <id> [options]
+> jumbo dependency add [options]
 ```
 
 ### Options
 
 | Option | Description |
 |--------|-------------|
-| `--consumer-id <id>` | Component that depends on another (required) |
-| `--provider-id <id>` | Component being depended upon (required) |
-| `--endpoint <text>` | Connection point, e.g. `/api/users`, `IUserRepository` |
-| `--contract <text>` | Interface or contract specification |
+| `--name <name>` | Dependency display name |
+| `--ecosystem <ecosystem>` | Ecosystem or provider, e.g. `npm`, `service` |
+| `--package-name <packageName>` | Package/service identifier |
+| `--version-constraint <constraint>` | Optional version constraint, e.g. `^4.18.0` |
+| `--endpoint <text>` | Optional endpoint/integration point |
+| `--contract <text>` | Optional interface/contract notes |
+| `--consumer-id <id>` | Legacy compatibility flag (deprecated, removed in `v3.0.0`) |
+| `--provider-id <id>` | Legacy compatibility flag (deprecated, removed in `v3.0.0`) |
 
 ### Examples
 
 ```bash
-# Basic dependency
-> jumbo dependency add --consumer-id comp_abc --provider-id comp_def
+# Register better-sqlite3 (database package)
+> jumbo dependency add --name better-sqlite3 --ecosystem npm --package-name better-sqlite3 --version-constraint ^9.4.3
 
-# With endpoint and contract
-> jumbo dependency add \
-  --consumer-id comp_abc \
-  --provider-id comp_def \
-  --endpoint "IUserRepository" \
-  --contract "UserRepository interface"
+# Register a non-database external dependency (Stripe API)
+> jumbo dependency add --name StripeAPI --ecosystem service --package-name stripe-api --version-constraint 2023-10-16 --endpoint https://api.stripe.com --contract "Payment API v1"
+
+# Legacy compatibility path (deprecated, removed in v3.0.0)
+> jumbo dependency add --consumer-id comp_abc --provider-id comp_def --endpoint "IUserRepository" --contract "UserRepository interface"
 ```
+
+Legacy flags emit a deprecation warning and are mapped to a component relation (`depends_on`). For migration details, see [Dependency Migration Guide](../../guides/dependency-migration.md).
 
 ---
 
 ## jumbo dependencies list
 
-List all component dependencies.
+List third-party dependencies.
 
 ### Synopsis
 
@@ -60,6 +67,9 @@ List all component dependencies.
 
 | Option | Description |
 |--------|-------------|
+| `--name <name>` | Filter by dependency display name |
+| `--ecosystem <ecosystem>` | Filter by ecosystem/provider |
+| `--package-name <packageName>` | Filter by package/service identifier |
 | `--consumer <componentId>` | Filter by consumer component ID |
 | `--provider <componentId>` | Filter by provider component ID |
 
@@ -67,15 +77,16 @@ List all component dependencies.
 
 ```bash
 > jumbo dependencies list
-> jumbo dependencies list --consumer comp_abc123
-> jumbo dependencies list --provider comp_def456
+> jumbo dependencies list --ecosystem npm
+> jumbo dependencies list --package-name better-sqlite3
+> jumbo dependencies list --consumer comp_abc123 --provider comp_def456
 ```
 
 ---
 
 ## jumbo dependency update
 
-Update an existing dependency.
+Update an existing third-party dependency.
 
 ### Synopsis
 
@@ -103,7 +114,7 @@ Update an existing dependency.
 
 ## jumbo dependency remove
 
-Remove a dependency.
+Remove a third-party dependency.
 
 ### Synopsis
 
@@ -123,4 +134,16 @@ Remove a dependency.
 ```bash
 > jumbo dependency remove --id dep_abc123
 > jumbo dependency remove --id dep_abc123 --reason "Services merged"
+```
+
+---
+
+## Migration Notes
+
+- `--consumer-id` / `--provider-id` are compatibility flags only.
+- Planned removal window: these legacy flags are supported during `v2.x` and removed in `v3.0.0`.
+- For component coupling, use relation commands:
+
+```bash
+> jumbo relation add --from-type component --from-id comp_abc --to-type component --to-id comp_def --type depends_on --description "comp_abc depends on comp_def"
 ```
