@@ -40,19 +40,19 @@ Complete command documentation.
 
 | Commands | Description |
 |----------|-------------|
-| [Goal Commands](reference/commands/goal.md) | add, start, complete, block, unblock, reset, resume, show, update, remove |
-| [Session Commands](reference/commands/session.md) | start, end, pause, resume, list, compact |
+| [Goal Commands](reference/commands/goal.md) | add, refine, commit, start, pause, resume, block, unblock, submit, review, approve, reject, codify, close, complete, reset, update, update-progress, show, remove, list |
+| [Session Commands](reference/commands/session.md) | start, end, list, compact |
 | [Project Commands](reference/commands/project.md) | init, update |
-| [Architecture Commands](reference/commands/architecture.md) | define, update |
-| [Component Commands](reference/commands/components.md) | add, update, deprecate, remove |
-| [Decision Commands](reference/commands/decisions.md) | add, update, supersede, reverse |
-| [Dependency Commands](reference/commands/dependencies.md) | add, update, remove |
-| [Guideline Commands](reference/commands/guidelines.md) | add, update, remove |
-| [Invariant Commands](reference/commands/invariants.md) | add, update, remove |
-| [Audience Commands](reference/commands/audiences.md) | add, update, remove |
-| [Audience Pain Commands](reference/commands/audience-pains.md) | add, update, remove |
-| [Value Proposition Commands](reference/commands/value-propositions.md) | add, update, remove |
-| [Relation Commands](reference/commands/relations.md) | add, remove |
+| [Architecture Commands](reference/commands/architecture.md) | define, update, view |
+| [Component Commands](reference/commands/components.md) | add, show, update, rename, search, list, deprecate, undeprecate, remove |
+| [Decision Commands](reference/commands/decisions.md) | add, list, update, supersede, reverse, restore |
+| [Dependency Commands](reference/commands/dependencies.md) | add, list, update, remove |
+| [Guideline Commands](reference/commands/guidelines.md) | add, list, update, remove |
+| [Invariant Commands](reference/commands/invariants.md) | add, list, update, remove |
+| [Audience Commands](reference/commands/audiences.md) | add, list, update, remove |
+| [Audience Pain Commands](reference/commands/audience-pains.md) | add, list, update |
+| [Value Proposition Commands](reference/commands/value-propositions.md) | add, list, update, remove |
+| [Relation Commands](reference/commands/relations.md) | add, list, remove |
 | [Work Commands](reference/commands/work.md) | pause, resume |
 | [Maintenance Commands](reference/commands/maintenance.md) | db rebuild, db upgrade, repair |
 | [Worker Commands](reference/commands/worker.md) | view |
