@@ -110,7 +110,8 @@ Your solution design, structure and patterns applied.
 - **Components**
 The parts comprising your solution and their roles.
 - **Dependencies**
-What your project relies on.
+Third-party packages and external services your project relies on (for example `better-sqlite3`, Stripe API).  
+Component-to-component coupling belongs in **Relations**.
 - **Decisions**
 A history of why you chose what you chose.
 - **Guidelines**
@@ -159,6 +160,7 @@ That's it. Jumbo will guide you through the rest. Fire up your coding agent next
 | [Installation](docs/getting-started/installation.md) | Prerequisites and setup |
 | [Concepts](docs/getting-started/concepts.md) | Understand sessions, goals, and context |
 | [Goal Management](docs/guides/goal-management.md) | Complete guide to tracking work |
+| [Dependency Migration](docs/guides/dependency-migration.md) | Migrate legacy coupling flags to relations |
 | [Command Reference](docs/reference/) | Full command documentation |
 
 ---

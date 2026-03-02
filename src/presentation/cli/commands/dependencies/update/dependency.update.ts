@@ -13,7 +13,7 @@ import { Renderer } from "../../../rendering/Renderer.js";
  * Command metadata for auto-registration
  */
 export const metadata: CommandMetadata = {
-  description: "Update an existing dependency with new endpoint, contract, or status",
+  description: "Update a third-party dependency with new endpoint, contract, or status",
   category: "solution",
   requiredOptions: [
     {
@@ -47,9 +47,13 @@ export const metadata: CommandMetadata = {
     {
       command: "jumbo dependency update --id dep_123 --contract 'REST API' --status active",
       description: "Update multiple fields"
+    },
+    {
+      command: "jumbo relation add --from-type component --from-id UserController --to-type component --to-id AuthMiddleware --type depends_on --description 'UserController depends on AuthMiddleware'",
+      description: "Component coupling belongs in relations"
     }
   ],
-  related: ["dependency add", "dependency remove", "component update"]
+  related: ["dependency add", "dependency remove", "relation add"]
 };
 
 /**
@@ -79,8 +83,10 @@ export async function dependencyUpdate(
     const data: Record<string, string | number> = {
       dependencyId: response.dependencyId,
     };
-    if (response.consumerId) data.consumer = response.consumerId;
-    if (response.providerId) data.provider = response.providerId;
+    if (response.name) data.name = response.name;
+    if (response.ecosystem) data.ecosystem = response.ecosystem;
+    if (response.packageName) data.packageName = response.packageName;
+    if (response.versionConstraint) data.versionConstraint = response.versionConstraint;
     if (response.endpoint) data.endpoint = response.endpoint;
     if (response.contract) data.contract = response.contract;
     if (response.status) data.status = response.status;

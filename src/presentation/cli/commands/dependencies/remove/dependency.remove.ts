@@ -13,7 +13,7 @@ import { Renderer } from "../../../rendering/Renderer.js";
  * Command metadata for auto-registration
  */
 export const metadata: CommandMetadata = {
-  description: "Remove a dependency from the project",
+  description: "Remove a third-party dependency from the project",
   category: "solution",
   requiredOptions: [
     {
@@ -30,14 +30,18 @@ export const metadata: CommandMetadata = {
   examples: [
     {
       command: "jumbo dependency remove --id dep_abc123",
-      description: "Remove a dependency from the project"
+      description: "Remove a third-party dependency from the project"
     },
     {
       command: "jumbo dependency remove --id dep_abc123 --reason 'Migrated to MongoDB'",
       description: "Remove a dependency with a reason"
+    },
+    {
+      command: "jumbo relation remove --id relation_abc123",
+      description: "Component coupling records are managed with relation commands"
     }
   ],
-  related: ["dependency add", "dependency update", "component remove"]
+  related: ["dependency add", "dependency update", "relation remove"]
 };
 
 /**
@@ -64,13 +68,14 @@ export async function dependencyRemove(
     // Success output
     const data: Record<string, string | number> = {
       dependencyId: response.dependencyId,
-      consumer: response.consumer,
-      provider: response.provider,
+      name: response.name,
+      ecosystem: response.ecosystem,
+      packageName: response.packageName,
       status: response.status,
     };
     if (response.reason) data.reason = response.reason;
 
-    renderer.success(`Dependency '${response.consumer} → ${response.provider}' removed`, data);
+    renderer.success(`Dependency '${response.ecosystem}:${response.packageName} (${response.name})' removed`, data);
   } catch (error) {
     renderer.error("Failed to remove dependency", error instanceof Error ? error : String(error));
     process.exit(1);
