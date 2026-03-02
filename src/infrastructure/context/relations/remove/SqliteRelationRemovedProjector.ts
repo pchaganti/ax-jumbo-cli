@@ -68,7 +68,7 @@ export class SqliteRelationRemovedProjector implements IRelationRemovedProjector
       relationType: row.relationType as string,
       strength: row.strength as RelationStrengthValue | null,
       description: row.description as string,
-      status: row.status as 'active' | 'removed',
+      status: row.status as 'active' | 'deactivated' | 'removed',
       version: row.version as number,
       createdAt: row.createdAt as string,
       updatedAt: row.updatedAt as string,

@@ -66,6 +66,9 @@ import { GetDecisionsController } from "../../application/context/decisions/get/
 import { ReverseDecisionCommandHandler } from "../../application/context/decisions/reverse/ReverseDecisionCommandHandler.js";
 import { LocalReverseDecisionGateway } from "../../application/context/decisions/reverse/LocalReverseDecisionGateway.js";
 import { ReverseDecisionController } from "../../application/context/decisions/reverse/ReverseDecisionController.js";
+import { RestoreDecisionCommandHandler } from "../../application/context/decisions/restore/RestoreDecisionCommandHandler.js";
+import { LocalRestoreDecisionGateway } from "../../application/context/decisions/restore/LocalRestoreDecisionGateway.js";
+import { RestoreDecisionController } from "../../application/context/decisions/restore/RestoreDecisionController.js";
 import { SupersedeDecisionCommandHandler } from "../../application/context/decisions/supersede/SupersedeDecisionCommandHandler.js";
 import { LocalSupersedeDecisionGateway } from "../../application/context/decisions/supersede/LocalSupersedeDecisionGateway.js";
 import { SupersedeDecisionController } from "../../application/context/decisions/supersede/SupersedeDecisionController.js";
@@ -76,6 +79,7 @@ import { UpdateDecisionController } from "../../application/context/decisions/up
 import { FsDecisionAddedEventStore } from "../context/decisions/add/FsDecisionAddedEventStore.js";
 import { FsDecisionUpdatedEventStore } from "../context/decisions/update/FsDecisionUpdatedEventStore.js";
 import { FsDecisionReversedEventStore } from "../context/decisions/reverse/FsDecisionReversedEventStore.js";
+import { FsDecisionRestoredEventStore } from "../context/decisions/restore/FsDecisionRestoredEventStore.js";
 import { FsDecisionSupersededEventStore } from "../context/decisions/supersede/FsDecisionSupersededEventStore.js";
 // Architecture Event Stores - decomposed by use case
 import { FsArchitectureDefinedEventStore } from "../context/architecture/define/FsArchitectureDefinedEventStore.js";
@@ -84,6 +88,7 @@ import { FsArchitectureUpdatedEventStore } from "../context/architecture/update/
 import { FsComponentAddedEventStore } from "../context/components/add/FsComponentAddedEventStore.js";
 import { FsComponentUpdatedEventStore } from "../context/components/update/FsComponentUpdatedEventStore.js";
 import { FsComponentDeprecatedEventStore } from "../context/components/deprecate/FsComponentDeprecatedEventStore.js";
+import { FsComponentUndeprecatedEventStore } from "../context/components/undeprecate/FsComponentUndeprecatedEventStore.js";
 import { FsComponentRemovedEventStore } from "../context/components/remove/FsComponentRemovedEventStore.js";
 import { FsComponentRenamedEventStore } from "../context/components/rename/FsComponentRenamedEventStore.js";
 // Dependency Controllers
@@ -150,6 +155,8 @@ import { FsValuePropositionUpdatedEventStore } from "../context/value-propositio
 import { FsValuePropositionRemovedEventStore } from "../context/value-propositions/remove/FsValuePropositionRemovedEventStore.js";
 // Relations Event Stores - decomposed by use case
 import { FsRelationAddedEventStore } from "../context/relations/add/FsRelationAddedEventStore.js";
+import { FsRelationDeactivatedEventStore } from "../context/relations/deactivate/FsRelationDeactivatedEventStore.js";
+import { FsRelationReactivatedEventStore } from "../context/relations/reactivate/FsRelationReactivatedEventStore.js";
 import { FsRelationRemovedEventStore } from "../context/relations/remove/FsRelationRemovedEventStore.js";
 
 // Session Projection Stores - decomposed by use case
@@ -185,6 +192,7 @@ import { SqliteGoalStatusReader } from "../context/goals/SqliteGoalStatusReader.
 import { SqliteDecisionAddedProjector } from "../context/decisions/add/SqliteDecisionAddedProjector.js";
 import { SqliteDecisionUpdatedProjector } from "../context/decisions/update/SqliteDecisionUpdatedProjector.js";
 import { SqliteDecisionReversedProjector } from "../context/decisions/reverse/SqliteDecisionReversedProjector.js";
+import { SqliteDecisionRestoredProjector } from "../context/decisions/restore/SqliteDecisionRestoredProjector.js";
 import { SqliteDecisionSupersededProjector } from "../context/decisions/supersede/SqliteDecisionSupersededProjector.js";
 import { SqliteDecisionViewReader } from "../context/decisions/get/SqliteDecisionViewReader.js";
 // Architecture Projection Stores - decomposed by use case
@@ -195,6 +203,7 @@ import { SqliteArchitectureReader } from "../context/architecture/SqliteArchitec
 import { SqliteComponentAddedProjector } from "../context/components/add/SqliteComponentAddedProjector.js";
 import { SqliteComponentUpdatedProjector } from "../context/components/update/SqliteComponentUpdatedProjector.js";
 import { SqliteComponentDeprecatedProjector } from "../context/components/deprecate/SqliteComponentDeprecatedProjector.js";
+import { SqliteComponentUndeprecatedProjector } from "../context/components/undeprecate/SqliteComponentUndeprecatedProjector.js";
 import { SqliteComponentRemovedProjector } from "../context/components/remove/SqliteComponentRemovedProjector.js";
 import { SqliteComponentRenamedProjector } from "../context/components/rename/SqliteComponentRenamedProjector.js";
 import { SqliteComponentViewReader } from "../context/components/get/SqliteComponentViewReader.js";
@@ -218,6 +227,8 @@ import { SqliteInvariantRemovedProjector } from "../context/invariants/remove/Sq
 import { SqliteInvariantViewReader } from "../context/invariants/get/SqliteInvariantViewReader.js";
 // Relations Projection Stores - decomposed by use case
 import { SqliteRelationAddedProjector } from "../context/relations/add/SqliteRelationAddedProjector.js";
+import { SqliteRelationDeactivatedProjector } from "../context/relations/deactivate/SqliteRelationDeactivatedProjector.js";
+import { SqliteRelationReactivatedProjector } from "../context/relations/reactivate/SqliteRelationReactivatedProjector.js";
 import { SqliteRelationRemovedProjector } from "../context/relations/remove/SqliteRelationRemovedProjector.js";
 import { SqliteRelationViewReader } from "../context/relations/get/SqliteRelationViewReader.js";
 // AudiencePain Projection Stores - decomposed by use case
@@ -286,6 +297,7 @@ import { GoalStatusMigratedEventHandler } from "../../application/context/goals/
 import { DecisionAddedEventHandler } from "../../application/context/decisions/add/DecisionAddedEventHandler.js";
 import { DecisionUpdatedEventHandler } from "../../application/context/decisions/update/DecisionUpdatedEventHandler.js";
 import { DecisionReversedEventHandler } from "../../application/context/decisions/reverse/DecisionReversedEventHandler.js";
+import { DecisionRestoredEventHandler } from "../../application/context/decisions/restore/DecisionRestoredEventHandler.js";
 import { DecisionSupersededEventHandler } from "../../application/context/decisions/supersede/DecisionSupersededEventHandler.js";
 // Architecture Event Handlers - decomposed by use case
 import { ArchitectureDefinedEventHandler } from "../../application/context/architecture/define/ArchitectureDefinedEventHandler.js";
@@ -294,6 +306,7 @@ import { ArchitectureUpdatedEventHandler } from "../../application/context/archi
 import { ComponentAddedEventHandler } from "../../application/context/components/add/ComponentAddedEventHandler.js";
 import { ComponentUpdatedEventHandler } from "../../application/context/components/update/ComponentUpdatedEventHandler.js";
 import { ComponentDeprecatedEventHandler } from "../../application/context/components/deprecate/ComponentDeprecatedEventHandler.js";
+import { ComponentUndeprecatedEventHandler } from "../../application/context/components/undeprecate/ComponentUndeprecatedEventHandler.js";
 import { ComponentRemovedEventHandler } from "../../application/context/components/remove/ComponentRemovedEventHandler.js";
 import { ComponentRenamedEventHandler } from "../../application/context/components/rename/ComponentRenamedEventHandler.js";
 // Dependency Event Handlers - decomposed by use case
@@ -346,6 +359,12 @@ import { RelationAddedEventHandler } from "../../application/context/relations/a
 import { AddRelationCommandHandler } from "../../application/context/relations/add/AddRelationCommandHandler.js";
 import { LocalAddRelationGateway } from "../../application/context/relations/add/LocalAddRelationGateway.js";
 import { AddRelationController } from "../../application/context/relations/add/AddRelationController.js";
+import { RelationDeactivatedEventHandler } from "../../application/context/relations/deactivate/RelationDeactivatedEventHandler.js";
+import { DeactivateRelationCommandHandler } from "../../application/context/relations/deactivate/DeactivateRelationCommandHandler.js";
+import { RelationDeactivationCascade } from "../../application/context/relations/deactivate/RelationDeactivationCascade.js";
+import { RelationReactivatedEventHandler } from "../../application/context/relations/reactivate/RelationReactivatedEventHandler.js";
+import { ReactivateRelationCommandHandler } from "../../application/context/relations/reactivate/ReactivateRelationCommandHandler.js";
+import { RelationReactivationCascade } from "../../application/context/relations/reactivate/RelationReactivationCascade.js";
 import { RelationRemovedEventHandler } from "../../application/context/relations/remove/RelationRemovedEventHandler.js";
 import { RemoveRelationCommandHandler } from "../../application/context/relations/remove/RemoveRelationCommandHandler.js";
 import { LocalRemoveRelationGateway } from "../../application/context/relations/remove/LocalRemoveRelationGateway.js";
@@ -499,6 +518,9 @@ import { ShowComponentController } from "../../application/context/components/sh
 import { DeprecateComponentCommandHandler } from "../../application/context/components/deprecate/DeprecateComponentCommandHandler.js";
 import { LocalDeprecateComponentGateway } from "../../application/context/components/deprecate/LocalDeprecateComponentGateway.js";
 import { DeprecateComponentController } from "../../application/context/components/deprecate/DeprecateComponentController.js";
+import { UndeprecateComponentCommandHandler } from "../../application/context/components/undeprecate/UndeprecateComponentCommandHandler.js";
+import { LocalUndeprecateComponentGateway } from "../../application/context/components/undeprecate/LocalUndeprecateComponentGateway.js";
+import { UndeprecateComponentController } from "../../application/context/components/undeprecate/UndeprecateComponentController.js";
 import { RemoveComponentCommandHandler } from "../../application/context/components/remove/RemoveComponentCommandHandler.js";
 import { LocalRemoveComponentGateway } from "../../application/context/components/remove/LocalRemoveComponentGateway.js";
 import { RemoveComponentController } from "../../application/context/components/remove/RemoveComponentController.js";
@@ -630,6 +652,7 @@ export class HostBuilder {
     const componentAddedEventStore = new FsComponentAddedEventStore(this.rootDir);
     const componentUpdatedEventStore = new FsComponentUpdatedEventStore(this.rootDir);
     const componentDeprecatedEventStore = new FsComponentDeprecatedEventStore(this.rootDir);
+    const componentUndeprecatedEventStore = new FsComponentUndeprecatedEventStore(this.rootDir);
     const componentRemovedEventStore = new FsComponentRemovedEventStore(this.rootDir);
     const componentRenamedEventStore = new FsComponentRenamedEventStore(this.rootDir);
     // Dependency Event Stores - decomposed by use case
@@ -640,6 +663,7 @@ export class HostBuilder {
     const decisionAddedEventStore = new FsDecisionAddedEventStore(this.rootDir);
     const decisionUpdatedEventStore = new FsDecisionUpdatedEventStore(this.rootDir);
     const decisionReversedEventStore = new FsDecisionReversedEventStore(this.rootDir);
+    const decisionRestoredEventStore = new FsDecisionRestoredEventStore(this.rootDir);
     const decisionSupersededEventStore = new FsDecisionSupersededEventStore(this.rootDir);
     // Guideline Event Stores - decomposed by use case
     const guidelineAddedEventStore = new FsGuidelineAddedEventStore(this.rootDir);
@@ -677,6 +701,8 @@ export class HostBuilder {
 
     // Relations Category - Event Stores - decomposed by use case
     const relationAddedEventStore = new FsRelationAddedEventStore(this.rootDir);
+    const relationDeactivatedEventStore = new FsRelationDeactivatedEventStore(this.rootDir);
+    const relationReactivatedEventStore = new FsRelationReactivatedEventStore(this.rootDir);
     const relationRemovedEventStore = new FsRelationRemovedEventStore(this.rootDir);
 
     // ============================================================
@@ -724,6 +750,7 @@ export class HostBuilder {
     const componentAddedProjector = new SqliteComponentAddedProjector(this.db);
     const componentUpdatedProjector = new SqliteComponentUpdatedProjector(this.db);
     const componentDeprecatedProjector = new SqliteComponentDeprecatedProjector(this.db);
+    const componentUndeprecatedProjector = new SqliteComponentUndeprecatedProjector(this.db);
     const componentRemovedProjector = new SqliteComponentRemovedProjector(this.db);
     const componentRenamedProjector = new SqliteComponentRenamedProjector(this.db);
     const componentViewReader = new SqliteComponentViewReader(this.db);
@@ -737,6 +764,7 @@ export class HostBuilder {
     const decisionAddedProjector = new SqliteDecisionAddedProjector(this.db);
     const decisionUpdatedProjector = new SqliteDecisionUpdatedProjector(this.db);
     const decisionReversedProjector = new SqliteDecisionReversedProjector(this.db);
+    const decisionRestoredProjector = new SqliteDecisionRestoredProjector(this.db);
     const decisionSupersededProjector = new SqliteDecisionSupersededProjector(this.db);
     const decisionViewReader = new SqliteDecisionViewReader(this.db);
     // Guideline Projection Stores - decomposed by use case
@@ -860,6 +888,8 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
 
     // Relations Category - Projection Stores - decomposed by use case
     const relationAddedProjector = new SqliteRelationAddedProjector(this.db);
+    const relationDeactivatedProjector = new SqliteRelationDeactivatedProjector(this.db);
+    const relationReactivatedProjector = new SqliteRelationReactivatedProjector(this.db);
     const relationRemovedProjector = new SqliteRelationRemovedProjector(this.db);
     const relationViewReader = new SqliteRelationViewReader(this.db);
 
@@ -900,6 +930,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       sessionViewReader,
       goalStatusReader,
       decisionViewReader,
+      relationViewReader,
       projectContextReader,
       audienceContextReader,
       audiencePainContextReader
@@ -1313,6 +1344,17 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     const reverseDecisionController = new ReverseDecisionController(
       reverseDecisionGateway
     );
+    const restoreDecisionCommandHandler = new RestoreDecisionCommandHandler(
+      decisionRestoredEventStore,
+      decisionRestoredProjector,
+      eventBus
+    );
+    const restoreDecisionGateway = new LocalRestoreDecisionGateway(
+      restoreDecisionCommandHandler
+    );
+    const restoreDecisionController = new RestoreDecisionController(
+      restoreDecisionGateway
+    );
     const supersedeDecisionCommandHandler = new SupersedeDecisionCommandHandler(
       decisionSupersededEventStore,
       decisionSupersededProjector,
@@ -1395,6 +1437,18 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     );
     const deprecateComponentController = new DeprecateComponentController(
       deprecateComponentGateway
+    );
+    const undeprecateComponentCommandHandler = new UndeprecateComponentCommandHandler(
+      componentUndeprecatedEventStore,
+      eventBus,
+      componentUndeprecatedProjector
+    );
+    const undeprecateComponentGateway = new LocalUndeprecateComponentGateway(
+      undeprecateComponentCommandHandler,
+      componentUndeprecatedProjector
+    );
+    const undeprecateComponentController = new UndeprecateComponentController(
+      undeprecateComponentGateway
     );
     const removeComponentCommandHandler = new RemoveComponentCommandHandler(
       componentRemovedEventStore,
@@ -1560,6 +1614,26 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       eventBus,
       relationRemovedProjector
     );
+    const deactivateRelationCommandHandler = new DeactivateRelationCommandHandler(
+      relationDeactivatedEventStore,
+      relationDeactivatedEventStore,
+      eventBus,
+      relationDeactivatedProjector
+    );
+    const relationDeactivationCascade = new RelationDeactivationCascade(
+      relationViewReader,
+      deactivateRelationCommandHandler
+    );
+    const reactivateRelationCommandHandler = new ReactivateRelationCommandHandler(
+      relationReactivatedEventStore,
+      relationReactivatedEventStore,
+      eventBus,
+      relationReactivatedProjector
+    );
+    const relationReactivationCascade = new RelationReactivationCascade(
+      relationViewReader,
+      reactivateRelationCommandHandler
+    );
     const removeRelationGateway = new LocalRemoveRelationGateway(
       removeRelationCommandHandler,
       relationRemovedProjector
@@ -1613,8 +1687,9 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     // Component Event Handlers - decomposed by use case
     const componentAddedEventHandler = new ComponentAddedEventHandler(componentAddedProjector);
     const componentUpdatedEventHandler = new ComponentUpdatedEventHandler(componentUpdatedProjector);
-    const componentDeprecatedEventHandler = new ComponentDeprecatedEventHandler(componentDeprecatedProjector);
-    const componentRemovedEventHandler = new ComponentRemovedEventHandler(componentRemovedProjector);
+    const componentDeprecatedEventHandler = new ComponentDeprecatedEventHandler(componentDeprecatedProjector, relationDeactivationCascade);
+    const componentUndeprecatedEventHandler = new ComponentUndeprecatedEventHandler(componentUndeprecatedProjector, relationReactivationCascade);
+    const componentRemovedEventHandler = new ComponentRemovedEventHandler(componentRemovedProjector, relationDeactivationCascade);
     const componentRenamedEventHandler = new ComponentRenamedEventHandler(componentRenamedProjector);
     // Dependency Event Handlers - decomposed by use case
     const dependencyAddedEventHandler = new DependencyAddedEventHandler(dependencyAddedProjector);
@@ -1623,8 +1698,9 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     // Decision Event Handlers - decomposed by use case
     const decisionAddedEventHandler = new DecisionAddedEventHandler(decisionAddedProjector);
     const decisionUpdatedEventHandler = new DecisionUpdatedEventHandler(decisionUpdatedProjector);
-    const decisionReversedEventHandler = new DecisionReversedEventHandler(decisionReversedProjector);
-    const decisionSupersededEventHandler = new DecisionSupersededEventHandler(decisionSupersededProjector);
+    const decisionReversedEventHandler = new DecisionReversedEventHandler(decisionReversedProjector, relationDeactivationCascade);
+    const decisionRestoredEventHandler = new DecisionRestoredEventHandler(decisionRestoredProjector, relationReactivationCascade);
+    const decisionSupersededEventHandler = new DecisionSupersededEventHandler(decisionSupersededProjector, relationDeactivationCascade);
     // Guideline Event Handlers - decomposed by use case
     const guidelineAddedEventHandler = new GuidelineAddedEventHandler(guidelineAddedProjector);
     const guidelineUpdatedEventHandler = new GuidelineUpdatedEventHandler(guidelineUpdatedProjector);
@@ -1694,6 +1770,8 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
 
     // Relations Category - Event Handlers - decomposed by use case
     const relationAddedEventHandler = new RelationAddedEventHandler(relationAddedProjector);
+    const relationDeactivatedEventHandler = new RelationDeactivatedEventHandler(relationDeactivatedProjector);
+    const relationReactivatedEventHandler = new RelationReactivatedEventHandler(relationReactivatedProjector);
     const relationRemovedEventHandler = new RelationRemovedEventHandler(relationRemovedProjector);
 
     // Worker Identity - Event Handlers
@@ -1739,6 +1817,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     eventBus.subscribe("ComponentAddedEvent", componentAddedEventHandler);
     eventBus.subscribe("ComponentUpdatedEvent", componentUpdatedEventHandler);
     eventBus.subscribe("ComponentDeprecatedEvent", componentDeprecatedEventHandler);
+    eventBus.subscribe("ComponentUndeprecatedEvent", componentUndeprecatedEventHandler);
     eventBus.subscribe("ComponentRemovedEvent", componentRemovedEventHandler);
     eventBus.subscribe("ComponentRenamedEvent", componentRenamedEventHandler);
 
@@ -1751,6 +1830,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     eventBus.subscribe("DecisionAddedEvent", decisionAddedEventHandler);
     eventBus.subscribe("DecisionUpdatedEvent", decisionUpdatedEventHandler);
     eventBus.subscribe("DecisionReversedEvent", decisionReversedEventHandler);
+    eventBus.subscribe("DecisionRestoredEvent", decisionRestoredEventHandler);
     eventBus.subscribe("DecisionSupersededEvent", decisionSupersededEventHandler);
 
     // Solution Category - Guideline events - decomposed by use case
@@ -1784,6 +1864,8 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
 
     // Relations Category - Relation events - decomposed by use case
     eventBus.subscribe("RelationAddedEvent", relationAddedEventHandler);
+    eventBus.subscribe("RelationDeactivatedEvent", relationDeactivatedEventHandler);
+    eventBus.subscribe("RelationReactivatedEvent", relationReactivatedEventHandler);
     eventBus.subscribe("RelationRemovedEvent", relationRemovedEventHandler);
 
     // Worker Identity events
@@ -1896,6 +1978,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       addDecisionController,
       getDecisionsController,
       reverseDecisionController,
+      restoreDecisionController,
       supersedeDecisionController,
       updateDecisionController,
 
@@ -1925,6 +2008,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       renameComponentController,
       showComponentController,
       deprecateComponentController,
+      undeprecateComponentController,
       removeComponentController,
 
       // Dependency Controllers
@@ -1940,6 +2024,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       // Component Event Stores - decomposed by use case
       componentAddedEventStore,
       componentUpdatedEventStore,
+      componentUndeprecatedEventStore,
       componentRenamedEventStore,
       componentRemovedEventStore,
       // Dependency Event Stores - decomposed by use case
@@ -1950,6 +2035,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       decisionAddedEventStore,
       decisionUpdatedEventStore,
       decisionReversedEventStore,
+      decisionRestoredEventStore,
       decisionSupersededEventStore,
       // Guideline Event Stores - decomposed by use case
       guidelineAddedEventStore,
@@ -1968,6 +2054,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       componentUpdatedProjector,
       componentRenamedProjector,
       componentDeprecatedProjector,
+      componentUndeprecatedProjector,
       componentRemovedProjector,
       componentViewReader,
       componentReader,
@@ -1980,6 +2067,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       decisionAddedProjector,
       decisionUpdatedProjector,
       decisionReversedProjector,
+      decisionRestoredProjector,
       decisionSupersededProjector,
       decisionViewReader,
       // Guideline Projection Stores - decomposed by use case
