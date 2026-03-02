@@ -98,17 +98,6 @@ export class GeminiConfigurer implements IConfigurer {
               ],
             },
           ],
-          SessionEnd: [
-            {
-              matcher: "exit" as const,
-              hooks: [
-                {
-                  type: "command" as const,
-                  command: "jumbo session end --focus {focus} --summary {summary}",
-                },
-              ],
-            },
-          ],
         },
         tools: {
           allowed: ["run_shell_command(jumbo --help)"],

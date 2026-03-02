@@ -101,17 +101,6 @@ export class ClaudeConfigurer implements IConfigurer {
               ],
             },
           ],
-          SessionEnd: [
-            {
-              matcher: "exit" as const,
-              hooks: [
-                {
-                  type: "command" as const,
-                  command: "jumbo session end --focus {focus} --summary {summary}",
-                },
-              ],
-            },
-          ],
         },
         permissions: {
           allow: ["Bash(jumbo --help)"],

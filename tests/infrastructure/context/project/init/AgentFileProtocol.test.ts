@@ -159,6 +159,7 @@ describe("AgentFileProtocol", () => {
       expect(settings.hooks?.SessionStart).toBeDefined();
       expect(settings.hooks.SessionStart[0].matcher).toBe("startup");
       expect(settings.hooks.SessionStart[0].hooks[0].command).toBe("jumbo session start");
+      expect(settings.hooks?.SessionEnd).toBeUndefined();
     });
 
     it("should create .claude/settings.json with jumbo --help permission", async () => {
@@ -199,6 +200,7 @@ describe("AgentFileProtocol", () => {
       expect(settings.hooks?.SessionStart).toBeDefined();
       expect(settings.hooks.SessionStart[0].matcher).toBe("startup");
       expect(settings.hooks.SessionStart[0].hooks[0].command).toBe("jumbo session start");
+      expect(settings.hooks?.SessionEnd).toBeUndefined();
     });
 
     it("should create .github/copilot-instructions.md with Jumbo instructions", async () => {
