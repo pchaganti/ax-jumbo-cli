@@ -24,7 +24,7 @@ import { GuidelineCategory } from "../../../src/domain/guidelines/Constants.js";
  * Tests for SqliteGoalContextAssembler
  *
  * Tests cover:
- * - Default behavior: when no relations exist, fetch all entities
+ * - No-relation behavior: returns empty context collections
  * - Explicit relations: when relations exist, fetch only related entities
  * - Relation metadata mapping into RelatedContext<T>
  * - Architecture handling
@@ -197,7 +197,7 @@ describe("SqliteGoalContextAssembler", () => {
       expect(result).toBeNull();
     });
 
-    it("should return all entities with default relation metadata when no relations exist", async () => {
+    it("should return empty context collections when no relations exist", async () => {
       // Arrange
       const goal: GoalView = {
         goalId: "goal_123",
@@ -313,37 +313,12 @@ describe("SqliteGoalContextAssembler", () => {
       // Assert
       expect(result).not.toBeNull();
       expect(result!.goal).toEqual(goal);
-      expect(result!.context.components).toHaveLength(1);
-      expect(result!.context.components[0]).toEqual({
-        entity: component,
-        relationType: "default",
-        relationDescription: ""
-      });
-      expect(result!.context.dependencies).toHaveLength(1);
-      expect(result!.context.dependencies[0]).toEqual({
-        entity: dependency,
-        relationType: "default",
-        relationDescription: ""
-      });
-      expect(result!.context.decisions).toHaveLength(1);
-      expect(result!.context.decisions[0]).toEqual({
-        entity: decision,
-        relationType: "default",
-        relationDescription: ""
-      });
-      expect(result!.context.invariants).toHaveLength(1);
-      expect(result!.context.invariants[0]).toEqual({
-        entity: invariant,
-        relationType: "default",
-        relationDescription: ""
-      });
-      expect(result!.context.guidelines).toHaveLength(1);
-      expect(result!.context.guidelines[0]).toEqual({
-        entity: guideline,
-        relationType: "default",
-        relationDescription: ""
-      });
-      expect(result!.context.architecture).toEqual(architecture);
+      expect(result!.context.components).toEqual([]);
+      expect(result!.context.dependencies).toEqual([]);
+      expect(result!.context.decisions).toEqual([]);
+      expect(result!.context.invariants).toEqual([]);
+      expect(result!.context.guidelines).toEqual([]);
+      expect(result!.context.architecture).toBeNull();
     });
 
     it("should return only related entities when explicit relations exist", async () => {

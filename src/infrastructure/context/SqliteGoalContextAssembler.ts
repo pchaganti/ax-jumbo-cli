@@ -24,10 +24,8 @@ import { EntityType } from "../../domain/relations/Constants.js";
  * 1. Query active relations from goal
  * 2. Group related entity IDs by type
  * 3. Batch fetch entities (one query per type)
- *    - If no relations exist, fetches ALL entities to provide complete project context
- *    - If relations exist, fetches only related entities
+ *    - Fetches only related entities
  * 4. Merge entity data with relation metadata into RelatedContext<T>
- *    - Default relation metadata used when no explicit relations exist
  * 5. Return complete ContextualGoalView (goal + context)
  *
  * Performance: ~7 queries worst case (goal + relations + 6 entity types)
@@ -53,7 +51,6 @@ export class SqliteGoalContextAssembler implements IGoalContextAssembler {
     // 2. Query relations where fromEntity = goal and status = active
     const allRelations = await this.relationReader.findByFromEntity(EntityType.GOAL, goalId);
     const relations = allRelations.filter(r => r.status === 'active');
-    const hasNoRelations = relations.length === 0;
 
     // 3. Group related entity IDs by type
     const componentIds = relations
@@ -79,7 +76,6 @@ export class SqliteGoalContextAssembler implements IGoalContextAssembler {
     const hasArchitectureRelation = relations.some(r => r.toEntityType === EntityType.ARCHITECTURE);
 
     // 4. Batch fetch entities (parallel queries)
-    // If no relations exist, fetch all entities to provide complete project context
     const [
       componentViews,
       dependencyViews,
@@ -88,12 +84,12 @@ export class SqliteGoalContextAssembler implements IGoalContextAssembler {
       guidelineViews,
       architectureView
     ] = await Promise.all([
-      hasNoRelations ? this.componentReader.findAll() : this.componentReader.findByIds(componentIds),
-      hasNoRelations ? this.dependencyReader.findAll() : this.dependencyReader.findByIds(dependencyIds),
-      hasNoRelations ? this.decisionReader.findAll("active") : this.decisionReader.findByIds(decisionIds),
-      hasNoRelations ? this.invariantReader.findAll() : this.invariantReader.findByIds(invariantIds),
-      hasNoRelations ? this.guidelineReader.findAll() : this.guidelineReader.findByIds(guidelineIds),
-      hasNoRelations || hasArchitectureRelation ? this.architectureReader.find() : Promise.resolve(null)
+      this.componentReader.findByIds(componentIds),
+      this.dependencyReader.findByIds(dependencyIds),
+      this.decisionReader.findByIds(decisionIds),
+      this.invariantReader.findByIds(invariantIds),
+      this.guidelineReader.findByIds(guidelineIds),
+      hasArchitectureRelation ? this.architectureReader.find() : Promise.resolve(null)
     ]);
 
     // 5. Merge entity data with relation metadata into RelatedContext<T>
@@ -103,23 +99,23 @@ export class SqliteGoalContextAssembler implements IGoalContextAssembler {
     );
 
     const components = this.toRelatedContexts(
-      componentViews, EntityType.COMPONENT, v => v.componentId, relationMap, hasNoRelations
+      componentViews, EntityType.COMPONENT, v => v.componentId, relationMap
     );
 
     const dependencies = this.toRelatedContexts(
-      dependencyViews, EntityType.DEPENDENCY, v => v.dependencyId, relationMap, hasNoRelations
+      dependencyViews, EntityType.DEPENDENCY, v => v.dependencyId, relationMap
     );
 
     const decisions = this.toRelatedContexts(
-      decisionViews, EntityType.DECISION, v => v.decisionId, relationMap, hasNoRelations
+      decisionViews, EntityType.DECISION, v => v.decisionId, relationMap
     );
 
     const invariants = this.toRelatedContexts(
-      invariantViews, EntityType.INVARIANT, v => v.invariantId, relationMap, hasNoRelations
+      invariantViews, EntityType.INVARIANT, v => v.invariantId, relationMap
     );
 
     const guidelines = this.toRelatedContexts(
-      guidelineViews, EntityType.GUIDELINE, v => v.guidelineId, relationMap, hasNoRelations
+      guidelineViews, EntityType.GUIDELINE, v => v.guidelineId, relationMap
     );
 
     // 6. Return assembled ContextualGoalView
@@ -138,23 +134,22 @@ export class SqliteGoalContextAssembler implements IGoalContextAssembler {
 
   /**
    * Map entity views to RelatedContext<T> by merging with relation metadata.
-   * Filters out entities without matching relations (unless hasNoRelations).
+   * Filters out entities without matching relations.
    */
   private toRelatedContexts<T>(
     views: T[],
     entityType: string,
     getId: (view: T) => string,
-    relationMap: Map<string, RelationView>,
-    hasNoRelations: boolean
+    relationMap: Map<string, RelationView>
   ): RelatedContext<T>[] {
     return views
       .map((view): RelatedContext<T> | null => {
         const relation = relationMap.get(`${entityType}:${getId(view)}`);
-        if (!relation && !hasNoRelations) return null;
+        if (!relation) return null;
         return {
           entity: view,
-          relationType: relation?.relationType ?? 'default',
-          relationDescription: relation?.description ?? ''
+          relationType: relation.relationType,
+          relationDescription: relation.description ?? ''
         };
       })
       .filter((item): item is RelatedContext<T> => item !== null);

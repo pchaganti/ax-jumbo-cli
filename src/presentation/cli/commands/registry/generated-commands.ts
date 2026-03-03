@@ -69,6 +69,7 @@ import { invariantsList, metadata as invariantsListMeta } from '../../commands/i
 import { invariantRemove, metadata as invariantRemoveMeta } from '../../commands/invariants/remove/invariant.remove.js';
 import { invariantUpdate, metadata as invariantUpdateMeta } from '../../commands/invariants/update/invariant.update.js';
 import { dbRebuild, metadata as dbRebuildMeta } from '../../commands/maintenance/db/rebuild/db.rebuild.js';
+import { dependencyMigrate, metadata as dependencyMigrateMeta } from '../../commands/maintenance/migrate-dependencies/dependency.migrate.js';
 import { dbUpgrade, metadata as dbUpgradeMeta } from '../../commands/maintenance/upgrade/db.upgrade.js';
 import { projectInit, metadata as projectInitMeta } from '../../commands/project/init/project.init.js';
 import { projectUpdate, metadata as projectUpdateMeta } from '../../commands/project/update/project.update.js';
@@ -387,6 +388,11 @@ export const commands: RegisteredCommand[] = [
     path: 'db rebuild',
     metadata: dbRebuildMeta,
     handler: dbRebuild
+  },
+  {
+    path: 'dependency migrate',
+    metadata: dependencyMigrateMeta,
+    handler: dependencyMigrate
   },
   {
     path: 'db upgrade',
