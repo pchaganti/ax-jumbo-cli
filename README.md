@@ -2,12 +2,8 @@
   <img src="jumbo-logo.svg" alt="Jumbo" width="200">
 </p>
 
-<h1 align="center">Jumbo - Memory for Coding Agents</h1>
-
-<p align="center">
-  Use Jumbo. <br>
-  Focus on goals, not context.
-</p>
+<h1 align="center">An Elephant Never Forgets <br> Neither should Claude Code</h1>
+<p align="center">Jumbo - Memory and Context Orchestration for Coding Agents</p>
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
@@ -20,17 +16,21 @@
 
 ## Can we address the elephant in the room?
 
-Face it, working with coding agents is not ALL fun.  
-One step back for every two forward is not a productivity boost.  
-It's a hassle.
+Working with coding agents is AMAZING!!!  
+But let's be honest - its <u>not</u> all fun.  
 
-Context engineering alleviates the pain, but has you focused on the wrong things.
+AI without guidelines can create a huge mess that takes forever to unravel.
+
+That's not a productivity boost. It's a hassle.
 
 
 ## How does Jumbo help?
 
-Jumbo is a CLI tool that gives your coding agent memory like an... well, <span style="font-size: 1.5rem;">🐘</span>. <br>
-It keeps your agent on track, and you focused on what you want to build.
+Jumbo gives your coding agent memory.  
+
+It captures project details, architecture, components, dependencies, invariants, guidelines, and decisions either directly from you, or from your agent based on your interactions with it.  
+
+Those details get curated into compact context packets that get delivered back to the coding agent when it starts implementing goals you define.that you decide are stored. Then made available  Claude Code, Codex CLI, GEMINI CLI, 
 
 ### Seen in Action
 
