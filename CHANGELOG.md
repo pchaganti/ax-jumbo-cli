@@ -5,32 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Changed
-
-- **Repair command promoted to top-level**: `jumbo repair` is now the primary command path (previously `jumbo maintenance repair`). The command is more discoverable and ergonomic as a top-level command.
-- **Dependency model clarification**: Dependency commands/documentation now define dependencies as third-party software/services (packages or external APIs). Component coupling is documented under relation commands (`depends_on`).
-- **Legacy coupling flag deprecation timeline**: `--consumer-id` and `--provider-id` compatibility flags on `jumbo dependency add` are now explicitly marked deprecated with planned removal in `v3.0.0`.
-
-### Compatibility
-
-- **Backward compatibility in v2.x**: Legacy `--consumer-id` / `--provider-id` behavior remains available during `v2.x` and maps to relations for migration safety.
-- **Upgrade safety**: `jumbo db upgrade --from v1 --to v2` remains idempotent. Re-running a successful migration produces no additional status migrations.
-
-### Deprecation Risk Assessment
-
-- **Breaking risk now**: Low. Existing scripts continue to run in `v2.x`, but emit deprecation warnings.
-- **Breaking risk at v3.0.0**: High for unattended scripts that still use legacy coupling flags. Migrate these scripts to `jumbo relation add --type depends_on` before adopting `v3.0.0`.
-
-### Fixed
-
-- **Repair command**: `jumbo repair` now correctly replaces the Jumbo section in AGENTS.md regardless of which version of section markers the file contains. Old installations using the legacy `## Instructions for Jumbo` heading are now detected and updated to the current format instead of appending a duplicate section.
-
-### Added
-
-- **Documentation**: Added reference pages for work commands (`work pause`, `work resume`), worker commands (`worker view`), and maintenance commands (`db rebuild`, `db upgrade`, `repair`). Updated session command reference with `sessions list` and `session compact`. Updated session management guide with paused state lifecycle, work pause/resume workflow, and context compaction.
-
 ## [2.0.0] - Unreleased
 
 ### BREAKING CHANGES
@@ -38,23 +12,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Session pause/resume removed**: The session pause and resume functionality has been completely removed from the CLI. Sessions now only support `session start` and `session end` commands. Any paused sessions will be automatically migrated to active status.
   - Removed commands: `jumbo session pause` and `jumbo session resume`
   - Goal pause/resume functionality remains unchanged
+  - Migration docs: [`docs/guides/session-management.md`](docs/guides/session-management.md), [`docs/reference/commands/session.md`](docs/reference/commands/session.md)
 
 - **Goal completion workflow changed**: Goals must now go through a review and qualification process before completion. This ensures quality gates are met before marking work as done.
   - Goals must be submitted for review with `jumbo goal review` after work is done
   - After review, goals must be qualified with `jumbo goal qualify`
   - Only goals with `qualified` status can be completed with `jumbo goal complete`
   - **Migration**: If you have goals in `doing` status that you want to complete, you'll need to first run `jumbo goal review --id <id>` then `jumbo goal qualify --id <id>` before completing them
+  - Migration docs: [`docs/guides/goal-management.md`](docs/guides/goal-management.md), [`docs/reference/commands/goal.md`](docs/reference/commands/goal.md)
 
 - **Command renamed**: The `jumbo goal updateProgress` command has been renamed to `jumbo goal update-progress` (kebab-case) for consistency with other multi-word commands.
   - Old command: `jumbo goal updateProgress` (no longer works)
   - New command: `jumbo goal update-progress`
   - **Migration**: Update any scripts or automation to use the new kebab-case command name
+  - Migration docs: [`docs/reference/commands/goal.md`](docs/reference/commands/goal.md)
 
 - **V2 namespace remodel (internal)**: Major internal restructuring of types, namespaces, and architectural boundaries. While these are internal changes, plugins or scripts that depend on internal module paths will break.
   - **Removed types**: `GoalContextView`, `SessionSummaryProjection` (+ handler, store), `RelatedComponent`, `RelatedDecision`, `RelatedDependency`, `RelatedGuideline`, `RelatedInvariant`
   - **Removed namespaces**: `list/` directories and `I*ListReader` interfaces replaced by `get/` and `I*ViewReader`; `get-context/` merged into `get/`
   - **Dropped table**: `session_summary_views` table removed via migration (was orphaned after `SessionSummaryProjection` removal)
   - **Migration**: Run `jumbo repair --yes` after upgrading to rebuild the database with V2 projections
+  - Migration docs: [`docs/reference/commands/maintenance.md`](docs/reference/commands/maintenance.md)
 
 ### Added
 
@@ -81,9 +59,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added GitHub hooks configurer for `.github/hooks/hooks.json`
   - Agent init now adds `jumbo --help` permission to Claude Code settings
   - Agent init now adds `jumbo --help` to Gemini CLI tools.allowed list
+- **Documentation**: Added reference pages for work commands (`work pause`, `work resume`), worker commands (`worker view`), and maintenance commands (`db rebuild`, `db upgrade`, `repair`). Updated session command reference with `sessions list` and `session compact`. Updated session management guide with paused state lifecycle, work pause/resume workflow, and context compaction.
 
 ### Changed
 
+- **Repair command promoted to top-level**: `jumbo repair` is now the primary command path (previously `jumbo maintenance repair`). The command is more discoverable and ergonomic as a top-level command.
+- **Dependency model clarification**: Dependency commands/documentation now define dependencies as third-party software/services (packages or external APIs). Component coupling is documented under relation commands (`depends_on`).
+- **Legacy coupling flag deprecation timeline**: `--consumer-id` and `--provider-id` compatibility flags on `jumbo dependency add` are now explicitly marked deprecated with planned removal in `v3.0.0`.
 - **Goal complete simplified**: The `jumbo goal complete` command no longer handles QA mode or commit logic. Goals must be pre-qualified through the review workflow. The `--commit` flag has been removed.
 
 - **Internal architecture**: Implemented Host/HostBuilder pattern for cleaner infrastructure composition (no user-facing impact)
@@ -102,6 +84,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **QA mode from goal complete**: The `--commit` flag and interactive QA logic have been removed from `jumbo goal complete`. Use the new `jumbo goal review` and `jumbo goal qualify` commands instead for quality assurance.
 
 - **Deprecated events**: Removed `GoalReviewedEvent` and `ReviewTurnTracker` which have been superseded by the new review workflow events
+
+### Fixed
+
+- **Repair command**: `jumbo repair` now correctly replaces the Jumbo section in AGENTS.md regardless of which version of section markers the file contains. Old installations using the legacy `## Instructions for Jumbo` heading are now detected and updated to the current format instead of appending a duplicate section.
+
+### Compatibility
+
+- **Backward compatibility in v2.x**: Legacy `--consumer-id` / `--provider-id` behavior remains available during `v2.x` and maps to relations for migration safety.
+- **Upgrade safety**: `jumbo db upgrade --from v1 --to v2` remains idempotent. Re-running a successful migration produces no additional status migrations.
+
+### Deprecation Risk Assessment
+
+- **Breaking risk now**: Low. Existing scripts continue to run in `v2.x`, but emit deprecation warnings.
+- **Breaking risk at v3.0.0**: High for unattended scripts that still use legacy coupling flags. Migrate these scripts to `jumbo relation add --type depends_on` before adopting `v3.0.0`.
+- Migration docs: [`docs/guides/dependency-migration.md`](docs/guides/dependency-migration.md), [`docs/reference/commands/dependencies.md`](docs/reference/commands/dependencies.md), [`docs/reference/commands/relations.md`](docs/reference/commands/relations.md)
 
 ## [1.0.1] - 2026-01-10
 
