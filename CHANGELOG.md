@@ -60,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Goal progress tracking**: Track progress notes on goals with `jumbo goal update-progress --id <id> --progress <text>`
 
+- **CLI telemetry instrumentation**: Every CLI command invocation is automatically tracked with command name, CLI version, Node.js version, OS platform, architecture, success/failure status, execution duration, and error type on failure. Telemetry is fully non-blocking and gracefully flushes pending events before process exit. Respects consent settings and CI environment detection.
+
 - **Telemetry consent management**: Opt-in anonymous telemetry infrastructure with user control:
   - `jumbo telemetry status` - Show current consent state, effective runtime status, and anonymous ID
   - `jumbo telemetry enable` - Opt into anonymous telemetry (generates anonymous UUID on first enable)
