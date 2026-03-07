@@ -31,6 +31,8 @@ interface HealOptions {
 export async function heal(options: HealOptions, container: IApplicationContainer) {
   const renderer = Renderer.getInstance();
   const outputBuilder = new HealOutputBuilder();
+  const logger = container.logger;
+  const tag = "[heal]";
 
   try {
     if (!options.yes) {
@@ -39,9 +41,11 @@ export async function heal(options: HealOptions, container: IApplicationContaine
       process.exit(1);
     }
 
+    logger.info(`${tag} Starting heal command`);
     const response = await container.rebuildDatabaseController.handle({
       skipConfirmation: options.yes,
     });
+    logger.info(`${tag} Heal command completed`, { eventsReplayed: response.eventsReplayed, success: response.success });
 
     const output = outputBuilder.buildSuccess(response);
     if (renderer.getConfig().format === "text") {
@@ -51,6 +55,9 @@ export async function heal(options: HealOptions, container: IApplicationContaine
 
     renderer.data(outputBuilder.buildStructuredOutput(response));
   } catch (error) {
+    logger.error(`${tag} Heal command failed`, error instanceof Error ? error : undefined, {
+      errorValue: error instanceof Error ? undefined : String(error),
+    });
     const output = outputBuilder.buildFailureError(
       error instanceof Error ? error : String(error)
     );

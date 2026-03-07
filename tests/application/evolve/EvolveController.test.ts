@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { IProjectRootResolver } from "../../../src/application/context/project/IProjectRootResolver.js";
 import { IAgentFileProtocol } from "../../../src/application/context/project/init/IAgentFileProtocol.js";
+import { ILogger } from "../../../src/application/logging/ILogger.js";
 import { IDatabaseRebuildService } from "../../../src/application/maintenance/db/rebuild/IDatabaseRebuildService.js";
 import { MigrateDependenciesCommandHandler } from "../../../src/application/maintenance/migrate-dependencies/MigrateDependenciesCommandHandler.js";
 import { UpgradeCommandHandler } from "../../../src/application/maintenance/upgrade/UpgradeCommandHandler.js";
@@ -66,6 +67,13 @@ describe("EvolveController", () => {
       }),
     } as jest.Mocked<MigrateDependenciesCommandHandler>;
 
+    const logger: ILogger = {
+      error: jest.fn(),
+      warn: jest.fn(),
+      info: jest.fn(),
+      debug: jest.fn(),
+    };
+
     controller = new EvolveController(
       runSchemaMigrations,
       upgradeCommandHandler,
@@ -73,7 +81,8 @@ describe("EvolveController", () => {
       projectRootResolver,
       agentFileProtocol,
       settingsInitializer,
-      databaseRebuildService
+      databaseRebuildService,
+      logger
     );
   });
 

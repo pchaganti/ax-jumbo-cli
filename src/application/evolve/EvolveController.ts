@@ -1,5 +1,6 @@
 import { IProjectRootResolver } from "../context/project/IProjectRootResolver.js";
 import { IAgentFileProtocol } from "../context/project/init/IAgentFileProtocol.js";
+import { ILogger } from "../logging/ILogger.js";
 import { IDatabaseRebuildService } from "../maintenance/db/rebuild/IDatabaseRebuildService.js";
 import { MigrateDependenciesCommandHandler } from "../maintenance/migrate-dependencies/MigrateDependenciesCommandHandler.js";
 import { UpgradeCommandHandler } from "../maintenance/upgrade/UpgradeCommandHandler.js";
@@ -10,6 +11,8 @@ import { EvolveStepResult } from "./EvolveStepResult.js";
 type SchemaMigrationAction = () => void | Promise<void>;
 
 export class EvolveController {
+  private readonly tag = "[EvolveController]";
+
   constructor(
     private readonly runSchemaMigrations: SchemaMigrationAction,
     private readonly upgradeCommandHandler: UpgradeCommandHandler,
@@ -17,12 +20,15 @@ export class EvolveController {
     private readonly projectRootResolver: IProjectRootResolver,
     private readonly agentFileProtocol: IAgentFileProtocol,
     private readonly settingsInitializer: ISettingsInitializer,
-    private readonly databaseRebuildService: IDatabaseRebuildService
+    private readonly databaseRebuildService: IDatabaseRebuildService,
+    private readonly logger: ILogger
   ) {}
 
   async handle(): Promise<EvolveResponse> {
+    this.logger.info(`${this.tag} Starting evolve`);
     const steps: EvolveStepResult[] = [];
     const projectRoot = this.projectRootResolver.resolve();
+    this.logger.debug(`${this.tag} Project root resolved`, { projectRoot });
 
     const schemaMigrationSucceeded = await this.runStep(
       steps,
@@ -128,6 +134,15 @@ export class EvolveController {
       );
     }
 
+    const failedSteps = steps.filter(s => s.status === "failed");
+    if (failedSteps.length > 0) {
+      this.logger.warn(`${this.tag} Evolve completed with ${failedSteps.length} failed step(s)`, {
+        failed: failedSteps.map(s => s.name),
+      });
+    } else {
+      this.logger.info(`${this.tag} Evolve completed successfully`, { totalSteps: steps.length });
+    }
+
     return { steps };
   }
 
@@ -137,8 +152,15 @@ export class EvolveController {
     operation: () => Promise<string | void>,
     successDetail?: string
   ): Promise<boolean> {
+    this.logger.debug(`${this.tag} Running step: ${name}`);
     const result = await this.executeStep(operation);
-    steps.push(this.createStepResult(name, result, successDetail));
+    const stepResult = this.createStepResult(name, result, successDetail);
+    steps.push(stepResult);
+    if (stepResult.status === "failed") {
+      this.logger.error(`${this.tag} Step failed: ${name}`, undefined, { detail: stepResult.detail });
+    } else {
+      this.logger.debug(`${this.tag} Step completed: ${name}`, { status: stepResult.status, detail: stepResult.detail });
+    }
     return result.status === "repaired";
   }
 
@@ -152,6 +174,9 @@ export class EvolveController {
         detail: typeof detail === "string" ? detail : undefined,
       };
     } catch (error) {
+      this.logger.error(`${this.tag} Step execution error`, error instanceof Error ? error : undefined, {
+        errorValue: error instanceof Error ? undefined : String(error),
+      });
       return {
         status: "failed",
         detail: error instanceof Error ? error.message : String(error),

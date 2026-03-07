@@ -593,7 +593,6 @@ export class HostBuilder {
     // ============================================================
 
     const projectRootResolver = new ProjectRootResolver();
-    const eventStore = new FsEventStore(this.rootDir);
     const eventBus = new InProcessEventBus();
     const clock = new SystemClock();
     const cliVersionReader = new CliVersionReader();
@@ -601,6 +600,8 @@ export class HostBuilder {
     // Create logger (writes to .jumbo/logs/jumbo.log)
     const logFilePath = path.join(this.rootDir, "logs", "jumbo.log");
     const logger = new FileLogger(logFilePath, LogLevel.DEBUG);
+
+    const eventStore = new FsEventStore(this.rootDir, logger);
 
     // Initialize settings file if it doesn't exist
     const settingsInitializer = new FsSettingsInitializer(this.rootDir);
@@ -628,7 +629,7 @@ export class HostBuilder {
 
     // Create worker identity components
     const hostSessionKeyResolver = new HostSessionKeyResolver();
-    const workerIdentifiedEventStore = new FsWorkerIdentifiedEventStore(this.rootDir);
+    const workerIdentifiedEventStore = new FsWorkerIdentifiedEventStore(this.rootDir, logger);
     const workerIdentifiedProjector = new SqliteWorkerIdentifiedProjector(this.db);
     const workerIdentityRegistry = new SqliteWorkerIdentityRegistry(
       this.db,
@@ -648,7 +649,8 @@ export class HostBuilder {
     const databaseRebuildService = new TemporarySequentialDatabaseRebuildService(
       this.rootDir,
       this.db,
-      eventStore
+      eventStore,
+      logger
     );
     const rebuildDatabaseGateway = new LocalRebuildDatabaseGateway(databaseRebuildService);
     const rebuildDatabaseController = new RebuildDatabaseController(rebuildDatabaseGateway);
@@ -661,82 +663,82 @@ export class HostBuilder {
     // ============================================================
 
     // Work Category - Session Event Stores - decomposed by use case
-    const sessionStartedEventStore = new FsSessionStartedEventStore(this.rootDir);
-    const sessionEndedEventStore = new FsSessionEndedEventStore(this.rootDir);
+    const sessionStartedEventStore = new FsSessionStartedEventStore(this.rootDir, logger);
+    const sessionEndedEventStore = new FsSessionEndedEventStore(this.rootDir, logger);
     // Goal Event Stores - decomposed by use case
-    const goalAddedEventStore = new FsGoalAddedEventStore(this.rootDir);
-    const goalStartedEventStore = new FsGoalStartedEventStore(this.rootDir);
-    const goalUpdatedEventStore = new FsGoalUpdatedEventStore(this.rootDir);
-    const goalBlockedEventStore = new FsGoalBlockedEventStore(this.rootDir);
-    const goalUnblockedEventStore = new FsGoalUnblockedEventStore(this.rootDir);
-    const goalPausedEventStore = new FsGoalPausedEventStore(this.rootDir);
-    const goalResumedEventStore = new FsGoalResumedEventStore(this.rootDir);
-    const goalCompletedEventStore = new FsGoalCompletedEventStore(this.rootDir);
-    const goalRefinedEventStore = new FsGoalRefinedEventStore(this.rootDir);
-    const goalResetEventStore = new FsGoalResetEventStore(this.rootDir);
-    const goalRemovedEventStore = new FsGoalRemovedEventStore(this.rootDir);
-    const goalProgressUpdatedEventStore = new FsGoalProgressUpdatedEventStore(this.rootDir);
-    const goalSubmittedForReviewEventStore = new FsGoalSubmittedForReviewEventStore(this.rootDir);
-    const goalQualifiedEventStore = new FsGoalQualifiedEventStore(this.rootDir);
-    const goalCommittedEventStore = new FsGoalCommittedEventStore(this.rootDir);
-    const goalRejectedEventStore = new FsGoalRejectedEventStore(this.rootDir);
-    const goalSubmittedEventStore = new FsGoalSubmittedEventStore(this.rootDir);
-    const goalCodifyingStartedEventStore = new FsGoalCodifyingStartedEventStore(this.rootDir);
-    const goalClosedEventStore = new FsGoalClosedEventStore(this.rootDir);
+    const goalAddedEventStore = new FsGoalAddedEventStore(this.rootDir, logger);
+    const goalStartedEventStore = new FsGoalStartedEventStore(this.rootDir, logger);
+    const goalUpdatedEventStore = new FsGoalUpdatedEventStore(this.rootDir, logger);
+    const goalBlockedEventStore = new FsGoalBlockedEventStore(this.rootDir, logger);
+    const goalUnblockedEventStore = new FsGoalUnblockedEventStore(this.rootDir, logger);
+    const goalPausedEventStore = new FsGoalPausedEventStore(this.rootDir, logger);
+    const goalResumedEventStore = new FsGoalResumedEventStore(this.rootDir, logger);
+    const goalCompletedEventStore = new FsGoalCompletedEventStore(this.rootDir, logger);
+    const goalRefinedEventStore = new FsGoalRefinedEventStore(this.rootDir, logger);
+    const goalResetEventStore = new FsGoalResetEventStore(this.rootDir, logger);
+    const goalRemovedEventStore = new FsGoalRemovedEventStore(this.rootDir, logger);
+    const goalProgressUpdatedEventStore = new FsGoalProgressUpdatedEventStore(this.rootDir, logger);
+    const goalSubmittedForReviewEventStore = new FsGoalSubmittedForReviewEventStore(this.rootDir, logger);
+    const goalQualifiedEventStore = new FsGoalQualifiedEventStore(this.rootDir, logger);
+    const goalCommittedEventStore = new FsGoalCommittedEventStore(this.rootDir, logger);
+    const goalRejectedEventStore = new FsGoalRejectedEventStore(this.rootDir, logger);
+    const goalSubmittedEventStore = new FsGoalSubmittedEventStore(this.rootDir, logger);
+    const goalCodifyingStartedEventStore = new FsGoalCodifyingStartedEventStore(this.rootDir, logger);
+    const goalClosedEventStore = new FsGoalClosedEventStore(this.rootDir, logger);
 
     // Solution Category
     // Architecture Event Stores - decomposed by use case
-    const architectureDefinedEventStore = new FsArchitectureDefinedEventStore(this.rootDir);
-    const architectureUpdatedEventStore = new FsArchitectureUpdatedEventStore(this.rootDir);
+    const architectureDefinedEventStore = new FsArchitectureDefinedEventStore(this.rootDir, logger);
+    const architectureUpdatedEventStore = new FsArchitectureUpdatedEventStore(this.rootDir, logger);
     // Component Event Stores - decomposed by use case
-    const componentAddedEventStore = new FsComponentAddedEventStore(this.rootDir);
-    const componentUpdatedEventStore = new FsComponentUpdatedEventStore(this.rootDir);
-    const componentDeprecatedEventStore = new FsComponentDeprecatedEventStore(this.rootDir);
-    const componentUndeprecatedEventStore = new FsComponentUndeprecatedEventStore(this.rootDir);
-    const componentRemovedEventStore = new FsComponentRemovedEventStore(this.rootDir);
-    const componentRenamedEventStore = new FsComponentRenamedEventStore(this.rootDir);
+    const componentAddedEventStore = new FsComponentAddedEventStore(this.rootDir, logger);
+    const componentUpdatedEventStore = new FsComponentUpdatedEventStore(this.rootDir, logger);
+    const componentDeprecatedEventStore = new FsComponentDeprecatedEventStore(this.rootDir, logger);
+    const componentUndeprecatedEventStore = new FsComponentUndeprecatedEventStore(this.rootDir, logger);
+    const componentRemovedEventStore = new FsComponentRemovedEventStore(this.rootDir, logger);
+    const componentRenamedEventStore = new FsComponentRenamedEventStore(this.rootDir, logger);
     // Dependency Event Stores - decomposed by use case
-    const dependencyAddedEventStore = new FsDependencyAddedEventStore(this.rootDir);
-    const dependencyUpdatedEventStore = new FsDependencyUpdatedEventStore(this.rootDir);
-    const dependencyRemovedEventStore = new FsDependencyRemovedEventStore(this.rootDir);
+    const dependencyAddedEventStore = new FsDependencyAddedEventStore(this.rootDir, logger);
+    const dependencyUpdatedEventStore = new FsDependencyUpdatedEventStore(this.rootDir, logger);
+    const dependencyRemovedEventStore = new FsDependencyRemovedEventStore(this.rootDir, logger);
     // Decision Event Stores - decomposed by use case
-    const decisionAddedEventStore = new FsDecisionAddedEventStore(this.rootDir);
-    const decisionUpdatedEventStore = new FsDecisionUpdatedEventStore(this.rootDir);
-    const decisionReversedEventStore = new FsDecisionReversedEventStore(this.rootDir);
-    const decisionRestoredEventStore = new FsDecisionRestoredEventStore(this.rootDir);
-    const decisionSupersededEventStore = new FsDecisionSupersededEventStore(this.rootDir);
+    const decisionAddedEventStore = new FsDecisionAddedEventStore(this.rootDir, logger);
+    const decisionUpdatedEventStore = new FsDecisionUpdatedEventStore(this.rootDir, logger);
+    const decisionReversedEventStore = new FsDecisionReversedEventStore(this.rootDir, logger);
+    const decisionRestoredEventStore = new FsDecisionRestoredEventStore(this.rootDir, logger);
+    const decisionSupersededEventStore = new FsDecisionSupersededEventStore(this.rootDir, logger);
     // Guideline Event Stores - decomposed by use case
-    const guidelineAddedEventStore = new FsGuidelineAddedEventStore(this.rootDir);
-    const guidelineUpdatedEventStore = new FsGuidelineUpdatedEventStore(this.rootDir);
-    const guidelineRemovedEventStore = new FsGuidelineRemovedEventStore(this.rootDir);
+    const guidelineAddedEventStore = new FsGuidelineAddedEventStore(this.rootDir, logger);
+    const guidelineUpdatedEventStore = new FsGuidelineUpdatedEventStore(this.rootDir, logger);
+    const guidelineRemovedEventStore = new FsGuidelineRemovedEventStore(this.rootDir, logger);
     // Invariant Event Stores - decomposed by use case
-    const invariantAddedEventStore = new FsInvariantAddedEventStore(this.rootDir);
-    const invariantUpdatedEventStore = new FsInvariantUpdatedEventStore(this.rootDir);
-    const invariantRemovedEventStore = new FsInvariantRemovedEventStore(this.rootDir);
+    const invariantAddedEventStore = new FsInvariantAddedEventStore(this.rootDir, logger);
+    const invariantUpdatedEventStore = new FsInvariantUpdatedEventStore(this.rootDir, logger);
+    const invariantRemovedEventStore = new FsInvariantRemovedEventStore(this.rootDir, logger);
 
     // Project Knowledge Category
     // Project Event Stores - decomposed by use case
-    const projectInitializedEventStore = new FsProjectInitializedEventStore(this.rootDir);
-    const projectUpdatedEventStore = new FsProjectUpdatedEventStore(this.rootDir);
+    const projectInitializedEventStore = new FsProjectInitializedEventStore(this.rootDir, logger);
+    const projectUpdatedEventStore = new FsProjectUpdatedEventStore(this.rootDir, logger);
     // Project Services
     const agentFileProtocol = new AgentFileProtocol();
     // Audience Event Stores - decomposed by use case
-    const audienceAddedEventStore = new FsAudienceAddedEventStore(this.rootDir);
-    const audienceUpdatedEventStore = new FsAudienceUpdatedEventStore(this.rootDir);
-    const audienceRemovedEventStore = new FsAudienceRemovedEventStore(this.rootDir);
+    const audienceAddedEventStore = new FsAudienceAddedEventStore(this.rootDir, logger);
+    const audienceUpdatedEventStore = new FsAudienceUpdatedEventStore(this.rootDir, logger);
+    const audienceRemovedEventStore = new FsAudienceRemovedEventStore(this.rootDir, logger);
     // AudiencePain Event Stores - decomposed by use case
-    const audiencePainAddedEventStore = new FsAudiencePainAddedEventStore(this.rootDir);
-    const audiencePainUpdatedEventStore = new FsAudiencePainUpdatedEventStore(this.rootDir);
+    const audiencePainAddedEventStore = new FsAudiencePainAddedEventStore(this.rootDir, logger);
+    const audiencePainUpdatedEventStore = new FsAudiencePainUpdatedEventStore(this.rootDir, logger);
 // ValueProposition Event Stores - decomposed by use case
-    const valuePropositionAddedEventStore = new FsValuePropositionAddedEventStore(this.rootDir);
-    const valuePropositionUpdatedEventStore = new FsValuePropositionUpdatedEventStore(this.rootDir);
-    const valuePropositionRemovedEventStore = new FsValuePropositionRemovedEventStore(this.rootDir);
+    const valuePropositionAddedEventStore = new FsValuePropositionAddedEventStore(this.rootDir, logger);
+    const valuePropositionUpdatedEventStore = new FsValuePropositionUpdatedEventStore(this.rootDir, logger);
+    const valuePropositionRemovedEventStore = new FsValuePropositionRemovedEventStore(this.rootDir, logger);
 
     // Relations Category - Event Stores - decomposed by use case
-    const relationAddedEventStore = new FsRelationAddedEventStore(this.rootDir);
-    const relationDeactivatedEventStore = new FsRelationDeactivatedEventStore(this.rootDir);
-    const relationReactivatedEventStore = new FsRelationReactivatedEventStore(this.rootDir);
-    const relationRemovedEventStore = new FsRelationRemovedEventStore(this.rootDir);
+    const relationAddedEventStore = new FsRelationAddedEventStore(this.rootDir, logger);
+    const relationDeactivatedEventStore = new FsRelationDeactivatedEventStore(this.rootDir, logger);
+    const relationReactivatedEventStore = new FsRelationReactivatedEventStore(this.rootDir, logger);
+    const relationRemovedEventStore = new FsRelationRemovedEventStore(this.rootDir, logger);
 
     // ============================================================
     // STEP 3: Create Projection Stores (Read Models)
@@ -1672,7 +1674,8 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       projectRootResolver,
       agentFileProtocol,
       settingsInitializer,
-      databaseRebuildService
+      databaseRebuildService,
+      logger
     );
 
     // RemoveRelation Controller

@@ -16,6 +16,12 @@ describe("heal command", () => {
           eventsReplayed: 123,
         }),
       } as any,
+      logger: {
+        error: jest.fn(),
+        warn: jest.fn(),
+        info: jest.fn(),
+        debug: jest.fn(),
+      },
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

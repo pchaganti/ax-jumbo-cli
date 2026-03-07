@@ -27,6 +27,8 @@ interface EvolveOptions {
 export async function evolve(options: EvolveOptions, container: IApplicationContainer) {
   const renderer = Renderer.getInstance();
   const outputBuilder = new EvolveOutputBuilder();
+  const logger = container.logger;
+  const tag = "[evolve]";
 
   try {
     if (!options.yes) {
@@ -34,9 +36,16 @@ export async function evolve(options: EvolveOptions, container: IApplicationCont
       process.exit(1);
     }
 
+    logger.info(`${tag} Starting evolve command`);
     const response = await container.evolveController.handle();
+    logger.info(`${tag} Evolve command completed`, {
+      steps: response.steps.map(s => ({ name: s.name, status: s.status })),
+    });
     renderer.info(outputBuilder.buildSuccess(response.steps).toHumanReadable());
   } catch (error) {
+    logger.error(`${tag} Evolve command failed`, error instanceof Error ? error : undefined, {
+      errorValue: error instanceof Error ? undefined : String(error),
+    });
     renderer.info(
       outputBuilder
         .buildFailureError(error instanceof Error ? error : String(error))
