@@ -1,13 +1,13 @@
 ---
 title: Maintenance Commands Reference
-description: Complete reference for database and repair maintenance commands.
+description: Complete reference for database rebuild, schema upgrades, migration utilities, and repair commands.
 sidebar:
-  order: 8
+  order: 15
 ---
 
 # Maintenance Commands Reference
 
-Complete reference for database rebuild, upgrade, and repair commands.
+Complete reference for database rebuild, upgrade, migration, and repair commands.
 
 ---
 
@@ -80,14 +80,50 @@ Migrate goal statuses from v1 to v2:
 
 ---
 
-## jumbo maintenance repair
+## jumbo dependency migrate
+
+Migrate legacy component-coupling dependencies to component relations.
+
+### Synopsis
+
+```bash
+> jumbo dependency migrate [--dry-run]
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Preview migration without making changes |
+
+### Behavior
+
+Converts legacy dependency records that represent component coupling into explicit relations. The operation is idempotent.
+
+### Examples
+
+Preview migration:
+
+```bash
+> jumbo dependency migrate --dry-run
+```
+
+Execute migration:
+
+```bash
+> jumbo dependency migrate
+```
+
+---
+
+## jumbo repair
 
 Repair agent configuration files and optionally rebuild the database.
 
 ### Synopsis
 
 ```bash
-> jumbo maintenance repair [--yes] [--no-agents] [--no-settings] [--no-db]
+> jumbo repair [--yes] [--no-agents] [--no-settings] [--no-db]
 ```
 
 ### Options
@@ -114,17 +150,17 @@ Each step can be skipped with its corresponding `--no-*` flag. A confirmation pr
 Repair everything:
 
 ```bash
-> jumbo maintenance repair --yes
+> jumbo repair --yes
 ```
 
 Repair configuration files only (skip database):
 
 ```bash
-> jumbo maintenance repair --yes --no-db
+> jumbo repair --yes --no-db
 ```
 
 Only rebuild the database:
 
 ```bash
-> jumbo maintenance repair --yes --no-agents --no-settings
+> jumbo repair --yes --no-agents --no-settings
 ```

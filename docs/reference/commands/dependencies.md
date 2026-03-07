@@ -138,6 +138,31 @@ Remove a third-party dependency.
 
 ---
 
+## jumbo dependency migrate
+
+Migrate legacy coupling-style dependency records into component relations.
+
+### Synopsis
+
+```bash
+> jumbo dependency migrate [--dry-run]
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Preview migration actions without writing changes |
+
+### Examples
+
+```bash
+> jumbo dependency migrate --dry-run
+> jumbo dependency migrate
+```
+
+---
+
 ## Migration Notes
 
 - `--consumer-id` / `--provider-id` are compatibility flags only.
