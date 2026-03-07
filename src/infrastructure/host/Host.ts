@@ -21,7 +21,6 @@
  */
 
 import Database from "better-sqlite3";
-import fs from "fs";
 import path from "path";
 import { HostBuilder } from "./HostBuilder.js";
 import { MigrationRunner } from "../persistence/MigrationRunner.js";
@@ -61,17 +60,13 @@ export class Host {
 
     // Initialize database connection
     const dbPath = path.join(this.rootDir, "jumbo.db");
-    const isNewDatabase = !fs.existsSync(dbPath);
-
     this.db = new Database(dbPath);
     this.db.pragma("journal_mode = WAL");
 
-    if (isNewDatabase) {
-      const infrastructureDir = path.resolve(__dirname, "..");
-      const migrations = getNamespaceMigrations(infrastructureDir);
-      const migrationRunner = new MigrationRunner(this.db);
-      migrationRunner.runNamespaceMigrations(migrations);
-    }
+    const infrastructureDir = path.resolve(__dirname, "..");
+    const migrations = getNamespaceMigrations(infrastructureDir);
+    const migrationRunner = new MigrationRunner(this.db);
+    migrationRunner.runNamespaceMigrations(migrations);
 
     return new HostBuilder(this.rootDir, this.db);
   }
