@@ -48,7 +48,7 @@ Complete command documentation.
 | [Architecture Commands](reference/commands/architecture.md) | define, update, view |
 | [Component Commands](reference/commands/components.md) | add, show, update, rename, search, list, deprecate, undeprecate, remove |
 | [Decision Commands](reference/commands/decisions.md) | add, list, update, supersede, reverse, restore |
-| [Dependency Commands](reference/commands/dependencies.md) | add, list, update, remove, migrate |
+| [Dependency Commands](reference/commands/dependencies.md) | add, list, update, remove |
 | [Guideline Commands](reference/commands/guidelines.md) | add, list, update, remove |
 | [Invariant Commands](reference/commands/invariants.md) | add, list, update, remove |
 | [Audience Commands](reference/commands/audiences.md) | add, list, update, remove |
@@ -56,7 +56,7 @@ Complete command documentation.
 | [Value Proposition Commands](reference/commands/value-propositions.md) | add, list, update, remove |
 | [Relation Commands](reference/commands/relations.md) | add, list, remove |
 | [Work Commands](reference/commands/work.md) | pause, resume |
-| [Maintenance Commands](reference/commands/maintenance.md) | heal, db upgrade, repair |
+| [Maintenance Commands](reference/commands/maintenance.md) | heal, evolve |
 | [Worker Commands](reference/commands/worker.md) | view |
 
 See [Reference index](reference/index.md) and [Commands index](reference/commands/index.md) for section landing pages.

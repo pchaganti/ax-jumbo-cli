@@ -21,7 +21,7 @@ export const metadata: CommandMetadata = {
       description: "Rebuild projections without confirmation",
     },
   ],
-  related: ["repair", "db upgrade"],
+  related: ["evolve"],
 };
 
 interface HealOptions {

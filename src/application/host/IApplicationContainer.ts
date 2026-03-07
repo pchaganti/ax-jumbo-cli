@@ -19,7 +19,7 @@ import { IClock } from "../time-and-date/IClock.js";
 import { RebuildDatabaseController } from "../maintenance/db/rebuild/RebuildDatabaseController.js";
 import { UpgradeCommandHandler } from "../maintenance/upgrade/UpgradeCommandHandler.js";
 import { MigrateDependenciesCommandHandler } from "../maintenance/migrate-dependencies/MigrateDependenciesCommandHandler.js";
-import { RepairController } from "../repair/RepairController.js";
+import { EvolveController } from "../evolve/EvolveController.js";
 import { ILogger } from "../logging/ILogger.js";
 import { IProjectRootResolver } from "../context/project/IProjectRootResolver.js";
 
@@ -359,7 +359,7 @@ export interface IApplicationContainer {
 
   // Maintenance Controllers
   rebuildDatabaseController: RebuildDatabaseController;
-  repairController: RepairController;
+  evolveController: EvolveController;
   upgradeCommandHandler: UpgradeCommandHandler;
   migrateDependenciesCommandHandler: MigrateDependenciesCommandHandler;
 

@@ -18,7 +18,7 @@ Complete command documentation.
 | [Architecture Commands](commands/architecture.md) | define, update, view |
 | [Component Commands](commands/components.md) | add, show, update, rename, search, list, deprecate, undeprecate, remove |
 | [Decision Commands](commands/decisions.md) | add, list, update, supersede, reverse, restore |
-| [Dependency Commands](commands/dependencies.md) | add, list, update, remove, migrate |
+| [Dependency Commands](commands/dependencies.md) | add, list, update, remove |
 | [Guideline Commands](commands/guidelines.md) | add, list, update, remove |
 | [Invariant Commands](commands/invariants.md) | add, list, update, remove |
 | [Audience Commands](commands/audiences.md) | add, list, update, remove |
@@ -26,5 +26,5 @@ Complete command documentation.
 | [Value Proposition Commands](commands/value-propositions.md) | add, list, update, remove |
 | [Relation Commands](commands/relations.md) | add, list, remove |
 | [Work Commands](commands/work.md) | pause, resume |
-| [Maintenance Commands](commands/maintenance.md) | heal, db upgrade, repair |
+| [Maintenance Commands](commands/maintenance.md) | heal, evolve |
 | [Worker Commands](commands/worker.md) | view |

@@ -17,7 +17,7 @@ Complete reference for all Jumbo CLI commands.
 | [Architecture Commands](architecture.md) | define, update, view |
 | [Component Commands](components.md) | add, show, update, rename, search, list, deprecate, undeprecate, remove |
 | [Decision Commands](decisions.md) | add, list, update, supersede, reverse, restore |
-| [Dependency Commands](dependencies.md) | add, list, update, remove, migrate |
+| [Dependency Commands](dependencies.md) | add, list, update, remove |
 | [Guideline Commands](guidelines.md) | add, list, update, remove |
 | [Invariant Commands](invariants.md) | add, list, update, remove |
 | [Audience Commands](audiences.md) | add, list, update, remove |
@@ -25,5 +25,5 @@ Complete reference for all Jumbo CLI commands.
 | [Value Proposition Commands](value-propositions.md) | add, list, update, remove |
 | [Relation Commands](relations.md) | add, list, remove |
 | [Work Commands](work.md) | pause, resume |
-| [Maintenance Commands](maintenance.md) | heal, db upgrade, repair |
+| [Maintenance Commands](maintenance.md) | heal, evolve |
 | [Worker Commands](worker.md) | view |

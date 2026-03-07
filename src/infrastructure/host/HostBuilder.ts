@@ -25,8 +25,7 @@ import { RebuildDatabaseController } from "../../application/maintenance/db/rebu
 import { UpgradeCommandHandler } from "../../application/maintenance/upgrade/UpgradeCommandHandler.js";
 import { MigrateDependenciesCommandHandler } from "../../application/maintenance/migrate-dependencies/MigrateDependenciesCommandHandler.js";
 import { LocalRebuildDatabaseGateway } from "../../application/maintenance/db/rebuild/LocalRebuildDatabaseGateway.js";
-import { RepairController } from "../../application/repair/RepairController.js";
-import { LocalRepairGateway } from "../../application/repair/LocalRepairGateway.js";
+import { EvolveController } from "../../application/evolve/EvolveController.js";
 import { ITelemetryClient } from "../../application/telemetry/ITelemetryClient.js";
 
 // Infrastructure implementations
@@ -40,6 +39,8 @@ import * as path from "path";
 // TEMPORARY: Use sequential rebuild service to avoid race conditions
 // TODO: Swap back to LocalDatabaseRebuildService when Epic/Feature/Task redesign is complete
 import { TemporarySequentialDatabaseRebuildService } from "../local/TemporarySequentialDatabaseRebuildService.js";
+import { MigrationRunner } from "../persistence/MigrationRunner.js";
+import { getNamespaceMigrations } from "../persistence/migrations.config.js";
 
 // Session Event Stores - decomposed by use case
 import { FsSessionStartedEventStore } from "../context/sessions/start/FsSessionStartedEventStore.js";
@@ -695,13 +696,6 @@ export class HostBuilder {
     const projectUpdatedEventStore = new FsProjectUpdatedEventStore(this.rootDir);
     // Project Services
     const agentFileProtocol = new AgentFileProtocol();
-    const repairGateway = new LocalRepairGateway(
-      projectRootResolver,
-      agentFileProtocol,
-      settingsInitializer,
-      databaseRebuildService
-    );
-    const repairController = new RepairController(repairGateway);
     // Audience Event Stores - decomposed by use case
     const audienceAddedEventStore = new FsAudienceAddedEventStore(this.rootDir);
     const audienceUpdatedEventStore = new FsAudienceUpdatedEventStore(this.rootDir);
@@ -1645,6 +1639,17 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       addRelationCommandHandler,
       removeDependencyCommandHandler
     );
+    const infrastructureDir = path.resolve(__dirname, "..");
+    const evolveMigrationRunner = new MigrationRunner(this.db);
+    const evolveController = new EvolveController(
+      () => evolveMigrationRunner.runNamespaceMigrations(getNamespaceMigrations(infrastructureDir)),
+      upgradeCommandHandler,
+      migrateDependenciesCommandHandler,
+      projectRootResolver,
+      agentFileProtocol,
+      settingsInitializer,
+      databaseRebuildService
+    );
 
     // RemoveRelation Controller
     const removeRelationCommandHandler = new RemoveRelationCommandHandler(
@@ -1936,7 +1941,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
 
       // Maintenance Controllers
       rebuildDatabaseController,
-      repairController,
+      evolveController,
       upgradeCommandHandler,
       migrateDependenciesCommandHandler,
 

@@ -38,6 +38,7 @@ import { dependencyAdd, metadata as dependencyAddMeta } from '../../commands/dep
 import { dependenciesList, metadata as dependenciesListMeta } from '../../commands/dependencies/list/dependencies.list.js';
 import { dependencyRemove, metadata as dependencyRemoveMeta } from '../../commands/dependencies/remove/dependency.remove.js';
 import { dependencyUpdate, metadata as dependencyUpdateMeta } from '../../commands/dependencies/update/dependency.update.js';
+import { evolve, metadata as evolveMeta } from '../../commands/evolve/evolve.js';
 import { goalAdd, metadata as goalAddMeta } from '../../commands/goals/add/goal.add.js';
 import { goalApprove, metadata as goalApproveMeta } from '../../commands/goals/approve/goal.approve.js';
 import { goalBlock, metadata as goalBlockMeta } from '../../commands/goals/block/goal.block.js';
@@ -69,14 +70,11 @@ import { invariantAdd, metadata as invariantAddMeta } from '../../commands/invar
 import { invariantsList, metadata as invariantsListMeta } from '../../commands/invariants/list/invariants.list.js';
 import { invariantRemove, metadata as invariantRemoveMeta } from '../../commands/invariants/remove/invariant.remove.js';
 import { invariantUpdate, metadata as invariantUpdateMeta } from '../../commands/invariants/update/invariant.update.js';
-import { dependencyMigrate, metadata as dependencyMigrateMeta } from '../../commands/maintenance/migrate-dependencies/dependency.migrate.js';
-import { dbUpgrade, metadata as dbUpgradeMeta } from '../../commands/maintenance/upgrade/db.upgrade.js';
 import { projectInit, metadata as projectInitMeta } from '../../commands/project/init/project.init.js';
 import { projectUpdate, metadata as projectUpdateMeta } from '../../commands/project/update/project.update.js';
 import { relationAdd, metadata as relationAddMeta } from '../../commands/relations/add/relation.add.js';
 import { relationsList, metadata as relationsListMeta } from '../../commands/relations/list/relations.list.js';
 import { relationRemove, metadata as relationRemoveMeta } from '../../commands/relations/remove/relation.remove.js';
-import { repair, metadata as repairMeta } from '../../commands/repair/repair.js';
 import { sessionCompact, metadata as sessionCompactMeta } from '../../commands/sessions/compact/session.compact.js';
 import { sessionEnd, metadata as sessionEndMeta } from '../../commands/sessions/end/session.end.js';
 import { sessionsList, metadata as sessionsListMeta } from '../../commands/sessions/list/sessions.list.js';
@@ -238,6 +236,11 @@ export const commands: RegisteredCommand[] = [
     handler: dependencyUpdate
   },
   {
+    path: 'evolve',
+    metadata: evolveMeta,
+    handler: evolve
+  },
+  {
     path: 'goal add',
     metadata: goalAddMeta,
     handler: goalAdd
@@ -393,16 +396,6 @@ export const commands: RegisteredCommand[] = [
     handler: invariantUpdate
   },
   {
-    path: 'dependency migrate',
-    metadata: dependencyMigrateMeta,
-    handler: dependencyMigrate
-  },
-  {
-    path: 'db upgrade',
-    metadata: dbUpgradeMeta,
-    handler: dbUpgrade
-  },
-  {
     path: 'project init',
     metadata: projectInitMeta,
     handler: projectInit
@@ -426,11 +419,6 @@ export const commands: RegisteredCommand[] = [
     path: 'relation remove',
     metadata: relationRemoveMeta,
     handler: relationRemove
-  },
-  {
-    path: 'repair',
-    metadata: repairMeta,
-    handler: repair
   },
   {
     path: 'session compact',
