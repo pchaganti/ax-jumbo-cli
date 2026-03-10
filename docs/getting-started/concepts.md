@@ -13,16 +13,17 @@ Understand the key concepts that power Jumbo.
 
 ## Sessions
 
-A session represents a continuous period of work with your AI coding agent.
+Sessions provide agents with the highest level of project context, and managed meta data about project state.
 
-**Starting a session** loads orientation context:
+**Starting a session** renders orientation context:
 
 - Project name and purpose
-- Previous session summary
+- Recent changes
 - Goals in progress
+- Goals ready for refinement
 - Planned goals
 
-**Ending a session** captures what was accomplished, creating continuity for the next session.
+**Ending a session** captures what was accomplished, creating a book of record for the project history.
 
 ```bash
 > jumbo session start
@@ -34,13 +35,13 @@ jumbo session end --focus "Completed authentication module"
 
 ## Goals
 
-Goals are discrete units of work that move through a 13-state lifecycle. Each goal has:
+Goals are discrete units of work that move through a four phased lifecycle. Each goal has:
 
 | Property | Description |
 |----------|-------------|
 | **Title** | Short label for the goal (max 60 characters) |
 | **Objective** | What needs to be accomplished |
-| **Criteria** | How to know when it's done |
+| **Criteria** | Details of the implementation that must be satisfied for approval |
 | **Scope** | What's in and out of scope |
 | **Status** | Current lifecycle state (see below) |
 
@@ -80,7 +81,7 @@ Context packets are optimized bundles of project knowledge delivered at workflow
 **Session start packet** contains:
 
 - Project overview
-- Recent accomplishments
+- Recent changes
 - Available goals
 
 **Goal start packet** contains:
@@ -88,13 +89,13 @@ Context packets are optimized bundles of project knowledge delivered at workflow
 - Goal objective, criteria, and boundaries
 - Relevant components and dependencies
 - Applicable invariants and guidelines
-- Recent decisions
+- Related decisions
 
 Context packets are designed for minimal token usage while providing maximum relevance.
 
 ---
 
-## Project knowledge
+## Memory types
 
 Jumbo captures several types of project knowledge:
 
@@ -116,7 +117,7 @@ This knowledge is delivered to your AI agent when relevant to the current goal.
 
 ## Event store
 
-Jumbo stores all project knowledge as immutable events.
+Jumbo stores all memories as immutable events.
 
 **Benefits:**
 

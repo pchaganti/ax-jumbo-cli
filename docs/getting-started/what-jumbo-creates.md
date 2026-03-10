@@ -34,8 +34,6 @@ The `.jumbo/` directory is Jumbo's local project memory. Everything Jumbo knows 
 │   └── ...
 ├── jumbo.db               # SQLite read projection
 ├── settings.jsonc         # Project-level configuration
-├── workers.json           # Worker process registry
-├── claims.json            # Goal ownership claims
 └── logs/
     └── jumbo.log          # Runtime log
 ```
@@ -44,9 +42,7 @@ The `.jumbo/` directory is Jumbo's local project memory. Everything Jumbo knows 
 |---|---|
 | `events/` | Append-only event store organized by aggregate UUID |
 | `jumbo.db` | SQLite database used as a CQRS read projection |
-| `settings.jsonc` | Project configuration (QA turn limits, claim duration) |
-| `workers.json` | Tracks active worker processes |
-| `claims.json` | Tracks goal ownership for concurrency control |
+| `settings.jsonc` | User settings (QA turn limits, claim duration) |
 | `logs/jumbo.log` | Runtime log output |
 
 ---
@@ -98,15 +94,13 @@ The SQLite database (`jumbo.db`) is a **CQRS read projection** — a denormalize
 
 ## Version control guidance
 
-The `.jumbo/` directory is **local project memory**. It is not yet designed for sharing across team members.
-
-Recommended `.gitignore` entries:
+The following entry will be added to your `.gitignore`.
 
 ```
 .jumbo/
 ```
 
-The agent hook files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/`, `.gemini/`, `.github/copilot-instructions.md`, `.github/hooks/`) should be committed so that all team members get the same agent integration.
+The `.jumbo/` directory is **local project memory**. It is not yet designed for sharing across team members.
 
 ---
 

@@ -60,6 +60,6 @@ If `jumbo` is not recognized after installation:
 
 ## Next steps
 
-- [Initialize your first project](quickstart.md)
+- [Initialize your first project](first-run.md)
 - [What Jumbo creates](what-jumbo-creates.md) — Understand every file Jumbo adds to your project
 - [Understand core concepts](concepts.md)

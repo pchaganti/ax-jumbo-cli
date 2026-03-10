@@ -1,11 +1,11 @@
 ---
-title: Advanced Workflows
+title: Advanced Methods
 description: Advanced patterns for chaining commands, running concurrent agent sessions, and keeping Jumbo workflows efficient.
 sidebar:
   order: 5
 ---
 
-# Advanced Workflows
+# Advanced Methods
 
 Use these patterns when you want faster execution, reliable context handoff, and clean multi-agent collaboration.
 

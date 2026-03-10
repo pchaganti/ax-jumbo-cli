@@ -7,7 +7,7 @@ sidebar:
 
 # Jumbo Documentation
 
-Memory for coding agents. Keep your AI assistant on track.
+Memory and contet orchestration for coding agents.
 
 ---
 
@@ -24,21 +24,24 @@ Memory for coding agents. Keep your AI assistant on track.
 
 ## Guides
 
-Deep-dive tutorials for common workflows.
+| Guide | Description |
+|-------|-------------|
+| [Goal Management](guides/goal-management.md) | Essential knowledge for using Jumbo |
+| [Project Initialization](guides/project-initialization.md) | Understand  |
+| [Session Management](guides/session-management.md) | Learn the essentials about how sessions work |
+| [Advanced Workflows](guides/advanced-workflows.md) | Goal chaining, running concurrent agents, and other productivity tips |
+
+---
+
+## Uprading
 
 | Guide | Description |
 |-------|-------------|
-| [Goal Management](guides/goal-management.md) | Track and complete work with goals |
-| [Project Initialization](guides/project-initialization.md) | Configure Jumbo for your project |
-| [Session Management](guides/session-management.md) | Manage work sessions effectively |
 | [Dependency Migration](guides/dependency-migration.md) | Migrate legacy coupling dependencies into relations |
-| [Advanced Workflows](guides/advanced-workflows.md) | Command chaining, multi-agent sessions, and efficiency patterns |
 
 ---
 
 ## Reference
-
-Complete command documentation.
 
 | Commands | Description |
 |----------|-------------|
@@ -58,8 +61,6 @@ Complete command documentation.
 | [Work Commands](reference/commands/work.md) | pause, resume |
 | [Maintenance Commands](reference/commands/maintenance.md) | heal, evolve |
 | [Worker Commands](reference/commands/worker.md) | view |
-
-See [Reference index](reference/index.md) and [Commands index](reference/commands/index.md) for section landing pages.
 
 ---
 
