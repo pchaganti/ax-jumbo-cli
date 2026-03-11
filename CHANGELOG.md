@@ -14,12 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Goal pause/resume functionality remains unchanged
   - Migration docs: [`docs/guides/session-management.md`](docs/guides/session-management.md), [`docs/reference/commands/session.md`](docs/reference/commands/session.md)
 
-- **Goal completion workflow changed**: Goals must now go through a review and qualification process before completion. This ensures quality gates are met before marking work as done.
-  - Goals must be submitted for review with `jumbo goal review` after work is done
-  - After review, goals must be qualified with `jumbo goal qualify`
-  - Only goals with `qualified` status can be completed with `jumbo goal complete`
-  - **Migration**: If you have goals in `doing` status that you want to complete, you'll need to first run `jumbo goal review --id <id>` then `jumbo goal qualify --id <id>` before completing them
+- **Goal lifecycle overhauled**: The goal lifecycle has been significantly expanded with new states, commands, and a renamed status vocabulary. The full lifecycle is now: `defined` → `in-refinement` → `refined` → `doing` → `submitted` → `in-review` → `approved` → `codifying` → `done`. Goals can also be `paused`, `blocked`, or `rejected` at various stages.
+  - **Status values renamed**: `to-do` → `defined`, `qualified` → `approved`, `completed` → `done`. Legacy values are migrated automatically via `jumbo evolve --yes`.
+  - **`goal complete` removed**: Replaced by `jumbo goal codify` (acquires claim for architectural reconciliation) and `jumbo goal close` (releases claim, transitions to `done`).
+  - **`goal qualify` deprecated**: Replaced by `jumbo goal approve`. `goal qualify` still works but emits a deprecation warning.
+  - **New commands**: `jumbo goal submit` (doing → submitted), `jumbo goal reject` (in-review → rejected), `jumbo goal approve` (in-review → approved), `jumbo goal commit` (in-refinement → refined), `jumbo goal codify` (approved → codifying), `jumbo goal close` (codifying → done)
+  - **New states**: `submitted`, `in-refinement`, `rejected`, `codifying`, `done` (replacing `completed`)
+  - **Refinement split into two phases**: `jumbo goal refine` now transitions to `in-refinement` and acquires a claim; `jumbo goal commit` transitions to `refined` and releases the claim. The `--approve` flag has been removed from `goal refine`.
+  - **Migration**: Run `jumbo evolve --yes` to migrate legacy status values. Update scripts that reference old status names or use `goal complete`/`goal qualify`.
   - Migration docs: [`docs/guides/goal-management.md`](docs/guides/goal-management.md), [`docs/reference/commands/goal.md`](docs/reference/commands/goal.md)
+
+- **`--goal-id` flag renamed to `--id`**: All goal commands now use `--id` instead of `--goal-id`. The goal namespace already provides context, making the prefix redundant.
+  - Old flag: `jumbo goal start --goal-id <id>` (no longer works)
+  - New flag: `jumbo goal start --id <id>`
+  - **Migration**: Update any scripts or automation to use `--id`
 
 - **Command renamed**: The `jumbo goal updateProgress` command has been renamed to `jumbo goal update-progress` (kebab-case) for consistency with other multi-word commands.
   - Old command: `jumbo goal updateProgress` (no longer works)
@@ -49,9 +57,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Heal command**: `jumbo heal --yes` rebuilds database projections by replaying all events from the event store. Replaces `jumbo db rebuild` as the user-facing corruption recovery command.
 
 - **Goal review workflow**: New two-step quality assurance workflow for goals before completion:
-  - `jumbo goal review --id <id>` - Submit a goal for review (transitions from `doing` to `in-review`)
-  - `jumbo goal qualify --id <id>` - Qualify a reviewed goal (transitions from `in-review` to `qualified`)
-  - Goals in `in-review` or `qualified` status are included in session context
+  - `jumbo goal review --id <id>` - Submit a goal for review (transitions from `submitted` to `in-review`)
+  - `jumbo goal approve --id <id>` - Approve a reviewed goal (transitions from `in-review` to `approved`)
+  - Goals in `in-review` or `approved` status are included in session context
+
+- **Goal submit command**: `jumbo goal submit --id <id>` transitions a goal from `doing` to `submitted` and releases the implementer's claim, signaling work is ready for review.
+
+- **Goal reject command**: `jumbo goal reject --id <id>` returns a reviewed goal from `in-review` to `rejected` status with review issues recorded as a dedicated goal state property.
+
+- **Goal codify/close commands**: Final lifecycle phase for architectural reconciliation:
+  - `jumbo goal codify --id <id>` - Transition from `approved` to `codifying` (acquires claim)
+  - `jumbo goal close --id <id>` - Transition from `codifying` to `done` (releases claim)
+
+- **Goal commit command**: `jumbo goal commit --id <id>` transitions a goal from `in-refinement` to `refined` and releases the refinement claim. Part of the two-phase refinement workflow.
+
+- **Goal title field**: Goals now support a `title` field for human-readable naming.
+
+- **Goal prerequisite goals**: Goals can declare prerequisite goals via the `prerequisiteGoals` property, enabling dependency ordering between goals.
 
 - **Goal pause/resume**: Goals can now be paused and resumed independently of sessions:
   - `jumbo goal pause --id <id>` - Pause work on a goal
@@ -59,6 +81,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Paused goals are included in session context and goals list
 
 - **Goal progress tracking**: Track progress notes on goals with `jumbo goal update-progress --id <id> --progress <text>`
+
+- **Goal reset with dynamic target**: `jumbo goal reset` now computes the target state dynamically from the state machine rather than hardcoding a reset destination.
+
+- **Component rename command**: `jumbo component rename` renames an existing component.
+
+- **Component show command**: `jumbo component show` displays component details and its relations.
+
+- **Relation deactivation/reactivation lifecycle**: Relations now support deactivation and reactivation with automatic cascade when a related entity reaches a terminal state.
 
 - **CLI telemetry instrumentation**: Every CLI command invocation is automatically tracked with command name, CLI version, Node.js version, OS platform, architecture, success/failure status, execution duration, and error type on failure. Telemetry is fully non-blocking and gracefully flushes pending events before process exit. Respects consent settings and CI environment detection.
 
@@ -77,11 +107,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Enhanced session context**: Paused and blocked goals are now included in session context output, providing complete visibility into all active work
 
+- **Short flag aliases**: Added short aliases across all entity commands (e.g., `-d` for `--description`, `-n` for `--name`) for faster CLI usage.
+
+- **Gitignore enforcement**: `jumbo project init` now enforces `.gitignore` exclusions for the `.jumbo` directory via `IGitignoreProtocol`.
+
+- **Idempotent claim re-entry**: Entry commands (start, refine, codify) now handle expired claims idempotently, allowing re-entry without manual claim cleanup.
+
 - **Agent configuration improvements**:
   - Updated Claude and Gemini configurers to match current repository settings
   - Added GitHub hooks configurer for `.github/hooks/hooks.json`
   - Agent init now adds `jumbo --help` permission to Claude Code settings
   - Agent init now adds `jumbo --help` to Gemini CLI tools.allowed list
+
+- **Template-managed skills**: `jumbo evolve` and `jumbo project init` now sync template-managed skills from the assets directory.
+
 - **Documentation**: Added reference pages for work commands (`work pause`, `work resume`), worker commands (`worker view`), and maintenance commands (`db rebuild`, `db upgrade`, `repair`). Updated session command reference with `sessions list` and `session compact`. Updated session management guide with paused state lifecycle, work pause/resume workflow, and context compaction.
 
 ### Changed
@@ -89,9 +128,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Evolve command**: `jumbo evolve --yes` now updates managed skills, configuration, schema, and projections in one command. `heal` remains the focused projection rebuild command.
 - **Dependency model clarification**: Dependency commands/documentation now define dependencies as third-party software/services (packages or external APIs). Component coupling is documented under relation commands (`depends_on`).
 - **Legacy coupling flag deprecation timeline**: `--consumer-id` and `--provider-id` compatibility flags on `jumbo dependency add` are now explicitly marked deprecated with planned removal in `v3.0.0`.
-- **Goal complete simplified**: The `jumbo goal complete` command no longer handles QA mode or commit logic. Goals must be pre-qualified through the review workflow. The `--commit` flag has been removed.
+- **Goal claim storage migrated to SQLite**: Goal claims are now stored in SQLite instead of the filesystem for improved reliability.
+- **Worker identity storage migrated to SQLite**: Worker identity persistence moved from filesystem to SQLite for consistency with other state.
 
-- **Internal architecture**: Implemented Host/HostBuilder pattern for cleaner infrastructure composition (no user-facing impact)
+- **Internal architecture**:
+  - Implemented Host/HostBuilder pattern for cleaner infrastructure composition
+  - Introduced Controller-Gateway pattern across all command flows for cleaner separation of presentation and application layers
+  - Consolidated `templates/` directory into `assets/` for static file storage
 
 - **V2 namespace remodel (internal)**:
   - Introduced `*Record` types (`GoalRecord`, `SessionRecord`, `ComponentRecord`, `DecisionRecord`, `DependencyRecord`, `GuidelineRecord`, `InvariantRecord`, `RelationRecord`) with dedicated `*RecordMapper` services at the infrastructure/application boundary
@@ -104,13 +147,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Project boundaries**: Removed `boundaries` field from the Project domain model, commands, views, and CLI options. The `--boundary` flag has been removed from `jumbo project init` and `jumbo project update`. Existing databases will have the column dropped via migration.
 
-- **QA mode from goal complete**: The `--commit` flag and interactive QA logic have been removed from `jumbo goal complete`. Use the new `jumbo goal review` and `jumbo goal qualify` commands instead for quality assurance.
+- **`goal complete` command**: Removed entirely. Replaced by `jumbo goal codify` and `jumbo goal close` for the final lifecycle phase. `GoalCompletedEvent` is retained for backward-compatible event replay.
+
+- **QA mode from goal complete**: The `--commit` flag and interactive QA logic have been removed. Use the new review workflow (`goal submit` → `goal review` → `goal approve`) followed by `goal codify` and `goal close`.
 
 - **Deprecated events**: Removed `GoalReviewedEvent` and `ReviewTurnTracker` which have been superseded by the new review workflow events
 
 ### Fixed
 
 - **Managed agent refresh**: The installation update flow now correctly replaces the Jumbo section in AGENTS.md regardless of which version of section markers the file contains. Old installations using the legacy `## Instructions for Jumbo` heading are now detected and updated to the current format instead of appending a duplicate section.
+
+- **Event store hardening**: Event store now handles corruption gracefully with improved observability in evolve/heal workflows.
+
+- **Stale database boot migration**: Pending migrations now run automatically on boot for databases that missed prior upgrades.
+
+- **ProjectRootResolver directory walk**: Fixed the resolver walking up to parent directories, which could cause it to find the wrong `.jumbo` directory.
+
+- **`.jumbo` directory resolution**: Fixed resolution from nearest ancestor to prevent state splitting when multiple `.jumbo` directories exist in the path hierarchy.
+
+- **Hidden commands in help output**: Hidden commands and top-level aliases are no longer shown in help output.
+
+- **TerminalOutput data section rendering**: Fixed `TerminalOutput.toHumanReadable()` to correctly render data section messages.
 
 ### Compatibility
 
