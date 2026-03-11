@@ -5,8 +5,6 @@ sidebar:
   order: 10
 ---
 
-# Documentation Contributing Guide
-
 Standards and conventions for contributing to Jumbo documentation.
 
 ---
@@ -46,13 +44,13 @@ Each section has a reserved `sidebar.order` range. **Leave gaps** between values
 
 | Section | Order range | Current assignments |
 |---------|-------------|---------------------|
-| `docs/getting-started/` | 1 -- 10 | 1: Installation, 2: Quickstart, 3: Concepts, 4: What Jumbo Creates |
+| `docs/getting-started/` | 1 -- 10 | 1: Installation, 2: First Run, 3: Concepts, 4: What Jumbo Creates |
 | `docs/guides/` | 1 -- 10 | 1: Project Initialization, 2: Goal Management, 3: Session Management, 4: Dependency Migration, 5: Advanced Workflows, 6: Telemetry |
 | `docs/reference/commands/` | 1 -- 20 | 1: Goal, 2: Session, 3: Project, 4: Architecture, 5: Components, 6: Decisions, 7: Dependencies, 8: Guidelines, 9: Invariants, 10: Audiences, 11: Audience Pains, 12: Value Propositions, 13: Relations, 14: Work, 15: Maintenance, 16: Worker, 17: Telemetry |
 
 ### Why gaps?
 
-If you need to insert a page between Installation (1) and Quickstart (2), you can't without renumbering. The reference section uses wider gaps (1, 3, 5) so you can slot new command pages in between (e.g., order 2 for a new command group).
+If you need to insert a page between Installation (1) and First Run (2), you can't without renumbering. The reference section uses wider gaps (1, 3, 5) so you can slot new command pages in between (e.g., order 2 for a new command group).
 
 ---
 

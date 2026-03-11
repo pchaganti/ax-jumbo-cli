@@ -1,13 +1,11 @@
 ---
 title: Jumbo Documentation
-description: Memory for coding agents. Keep your AI assistant on track with persistent, transferable context management.
+description: Memory and context orchestration for coding agents.
 sidebar:
   order: 1
 ---
 
-# Jumbo Documentation
-
-Memory and contet orchestration for coding agents.
+Memory and context orchestration for coding agents.
 
 ---
 
@@ -16,7 +14,7 @@ Memory and contet orchestration for coding agents.
 | Goal | Resource |
 |------|----------|
 | Install Jumbo | [Installation](getting-started/installation.md) |
-| Get running in 5 minutes | [Quickstart](getting-started/quickstart.md) |
+| Get set up and complete your first goal | [First Run](getting-started/first-run.md) |
 | Understand core concepts | [Concepts](getting-started/concepts.md) |
 | See what Jumbo adds to your project | [What Jumbo Creates](getting-started/what-jumbo-creates.md) |
 
@@ -27,17 +25,16 @@ Memory and contet orchestration for coding agents.
 | Guide | Description |
 |-------|-------------|
 | [Goal Management](guides/goal-management.md) | Essential knowledge for using Jumbo |
-| [Project Initialization](guides/project-initialization.md) | Understand  |
-| [Session Management](guides/session-management.md) | Learn the essentials about how sessions work |
+| [Project Initialization](guides/project-initialization.md) | Understand what happens during `jumbo init` |
 | [Advanced Workflows](guides/advanced-workflows.md) | Goal chaining, running concurrent agents, and other productivity tips |
 
 ---
 
-## Uprading
+## Upgrading
 
 | Guide | Description |
 |-------|-------------|
-| [Dependency Migration](guides/dependency-migration.md) | Migrate legacy coupling dependencies into relations |
+| [Upgrading to v2](upgrading/v2.md) | Migrate your project from v1 to v2 |
 
 ---
 
@@ -61,16 +58,6 @@ Memory and contet orchestration for coding agents.
 | [Work Commands](reference/commands/work.md) | pause, resume |
 | [Maintenance Commands](reference/commands/maintenance.md) | heal, evolve |
 | [Worker Commands](reference/commands/worker.md) | view |
-
----
-
-## Documentation internals
-
-| Page | Description |
-|------|-------------|
-| [Docs Contributing Guide](CONTRIBUTING-DOCS.md) | Frontmatter schema, ordering conventions, and docs structure standards |
-| [Guides Index](guides/index.md) | Landing page for guide content |
-| [Getting Started Index](getting-started/index.md) | Landing page for onboarding content |
 
 ---
 
