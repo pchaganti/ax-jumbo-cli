@@ -71,8 +71,7 @@ export class FsSettingsReader implements ISettingsReader {
       return false;
     }
 
-    return Object.prototype.hasOwnProperty.call(telemetry, "enabled")
-      || Object.prototype.hasOwnProperty.call(telemetry, "anonymousId");
+    return telemetry.consentGiven === true;
   }
 
   /**
@@ -101,6 +100,8 @@ export class FsSettingsReader implements ISettingsReader {
           settings.telemetry?.enabled ?? DEFAULT_SETTINGS.telemetry.enabled,
         anonymousId:
           settings.telemetry?.anonymousId ?? DEFAULT_SETTINGS.telemetry.anonymousId,
+        consentGiven:
+          settings.telemetry?.consentGiven ?? DEFAULT_SETTINGS.telemetry.consentGiven,
       },
     };
   }
@@ -127,10 +128,12 @@ export class FsSettingsReader implements ISettingsReader {
 
   // Telemetry consent and anonymous identity settings
   "telemetry": {
-    // Whether anonymous usage telemetry is enabled
+    // Whether anonymous usage telemetry is enabled (opt-out model)
     "enabled": ${settings.telemetry.enabled},
-    // Anonymous identifier used after telemetry opt-in
-    "anonymousId": ${anonymousIdValue}
+    // Anonymous identifier used for telemetry events after consent
+    "anonymousId": ${anonymousIdValue},
+    // Whether the user has explicitly made a telemetry consent decision
+    "consentGiven": ${settings.telemetry.consentGiven}
   }
 }
 `;

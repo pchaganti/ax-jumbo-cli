@@ -30,7 +30,7 @@ describe("LocalViewWorkerGateway", () => {
     mockSettingsReader.read.mockResolvedValue({
       qa: { defaultTurnLimit: 3 },
       claims: { claimDurationMinutes: 45 },
-      telemetry: { enabled: false, anonymousId: null },
+      telemetry: { enabled: false, anonymousId: null, consentGiven: false },
     });
 
     const response = await gateway.viewWorker({});
@@ -45,7 +45,7 @@ describe("LocalViewWorkerGateway", () => {
     mockSettingsReader.read.mockResolvedValue({
       qa: { defaultTurnLimit: 3 },
       claims: { claimDurationMinutes: 30 },
-      telemetry: { enabled: false, anonymousId: null },
+      telemetry: { enabled: false, anonymousId: null, consentGiven: false },
     });
 
     await gateway.viewWorker({});

@@ -15,8 +15,11 @@ export class LocalGetTelemetryStatusGateway implements IGetTelemetryStatusGatewa
   async getTelemetryStatus(
     _request: GetTelemetryStatusRequest
   ): Promise<GetTelemetryStatusResponse> {
-    const settings = await this.settingsReader.read();
+    // Check configuration BEFORE read() — read() auto-creates the settings
+    // file with defaults, which would cause hasTelemetryConfiguration() to
+    // return true prematurely and prevent the init consent prompt from firing.
     const configured = await this.settingsReader.hasTelemetryConfiguration();
+    const settings = await this.settingsReader.read();
 
     return this.telemetryConsentStatusResolver.resolve(settings, configured, {
       ciDetected: this.telemetryEnvironmentReader.isCiEnvironment(),

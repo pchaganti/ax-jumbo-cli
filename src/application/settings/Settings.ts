@@ -35,8 +35,8 @@ export interface ClaimSettings {
 
 export interface TelemetrySettings {
   /**
-   * Whether the user has opted into telemetry collection.
-   * Default: false
+   * Whether anonymous usage telemetry is enabled.
+   * Default: true (opt-out model)
    */
   enabled: boolean;
 
@@ -45,6 +45,13 @@ export interface TelemetrySettings {
    * Null until telemetry is enabled for the first time.
    */
   anonymousId: string | null;
+
+  /**
+   * Whether the user has explicitly made a telemetry consent decision.
+   * False until the user opts in or out via the init prompt or
+   * telemetry enable/disable commands.
+   */
+  consentGiven: boolean;
 }
 
 export interface Settings {

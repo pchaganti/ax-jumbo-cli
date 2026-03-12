@@ -24,7 +24,7 @@ describe("UpdateTelemetryConsentCommandHandler", () => {
     settingsReader.read.mockResolvedValue({
       qa: { defaultTurnLimit: 3 },
       claims: { claimDurationMinutes: 30 },
-      telemetry: { enabled: false, anonymousId: null },
+      telemetry: { enabled: false, anonymousId: null, consentGiven: false },
     });
 
     const result = await handler.execute({ enabled: true });
@@ -37,7 +37,7 @@ describe("UpdateTelemetryConsentCommandHandler", () => {
     expect(settingsReader.write).toHaveBeenCalledWith({
       qa: { defaultTurnLimit: 3 },
       claims: { claimDurationMinutes: 30 },
-      telemetry: { enabled: true, anonymousId: "generated-uuid" },
+      telemetry: { enabled: true, anonymousId: "generated-uuid", consentGiven: true },
     });
   });
 
@@ -45,7 +45,7 @@ describe("UpdateTelemetryConsentCommandHandler", () => {
     settingsReader.read.mockResolvedValue({
       qa: { defaultTurnLimit: 3 },
       claims: { claimDurationMinutes: 30 },
-      telemetry: { enabled: true, anonymousId: "existing-id" },
+      telemetry: { enabled: true, anonymousId: "existing-id", consentGiven: true },
     });
 
     const result = await handler.execute({ enabled: false });

@@ -162,10 +162,6 @@ async function promptForTelemetryConsentIfNeeded(
   container: IApplicationContainer,
   interactive: boolean
 ): Promise<void> {
-  if (!interactive || !process.stdout.isTTY) {
-    return;
-  }
-
   const status = await container.getTelemetryStatusController.handle({});
 
   if (
@@ -176,12 +172,21 @@ async function promptForTelemetryConsentIfNeeded(
     return;
   }
 
+  // Non-interactive mode: enable telemetry by default (opt-out model)
+  if (!interactive || !process.stdout.isTTY) {
+    await container.updateTelemetryConsentController.handle({ enabled: true });
+    return;
+  }
+
   const answers = await inquirer.prompt<TelemetryConsentPromptAnswer>([
     {
       type: "confirm",
       name: "enabled",
-      message: "Allow anonymous telemetry to help improve Jumbo?",
-      default: false,
+      message:
+        "Jumbo collects anonymous usage data to help improve the product. " +
+        "You can opt out later with 'jumbo telemetry disable' or JUMBO_TELEMETRY_DISABLED=1. " +
+        "Allow anonymous telemetry?",
+      default: true,
     },
   ]);
 

@@ -18,10 +18,10 @@ describe("project.init command", () => {
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let isTtyDescriptor: PropertyDescriptor | undefined;
 
-  beforeEach(() => {
-    (inquirer.prompt as jest.Mock).mockReset();
-
-    mockContainer = {
+  function createMockContainer(
+    telemetryStatusOverrides: Record<string, unknown> = {}
+  ): Partial<IApplicationContainer> {
+    return {
       cliVersionReader: {
         getVersion: jest.fn().mockReturnValue({ version: "1.0.1" }),
       } as any,
@@ -33,6 +33,7 @@ describe("project.init command", () => {
           anonymousId: null,
           disabledByCi: false,
           disabledByEnvironment: false,
+          ...telemetryStatusOverrides,
         }),
       } as any,
       updateTelemetryConsentController: {
@@ -57,6 +58,12 @@ describe("project.init command", () => {
         }),
       } as any,
     };
+  }
+
+  beforeEach(() => {
+    (inquirer.prompt as jest.Mock).mockReset();
+
+    mockContainer = createMockContainer();
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
     Renderer.reset();
@@ -93,7 +100,33 @@ describe("project.init command", () => {
     ).toHaveBeenCalledWith({ enabled: true });
   });
 
-  it("does not prompt for telemetry in non-interactive init", async () => {
+  it("accepting default enables telemetry with opt-out framing", async () => {
+    const promptMock = inquirer.prompt as jest.Mock;
+    promptMock
+      .mockResolvedValueOnce({ name: "TestProject" })
+      .mockResolvedValueOnce({ enabled: true });
+
+    await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
+
+    expect(
+      mockContainer.updateTelemetryConsentController!.handle
+    ).toHaveBeenCalledWith({ enabled: true });
+  });
+
+  it("declining disables telemetry", async () => {
+    const promptMock = inquirer.prompt as jest.Mock;
+    promptMock
+      .mockResolvedValueOnce({ name: "TestProject" })
+      .mockResolvedValueOnce({ enabled: false });
+
+    await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
+
+    expect(
+      mockContainer.updateTelemetryConsentController!.handle
+    ).toHaveBeenCalledWith({ enabled: false });
+  });
+
+  it("enables telemetry by default in non-interactive mode without prompting", async () => {
     const promptMock = inquirer.prompt as jest.Mock;
 
     await projectInit(
@@ -106,6 +139,45 @@ describe("project.init command", () => {
     );
 
     expect(promptMock).not.toHaveBeenCalled();
+    expect(
+      mockContainer.updateTelemetryConsentController!.handle
+    ).toHaveBeenCalledWith({ enabled: true });
+  });
+
+  it("skips telemetry prompt when CI is detected", async () => {
+    mockContainer = createMockContainer({ disabledByCi: true });
+
+    const promptMock = inquirer.prompt as jest.Mock;
+    promptMock.mockResolvedValueOnce({ name: "TestProject" });
+
+    await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
+
+    expect(
+      mockContainer.updateTelemetryConsentController!.handle
+    ).not.toHaveBeenCalled();
+  });
+
+  it("skips telemetry prompt when JUMBO_TELEMETRY_DISABLED=1 is set", async () => {
+    mockContainer = createMockContainer({ disabledByEnvironment: true });
+
+    const promptMock = inquirer.prompt as jest.Mock;
+    promptMock.mockResolvedValueOnce({ name: "TestProject" });
+
+    await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
+
+    expect(
+      mockContainer.updateTelemetryConsentController!.handle
+    ).not.toHaveBeenCalled();
+  });
+
+  it("skips telemetry prompt when already configured", async () => {
+    mockContainer = createMockContainer({ configured: true });
+
+    const promptMock = inquirer.prompt as jest.Mock;
+    promptMock.mockResolvedValueOnce({ name: "TestProject" });
+
+    await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
+
     expect(
       mockContainer.updateTelemetryConsentController!.handle
     ).not.toHaveBeenCalled();
