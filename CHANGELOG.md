@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Telemetry opt-out by default**: `jumbo init` now prompts for telemetry consent during interactive initialization with opt-out framing (default: enabled). Non-interactive mode enables telemetry automatically. Users can opt out during init, or later via `jumbo telemetry disable` or `JUMBO_TELEMETRY_DISABLED=1`. Default telemetry setting changed from `false` to `true`.
+
+### Fixed
+
+- **Telemetry consent prompt was dead code**: The `promptForTelemetryConsentIfNeeded` function during `jumbo init` never fired because `FsSettingsReader.read()` auto-created the settings file before `hasTelemetryConfiguration()` was checked, causing it to always return `true`.
+
 ## [2.0.0] - 2026-03-11
 
 ### BREAKING CHANGES

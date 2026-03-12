@@ -80,7 +80,7 @@ describe("SubmitGoalForReviewCommandHandler", () => {
       read: jest.fn().mockResolvedValue({
         qa: { defaultTurnLimit: 3 },
         claims: { claimDurationMinutes: 120 },
-        telemetry: { enabled: false, anonymousId: null },
+        telemetry: { enabled: false, anonymousId: null, consentGiven: false },
       }),
       write: jest.fn(),
       hasTelemetryConfiguration: jest.fn(),

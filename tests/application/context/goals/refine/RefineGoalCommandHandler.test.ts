@@ -85,7 +85,7 @@ describe("RefineGoalCommandHandler", () => {
       read: jest.fn().mockResolvedValue({
         qa: { defaultTurnLimit: 3 },
         claims: { claimDurationMinutes: 60 },
-        telemetry: { enabled: false, anonymousId: null },
+        telemetry: { enabled: false, anonymousId: null, consentGiven: false },
       }),
       write: jest.fn(),
       hasTelemetryConfiguration: jest.fn(),

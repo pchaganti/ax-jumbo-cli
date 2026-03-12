@@ -9,7 +9,7 @@ describe("TelemetryConsentStatusResolver", () => {
       {
         qa: { defaultTurnLimit: 3 },
         claims: { claimDurationMinutes: 30 },
-        telemetry: { enabled: true, anonymousId: "anon-123" },
+        telemetry: { enabled: true, anonymousId: "anon-123", consentGiven: true },
       },
       true,
       {
@@ -35,7 +35,7 @@ describe("TelemetryConsentStatusResolver", () => {
       {
         qa: { defaultTurnLimit: 3 },
         claims: { claimDurationMinutes: 30 },
-        telemetry: { enabled: true, anonymousId: "anon-123" },
+        telemetry: { enabled: true, anonymousId: "anon-123", consentGiven: true },
       },
       true,
       {

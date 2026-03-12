@@ -39,10 +39,12 @@ export class FsSettingsInitializer implements ISettingsInitializer {
 
   // Telemetry consent and anonymous identity settings
   "telemetry": {
-    // Whether anonymous usage telemetry is enabled
-    "enabled": false,
-    // Anonymous identifier used after telemetry opt-in
-    "anonymousId": null
+    // Whether anonymous usage telemetry is enabled (opt-out model)
+    "enabled": true,
+    // Anonymous identifier used for telemetry events after consent
+    "anonymousId": null,
+    // Whether the user has explicitly made a telemetry consent decision
+    "consentGiven": false
   }
 }
 `;

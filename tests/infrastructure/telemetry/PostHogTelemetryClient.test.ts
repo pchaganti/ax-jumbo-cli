@@ -77,6 +77,7 @@ describe("PostHogTelemetryClient", () => {
           telemetry: {
             enabled: true,
             anonymousId: "anon-123",
+            consentGiven: true,
           },
         })
       );
@@ -104,6 +105,7 @@ describe("PostHogTelemetryClient", () => {
           telemetry: {
             enabled: true,
             anonymousId: "anon-123",
+            consentGiven: true,
           },
         })
       );

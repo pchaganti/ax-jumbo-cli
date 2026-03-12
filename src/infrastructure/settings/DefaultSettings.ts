@@ -15,7 +15,8 @@ export const DEFAULT_SETTINGS: Settings = {
     claimDurationMinutes: DEFAULT_CLAIM_DURATION_MINUTES,
   },
   telemetry: {
-    enabled: false,
+    enabled: true,
     anonymousId: null,
+    consentGiven: false,
   },
 };

@@ -31,6 +31,7 @@ export class UpdateTelemetryConsentCommandHandler {
       telemetry: {
         enabled: command.enabled,
         anonymousId,
+        consentGiven: true,
       },
     });
 
