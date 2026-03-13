@@ -53,7 +53,7 @@ Those solve the core problems. These make Jumbo pleasant to use:
 ## Quick Start
 
 <p style="background: #000000; padding: 15px 15px 15px 15px; font-size:16px; color: #eeeeee; font-family: 'Courier New', Courier, monospace; font-weight:bold">
-> <span style="color: #f9c741;">npm</span> <span style="color: #ababab;">-g</span> jumbo-cli
+> <span style="color: #f9c741;">npm</span> <span style="color: #ababab;">i -g</span> jumbo-cli
 <br>
 > <span style="color: #f9c741;">jumbo</span> init
 <br>
