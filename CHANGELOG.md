@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-03-15
+
+### Changed
+
+- **Internal**: Telemetry configuration externalized from source code to build-time injection.
+- **Internal**: Publish workflow and test reliability improvements.
+
 ## [2.0.2] - 2026-03-14
 
 ### Changed
