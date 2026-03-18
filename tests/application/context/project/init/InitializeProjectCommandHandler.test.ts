@@ -40,8 +40,10 @@ describe("InitializeProjectCommandHandler", () => {
     };
 
     agentFileProtocol = {
+      ensureJumboMd: jest.fn().mockResolvedValue(undefined),
       ensureAgentsMd: jest.fn().mockResolvedValue(undefined),
       ensureAgentConfigurations: jest.fn().mockResolvedValue(undefined),
+      repairJumboMd: jest.fn().mockResolvedValue(undefined),
       repairAgentsMd: jest.fn().mockResolvedValue(undefined),
       repairAgentConfigurations: jest.fn().mockResolvedValue(undefined),
       getPlannedFileChanges: jest.fn().mockResolvedValue([]),

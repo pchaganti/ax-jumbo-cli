@@ -13,8 +13,10 @@ describe("LocalPlanProjectInitGateway", () => {
 
   beforeEach(() => {
     mockAgentFileProtocol = {
+      ensureJumboMd: jest.fn<IAgentFileProtocol["ensureJumboMd"]>().mockResolvedValue(undefined),
       ensureAgentsMd: jest.fn<IAgentFileProtocol["ensureAgentsMd"]>().mockResolvedValue(undefined),
       ensureAgentConfigurations: jest.fn<IAgentFileProtocol["ensureAgentConfigurations"]>().mockResolvedValue(undefined),
+      repairJumboMd: jest.fn<IAgentFileProtocol["repairJumboMd"]>().mockResolvedValue(undefined),
       repairAgentsMd: jest.fn<IAgentFileProtocol["repairAgentsMd"]>().mockResolvedValue(undefined),
       repairAgentConfigurations: jest.fn<IAgentFileProtocol["repairAgentConfigurations"]>().mockResolvedValue(undefined),
       getPlannedFileChanges: jest.fn<IAgentFileProtocol["getPlannedFileChanges"]>().mockResolvedValue([]),
@@ -35,6 +37,7 @@ describe("LocalPlanProjectInitGateway", () => {
 
   it("should aggregate agent file changes, settings change, and gitignore changes into response", async () => {
     const agentChanges: PlannedFileChange[] = [
+      { path: "JUMBO.md", action: "create", description: "Jumbo instructions file" },
       { path: "AGENTS.md", action: "create", description: "Agent instructions file" },
       { path: ".claude/settings.json", action: "create", description: "Claude agent config" },
     ];

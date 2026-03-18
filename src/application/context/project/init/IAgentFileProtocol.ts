@@ -5,7 +5,8 @@
  * during project initialization.
  *
  * Responsibilities:
- * - Ensure AGENTS.md exists with Jumbo instructions
+ * - Ensure JUMBO.md exists with full Jumbo instructions
+ * - Ensure AGENTS.md exists with thin reference to JUMBO.md
  * - Ensure all supported agents are configured
  * - Report planned file changes for preview before execution
  *
@@ -20,12 +21,24 @@ import { PlannedFileChange } from "./PlannedFileChange.js";
 
 export interface IAgentFileProtocol {
   /**
-   * Ensure AGENTS.md exists with Jumbo instructions.
+   * Ensure JUMBO.md exists with full Jumbo instructions.
    *
    * Behavior:
-   * - If AGENTS.md doesn't exist: Create it with full content
-   * - If AGENTS.md exists without Jumbo Instructions: Append Jumbo Instructions section
-   * - If AGENTS.md exists with Jumbo Instructions section: Replace with current version
+   * - If JUMBO.md doesn't exist: Create it with full content
+   * - If JUMBO.md exists with Jumbo section: Replace with current version
+   * - If JUMBO.md exists without Jumbo section: Append current Jumbo section
+   *
+   * @param projectRoot Absolute path to project root directory
+   */
+  ensureJumboMd(projectRoot: string): Promise<void>;
+
+  /**
+   * Ensure AGENTS.md exists with thin reference to JUMBO.md.
+   *
+   * Behavior:
+   * - If AGENTS.md doesn't exist: Create it with thin reference content
+   * - If AGENTS.md exists without Jumbo Instructions: Append thin reference section
+   * - If AGENTS.md exists with Jumbo Instructions section: Replace with thin reference
    *
    * @param projectRoot Absolute path to project root directory
    */
@@ -50,12 +63,24 @@ export interface IAgentFileProtocol {
   ensureAgentConfigurations(projectRoot: string): Promise<void>;
 
   /**
-   * Repair AGENTS.md by replacing the Jumbo section with the current version.
+   * Repair JUMBO.md by replacing the Jumbo section with the current version.
    *
    * Behavior:
-   * - If AGENTS.md doesn't exist: Create it with full content
-   * - If AGENTS.md exists with Jumbo section: Replace section with current version
-   * - If AGENTS.md exists without Jumbo section: Append current Jumbo section
+   * - If JUMBO.md doesn't exist: Create it with full content
+   * - If JUMBO.md exists with Jumbo section: Replace section with current version
+   * - If JUMBO.md exists without Jumbo section: Append current Jumbo section
+   *
+   * @param projectRoot Absolute path to project root directory
+   */
+  repairJumboMd(projectRoot: string): Promise<void>;
+
+  /**
+   * Repair AGENTS.md by replacing the Jumbo section with the current thin reference.
+   *
+   * Behavior:
+   * - If AGENTS.md doesn't exist: Create it with thin reference content
+   * - If AGENTS.md exists with Jumbo section: Replace section with thin reference
+   * - If AGENTS.md exists without Jumbo section: Append thin reference section
    *
    * @param projectRoot Absolute path to project root directory
    */
@@ -79,6 +104,7 @@ export interface IAgentFileProtocol {
    * Use this for preview before user confirmation.
    *
    * Includes:
+   * - JUMBO.md (create or modify)
    * - AGENTS.md (create or modify)
    * - All agent-specific files from configurers
    *

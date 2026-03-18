@@ -2,7 +2,7 @@
  * Infrastructure: Gemini CLI Configurer
  *
  * Encapsulates all knowledge about Gemini CLI configuration:
- * - GEMINI.md with reference to AGENTS.md
+ * - GEMINI.md with thin reference to JUMBO.md
  * - .gemini/settings.json with SessionStart hooks
  *
  * Operations are idempotent and gracefully handle errors.
@@ -27,27 +27,26 @@ export class GeminiConfigurer implements IConfigurer {
   }
 
   /**
-   * Ensure GEMINI.md exists with reference to AGENTS.md
+   * Ensure GEMINI.md exists with thin reference to JUMBO.md
    */
   private async ensureGeminiMd(projectRoot: string): Promise<void> {
     const geminiMdPath = path.join(projectRoot, "GEMINI.md");
-    const reference = AgentFileReferenceContent.getAgentFileReference();
+    const reference = AgentFileReferenceContent.getAgentFileReference("GEMINI.md");
 
     try {
       const exists = await fs.pathExists(geminiMdPath);
 
       if (!exists) {
-        // File doesn't exist - create with reference
-        await fs.writeFile(geminiMdPath, reference.trim() + "\n", "utf-8");
+        await fs.writeFile(geminiMdPath, reference, "utf-8");
         return;
       }
 
       // File exists - check if reference is present
       const content = await fs.readFile(geminiMdPath, "utf-8");
 
-      if (!content.includes("AGENTS.md")) {
+      if (!content.includes("JUMBO.md")) {
         // Reference missing - append it
-        const updatedContent = content.trimEnd() + "\n" + reference;
+        const updatedContent = content.trimEnd() + "\n\n" + reference;
         await fs.writeFile(geminiMdPath, updatedContent, "utf-8");
       }
       // else: Reference already present - no-op
@@ -123,29 +122,29 @@ export class GeminiConfigurer implements IConfigurer {
   }
 
   /**
-   * Repair GEMINI.md by replacing the reference block with the current version
+   * Repair GEMINI.md by replacing the reference with the current thin reference
    */
   private async repairGeminiMd(projectRoot: string): Promise<void> {
     const geminiMdPath = path.join(projectRoot, "GEMINI.md");
-    const reference = AgentFileReferenceContent.getAgentFileReference();
+    const reference = AgentFileReferenceContent.getAgentFileReference("GEMINI.md");
 
     try {
       const exists = await fs.pathExists(geminiMdPath);
 
       if (!exists) {
-        await fs.writeFile(geminiMdPath, reference.trim() + "\n", "utf-8");
+        await fs.writeFile(geminiMdPath, reference, "utf-8");
         return;
       }
 
       const content = await fs.readFile(geminiMdPath, "utf-8");
-      const replaced = AgentFileReferenceContent.replaceAgentFileReference(content);
+      const replaced = AgentFileReferenceContent.replaceAgentFileReference(content, "GEMINI.md");
 
       if (replaced !== null) {
-        // Reference block found - replace with current version
+        // Legacy reference block found - replace entire file with new thin reference
         await fs.writeFile(geminiMdPath, replaced, "utf-8");
-      } else if (!content.includes("AGENTS.md")) {
+      } else if (!content.includes("JUMBO.md")) {
         // No reference at all - append
-        const updatedContent = content.trimEnd() + "\n" + reference;
+        const updatedContent = content.trimEnd() + "\n\n" + reference;
         await fs.writeFile(geminiMdPath, updatedContent, "utf-8");
       }
     } catch (error) {

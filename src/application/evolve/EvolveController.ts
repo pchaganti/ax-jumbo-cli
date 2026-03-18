@@ -76,6 +76,15 @@ export class EvolveController {
 
     await this.runStep(
       steps,
+      "JUMBO.md",
+      async () => {
+        await this.agentFileProtocol.repairJumboMd(projectRoot);
+      },
+      "Updated Jumbo instructions in JUMBO.md."
+    );
+
+    await this.runStep(
+      steps,
       "AGENTS.md",
       async () => {
         await this.agentFileProtocol.repairAgentsMd(projectRoot);
