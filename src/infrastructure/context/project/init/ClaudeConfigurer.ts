@@ -2,7 +2,7 @@
  * Infrastructure: Claude Code Configurer
  *
  * Encapsulates all knowledge about Claude Code configuration:
- * - CLAUDE.md with reference to AGENTS.md
+ * - CLAUDE.md with thin reference to JUMBO.md
  * - .claude/settings.json with SessionStart hooks
  *
  * Use this as a reference when creating new agent Configurers.
@@ -30,27 +30,26 @@ export class ClaudeConfigurer implements IConfigurer {
   }
 
   /**
-   * Ensure CLAUDE.md exists with reference to AGENTS.md
+   * Ensure CLAUDE.md exists with thin reference to JUMBO.md
    */
   private async ensureClaudeMd(projectRoot: string): Promise<void> {
     const claudeMdPath = path.join(projectRoot, "CLAUDE.md");
-    const reference = AgentFileReferenceContent.getAgentFileReference();
+    const reference = AgentFileReferenceContent.getAgentFileReference("CLAUDE.md");
 
     try {
       const exists = await fs.pathExists(claudeMdPath);
 
       if (!exists) {
-        // File doesn't exist - create with reference
-        await fs.writeFile(claudeMdPath, reference.trim() + "\n", "utf-8");
+        await fs.writeFile(claudeMdPath, reference, "utf-8");
         return;
       }
 
       // File exists - check if reference is present
       const content = await fs.readFile(claudeMdPath, "utf-8");
 
-      if (!content.includes("AGENTS.md")) {
+      if (!content.includes("JUMBO.md")) {
         // Reference missing - append it
-        const updatedContent = content.trimEnd() + "\n" + reference;
+        const updatedContent = content.trimEnd() + "\n\n" + reference;
         await fs.writeFile(claudeMdPath, updatedContent, "utf-8");
       }
       // else: Reference already present - no-op
@@ -126,29 +125,29 @@ export class ClaudeConfigurer implements IConfigurer {
   }
 
   /**
-   * Repair CLAUDE.md by replacing the reference block with the current version
+   * Repair CLAUDE.md by replacing the reference with the current thin reference
    */
   private async repairClaudeMd(projectRoot: string): Promise<void> {
     const claudeMdPath = path.join(projectRoot, "CLAUDE.md");
-    const reference = AgentFileReferenceContent.getAgentFileReference();
+    const reference = AgentFileReferenceContent.getAgentFileReference("CLAUDE.md");
 
     try {
       const exists = await fs.pathExists(claudeMdPath);
 
       if (!exists) {
-        await fs.writeFile(claudeMdPath, reference.trim() + "\n", "utf-8");
+        await fs.writeFile(claudeMdPath, reference, "utf-8");
         return;
       }
 
       const content = await fs.readFile(claudeMdPath, "utf-8");
-      const replaced = AgentFileReferenceContent.replaceAgentFileReference(content);
+      const replaced = AgentFileReferenceContent.replaceAgentFileReference(content, "CLAUDE.md");
 
       if (replaced !== null) {
-        // Reference block found - replace with current version
+        // Legacy reference block found - replace entire file with new thin reference
         await fs.writeFile(claudeMdPath, replaced, "utf-8");
-      } else if (!content.includes("AGENTS.md")) {
+      } else if (!content.includes("JUMBO.md")) {
         // No reference at all - append
-        const updatedContent = content.trimEnd() + "\n" + reference;
+        const updatedContent = content.trimEnd() + "\n\n" + reference;
         await fs.writeFile(claudeMdPath, updatedContent, "utf-8");
       }
     } catch (error) {

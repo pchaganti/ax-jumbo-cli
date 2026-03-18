@@ -1641,7 +1641,8 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     );
     const localInitializeProjectGateway = new LocalInitializeProjectGateway(
       initializeProjectCommandHandler,
-      localPlanProjectInitGateway
+      localPlanProjectInitGateway,
+      agentFileProtocol
     );
     const initializeProjectController = new InitializeProjectController(
       localInitializeProjectGateway

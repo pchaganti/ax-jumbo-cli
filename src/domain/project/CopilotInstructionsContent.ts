@@ -1,7 +1,8 @@
 /**
  * Domain Value Object: Copilot Instructions Content
  *
- * Codifies the GitHub Copilot instructions for copilot-instructions.md.
+ * Codifies the thin reference content for copilot-instructions.md
+ * that directs agents to read JUMBO.md on startup.
  * Handles content generation, section marker detection, and section replacement.
  *
  * Rationale: Codified in domain rather than template file to support
@@ -10,47 +11,14 @@
 
 export class CopilotInstructionsContent {
   /**
-   * Generate GitHub Copilot instructions for copilot-instructions.md
+   * Generate thin reference content for copilot-instructions.md
    */
   static getCopilotInstructions(): string {
-    return `## Jumbo Context Management
+    return `# copilot-instructions.md
 
-**IMPORTANT: This project uses Jumbo for AI memory and context management.**
+## Instructions for Agents on how to collaborate with Jumbo
 
-GitHub Copilot does not support automatic SessionStart hooks, so you must manually
-run Jumbo commands to load project context.
-
-### MANDATORY FIRST ACTION
-
-**Run \`jumbo session start\` at the beginning of each session.**
-
-This loads orientation context including:
-- Recent completed work and session state
-- Planned goals and their success criteria
-- Active architectural decisions
-- System invariants and guidelines
-- Project context and domain knowledge
-
-### Working with Jumbo
-
-1. **Start each session**: Run \`jumbo session start\` to load orientation context
-2. **Start a goal**: Before working on a task, run \`jumbo goal start --id <id>\` to load goal-specific context
-3. **Capture memories**: As you work, run jumbo commands to capture project knowledge:
-   - \`jumbo component add\` - Track architectural components
-   - \`jumbo decision add\` - Record architectural decisions (ADRs)
-   - \`jumbo guideline add\` - Capture coding standards and preferences
-   - \`jumbo invariant add\` - Document non-negotiable constraints
-   - \`jumbo relation add\` - Link related entities
-
-### Available Commands
-
-Run \`jumbo --help\` to see all available commands.
-
-### Learn More
-
-See AGENTS.md for complete instructions on using Jumbo.
-
-Run \`jumbo capabilities\` to learn about Jumbo's workflow and philosophy.
+See ../JUMBO.md and follow all instructions. If the file does not exist, then ignore this instruction.
 `;
   }
 
@@ -58,31 +26,55 @@ Run \`jumbo capabilities\` to learn about Jumbo's workflow and philosophy.
    * Marker used to detect if Jumbo section already exists in copilot-instructions.md
    */
   static getCopilotSectionMarker(): string {
+    return "## Instructions for Agents on how to collaborate with Jumbo";
+  }
+
+  /**
+   * Legacy marker from the previous verbose Copilot instructions.
+   */
+  private static getLegacyCopilotSectionMarker(): string {
     return "## Jumbo Context Management";
   }
 
   /**
-   * Replace the Copilot section in copilot-instructions.md with the current version.
-   * Finds "## Jumbo Context Management" heading and replaces everything from there
-   * to the next "## " heading (or EOF) with current getCopilotInstructions().
+   * Replace the Copilot section in copilot-instructions.md with the current thin reference.
+   * Finds current or legacy section marker and replaces everything from there
+   * to the next "## " heading (or EOF) with current thin reference section.
    *
-   * @returns Updated content, or null if marker not found
+   * @returns Updated content, or null if no marker found
    */
   static replaceCopilotSection(existingContent: string): string | null {
-    const marker = this.getCopilotSectionMarker();
-    const markerIndex = existingContent.indexOf(marker);
-    if (markerIndex === -1) return null;
+    const allMarkers = [this.getCopilotSectionMarker(), this.getLegacyCopilotSectionMarker()];
+
+    let matchedMarker: string | null = null;
+    let markerIndex = -1;
+
+    for (const marker of allMarkers) {
+      const index = existingContent.indexOf(marker);
+      if (index !== -1) {
+        matchedMarker = marker;
+        markerIndex = index;
+        break;
+      }
+    }
+
+    if (matchedMarker === null || markerIndex === -1) return null;
 
     // Find the next ## heading after the marker (or EOF)
-    const afterMarker = existingContent.substring(markerIndex + marker.length);
+    const afterMarker = existingContent.substring(markerIndex + matchedMarker.length);
     const nextHeadingMatch = afterMarker.match(/\n## /);
     const endIndex = nextHeadingMatch
-      ? markerIndex + marker.length + nextHeadingMatch.index!
+      ? markerIndex + matchedMarker.length + nextHeadingMatch.index!
       : existingContent.length;
 
     const before = existingContent.substring(0, markerIndex);
     const after = existingContent.substring(endIndex);
 
-    return before + this.getCopilotInstructions() + after;
+    const sectionContent = `## Instructions for Agents on how to collaborate with Jumbo
+
+See ../JUMBO.md and follow all instructions. If the file does not exist, then ignore this instruction.
+`;
+
+    return before + sectionContent + after;
   }
 }

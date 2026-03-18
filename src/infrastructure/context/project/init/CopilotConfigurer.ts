@@ -2,7 +2,7 @@
  * Infrastructure: GitHub Copilot Configurer
  *
  * Encapsulates all knowledge about GitHub Copilot configuration:
- * - .github/copilot-instructions.md with Jumbo instructions
+ * - .github/copilot-instructions.md with thin reference to JUMBO.md
  *
  * Note: Copilot does not support SessionStart hooks, so configuration
  * is limited to static instruction files.
@@ -43,7 +43,7 @@ export class CopilotConfigurer implements IConfigurer {
       const exists = await fs.pathExists(copilotInstructionsPath);
 
       if (!exists) {
-        // File doesn't exist - create with Jumbo section
+        // File doesn't exist - create with thin reference
         await fs.writeFile(
           copilotInstructionsPath,
           CopilotInstructionsContent.getCopilotInstructions(),
@@ -56,10 +56,13 @@ export class CopilotConfigurer implements IConfigurer {
       const content = await fs.readFile(copilotInstructionsPath, "utf-8");
       const jumboMarker = CopilotInstructionsContent.getCopilotSectionMarker();
 
-      if (!content.includes(jumboMarker)) {
-        // Jumbo section missing - append it
-        const updatedContent =
-          content + "\n\n" + CopilotInstructionsContent.getCopilotInstructions();
+      if (!content.includes(jumboMarker) && !content.includes("## Jumbo Context Management")) {
+        // Jumbo section missing (neither current nor legacy) - append section
+        const sectionContent = `## Instructions for Agents on how to collaborate with Jumbo
+
+See ../JUMBO.md and follow all instructions. If the file does not exist, then ignore this instruction.
+`;
+        const updatedContent = content + "\n\n" + sectionContent;
         await fs.writeFile(copilotInstructionsPath, updatedContent, "utf-8");
       }
       // else: Jumbo section already present - no-op
@@ -79,7 +82,7 @@ export class CopilotConfigurer implements IConfigurer {
   }
 
   /**
-   * Repair copilot-instructions.md by replacing the Jumbo section with current version
+   * Repair copilot-instructions.md by replacing the Jumbo section with current thin reference
    */
   private async repairCopilotInstructions(projectRoot: string): Promise<void> {
     const copilotInstructionsPath = path.join(
@@ -106,12 +109,15 @@ export class CopilotConfigurer implements IConfigurer {
       const replaced = CopilotInstructionsContent.replaceCopilotSection(content);
 
       if (replaced !== null) {
-        // Jumbo section found - replace with current version
+        // Jumbo section found (current or legacy) - replace with thin reference
         await fs.writeFile(copilotInstructionsPath, replaced, "utf-8");
       } else {
         // Jumbo section not found - append
-        const updatedContent =
-          content + "\n\n" + CopilotInstructionsContent.getCopilotInstructions();
+        const sectionContent = `## Instructions for Agents on how to collaborate with Jumbo
+
+See ../JUMBO.md and follow all instructions. If the file does not exist, then ignore this instruction.
+`;
+        const updatedContent = content + "\n\n" + sectionContent;
         await fs.writeFile(copilotInstructionsPath, updatedContent, "utf-8");
       }
     } catch (error) {

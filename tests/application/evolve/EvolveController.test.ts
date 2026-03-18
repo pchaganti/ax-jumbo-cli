@@ -24,8 +24,10 @@ describe("EvolveController", () => {
       resolve: jest.fn<IProjectRootResolver["resolve"]>().mockReturnValue("C:/repo"),
     } as jest.Mocked<IProjectRootResolver>;
     agentFileProtocol = {
+      ensureJumboMd: jest.fn<IAgentFileProtocol["ensureJumboMd"]>().mockResolvedValue(undefined),
       ensureAgentsMd: jest.fn(),
       ensureAgentConfigurations: jest.fn(),
+      repairJumboMd: jest.fn<IAgentFileProtocol["repairJumboMd"]>().mockResolvedValue(undefined),
       repairAgentsMd: jest.fn<IAgentFileProtocol["repairAgentsMd"]>().mockResolvedValue(undefined),
       repairAgentConfigurations: jest
         .fn<IAgentFileProtocol["repairAgentConfigurations"]>()
@@ -93,6 +95,7 @@ describe("EvolveController", () => {
     expect(upgradeCommandHandler.handle).toHaveBeenCalledWith({ from: "v1", to: "v2" });
     expect(migrateDependenciesCommandHandler.handle).toHaveBeenCalledWith({ dryRun: false });
     expect(projectRootResolver.resolve).toHaveBeenCalledTimes(1);
+    expect(agentFileProtocol.repairJumboMd).toHaveBeenCalledWith("C:/repo");
     expect(agentFileProtocol.repairAgentsMd).toHaveBeenCalledWith("C:/repo");
     expect(agentFileProtocol.repairAgentConfigurations).toHaveBeenCalledWith("C:/repo");
     expect(settingsInitializer.ensureSettingsFileExists).toHaveBeenCalledTimes(1);
@@ -101,6 +104,7 @@ describe("EvolveController", () => {
       "Schema migrations",
       "Goal status migration",
       "Legacy dependency migration",
+      "JUMBO.md",
       "AGENTS.md",
       "Agent configuration files",
       "Managed skills",
@@ -134,11 +138,12 @@ describe("EvolveController", () => {
       status: "skipped",
       detail: "Skipped because schema migrations failed.",
     });
-    expect(response.steps[8]).toEqual({
+    expect(response.steps[9]).toEqual({
       name: "Database projections",
       status: "skipped",
       detail: "Skipped because one or more database migration steps failed.",
     });
+    expect(agentFileProtocol.repairJumboMd).toHaveBeenCalled();
     expect(agentFileProtocol.repairAgentsMd).toHaveBeenCalled();
     expect(settingsInitializer.ensureSettingsFileExists).toHaveBeenCalled();
   });
@@ -155,7 +160,7 @@ describe("EvolveController", () => {
       status: "failed",
       detail: "status migration failed",
     });
-    expect(response.steps[8]).toEqual({
+    expect(response.steps[9]).toEqual({
       name: "Database projections",
       status: "skipped",
       detail: "Skipped because one or more database migration steps failed.",

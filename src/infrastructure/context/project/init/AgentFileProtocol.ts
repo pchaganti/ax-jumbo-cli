@@ -17,6 +17,7 @@ import path from "path";
 import fs from "fs-extra";
 import { IAgentFileProtocol } from "../../../../application/context/project/init/IAgentFileProtocol.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
+import { JumboMdContent } from "../../../../domain/project/JumboMdContent.js";
 import { AgentsMdContent } from "../../../../domain/project/AgentsMdContent.js";
 import { IConfigurer } from "./IConfigurer.js";
 import { ClaudeConfigurer } from "./ClaudeConfigurer.js";
@@ -58,7 +59,35 @@ export class AgentFileProtocol implements IAgentFileProtocol {
   constructor(private readonly templateSkillsRoot: string = DEFAULT_TEMPLATE_SKILLS_ROOT) {}
 
   /**
-   * Ensure AGENTS.md exists with Jumbo instructions
+   * Ensure JUMBO.md exists with full Jumbo instructions
+   */
+  async ensureJumboMd(projectRoot: string): Promise<void> {
+    const jumboMdPath = path.join(projectRoot, "JUMBO.md");
+
+    try {
+      const exists = await fs.pathExists(jumboMdPath);
+
+      if (!exists) {
+        await fs.writeFile(jumboMdPath, JumboMdContent.getFullContent(), "utf-8");
+        return;
+      }
+
+      const content = await fs.readFile(jumboMdPath, "utf-8");
+      const replaced = JumboMdContent.replaceJumboSection(content);
+
+      if (replaced !== null) {
+        await fs.writeFile(jumboMdPath, replaced, "utf-8");
+      } else {
+        const updatedContent = content + "\n\n" + JumboMdContent.getJumboSection();
+        await fs.writeFile(jumboMdPath, updatedContent, "utf-8");
+      }
+    } catch (error) {
+      console.warn(`Warning: Failed to update JUMBO.md: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Ensure AGENTS.md exists with thin reference to JUMBO.md
    */
   async ensureAgentsMd(projectRoot: string): Promise<void> {
     const agentsMdPath = path.join(projectRoot, "AGENTS.md");
@@ -67,25 +96,20 @@ export class AgentFileProtocol implements IAgentFileProtocol {
       const exists = await fs.pathExists(agentsMdPath);
 
       if (!exists) {
-        // File doesn't exist - create with full content
         await fs.writeFile(agentsMdPath, AgentsMdContent.getFullContent(), "utf-8");
         return;
       }
 
-      // File exists - try to replace existing Jumbo section (current or legacy markers)
       const content = await fs.readFile(agentsMdPath, "utf-8");
       const replaced = AgentsMdContent.replaceJumboSection(content);
 
       if (replaced !== null) {
-        // Jumbo section found (current or legacy) - replace with current version
         await fs.writeFile(agentsMdPath, replaced, "utf-8");
       } else {
-        // No Jumbo section found - append it
         const updatedContent = content + "\n\n" + AgentsMdContent.getJumboSection();
         await fs.writeFile(agentsMdPath, updatedContent, "utf-8");
       }
     } catch (error) {
-      // Graceful degradation - log but don't throw
       console.warn(`Warning: Failed to update AGENTS.md: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -102,7 +126,35 @@ export class AgentFileProtocol implements IAgentFileProtocol {
   }
 
   /**
-   * Repair AGENTS.md by replacing the Jumbo section with the current version
+   * Repair JUMBO.md by replacing the Jumbo section with the current version
+   */
+  async repairJumboMd(projectRoot: string): Promise<void> {
+    const jumboMdPath = path.join(projectRoot, "JUMBO.md");
+
+    try {
+      const exists = await fs.pathExists(jumboMdPath);
+
+      if (!exists) {
+        await fs.writeFile(jumboMdPath, JumboMdContent.getFullContent(), "utf-8");
+        return;
+      }
+
+      const content = await fs.readFile(jumboMdPath, "utf-8");
+      const replaced = JumboMdContent.replaceJumboSection(content);
+
+      if (replaced !== null) {
+        await fs.writeFile(jumboMdPath, replaced, "utf-8");
+      } else {
+        const updatedContent = content + "\n\n" + JumboMdContent.getJumboSection();
+        await fs.writeFile(jumboMdPath, updatedContent, "utf-8");
+      }
+    } catch (error) {
+      console.warn(`Warning: Failed to repair JUMBO.md: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Repair AGENTS.md by replacing the Jumbo section with the current thin reference
    */
   async repairAgentsMd(projectRoot: string): Promise<void> {
     const agentsMdPath = path.join(projectRoot, "AGENTS.md");
@@ -111,7 +163,6 @@ export class AgentFileProtocol implements IAgentFileProtocol {
       const exists = await fs.pathExists(agentsMdPath);
 
       if (!exists) {
-        // File doesn't exist - create with full content (same as ensure)
         await fs.writeFile(agentsMdPath, AgentsMdContent.getFullContent(), "utf-8");
         return;
       }
@@ -120,10 +171,8 @@ export class AgentFileProtocol implements IAgentFileProtocol {
       const replaced = AgentsMdContent.replaceJumboSection(content);
 
       if (replaced !== null) {
-        // Jumbo section found - replace with current version
         await fs.writeFile(agentsMdPath, replaced, "utf-8");
       } else {
-        // Jumbo section not found - append (same as ensure)
         const updatedContent = content + "\n\n" + AgentsMdContent.getJumboSection();
         await fs.writeFile(agentsMdPath, updatedContent, "utf-8");
       }
@@ -152,6 +201,14 @@ export class AgentFileProtocol implements IAgentFileProtocol {
    */
   async getPlannedFileChanges(projectRoot: string): Promise<PlannedFileChange[]> {
     const changes: PlannedFileChange[] = [];
+
+    // JUMBO.md change
+    const jumboMdPath = path.join(projectRoot, "JUMBO.md");
+    changes.push({
+      path: "JUMBO.md",
+      action: (await fs.pathExists(jumboMdPath)) ? "modify" : "create",
+      description: "Add Jumbo instructions",
+    });
 
     // AGENTS.md change
     const agentsMdPath = path.join(projectRoot, "AGENTS.md");

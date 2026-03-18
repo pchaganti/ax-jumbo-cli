@@ -6,48 +6,42 @@ import { AgentsMdContent } from "../../../src/domain/project/AgentsMdContent";
 
 describe("AgentsMdContent Value Object", () => {
   describe("getJumboSection()", () => {
-    it("should return Jumbo section markdown content", () => {
+    it("should return thin reference section pointing to JUMBO.md", () => {
       const content = AgentsMdContent.getJumboSection();
 
       expect(content).toContain("## Instructions for Agents on how to collaborate with Jumbo");
-      expect(content).toContain("Jumbo CLI for agent orchestration and context management");
-      expect(content).toContain("jumbo session start");
-      expect(content).toContain("jumbo goal start");
-      expect(content).toContain("jumbo component add");
-      expect(content).toContain("jumbo decision add");
-      expect(content).toContain("jumbo guideline add");
-      expect(content).toContain("jumbo invariant add");
+      expect(content).toContain("See JUMBO.md and follow all instructions.");
+      expect(content).toContain("If the file does not exist, then ignore this instruction.");
     });
 
-    it("should include available commands section", () => {
+    it("should not contain full instructions (those belong in JumboMdContent)", () => {
       const content = AgentsMdContent.getJumboSection();
 
-      expect(content).toContain("### Available Commands");
-      expect(content).toContain("jumbo goal add --help");
-      expect(content).toContain("jumbo session start --help");
-    });
-
-    it("should include proactive section", () => {
-      const content = AgentsMdContent.getJumboSection();
-
-      expect(content).toContain("### Be Proactive");
-      expect(content).toContain("Be vigilant in identifying");
+      expect(content).not.toContain("Dear Agent,");
+      expect(content).not.toContain("### Available Commands");
+      expect(content).not.toContain("jumbo session start");
     });
   });
 
   describe("getFullContent()", () => {
-    it("should return complete AGENTS.md content", () => {
+    it("should return complete AGENTS.md content with header", () => {
       const content = AgentsMdContent.getFullContent();
 
-      expect(content).toContain("# Agents.md");
+      expect(content).toContain("# AGENTS.md");
       expect(content).toContain("## Instructions for Agents on how to collaborate with Jumbo");
     });
 
-    it("should include Jumbo section in full content", () => {
+    it("should include thin reference section in full content", () => {
       const fullContent = AgentsMdContent.getFullContent();
       const jumboSection = AgentsMdContent.getJumboSection();
 
       expect(fullContent).toContain(jumboSection);
+    });
+
+    it("should contain reference to JUMBO.md", () => {
+      const content = AgentsMdContent.getFullContent();
+
+      expect(content).toContain("See JUMBO.md and follow all instructions.");
     });
   });
 
@@ -104,11 +98,16 @@ describe("AgentsMdContent Value Object", () => {
       expect(result).not.toContain(legacyMarker);
     });
 
-    it("should append when no marker is found", () => {
-      const content = "# My AGENTS.md\n\nNo Jumbo section here.";
-      const result = AgentsMdContent.replaceJumboSection(content);
+    it("should replace verbose content with thin reference", () => {
+      const currentMarker = AgentsMdContent.getCurrentJumboSectionMarker();
+      const verboseContent = `# Agents.md\n\n${currentMarker}\n\nDear Agent,\n\nLots of instructions...\n\n### Available Commands\n\`jumbo --help\`\n`;
 
-      expect(result).toBeNull();
+      const result = AgentsMdContent.replaceJumboSection(verboseContent);
+
+      expect(result).not.toBeNull();
+      expect(result).toContain("See JUMBO.md and follow all instructions.");
+      expect(result).not.toContain("Dear Agent,");
+      expect(result).not.toContain("### Available Commands");
     });
 
     it("should preserve content before the section", () => {
