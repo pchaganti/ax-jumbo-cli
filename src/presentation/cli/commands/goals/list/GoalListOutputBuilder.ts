@@ -3,6 +3,44 @@ import { TerminalOutput } from '../../../output/TerminalOutput.js';
 import { GoalView } from '../../../../../application/context/goals/GoalView.js';
 
 /**
+ * Status ordering for goal list display.
+ * Ordered reverse of the goal workflow: most progressed statuses appear first.
+ * Includes ALL non-terminal GoalStatus values.
+ */
+export const STATUS_ORDER: Readonly<Record<string, number>> = {
+  "approved": 0,
+  "in-review": 1,
+  "submitted": 2,
+  "paused": 3,
+  "doing": 4,
+  "blocked": 5,
+  "unblocked": 6,
+  "rejected": 7,
+  "in-refinement": 8,
+  "codifying": 9,
+  "refined": 10,
+  "defined": 11
+};
+
+/**
+ * Bracket-style heading labels for each status.
+ */
+const STATUS_HEADINGS: Readonly<Record<string, string>> = {
+  "approved": "[APPROVED]",
+  "in-review": "[IN-REVIEW]",
+  "submitted": "[SUBMITTED]",
+  "paused": "[PAUSED]",
+  "doing": "[DOING]",
+  "blocked": "[BLOCKED]",
+  "unblocked": "[UNBLOCKED]",
+  "rejected": "[REJECTED]",
+  "in-refinement": "[IN-REFINEMENT]",
+  "codifying": "[CODIFYING]",
+  "refined": "[REFINED]",
+  "defined": "[DEFINED]"
+};
+
+/**
  * Specialized builder for goals.list command output.
  * Encapsulates all output rendering for the list goals command.
  *
@@ -14,34 +52,6 @@ export class GoalListOutputBuilder {
 
   constructor() {
     this.builder = new TerminalOutputBuilder();
-  }
-
-  /**
-   * Format status with visual indicator
-   */
-  private formatStatus(status: string): string {
-    switch (status) {
-      case "doing":
-        return "[DOING]  ";
-      case "blocked":
-        return "[BLOCKED]";
-      case "defined":
-        return "[DEFINED]";
-      case "refined":
-        return "[REFINED]";
-      case "paused":
-        return "[PAUSED] ";
-      case "in-review":
-        return "[IN-REVIEW]";
-      case "approved":
-        return "[APPROVED]";
-      case "rejected":
-        return "[REJECTED]";
-      case "unblocked":
-        return "[UNBLOCKED]";
-      default:
-        return `[${status.toUpperCase()}]`;
-    }
   }
 
   /**
@@ -65,43 +75,49 @@ export class GoalListOutputBuilder {
 
   /**
    * Build output for active goals list.
-   * Renders header and formatted list of all non-completed goals.
+   * Groups goals by status under heading lines, ordered by STATUS_ORDER.
+   * Within each group, goals are sorted by createdAt ascending.
+   * Empty groups are omitted.
    */
   buildActiveGoalsList(activeGoals: GoalView[]): TerminalOutput {
     this.builder.reset();
 
-    // Sort: first approved, then in-review, then paused, then doing, then blocked, then refined, then defined, then by createdAt
-    const statusOrder: Record<string, number> = {
-      "approved": 0,
-      "in-review": 1,
-      "paused": 2,
-      "doing": 3,
-      "blocked": 4,
-      "unblocked": 5,
-      "refined": 6,
-      "defined": 7
-    };
+    // Group goals by status
+    const groupedGoals = new Map<string, GoalView[]>();
+    for (const goal of activeGoals) {
+      const group = groupedGoals.get(goal.status) ?? [];
+      group.push(goal);
+      groupedGoals.set(goal.status, group);
+    }
 
-    const sortedGoals = [...activeGoals].sort((a: GoalView, b: GoalView) => {
-      const statusDiff = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
-      if (statusDiff !== 0) return statusDiff;
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    });
+    // Sort within each group by createdAt ascending
+    for (const group of groupedGoals.values()) {
+      group.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    }
 
-    // Build output as single prompt section
-    let output = `\nActive Goals (${sortedGoals.length}):\n\n`;
+    // Get statuses ordered by STATUS_ORDER
+    const orderedStatuses = [...groupedGoals.keys()].sort(
+      (a, b) => (STATUS_ORDER[a] ?? 99) - (STATUS_ORDER[b] ?? 99)
+    );
 
-    for (const goal of sortedGoals) {
-      const status = this.formatStatus(goal.status);
-      output += `${status}  ${goal.goalId}\n`;
-      if (goal.title) {
-        output += `           ${goal.title}\n`;
+    let output = `\nActive Goals (${activeGoals.length}):\n`;
+
+    for (const status of orderedStatuses) {
+      const goals = groupedGoals.get(status)!;
+      const heading = STATUS_HEADINGS[status] ?? `[${status.toUpperCase()}]`;
+      output += `\n── ${heading} ──\n\n`;
+
+      for (const goal of goals) {
+        output += `  ${goal.goalId}\n`;
+        if (goal.title) {
+          output += `    ${goal.title}\n`;
+        }
+        output += `    ${goal.objective}\n`;
+        if (goal.note) {
+          output += `    Note: ${goal.note}\n`;
+        }
+        output += "\n";
       }
-      output += `           ${goal.objective}\n`;
-      if (goal.note) {
-        output += `           Note: ${goal.note}\n`;
-      }
-      output += "\n";
     }
 
     this.builder.addPrompt(output);
@@ -115,20 +131,8 @@ export class GoalListOutputBuilder {
   buildStructuredOutput(activeGoals: GoalView[]): TerminalOutput {
     this.builder.reset();
 
-    // Sort using same logic as human-readable output
-    const statusOrder: Record<string, number> = {
-      "approved": 0,
-      "in-review": 1,
-      "paused": 2,
-      "doing": 3,
-      "blocked": 4,
-      "unblocked": 5,
-      "refined": 6,
-      "defined": 7
-    };
-
     const sortedGoals = [...activeGoals].sort((a: GoalView, b: GoalView) => {
-      const statusDiff = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
+      const statusDiff = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
       if (statusDiff !== 0) return statusDiff;
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });
