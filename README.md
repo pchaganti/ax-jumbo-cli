@@ -89,7 +89,6 @@ Jumbo remembers:
 
 Your domain:
 - **Project**: What you are building and who it's for. 
-- **Relations**: The connections between all Jumbo's memories.
 - **Audiences**: Who uses your project and their priorities.
 - **Audience Pains**: The problems your audiences face that you aim to solve.
 - **Value Propositions**: How your product addresses each audience pain. 
