@@ -7,8 +7,7 @@
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
 import { Renderer } from "../../../rendering/Renderer.js";
-import { SessionStartTextRenderer } from "./SessionStartTextRenderer.js";
-import { EnrichedSessionContext } from "../../../../../application/context/sessions/get/EnrichedSessionContext.js";
+import { SessionStartOutputBuilder } from "./SessionStartOutputBuilder.js";
 
 /**
  * Command metadata for auto-registration
@@ -32,7 +31,7 @@ export const metadata: CommandMetadata = {
  *
  * Responsibilities (presentation layer only):
  * - Call SessionStartController for orchestrated session start
- * - Render the result for display
+ * - Render the result via SessionStartOutputBuilder
  *
  * Orchestration is delegated to SessionStartController in the application layer.
  */
@@ -54,43 +53,21 @@ export async function sessionStart(
     const response = await container.sessionStartController.handle({});
 
     // 2. RENDER: Display context and result
+    const outputBuilder = new SessionStartOutputBuilder();
+
     if (isTextOutput) {
-      const textRenderer = new SessionStartTextRenderer();
-      const textOutput = textRenderer.render(response.context);
-
-      for (const block of textOutput.blocks) {
-        if (block) {
-          renderer.info(block);
-        }
-      }
-
-      renderer.info("---\n");
-      renderer.info(textOutput.llmInstruction);
+      const output = outputBuilder.buildSessionStartOutput(response.context);
+      renderer.info(output.toHumanReadable());
 
       renderer.success("Session started", {
         sessionId: response.sessionId,
       });
     } else {
-      renderer.data(buildStructuredSessionStartOutput(response.context, response.sessionId));
+      renderer.data(outputBuilder.buildStructuredOutput(response.context, response.sessionId));
     }
   } catch (error) {
     renderer.error("Failed to start session", error instanceof Error ? error : String(error));
     process.exit(1);
   }
   // NO CLEANUP - infrastructure manages itself!
-}
-
-function buildStructuredSessionStartOutput(
-  sessionContext: EnrichedSessionContext,
-  sessionId: string
-) {
-  const textRenderer = new SessionStartTextRenderer();
-  const structuredContext = textRenderer.buildStructuredContext(sessionContext);
-
-  return {
-    ...structuredContext,
-    sessionStart: {
-      sessionId,
-    },
-  };
 }
