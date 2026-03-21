@@ -11,7 +11,7 @@ Track work effectively with Jumbo's goal system.
 
 ## Overview
 
-Goals are the heart of Jumbo's context management. You define what needs to be done, and your agent drives the goal through four phases: **refinement**, **execution**, **review**, and **codification**. At each transition, Jumbo delivers optimized context packets to your agent containing:
+Goals are the heart of Jumbo's context management. You define what needs to be done, and your agent drives the goal through four phases: **refinement**, **implementation**, **review**, and **codification**. At each transition, Jumbo delivers optimized context packets to your agent containing:
 
 - The goal's objective, criteria, and scope
 - Relevant components and dependencies
@@ -25,8 +25,8 @@ Goals are the heart of Jumbo's context management. You define what needs to be d
 | Phase | Description |
 |-------|-------------|
 | **Define** | You set an objective, criteria, and scope |
-| **Refine** | Agent links relevant project knowledge to the goal |
-| **Execute** | Agent implements the goal using curated context |
+| **Refine** | Agent links relevant project knowledge to the goal building the exact context needed to implement the goal |
+| **Implement** | Agent implements the goal using curated context |
 | **Review** | Agent verifies the implementation against criteria |
 | **Codify** | Agent captures new learnings and closes the goal |
 
@@ -84,11 +84,11 @@ Always refine before starting. Curating relations ensures the implementing agent
 
 ---
 
-## Phase 2: Execution
+## Phase 2: Implementation
 
 When a refined goal is started, Jumbo delivers the goal's context packet to the agent. The agent receives the objective, criteria, scope, and all related project knowledge in a single prompt.
 
-During execution, the agent:
+During implementation, the agent:
 
 - Implements the goal according to the criteria
 - Records progress as sub-tasks are completed
