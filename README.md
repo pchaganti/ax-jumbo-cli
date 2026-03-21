@@ -62,7 +62,7 @@ Those solve the core problems. These make Jumbo pleasant to use:
 
 Jumbo will automatically orient the agent about your project and available goals.
 
-See the [Getting started](docs/getting-started/quickstart.md) guide for the full workflow.
+See the [Getting started](docs/getting-started/first-run.md) guide for the full workflow.
 
 ## Compatibility
 Jumbo seamlessly integrates with all frontier harnesses and models. Use them interchangeably or in parallel. 
@@ -157,14 +157,13 @@ Spread some ❤️ and sponsor the projects or buy them a cup of coffee. I have.
 
 | Resource | Description |
 | --- | --- |
-| [Quickstart](docs/getting-started/quickstart.md) | Get running in 5 minutes |
+| [Quickstart](docs/getting-started/first-run.md) | Get running in 5 minutes |
 | [Installation](docs/getting-started/installation.md) | Prerequisites and setup |
 | [Concepts](docs/getting-started/concepts.md) | Understand sessions, goals, and context |
 | [What Jumbo Creates](docs/getting-started/what-jumbo-creates.md) | Generated files, folders, and local state |
 | [Goal Management](docs/guides/goal-management.md) | Complete guide to tracking work |
-| [Project Initialization](docs/guides/project-initialization.md) | Configure Jumbo for your project |
-| [Session Management](docs/guides/session-management.md) | Manage pause, resume, and session continuity |
-| [Dependency Migration](docs/guides/dependency-migration.md) | Migrate legacy coupling flags to relations |
+| [Project Initialization](docs/reference/project-initialization.md) | Configure Jumbo for your project |
+| [Session Management](docs/reference/commands/session.md) | Manage pause, resume, and session continuity |
 | [Advanced Workflows](docs/guides/advanced-workflows.md) | Command chaining and multi-agent collaboration patterns |
 | [Command Reference](docs/reference/) | Full command documentation |
 
