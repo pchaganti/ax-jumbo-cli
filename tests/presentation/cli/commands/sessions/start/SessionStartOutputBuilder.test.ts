@@ -15,6 +15,7 @@ import { SessionContext } from "../../../../../../src/application/context/sessio
 import { GoalView } from "../../../../../../src/application/context/goals/GoalView.js";
 import { DecisionView } from "../../../../../../src/application/context/decisions/DecisionView.js";
 import { SessionView } from "../../../../../../src/application/context/sessions/SessionView.js";
+import { ActivityMirror } from "../../../../../../src/application/context/sessions/start/ActivityMirrorAssembler.js";
 
 describe("SessionStartOutputBuilder", () => {
   let builder: SessionStartOutputBuilder;
@@ -167,6 +168,87 @@ describe("SessionStartOutputBuilder", () => {
       const result = builder.buildStructuredOutput(context, "session-000");
 
       expect(result.llmInstructions.sessionContext).toBeNull();
+    });
+
+    it("should include activityMirror in structured output when provided", () => {
+      const context = createContext();
+      const mirror: ActivityMirror = {
+        sessionCount: 3,
+        entitiesRegistered: 5,
+        decisionsRecorded: 2,
+        relationsAdded: 3,
+        goalsAdded: 1,
+      };
+
+      const result = builder.buildStructuredOutput(context, "session-123", mirror);
+
+      expect(result.activityMirror).toEqual(mirror);
+    });
+
+    it("should omit activityMirror from structured output when null", () => {
+      const context = createContext();
+      const result = builder.buildStructuredOutput(context, "session-123", null);
+
+      expect(result).not.toHaveProperty("activityMirror");
+    });
+  });
+
+  describe("activity mirror rendering", () => {
+    it("should render activity mirror section when provided", () => {
+      const context = createContext();
+      const mirror: ActivityMirror = {
+        sessionCount: 3,
+        entitiesRegistered: 8,
+        decisionsRecorded: 3,
+        relationsAdded: 2,
+        goalsAdded: 1,
+      };
+
+      const output = builder.buildSessionStartOutput(context, mirror);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("[Activity Mirror]");
+      expect(text).toContain("Last 3 sessions");
+      expect(text).toContain("8 entities registered");
+      expect(text).toContain("3 decisions recorded");
+      expect(text).toContain("2 relations added");
+      expect(text).toContain("1 goals added");
+      expect(text).toContain("@LLM: This is your impact");
+    });
+
+    it("should omit activity mirror section when null", () => {
+      const context = createContext();
+      const output = builder.buildSessionStartOutput(context, null);
+      const text = output.toHumanReadable();
+
+      expect(text).not.toContain("[Activity Mirror]");
+    });
+
+    it("should omit activity mirror section when not provided", () => {
+      const context = createContext();
+      const output = builder.buildSessionStartOutput(context);
+      const text = output.toHumanReadable();
+
+      expect(text).not.toContain("[Activity Mirror]");
+    });
+
+    it("should only include non-zero counts in activity mirror", () => {
+      const context = createContext();
+      const mirror: ActivityMirror = {
+        sessionCount: 2,
+        entitiesRegistered: 3,
+        decisionsRecorded: 0,
+        relationsAdded: 0,
+        goalsAdded: 1,
+      };
+
+      const output = builder.buildSessionStartOutput(context, mirror);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("3 entities registered");
+      expect(text).toContain("1 goals added");
+      expect(text).not.toContain("decisions");
+      expect(text).not.toContain("relations");
     });
   });
 });
