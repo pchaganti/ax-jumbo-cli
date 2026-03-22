@@ -30,8 +30,38 @@ Run `jumbo session end --focus {focus-description}` --summary {summary-of-what-t
 ### Before Starting Work on a Goal
 Run `jumbo goal start --id <id>`
 
-### Be Proactive - Use Jumbo to the Fullest Extent
-Jumbo supercharges your abilities and consistency by supplying you with durable memory. Use is unsparingly. Be vigilant in identifying user decisions that change the existing standards for the project. Document when new patterns are introduced or removed. Capture corrections made by the user in the form of invariants or guidelines. If a new pattern is introduced, capture it. If a new component is introduced capture it. If new relations are relevant, register them. Use the full jumbo command catalog to quickly gain project insights. The rate of successful collaborations and ability to deliver on the developers wishes without error will highly increase the more you leverage Jumbo.
+### Maintain Context as You Work
+
+Jumbo is your persistent memory across sessions. Keeping it accurate is part of your job — not a cleanup step, but something you do in real-time as you work, the same way you write tests alongside code.
+
+#### During Refinement
+When you discover that work X must happen before a goal can succeed, register it immediately:
+```
+jumbo goal add --objective "X that must happen first"
+jumbo goal update --id <current-goal-id> --prerequisite-goals <new-goal-id>
+```
+
+#### During Implementation
+When you make an architectural decision, register it before moving on:
+```
+jumbo decision add --title "Chose X over Y" --rationale "Because Z" --context "Background"
+```
+
+When you create a new component, register it and link it:
+```
+jumbo component add --name "ComponentName" --description "What it does"
+jumbo relation add --from-type goal --from-id <goal-id> --to-type component --to-id <component-id> --type involves --description "Created during implementation"
+```
+
+#### When the User Corrects You
+When user feedback changes the approach, capture it as a durable constraint:
+```
+jumbo invariant add --category "architecture" --description "Never do X because Y"
+jumbo guideline add --category "codingStyle" --description "Prefer X over Y"
+```
+
+#### Why This Matters
+Context you register now is served to future sessions — yours or another agent's. Unregistered decisions, components, and corrections are lost at session end. The more you capture, the fewer mistakes future sessions make.
 
 ### Available Commands
 `jumbo --help `

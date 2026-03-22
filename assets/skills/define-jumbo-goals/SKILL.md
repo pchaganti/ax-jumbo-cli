@@ -43,6 +43,13 @@ This discovery serves two purposes:
 - **Inform decomposition**: Understanding the system's boundaries, patterns, and constraints reveals the natural seams along which to split work.
 - **Inform criteria**: Existing invariants, decisions, and patterns dictate what "correct" looks like.
 
+If you encounter components, patterns, or decisions that exist in the codebase but are not registered in Jumbo, register them now — before writing goals. Accurate entity coverage produces better relations during refinement:
+
+```bash
+jumbo component add --name "ExistingService" --description "What it does"
+jumbo decision add --title "Existing pattern" --rationale "Why it was chosen" --context "Background"
+```
+
 Also explore the codebase directly to understand current implementation:
 
 ```bash

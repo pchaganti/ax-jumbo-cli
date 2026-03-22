@@ -1,0 +1,201 @@
+/**
+ * Tests for GoalStartOutputBuilder
+ *
+ * Verifies output for goal start command including:
+ * - Goal implementation instructions rendering
+ * - Context maintenance instructions with concrete commands
+ * - Scope, architecture, components, decisions, invariants, guidelines sections
+ * - Progress tracking and submit instructions
+ */
+
+import { describe, it, expect, beforeEach } from "@jest/globals";
+import { GoalStartOutputBuilder } from "../../../../../../src/presentation/cli/commands/goals/start/GoalStartOutputBuilder.js";
+import { ContextualGoalView } from "../../../../../../src/application/context/goals/get/ContextualGoalView.js";
+import { GoalView } from "../../../../../../src/application/context/goals/GoalView.js";
+import { GoalContext } from "../../../../../../src/application/context/goals/get/GoalContext.js";
+
+describe("GoalStartOutputBuilder", () => {
+  let builder: GoalStartOutputBuilder;
+
+  beforeEach(() => {
+    builder = new GoalStartOutputBuilder();
+  });
+
+  function makeGoal(overrides: Partial<GoalView> = {}): GoalView {
+    return {
+      goalId: "goal_test_123",
+      title: "Test Goal",
+      objective: "Implement feature X",
+      successCriteria: ["Criterion A", "Criterion B"],
+      scopeIn: [],
+      scopeOut: [],
+      status: "doing",
+      version: 1,
+      createdAt: "2025-01-01T10:00:00Z",
+      updatedAt: "2025-01-01T10:00:00Z",
+      progress: [],
+      ...overrides,
+    } as GoalView;
+  }
+
+  function makeContext(overrides: Partial<GoalContext> = {}): GoalContext {
+    return {
+      components: [],
+      dependencies: [],
+      decisions: [],
+      invariants: [],
+      guidelines: [],
+      architecture: null,
+      ...overrides,
+    };
+  }
+
+  function makeView(
+    goalOverrides: Partial<GoalView> = {},
+    contextOverrides: Partial<GoalContext> = {}
+  ): ContextualGoalView {
+    return {
+      goal: makeGoal(goalOverrides),
+      context: makeContext(contextOverrides),
+    };
+  }
+
+  describe("build", () => {
+    it("should render objective section", () => {
+      const view = makeView();
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("## Objective:");
+      expect(text).toContain("Implement feature X");
+    });
+
+    it("should render success criteria section", () => {
+      const view = makeView();
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("## Success Criteria:");
+      expect(text).toContain("- Criterion A");
+      expect(text).toContain("- Criterion B");
+    });
+
+    it("should render scope sections when scoped", () => {
+      const view = makeView({
+        scopeIn: ["src/feature/"],
+        scopeOut: ["src/other/"],
+      });
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("#### In Scope");
+      expect(text).toContain("- src/feature/");
+      expect(text).toContain("#### Out of Scope");
+      expect(text).toContain("- src/other/");
+    });
+
+    it("should render progress section when progress exists", () => {
+      const view = makeView({ progress: ["Completed step 1", "Completed step 2"] });
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("## Current Progress:");
+      expect(text).toContain("- Completed step 1");
+      expect(text).toContain("- Completed step 2");
+    });
+
+    it("should include submit instruction with goal ID", () => {
+      const view = makeView({ goalId: "goal_abc" });
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("jumbo goal submit --id goal_abc");
+    });
+
+    it("should include progress tracking instruction with goal ID", () => {
+      const view = makeView({ goalId: "goal_abc" });
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("jumbo goal update-progress --id goal_abc");
+    });
+  });
+
+  describe("context maintenance instructions", () => {
+    it("should include context maintenance section with concrete commands", () => {
+      const view = makeView();
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("CONTEXT MAINTENANCE:");
+      expect(text).toContain("jumbo decision add --title");
+      expect(text).toContain("jumbo component add --name");
+      expect(text).toContain("jumbo relation add --from-type goal --from-id goal_test_123");
+      expect(text).toContain("jumbo invariant add --category");
+      expect(text).toContain("jumbo guideline add --category");
+    });
+
+    it("should emphasize real-time registration over cleanup", () => {
+      const view = makeView();
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("not as a cleanup step at the end");
+      expect(text).toContain("Capture it as it happens");
+    });
+
+    it("should include goal-specific relation add command with correct goal ID", () => {
+      const view = makeView({ goalId: "goal_specific_456" });
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("--from-id goal_specific_456");
+    });
+  });
+
+  describe("components section", () => {
+    it("should render components when present", () => {
+      const view = makeView({}, {
+        components: [
+          { entity: { name: "AuthService", description: "Handles authentication" } as any, relationType: "involves", relationDescription: "" },
+        ],
+      });
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("## Relevant Components:");
+      expect(text).toContain("AuthService: Handles authentication");
+    });
+  });
+
+  describe("decisions section", () => {
+    it("should render decisions when present", () => {
+      const view = makeView({}, {
+        decisions: [
+          { entity: { title: "Use REST", rationale: "Simpler than GraphQL" } as any, relationType: "implements", relationDescription: "" },
+        ],
+      });
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("## Relevant Decisions:");
+      expect(text).toContain("Use REST: Simpler than GraphQL");
+    });
+  });
+
+  describe("invariants section", () => {
+    it("should render invariants when present", () => {
+      const view = makeView({}, {
+        invariants: [
+          { entity: { title: "No raw SQL", description: "Always use query builder" } as any, relationType: "must-respect", relationDescription: "" },
+        ],
+      });
+      const output = builder.build(view);
+      const text = output.toHumanReadable();
+
+      expect(text).toContain("## Invariants:");
+      expect(text).toContain("No raw SQL:");
+      expect(text).toContain("Always use query builder");
+    });
+  });
+});

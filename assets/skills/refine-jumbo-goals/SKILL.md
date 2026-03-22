@@ -103,15 +103,28 @@ jumbo relation add \
 - GOOD: "Removal must not leave orphaned registrations or broken import paths across layer boundaries"
 - GOOD: "Ensure the read-side query path remains intact after removing the old handler"
 
-### 5. Update Goal Metadata
+### 5. Surface Prerequisites
 
-During entity exploration, you may discover:
+As you analyze the goal against project entities, you may discover that work X must happen before this goal can succeed. When you identify a prerequisite, register it immediately — do not defer it to a note or comment:
+
+1. Register the prerequisite as a new goal:
+   ```bash
+   jumbo goal add --objective "X that must happen first"
+   ```
+2. Link it to the current goal:
+   ```bash
+   jumbo goal update --id <goal-id> --prerequisite-goals <new-goal-id>
+   ```
+3. Continue refining the current goal.
+
+### 6. Update Goal Metadata
+
+During entity exploration, you may also discover:
 - Additional files that belong in scope
 - Files that should be created or modified
 - Risk of scope creep
 - Success criteria that need updating
 - Applicable refactoring skills to reference in criteria (prefix with `skill:`)
-- Registered goals that should be added as prerequisites or follow-ups
 
 Update the goal accordingly:
 
@@ -125,7 +138,7 @@ jumbo goal update --id <goal-id> \
   --prerequisite-goals <goalIds...>
 ```
 
-### 6. Verify Completeness
+### 7. Verify Completeness
 
 Before approving, verify ALL of the following:
 
@@ -138,7 +151,7 @@ Before approving, verify ALL of the following:
 - [ ] Goal criteria and scope reflect any discoveries made during refinement
 - [ ] The goal has at least 5 relations total (fewer suggests incomplete analysis)
 
-### 7. Approve Refinement
+### 8. Approve Refinement
 
 Only after completing all verification checks:
 

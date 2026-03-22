@@ -175,7 +175,7 @@ export class SessionContextOutputBuilder {
 
     const llmInstruction =
       context.context.pausedGoals.length > 0
-        ? "\n\n@LLM: Goals were paused. To resume a paused goal, run:\n  jumbo goal resume --id <goal-id>"
+        ? "\n\n@LLM: Goals were paused in your workspace. To pick up where you left off, run:\n  jumbo goal resume --id <goal-id>"
         : undefined;
 
     return { data: contextData, llmInstruction };
@@ -184,7 +184,8 @@ export class SessionContextOutputBuilder {
   private buildBrownfieldInstruction(): string {
     return [
       "",
-      "@LLM: This is a BROWNFIELD PROJECT with no Jumbo context yet.",
+      "@LLM: This is a BROWNFIELD PROJECT — your Jumbo workspace has no context yet.",
+      "Jumbo is your persistent memory. What you register here survives session boundaries and is available to any agent working on this project.",
       "",
       "REQUIRED ACTION: Proactively engage the user with the following approach:",
       "",

@@ -161,7 +161,13 @@ export class GoalStartOutputBuilder {
     this.builder.addPrompt(
       "---\n\n" +
       "@LLM: Goal context loaded. Work within scope.\n" +
-      `Track your progress by documenting completed sub-tasks with 'jumbo goal update-progress --id ${goal.goalId} --task-description <description>'.`
+      `Track your progress by documenting completed sub-tasks with 'jumbo goal update-progress --id ${goal.goalId} --task-description <description>'.\n\n` +
+      "CONTEXT MAINTENANCE: As you implement, register decisions, components, and relations in real-time — not as a cleanup step at the end, but as they happen:\n" +
+      "- When you make an architectural choice: jumbo decision add --title \"Chose X over Y\" --rationale \"Because Z\" --context \"Background\"\n" +
+      "- When you create a new component: jumbo component add --name \"Name\" --description \"What it does\"\n" +
+      "- When you discover a new relation: jumbo relation add --from-type goal --from-id " + goal.goalId + " --to-type <type> --to-id <id> --type involves --description \"Why\"\n" +
+      "- When the user corrects your approach: jumbo invariant add --category \"architecture\" --description \"The constraint\" or jumbo guideline add --category \"codingStyle\" --description \"The practice\"\n" +
+      "Unregistered context is lost at session end. Capture it as it happens."
     );
 
     // Review instructions (prominent)
