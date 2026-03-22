@@ -68,7 +68,30 @@ Coding standards, testing requirements, and process practices. You SHOULD follow
 jumbo goal update-progress --id <goal-id> --task-description "<description>"
 ```
 
-### 4. Submit for Review
+### 4. Maintain Context as You Implement
+
+Register decisions, components, and corrections as they happen — not as a cleanup step after implementation.
+
+- **Architectural decision made** (e.g., chose pattern X over Y):
+  ```bash
+  jumbo decision add --title "Chose X over Y" --rationale "Because Z" --context "Background"
+  ```
+
+- **New component created** (e.g., introduced a new service or builder):
+  ```bash
+  jumbo component add --name "ComponentName" --description "What it does"
+  jumbo relation add --from-type goal --from-id <goal-id> --to-type component --to-id <component-id> --type involves --description "Created during implementation"
+  ```
+
+- **User corrects your approach** (e.g., "don't do X, do Y instead"):
+  ```bash
+  jumbo invariant add --category "architecture" --description "Never do X because Y"
+  jumbo guideline add --category "codingStyle" --description "Prefer X over Y"
+  ```
+
+Context registered now is served to future sessions. What you skip is lost.
+
+### 5. Submit for Review
 
 When all success criteria are met and implementation is complete:
 

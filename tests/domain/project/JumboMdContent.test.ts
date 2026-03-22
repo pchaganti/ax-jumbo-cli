@@ -28,11 +28,21 @@ describe("JumboMdContent Value Object", () => {
       expect(content).toContain("jumbo session start --help");
     });
 
-    it("should include proactive section", () => {
+    it("should include context maintenance section with specific behavioral expectations", () => {
       const content = JumboMdContent.getJumboSection();
 
-      expect(content).toContain("### Be Proactive");
-      expect(content).toContain("Be vigilant in identifying");
+      expect(content).toContain("### Maintain Context as You Work");
+      expect(content).toContain("#### During Refinement");
+      expect(content).toContain("jumbo goal add --objective");
+      expect(content).toContain("--prerequisite-goals");
+      expect(content).toContain("#### During Implementation");
+      expect(content).toContain("jumbo decision add --title");
+      expect(content).toContain("jumbo component add --name");
+      expect(content).toContain("jumbo relation add --from-type goal");
+      expect(content).toContain("#### When the User Corrects You");
+      expect(content).toContain("jumbo invariant add --category");
+      expect(content).toContain("jumbo guideline add --category");
+      expect(content).toContain("#### Why This Matters");
     });
 
     it("should include Dear Agent letter", () => {

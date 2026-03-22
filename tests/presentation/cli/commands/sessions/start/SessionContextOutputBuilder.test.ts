@@ -163,11 +163,38 @@ describe("SessionContextOutputBuilder", () => {
       expect(text).toContain("jumbo goal resume --id");
     });
 
-    it("should not include @LLM resume prompt when no goals are paused", () => {
+    it("should not include resume prompt when no goals are paused", () => {
       const context = createContext({ pausedGoals: [] });
       const text = builder.renderSessionSummary(context);
 
       expect(text).not.toContain("Goals were paused");
+    });
+
+    it("should frame paused goals with workspace language", () => {
+      const context = createContext({
+        pausedGoals: [
+          {
+            goalId: "goal_ws",
+            objective: "Workspace task",
+            status: "paused",
+            updatedAt: "2025-01-01T11:15:00Z",
+          } as GoalView,
+        ],
+      });
+
+      const text = builder.renderSessionSummary(context);
+
+      expect(text).toContain("your workspace");
+    });
+  });
+
+  describe("brownfield workspace framing", () => {
+    it("should frame Jumbo as the LLM's persistent memory in brownfield onboarding", () => {
+      const context = createContext({}, defaultSession, ["brownfield-onboarding"]);
+      const text = builder.renderSessionSummary(context);
+
+      expect(text).toContain("your Jumbo workspace");
+      expect(text).toContain("your persistent memory");
     });
   });
 

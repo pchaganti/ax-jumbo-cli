@@ -134,7 +134,13 @@ export class GoalRefineOutputBuilder {
       "Relations capture essential context that will be provided when implementing this goal.\n" +
       "Incomplete relations result in missing architectural constraints, patterns, and domain\n" +
       "knowledge during implementation.\n" +
-      "\nBE THOROUGH: Most goals require 5-10+ relations across multiple entity types."
+      "\nBE THOROUGH: Most goals require 5-10+ relations across multiple entity types.\n" +
+      "\nPREREQUISITE DISCOVERY: As you analyze this goal, if you discover that work X must\n" +
+      "happen before this goal can succeed, stop and register it:\n" +
+      "  1. jumbo goal add --objective \"X that must happen first\"\n" +
+      "  2. jumbo goal update --id " + goal.goalId + " --prerequisite-goals <new-goal-id>\n" +
+      "  3. Continue refinement of this goal\n" +
+      "Do not defer prerequisite registration — capture it the moment you identify it."
     );
 
     // Entity exploration commands
