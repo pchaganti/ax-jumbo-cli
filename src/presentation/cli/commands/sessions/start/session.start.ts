@@ -56,14 +56,14 @@ export async function sessionStart(
     const outputBuilder = new SessionStartOutputBuilder();
 
     if (isTextOutput) {
-      const output = outputBuilder.buildSessionStartOutput(response.context);
+      const output = outputBuilder.buildSessionStartOutput(response.context, response.activityMirror);
       renderer.info(output.toHumanReadable());
 
       renderer.success("Session started", {
         sessionId: response.sessionId,
       });
     } else {
-      renderer.data(outputBuilder.buildStructuredOutput(response.context, response.sessionId));
+      renderer.data(outputBuilder.buildStructuredOutput(response.context, response.sessionId, response.activityMirror));
     }
   } catch (error) {
     renderer.error("Failed to start session", error instanceof Error ? error : String(error));

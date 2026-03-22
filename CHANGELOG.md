@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Activity mirror**: `session start` now surfaces a brief summary of proactive context maintenance actions from recent sessions (entities registered, decisions recorded, relations added, goals added), reinforcing productive LLM behavior.
+
 ## [2.3.1] - 2026-03-21
 
 ### Changed
