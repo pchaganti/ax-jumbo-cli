@@ -17,6 +17,7 @@ import { SessionContext } from "../../../../../../src/application/context/sessio
 import { GoalView } from "../../../../../../src/application/context/goals/GoalView.js";
 import { DecisionView } from "../../../../../../src/application/context/decisions/DecisionView.js";
 import { SessionView } from "../../../../../../src/application/context/sessions/SessionView.js";
+import { SessionInstructionSignal } from "../../../../../../src/application/context/sessions/SessionInstructionSignal.js";
 
 describe("SessionContextOutputBuilder", () => {
   let builder: SessionContextOutputBuilder;
@@ -193,7 +194,7 @@ describe("SessionContextOutputBuilder", () => {
 
   describe("brownfield workspace framing", () => {
     it("should frame Jumbo as the LLM's persistent memory in brownfield onboarding", () => {
-      const context = createContext({}, defaultSession, ["brownfield-onboarding"]);
+      const context = createContext({}, defaultSession, [SessionInstructionSignal.BROWNFIELD_ONBOARDING]);
       const text = builder.renderSessionSummary(context);
 
       expect(text).toContain("your Jumbo workspace");
@@ -213,7 +214,7 @@ describe("SessionContextOutputBuilder", () => {
           } as any,
         },
         defaultSession,
-        ["primitive-gaps-detected"]
+        [SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED]
       );
 
       const text = builder.renderSessionSummary(context);
@@ -237,7 +238,7 @@ describe("SessionContextOutputBuilder", () => {
           } as any,
         },
         defaultSession,
-        ["primitive-gaps-detected"]
+        [SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED]
       );
 
       const text = builder.renderSessionSummary(context);
@@ -281,7 +282,7 @@ describe("SessionContextOutputBuilder", () => {
           ],
         },
         defaultSession,
-        ["primitive-gaps-detected"]
+        [SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED]
       );
 
       const text = builder.renderSessionSummary(context);
@@ -339,7 +340,7 @@ describe("SessionContextOutputBuilder", () => {
 
   describe("brownfield project handling", () => {
     it("should return brownfield instructions when brownfield-onboarding instruction is present", () => {
-      const context = createContext({}, defaultSession, ["brownfield-onboarding"]);
+      const context = createContext({}, defaultSession, [SessionInstructionSignal.BROWNFIELD_ONBOARDING]);
       const text = builder.renderSessionSummary(context);
 
       expect(text).toContain("BROWNFIELD PROJECT");
@@ -386,7 +387,7 @@ describe("SessionContextOutputBuilder", () => {
     });
 
     it("should include brownfield instruction when brownfield-onboarding present", () => {
-      const context = createContext({}, defaultSession, ["brownfield-onboarding"]);
+      const context = createContext({}, defaultSession, [SessionInstructionSignal.BROWNFIELD_ONBOARDING]);
 
       const result = builder.buildStructuredSessionContext(context);
 

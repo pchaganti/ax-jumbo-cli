@@ -3,6 +3,7 @@ import { TerminalOutput } from "../../../output/TerminalOutput.js";
 import { EnrichedSessionContext } from "../../../../../application/context/sessions/get/EnrichedSessionContext.js";
 import { ContextualProjectView } from "../../../../../application/context/project/get/ContextualProjectView.js";
 import { YamlFormatter } from "../../../formatting/YamlFormatter.js";
+import { SessionInstructionSignal } from "../../../../../application/context/sessions/SessionInstructionSignal.js";
 
 /**
  * SessionContextOutputBuilder - Builds output for session context orientation.
@@ -119,7 +120,7 @@ export class SessionContextOutputBuilder {
   private buildSessionContextData(
     context: EnrichedSessionContext
   ): { data: Record<string, unknown>; llmInstruction?: string } {
-    if (context.instructions.includes("brownfield-onboarding")) {
+    if (context.instructions.includes(SessionInstructionSignal.BROWNFIELD_ONBOARDING)) {
       return {
         data: {
           sessionContext: {
@@ -183,7 +184,7 @@ export class SessionContextOutputBuilder {
 
     const llmParts: string[] = [];
 
-    if (context.instructions.includes("primitive-gaps-detected")) {
+    if (context.instructions.includes(SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED)) {
       llmParts.push(this.buildPrimitiveGapsInstruction(context));
     }
 

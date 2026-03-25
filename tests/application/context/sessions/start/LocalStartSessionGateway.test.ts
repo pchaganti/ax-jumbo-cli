@@ -6,6 +6,7 @@ import { IBrownfieldStatusReader } from "../../../../../src/application/context/
 import { ActivityMirrorAssembler } from "../../../../../src/application/context/sessions/start/ActivityMirrorAssembler.js";
 import { ContextualSessionView } from "../../../../../src/application/context/sessions/get/ContextualSessionView.js";
 import { GoalView } from "../../../../../src/application/context/goals/GoalView.js";
+import { SessionInstructionSignal } from "../../../../../src/application/context/sessions/SessionInstructionSignal.js";
 
 describe("LocalStartSessionGateway", () => {
   let sessionContextQueryHandler: jest.Mocked<SessionContextQueryHandler>;
@@ -87,7 +88,7 @@ describe("LocalStartSessionGateway", () => {
     it("should always include goal-selection-prompt instruction", async () => {
       const result = await gateway.startSession({});
 
-      expect(result.context.instructions).toContain("goal-selection-prompt");
+      expect(result.context.instructions).toContain(SessionInstructionSignal.GOAL_SELECTION_PROMPT);
     });
 
     it("should include brownfield-onboarding when project is unprimed", async () => {
@@ -95,7 +96,7 @@ describe("LocalStartSessionGateway", () => {
 
       const result = await gateway.startSession({});
 
-      expect(result.context.instructions).toContain("brownfield-onboarding");
+      expect(result.context.instructions).toContain(SessionInstructionSignal.BROWNFIELD_ONBOARDING);
     });
 
     it("should not include brownfield-onboarding when project is primed", async () => {
@@ -103,7 +104,7 @@ describe("LocalStartSessionGateway", () => {
 
       const result = await gateway.startSession({});
 
-      expect(result.context.instructions).not.toContain("brownfield-onboarding");
+      expect(result.context.instructions).not.toContain(SessionInstructionSignal.BROWNFIELD_ONBOARDING);
     });
 
     it("should include paused-goals-resume when paused goals exist", async () => {
@@ -121,13 +122,13 @@ describe("LocalStartSessionGateway", () => {
 
       const result = await gateway.startSession({});
 
-      expect(result.context.instructions).toContain("paused-goals-resume");
+      expect(result.context.instructions).toContain(SessionInstructionSignal.PAUSED_GOALS_RESUME);
     });
 
     it("should not include paused-goals-resume when no paused goals", async () => {
       const result = await gateway.startSession({});
 
-      expect(result.context.instructions).not.toContain("paused-goals-resume");
+      expect(result.context.instructions).not.toContain(SessionInstructionSignal.PAUSED_GOALS_RESUME);
     });
 
     it("should include all instructions when brownfield with paused goals", async () => {
@@ -147,9 +148,9 @@ describe("LocalStartSessionGateway", () => {
       const result = await gateway.startSession({});
 
       expect(result.context.instructions).toEqual([
-        "brownfield-onboarding",
-        "paused-goals-resume",
-        "goal-selection-prompt",
+        SessionInstructionSignal.BROWNFIELD_ONBOARDING,
+        SessionInstructionSignal.PAUSED_GOALS_RESUME,
+        SessionInstructionSignal.GOAL_SELECTION_PROMPT,
       ]);
     });
 
@@ -173,7 +174,7 @@ describe("LocalStartSessionGateway", () => {
 
       const result = await gateway.startSession({});
 
-      expect(result.context.instructions).toContain("primitive-gaps-detected");
+      expect(result.context.instructions).toContain(SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED);
     });
 
     it("should not include primitive-gaps-detected when all primitive catalogs have entries", async () => {
@@ -196,7 +197,7 @@ describe("LocalStartSessionGateway", () => {
 
       const result = await gateway.startSession({});
 
-      expect(result.context.instructions).not.toContain("primitive-gaps-detected");
+      expect(result.context.instructions).not.toContain(SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED);
     });
 
     it("should not include primitive-gaps-detected during brownfield onboarding", async () => {
@@ -220,13 +221,13 @@ describe("LocalStartSessionGateway", () => {
 
       const result = await gateway.startSession({});
 
-      expect(result.context.instructions).not.toContain("primitive-gaps-detected");
+      expect(result.context.instructions).not.toContain(SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED);
     });
 
     it("should not include primitive-gaps-detected when no project context exists", async () => {
       const result = await gateway.startSession({});
 
-      expect(result.context.instructions).not.toContain("primitive-gaps-detected");
+      expect(result.context.instructions).not.toContain(SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED);
     });
 
     it("should include primitive-gaps-detected when only some catalogs are empty", async () => {
@@ -249,7 +250,7 @@ describe("LocalStartSessionGateway", () => {
 
       const result = await gateway.startSession({});
 
-      expect(result.context.instructions).toContain("primitive-gaps-detected");
+      expect(result.context.instructions).toContain(SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED);
     });
   });
 
