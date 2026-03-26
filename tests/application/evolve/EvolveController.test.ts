@@ -32,6 +32,7 @@ describe("EvolveController", () => {
       repairAgentConfigurations: jest
         .fn<IAgentFileProtocol["repairAgentConfigurations"]>()
         .mockResolvedValue(undefined),
+      getAvailableAgents: jest.fn<IAgentFileProtocol["getAvailableAgents"]>().mockReturnValue([]),
       getPlannedFileChanges: jest.fn(),
     } as jest.Mocked<IAgentFileProtocol>;
     settingsInitializer = {

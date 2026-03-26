@@ -17,6 +17,7 @@
  * - Agent-specific knowledge is encapsulated in individual Configurer classes
  */
 
+import { AgentId, AvailableAgent } from "./AgentSelection.js";
 import { PlannedFileChange } from "./PlannedFileChange.js";
 
 export interface IAgentFileProtocol {
@@ -60,7 +61,10 @@ export interface IAgentFileProtocol {
    *
    * @param projectRoot Absolute path to project root directory
    */
-  ensureAgentConfigurations(projectRoot: string): Promise<void>;
+  ensureAgentConfigurations(
+    projectRoot: string,
+    selectedAgentIds?: readonly AgentId[]
+  ): Promise<void>;
 
   /**
    * Repair JUMBO.md by replacing the Jumbo section with the current version.
@@ -97,7 +101,15 @@ export interface IAgentFileProtocol {
    *
    * @param projectRoot Absolute path to project root directory
    */
-  repairAgentConfigurations(projectRoot: string): Promise<void>;
+  repairAgentConfigurations(
+    projectRoot: string,
+    selectedAgentIds?: readonly AgentId[]
+  ): Promise<void>;
+
+  /**
+   * Return the available agents derived from the registered configurers.
+   */
+  getAvailableAgents(): readonly AvailableAgent[];
 
   /**
    * Get all planned file changes without executing.
@@ -111,5 +123,8 @@ export interface IAgentFileProtocol {
    * @param projectRoot Absolute path to project root directory
    * @returns List of planned file changes
    */
-  getPlannedFileChanges(projectRoot: string): Promise<PlannedFileChange[]>;
+  getPlannedFileChanges(
+    projectRoot: string,
+    selectedAgentIds?: readonly AgentId[]
+  ): Promise<PlannedFileChange[]>;
 }

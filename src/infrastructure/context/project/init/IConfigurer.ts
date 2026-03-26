@@ -10,9 +10,13 @@
  * - Easy extension: add new agent by creating a new Configurer class
  */
 
+import { AvailableAgent } from "../../../../application/context/project/init/AgentSelection.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 
 export interface IConfigurer {
+  readonly agent: AvailableAgent;
+  readonly skillPlatforms: readonly string[];
+
   /**
    * Execute the configuration for this agent.
    *

@@ -46,6 +46,7 @@ describe("InitializeProjectCommandHandler", () => {
       repairJumboMd: jest.fn().mockResolvedValue(undefined),
       repairAgentsMd: jest.fn().mockResolvedValue(undefined),
       repairAgentConfigurations: jest.fn().mockResolvedValue(undefined),
+      getAvailableAgents: jest.fn().mockReturnValue([]),
       getPlannedFileChanges: jest.fn().mockResolvedValue([]),
     };
 
@@ -106,7 +107,7 @@ describe("InitializeProjectCommandHandler", () => {
         purpose: "LLM context management",
       };
 
-      const result = await handler.execute(command, "/repo");
+      const result = await handler.execute(command, "/repo", ["claude", "gemini"]);
 
       expect(result.projectId).toBe("project");
       expect(eventWriter.append).toHaveBeenCalledTimes(1);
@@ -120,7 +121,7 @@ describe("InitializeProjectCommandHandler", () => {
 
       expect(eventBus.publish).toHaveBeenCalledWith(appendedEvent);
       expect(agentFileProtocol.ensureAgentsMd).toHaveBeenCalledWith("/repo");
-      expect(agentFileProtocol.ensureAgentConfigurations).toHaveBeenCalledWith("/repo");
+      expect(agentFileProtocol.ensureAgentConfigurations).toHaveBeenCalledWith("/repo", ["claude", "gemini"]);
       expect(settingsInitializer.ensureSettingsFileExists).toHaveBeenCalledTimes(1);
       expect(gitignoreProtocol.ensureExclusions).toHaveBeenCalledWith("/repo");
     });

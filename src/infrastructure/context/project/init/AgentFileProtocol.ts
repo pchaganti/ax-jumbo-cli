@@ -15,6 +15,7 @@
 
 import path from "path";
 import fs from "fs-extra";
+import { AgentId, AvailableAgent } from "../../../../application/context/project/init/AgentSelection.js";
 import { IAgentFileProtocol } from "../../../../application/context/project/init/IAgentFileProtocol.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 import { JumboMdContent } from "../../../../domain/project/JumboMdContent.js";
@@ -24,11 +25,6 @@ import { ClaudeConfigurer } from "./ClaudeConfigurer.js";
 import { GeminiConfigurer } from "./GeminiConfigurer.js";
 import { CopilotConfigurer } from "./CopilotConfigurer.js";
 import { GitHubHooksConfigurer } from "./GitHubHooksConfigurer.js";
-
-interface SkillPlatformConfiguration {
-  readonly platformId: string;
-  readonly skillsDirectoryRelativePath: string;
-}
 
 const DEFAULT_TEMPLATE_SKILLS_ROOT = path.resolve(
   __dirname,
@@ -40,13 +36,6 @@ const DEFAULT_TEMPLATE_SKILLS_ROOT = path.resolve(
   "assets",
   "skills"
 );
-
-const SKILL_PLATFORM_CONFIGURATIONS: SkillPlatformConfiguration[] = [
-  { platformId: "agents", skillsDirectoryRelativePath: path.join(".agents", "skills") },
-  { platformId: "claude", skillsDirectoryRelativePath: path.join(".claude", "skills") },
-  { platformId: "gemini", skillsDirectoryRelativePath: path.join(".gemini", "skills") },
-  { platformId: "vibe", skillsDirectoryRelativePath: path.join(".vibe", "skills") },
-];
 
 export class AgentFileProtocol implements IAgentFileProtocol {
   private readonly configurers: IConfigurer[] = [
@@ -117,12 +106,15 @@ export class AgentFileProtocol implements IAgentFileProtocol {
   /**
    * Ensure all supported agents are configured for Jumbo
    */
-  async ensureAgentConfigurations(projectRoot: string): Promise<void> {
-    for (const configurer of this.configurers) {
+  async ensureAgentConfigurations(
+    projectRoot: string,
+    selectedAgentIds?: readonly AgentId[]
+  ): Promise<void> {
+    for (const configurer of this.getConfigurers(selectedAgentIds)) {
       await configurer.configure(projectRoot);
     }
 
-    await this.installSkillsFromTemplates(projectRoot);
+    await this.installSkillsFromTemplates(projectRoot, selectedAgentIds);
   }
 
   /**
@@ -184,8 +176,11 @@ export class AgentFileProtocol implements IAgentFileProtocol {
   /**
    * Repair all supported agent configurations
    */
-  async repairAgentConfigurations(projectRoot: string): Promise<void> {
-    for (const configurer of this.configurers) {
+  async repairAgentConfigurations(
+    projectRoot: string,
+    selectedAgentIds?: readonly AgentId[]
+  ): Promise<void> {
+    for (const configurer of this.getConfigurers(selectedAgentIds)) {
       if (configurer.repair) {
         await configurer.repair(projectRoot);
       } else {
@@ -193,13 +188,20 @@ export class AgentFileProtocol implements IAgentFileProtocol {
       }
     }
 
-    await this.repairSkillsFromTemplates(projectRoot);
+    await this.repairSkillsFromTemplates(projectRoot, selectedAgentIds);
+  }
+
+  getAvailableAgents(): readonly AvailableAgent[] {
+    return this.configurers.map((configurer) => configurer.agent);
   }
 
   /**
    * Get all planned file changes without executing.
    */
-  async getPlannedFileChanges(projectRoot: string): Promise<PlannedFileChange[]> {
+  async getPlannedFileChanges(
+    projectRoot: string,
+    selectedAgentIds?: readonly AgentId[]
+  ): Promise<PlannedFileChange[]> {
     const changes: PlannedFileChange[] = [];
 
     // JUMBO.md change
@@ -219,28 +221,28 @@ export class AgentFileProtocol implements IAgentFileProtocol {
     });
 
     // Collect from all configurers
-    for (const configurer of this.configurers) {
+    for (const configurer of this.getConfigurers(selectedAgentIds)) {
       const configurerChanges = await configurer.getPlannedFileChanges(projectRoot);
       changes.push(...configurerChanges);
     }
 
-    const skillChanges = await this.getSkillPlannedFileChanges(projectRoot);
+    const skillChanges = await this.getSkillPlannedFileChanges(projectRoot, selectedAgentIds);
     changes.push(...skillChanges);
 
     return changes;
   }
 
-  private async installSkillsFromTemplates(projectRoot: string): Promise<void> {
+  private async installSkillsFromTemplates(
+    projectRoot: string,
+    selectedAgentIds?: readonly AgentId[]
+  ): Promise<void> {
     const templateSkillNames = await this.getTemplateSkillNames();
     if (templateSkillNames.length === 0) {
       return;
     }
 
-    for (const platformConfiguration of SKILL_PLATFORM_CONFIGURATIONS) {
-      const platformSkillsRoot = path.join(
-        projectRoot,
-        platformConfiguration.skillsDirectoryRelativePath
-      );
+    for (const platformSkillsRelativePath of this.getSkillPlatforms(selectedAgentIds)) {
+      const platformSkillsRoot = path.join(projectRoot, platformSkillsRelativePath);
       await fs.ensureDir(platformSkillsRoot);
 
       for (const skillName of templateSkillNames) {
@@ -254,7 +256,7 @@ export class AgentFileProtocol implements IAgentFileProtocol {
           });
         } catch (error) {
           console.warn(
-            `Warning: Failed to install template skill '${skillName}' for ${platformConfiguration.platformId}: ${
+            `Warning: Failed to install template skill '${skillName}' for ${platformSkillsRelativePath}: ${
               error instanceof Error ? error.message : String(error)
             }`
           );
@@ -263,17 +265,17 @@ export class AgentFileProtocol implements IAgentFileProtocol {
     }
   }
 
-  private async repairSkillsFromTemplates(projectRoot: string): Promise<void> {
+  private async repairSkillsFromTemplates(
+    projectRoot: string,
+    selectedAgentIds?: readonly AgentId[]
+  ): Promise<void> {
     const templateSkillNames = await this.getTemplateSkillNames();
     if (templateSkillNames.length === 0) {
       return;
     }
 
-    for (const platformConfiguration of SKILL_PLATFORM_CONFIGURATIONS) {
-      const platformSkillsRoot = path.join(
-        projectRoot,
-        platformConfiguration.skillsDirectoryRelativePath
-      );
+    for (const platformSkillsRelativePath of this.getSkillPlatforms(selectedAgentIds)) {
+      const platformSkillsRoot = path.join(projectRoot, platformSkillsRelativePath);
       await fs.ensureDir(platformSkillsRoot);
 
       for (const skillName of templateSkillNames) {
@@ -288,7 +290,7 @@ export class AgentFileProtocol implements IAgentFileProtocol {
           });
         } catch (error) {
           console.warn(
-            `Warning: Failed to repair template skill '${skillName}' for ${platformConfiguration.platformId}: ${
+            `Warning: Failed to repair template skill '${skillName}' for ${platformSkillsRelativePath}: ${
               error instanceof Error ? error.message : String(error)
             }`
           );
@@ -297,25 +299,26 @@ export class AgentFileProtocol implements IAgentFileProtocol {
     }
   }
 
-  private async getSkillPlannedFileChanges(projectRoot: string): Promise<PlannedFileChange[]> {
+  private async getSkillPlannedFileChanges(
+    projectRoot: string,
+    selectedAgentIds?: readonly AgentId[]
+  ): Promise<PlannedFileChange[]> {
     const templateSkillNames = await this.getTemplateSkillNames();
     if (templateSkillNames.length === 0) {
       return [];
     }
 
     const changes: PlannedFileChange[] = [];
-    for (const platformConfiguration of SKILL_PLATFORM_CONFIGURATIONS) {
+    for (const platformSkillsRelativePath of this.getSkillPlatforms(selectedAgentIds)) {
       for (const skillName of templateSkillNames) {
         const destinationSkillDirectory = path.join(
           projectRoot,
-          platformConfiguration.skillsDirectoryRelativePath,
+          platformSkillsRelativePath,
           skillName
         );
         const exists = await fs.pathExists(destinationSkillDirectory);
         changes.push({
-          path: path
-            .join(platformConfiguration.skillsDirectoryRelativePath, skillName)
-            .replace(/\\/g, "/"),
+          path: path.join(platformSkillsRelativePath, skillName).replace(/\\/g, "/"),
           action: exists ? "modify" : "create",
           description:
             "Sync Jumbo-managed skill from assets/skills (user-created skills are preserved)",
@@ -337,5 +340,26 @@ export class AgentFileProtocol implements IAgentFileProtocol {
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
       .sort((left, right) => left.localeCompare(right));
+  }
+
+  private getConfigurers(selectedAgentIds?: readonly AgentId[]): IConfigurer[] {
+    if (!selectedAgentIds || selectedAgentIds.length === 0) {
+      return this.configurers;
+    }
+
+    const selectedAgentIdSet = new Set(selectedAgentIds);
+    return this.configurers.filter((configurer) => selectedAgentIdSet.has(configurer.agent.id));
+  }
+
+  private getSkillPlatforms(selectedAgentIds?: readonly AgentId[]): string[] {
+    const skillPlatforms = new Set<string>();
+
+    for (const configurer of this.getConfigurers(selectedAgentIds)) {
+      for (const skillPlatform of configurer.skillPlatforms) {
+        skillPlatforms.add(skillPlatform);
+      }
+    }
+
+    return Array.from(skillPlatforms).sort((left, right) => left.localeCompare(right));
   }
 }

@@ -13,6 +13,13 @@ import { IConfigurer } from "./IConfigurer.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 
 export class GitHubHooksConfigurer implements IConfigurer {
+  readonly agent = {
+    id: "github-hooks",
+    name: "GitHub Hooks",
+  } as const;
+
+  readonly skillPlatforms = [".vibe/skills"] as const;
+
   /**
    * Configure all GitHub hooks requirements for Jumbo
    *

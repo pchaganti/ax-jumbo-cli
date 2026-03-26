@@ -14,6 +14,12 @@ import { IApplicationContainer } from "../../../../../../src/application/host/IA
 import { Renderer } from "../../../../../../src/presentation/cli/rendering/Renderer.js";
 
 describe("project.init command", () => {
+  const availableAgents = [
+    { id: "claude", name: "Claude" },
+    { id: "gemini", name: "Gemini" },
+    { id: "copilot", name: "Copilot" },
+    { id: "github-hooks", name: "GitHub Hooks" },
+  ] as const;
   let mockContainer: Partial<IApplicationContainer>;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let isTtyDescriptor: PropertyDescriptor | undefined;
@@ -48,6 +54,7 @@ describe("project.init command", () => {
       } as any,
       planProjectInitController: {
         handle: jest.fn().mockResolvedValue({
+          availableAgents,
           plannedChanges: [],
         }),
       } as any,
@@ -93,10 +100,12 @@ describe("project.init command", () => {
    * 6. Value confirm gate
    * 7. (If yes: value fields, then "Add another?" confirm)
    * 8. Telemetry consent
+   * 9. Agent selection
    */
   function mockInteractiveSkipAllPrimitives(
     projectOverrides: Record<string, unknown> = {},
-    telemetryAnswer: Record<string, unknown> = { enabled: true }
+    telemetryAnswer: Record<string, unknown> = { enabled: true },
+    agentSelectionAnswer: Record<string, unknown> = { selectedAgentIds: availableAgents.map((agent) => agent.id) }
   ) {
     const promptMock = inquirer.prompt as jest.Mock;
     promptMock
@@ -104,7 +113,8 @@ describe("project.init command", () => {
       .mockResolvedValueOnce({ defineAudience: false })    // skip audiences
       .mockResolvedValueOnce({ definePain: false })         // skip pains
       .mockResolvedValueOnce({ defineValue: false })        // skip values
-      .mockResolvedValueOnce(telemetryAnswer);              // telemetry
+      .mockResolvedValueOnce(telemetryAnswer)               // telemetry
+      .mockResolvedValueOnce(agentSelectionAnswer);         // agents
   }
 
   beforeEach(() => {
@@ -194,7 +204,8 @@ describe("project.init command", () => {
         .mockResolvedValueOnce({ name: "TestProject" })
         .mockResolvedValueOnce({ defineAudience: false })
         .mockResolvedValueOnce({ definePain: false })
-        .mockResolvedValueOnce({ defineValue: false });
+        .mockResolvedValueOnce({ defineValue: false })
+        .mockResolvedValueOnce({ selectedAgentIds: ["claude"] });
 
       await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
 
@@ -211,7 +222,8 @@ describe("project.init command", () => {
         .mockResolvedValueOnce({ name: "TestProject" })
         .mockResolvedValueOnce({ defineAudience: false })
         .mockResolvedValueOnce({ definePain: false })
-        .mockResolvedValueOnce({ defineValue: false });
+        .mockResolvedValueOnce({ defineValue: false })
+        .mockResolvedValueOnce({ selectedAgentIds: ["claude"] });
 
       await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
 
@@ -228,7 +240,8 @@ describe("project.init command", () => {
         .mockResolvedValueOnce({ name: "TestProject" })
         .mockResolvedValueOnce({ defineAudience: false })
         .mockResolvedValueOnce({ definePain: false })
-        .mockResolvedValueOnce({ defineValue: false });
+        .mockResolvedValueOnce({ defineValue: false })
+        .mockResolvedValueOnce({ selectedAgentIds: ["claude"] });
 
       await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
 
@@ -252,7 +265,8 @@ describe("project.init command", () => {
         .mockResolvedValueOnce({ defineValue: true })                        // value gate
         .mockResolvedValueOnce({ title: "Persistent", description: "Keep context", benefit: "No loss", measurableOutcome: "" }) // value fields
         .mockResolvedValueOnce({ another: false })                           // no more values
-        .mockResolvedValueOnce({ enabled: true });                           // telemetry
+        .mockResolvedValueOnce({ enabled: true })                            // telemetry
+        .mockResolvedValueOnce({ selectedAgentIds: ["claude", "copilot"] }); // agents
 
       await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
 
@@ -294,7 +308,8 @@ describe("project.init command", () => {
         .mockResolvedValueOnce({ another: false })                           // done
         .mockResolvedValueOnce({ definePain: false })
         .mockResolvedValueOnce({ defineValue: false })
-        .mockResolvedValueOnce({ enabled: true });
+        .mockResolvedValueOnce({ enabled: true })
+        .mockResolvedValueOnce({ selectedAgentIds: ["claude"] });
 
       await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
 
@@ -322,7 +337,8 @@ describe("project.init command", () => {
         .mockResolvedValueOnce({ title: "Pain B", description: "Desc B" })
         .mockResolvedValueOnce({ another: false })
         .mockResolvedValueOnce({ defineValue: false })
-        .mockResolvedValueOnce({ enabled: true });
+        .mockResolvedValueOnce({ enabled: true })
+        .mockResolvedValueOnce({ selectedAgentIds: ["claude"] });
 
       await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
 
@@ -340,7 +356,8 @@ describe("project.init command", () => {
         .mockResolvedValueOnce({ another: true })
         .mockResolvedValueOnce({ title: "V2", description: "D2", benefit: "B2", measurableOutcome: "M2" })
         .mockResolvedValueOnce({ another: false })
-        .mockResolvedValueOnce({ enabled: true });
+        .mockResolvedValueOnce({ enabled: true })
+        .mockResolvedValueOnce({ selectedAgentIds: ["claude"] });
 
       await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
 
@@ -355,6 +372,28 @@ describe("project.init command", () => {
   });
 
   describe("non-interactive primitive flags", () => {
+    it("skips the agent checkbox and initializes all agents in non-interactive mode", async () => {
+      await projectInit(
+        {
+          nonInteractive: true,
+          yolo: true,
+          name: "TestProject",
+        },
+        mockContainer as IApplicationContainer
+      );
+
+      expect(mockContainer.planProjectInitController!.handle).toHaveBeenCalledTimes(1);
+      expect(mockContainer.planProjectInitController!.handle).toHaveBeenCalledWith({
+        projectRoot: process.cwd(),
+      });
+      expect(mockContainer.initializeProjectController!.handle).toHaveBeenCalledWith({
+        name: "TestProject",
+        purpose: undefined,
+        projectRoot: process.cwd(),
+        selectedAgentIds: undefined,
+      });
+    });
+
     it("persists audience from CLI flags in non-interactive mode", async () => {
       await projectInit(
         {
@@ -432,6 +471,30 @@ describe("project.init command", () => {
   });
 
   describe("success output", () => {
+    it("filters planned changes and initialization to the selected agents", async () => {
+      mockInteractiveSkipAllPrimitives(
+        {},
+        { enabled: true },
+        { selectedAgentIds: ["gemini", "copilot"] }
+      );
+
+      await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
+
+      expect(mockContainer.planProjectInitController!.handle).toHaveBeenNthCalledWith(1, {
+        projectRoot: process.cwd(),
+      });
+      expect(mockContainer.planProjectInitController!.handle).toHaveBeenNthCalledWith(2, {
+        projectRoot: process.cwd(),
+        selectedAgentIds: ["gemini", "copilot"],
+      });
+      expect(mockContainer.initializeProjectController!.handle).toHaveBeenCalledWith({
+        name: "TestProject",
+        purpose: undefined,
+        projectRoot: process.cwd(),
+        selectedAgentIds: ["gemini", "copilot"],
+      });
+    });
+
     it("lists registered primitives in success output", async () => {
       const promptMock = inquirer.prompt as jest.Mock;
       promptMock
@@ -441,7 +504,8 @@ describe("project.init command", () => {
         .mockResolvedValueOnce({ another: false })
         .mockResolvedValueOnce({ definePain: false })
         .mockResolvedValueOnce({ defineValue: false })
-        .mockResolvedValueOnce({ enabled: true });
+        .mockResolvedValueOnce({ enabled: true })
+        .mockResolvedValueOnce({ selectedAgentIds: ["claude"] });
 
       await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
 
@@ -473,7 +537,8 @@ describe("project.init command", () => {
         .mockResolvedValueOnce({ defineValue: true })
         .mockResolvedValueOnce({ title: "Val", description: "Desc", benefit: "Ben", measurableOutcome: "" })
         .mockResolvedValueOnce({ another: false })
-        .mockResolvedValueOnce({ enabled: true });
+        .mockResolvedValueOnce({ enabled: true })
+        .mockResolvedValueOnce({ selectedAgentIds: ["claude"] });
 
       await projectInit({ yolo: true }, mockContainer as IApplicationContainer);
 

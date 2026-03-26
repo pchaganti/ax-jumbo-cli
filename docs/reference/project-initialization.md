@@ -39,6 +39,8 @@ You'll be prompted for:
 
 Each optional section is gated by a confirm prompt (default: Yes). Decline to skip. After each entry, you can add more of the same type.
 
+Before confirmation, Jumbo also shows a checkbox prompt listing the available agent integrations derived from the registered configurers. Your selections determine which agent-specific files, hooks, and managed skill directories are included in the plan and written during initialization.
+
 ---
 
 ## Non-interactive initialization
@@ -59,6 +61,8 @@ You can also provide audience, pain, and value proposition data via flags:
 ```
 
 Primitive flags require all mandatory fields for their type to take effect. Partial sets are silently ignored.
+
+Non-interactive mode skips the agent checkbox and preserves the existing behavior of configuring all supported agents.
 
 ---
 
@@ -82,9 +86,11 @@ Jumbo configures hooks for popular AI coding assistants:
 |-------|---------------|
 | **Claude Code** | `.claude/settings.json` with SessionStart hook |
 | **GitHub Copilot** | `.github/copilot-instructions.md` |
-| **Gemini / Others** | `AGENTS.md` with manual setup instructions |
+| **Gemini CLI** | `GEMINI.md` and `.gemini/settings.json` |
+| **GitHub Hooks** | `.github/hooks/hooks.json` |
+| **All agents** | `JUMBO.md` and `AGENTS.md` |
 
-These hooks ensure your AI agent receives project state automatically when starting a session.
+Interactive init only creates the agent-specific files and managed skill directories for the agents you select. `JUMBO.md` and `AGENTS.md` are always created because they are shared across integrations.
 
 ---
 

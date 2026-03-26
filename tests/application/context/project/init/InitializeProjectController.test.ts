@@ -21,6 +21,7 @@ describe("InitializeProjectController", () => {
       name: "my-project",
       purpose: "A test project",
       projectRoot: "/home/user/project",
+      selectedAgentIds: ["claude"],
     };
 
     const expectedResponse: InitializeProjectResponse = {
@@ -43,6 +44,7 @@ describe("InitializeProjectController", () => {
       name: "minimal-project",
       purpose: undefined,
       projectRoot: "/home/user/minimal",
+      selectedAgentIds: undefined,
     };
 
     const expectedResponse: InitializeProjectResponse = {

@@ -10,6 +10,7 @@ import inquirer from "inquirer";
 import chalk from "chalk";
 import { CommandMetadata } from "../../registry/CommandMetadata.js";
 import { IApplicationContainer } from "../../../../../application/host/IApplicationContainer.js";
+import { AgentId, AvailableAgent } from "../../../../../application/context/project/init/AgentSelection.js";
 import { PlannedFileChange } from "../../../../../application/context/project/init/PlannedFileChange.js";
 import { Renderer } from "../../../rendering/Renderer.js";
 import { getBannerLines, showAnimatedBanner } from "../../../banner/AnimatedBanner.js";
@@ -63,6 +64,35 @@ async function confirmChanges(): Promise<boolean> {
     },
   ]);
   return answers.proceed;
+}
+
+async function promptForAgentSelection(
+  availableAgents: readonly AvailableAgent[]
+): Promise<readonly AgentId[]> {
+  if (availableAgents.length === 0) {
+    return [];
+  }
+
+  const answers = await inquirer.prompt([
+    {
+      type: "checkbox",
+      name: "selectedAgentIds",
+      message: "Select agents to configure:",
+      choices: availableAgents.map((agent) => ({
+        name: agent.name,
+        value: agent.id,
+        checked: true,
+      })),
+      validate: (input: readonly AgentId[]) => {
+        if (input.length === 0) {
+          return "Select at least one agent";
+        }
+        return true;
+      },
+    },
+  ]);
+
+  return answers.selectedAgentIds;
 }
 
 /**
@@ -543,6 +573,7 @@ export async function projectInit(
   // Determine project details and primitives based on mode
   let projectDetails: ProjectInitOptions;
   let primitives: PrimitiveOptions = { audiences: [], audiencePains: [], valuePropositions: [] };
+  let selectedAgentIds: readonly AgentId[] | undefined;
 
   if (options.nonInteractive) {
     // Non-interactive mode: require --name flag
@@ -588,9 +619,20 @@ export async function projectInit(
 
   await promptForTelemetryConsentIfNeeded(container, !options.nonInteractive);
 
-  // Get planned changes from application layer (single source of truth)
   const projectRoot = process.cwd();
-  const planResponse = await container.planProjectInitController.handle({ projectRoot });
+  const initialPlanResponse = await container.planProjectInitController.handle({ projectRoot });
+
+  if (!options.nonInteractive) {
+    selectedAgentIds = await promptForAgentSelection(initialPlanResponse.availableAgents);
+  }
+
+  const planResponse = options.nonInteractive
+    ? initialPlanResponse
+    : await container.planProjectInitController.handle({
+      projectRoot,
+      selectedAgentIds,
+    });
+
   displayPlannedChanges(renderer, planResponse.plannedChanges);
 
   // Ask for confirmation (unless --yolo flag is set)
@@ -610,6 +652,7 @@ export async function projectInit(
     name: projectDetails.name,
     purpose: projectDetails.purpose,
     projectRoot,
+    selectedAgentIds,
   });
 
   // Show completion status for each change (from the result, not hardcoded)

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { AvailableAgent } from "../../../../../src/application/context/project/init/AgentSelection.js";
 import { PlanProjectInitController } from "../../../../../src/application/context/project/init/PlanProjectInitController.js";
 import { IPlanProjectInitGateway } from "../../../../../src/application/context/project/init/IPlanProjectInitGateway.js";
 import { PlannedFileChange } from "../../../../../src/application/context/project/init/PlannedFileChange.js";
@@ -16,6 +17,7 @@ describe("PlanProjectInitController", () => {
   });
 
   it("should delegate to gateway and return response", async () => {
+    const availableAgents: AvailableAgent[] = [{ id: "claude", name: "Claude" }];
     const mockChanges: PlannedFileChange[] = [
       {
         path: "AGENTS.md",
@@ -24,7 +26,7 @@ describe("PlanProjectInitController", () => {
       },
     ];
 
-    const expectedResponse = { plannedChanges: mockChanges };
+    const expectedResponse = { availableAgents, plannedChanges: mockChanges };
     mockGateway.planProjectInit.mockResolvedValue(expectedResponse);
 
     const response = await controller.handle({ projectRoot: "/test/project" });
@@ -34,7 +36,7 @@ describe("PlanProjectInitController", () => {
   });
 
   it("should pass project root through to gateway", async () => {
-    mockGateway.planProjectInit.mockResolvedValue({ plannedChanges: [] });
+    mockGateway.planProjectInit.mockResolvedValue({ availableAgents: [], plannedChanges: [] });
 
     await controller.handle({ projectRoot: "/another/project" });
 

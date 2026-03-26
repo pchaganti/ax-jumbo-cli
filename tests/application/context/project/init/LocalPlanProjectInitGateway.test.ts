@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { AvailableAgent } from "../../../../../src/application/context/project/init/AgentSelection.js";
 import { LocalPlanProjectInitGateway } from "../../../../../src/application/context/project/init/LocalPlanProjectInitGateway.js";
 import { IAgentFileProtocol } from "../../../../../src/application/context/project/init/IAgentFileProtocol.js";
 import { IGitignoreProtocol } from "../../../../../src/application/context/project/init/IGitignoreProtocol.js";
@@ -19,6 +20,7 @@ describe("LocalPlanProjectInitGateway", () => {
       repairJumboMd: jest.fn<IAgentFileProtocol["repairJumboMd"]>().mockResolvedValue(undefined),
       repairAgentsMd: jest.fn<IAgentFileProtocol["repairAgentsMd"]>().mockResolvedValue(undefined),
       repairAgentConfigurations: jest.fn<IAgentFileProtocol["repairAgentConfigurations"]>().mockResolvedValue(undefined),
+      getAvailableAgents: jest.fn<IAgentFileProtocol["getAvailableAgents"]>().mockReturnValue([]),
       getPlannedFileChanges: jest.fn<IAgentFileProtocol["getPlannedFileChanges"]>().mockResolvedValue([]),
     } as jest.Mocked<IAgentFileProtocol>;
 
@@ -36,6 +38,7 @@ describe("LocalPlanProjectInitGateway", () => {
   });
 
   it("should aggregate agent file changes, settings change, and gitignore changes into response", async () => {
+    const availableAgents: AvailableAgent[] = [{ id: "claude", name: "Claude" }];
     const agentChanges: PlannedFileChange[] = [
       { path: "JUMBO.md", action: "create", description: "Jumbo instructions file" },
       { path: "AGENTS.md", action: "create", description: "Agent instructions file" },
@@ -50,14 +53,18 @@ describe("LocalPlanProjectInitGateway", () => {
       { path: ".gitignore", action: "create", description: "Exclude Jumbo internal state from version control" },
     ];
 
+    mockAgentFileProtocol.getAvailableAgents.mockReturnValue(availableAgents);
     mockAgentFileProtocol.getPlannedFileChanges.mockResolvedValue(agentChanges);
     mockSettingsInitializer.getPlannedFileChange.mockResolvedValue(settingsChange);
     mockGitignoreProtocol.getPlannedFileChanges.mockResolvedValue(gitignoreChanges);
 
     const response = await gateway.planProjectInit({ projectRoot: "/test/project" });
 
-    expect(response.plannedChanges).toEqual([...agentChanges, settingsChange, ...gitignoreChanges]);
-    expect(mockAgentFileProtocol.getPlannedFileChanges).toHaveBeenCalledWith("/test/project");
+    expect(response).toEqual({
+      availableAgents,
+      plannedChanges: [...agentChanges, settingsChange, ...gitignoreChanges],
+    });
+    expect(mockAgentFileProtocol.getPlannedFileChanges).toHaveBeenCalledWith("/test/project", undefined);
     expect(mockSettingsInitializer.getPlannedFileChange).toHaveBeenCalled();
     expect(mockGitignoreProtocol.getPlannedFileChanges).toHaveBeenCalledWith("/test/project");
   });
@@ -73,7 +80,7 @@ describe("LocalPlanProjectInitGateway", () => {
 
     const response = await gateway.planProjectInit({ projectRoot: "/test/project" });
 
-    expect(response.plannedChanges).toEqual(agentChanges);
+    expect(response).toEqual({ availableAgents: [], plannedChanges: agentChanges });
   });
 
   it("should return empty planned changes when no changes are needed", async () => {
@@ -83,6 +90,18 @@ describe("LocalPlanProjectInitGateway", () => {
 
     const response = await gateway.planProjectInit({ projectRoot: "/test/project" });
 
-    expect(response.plannedChanges).toEqual([]);
+    expect(response).toEqual({ availableAgents: [], plannedChanges: [] });
+  });
+
+  it("should pass selected agent ids to the agent file protocol", async () => {
+    await gateway.planProjectInit({
+      projectRoot: "/test/project",
+      selectedAgentIds: ["gemini", "copilot"],
+    });
+
+    expect(mockAgentFileProtocol.getPlannedFileChanges).toHaveBeenCalledWith(
+      "/test/project",
+      ["gemini", "copilot"]
+    );
   });
 });
