@@ -3,7 +3,6 @@ import { LocalStartSessionGateway } from "../../../../../src/application/context
 import { SessionContextQueryHandler } from "../../../../../src/application/context/sessions/get/SessionContextQueryHandler.js";
 import { StartSessionCommandHandler } from "../../../../../src/application/context/sessions/start/StartSessionCommandHandler.js";
 import { IBrownfieldStatusReader } from "../../../../../src/application/context/sessions/start/IBrownfieldStatusReader.js";
-import { ActivityMirrorAssembler } from "../../../../../src/application/context/sessions/start/ActivityMirrorAssembler.js";
 import { ContextualSessionView } from "../../../../../src/application/context/sessions/get/ContextualSessionView.js";
 import { GoalView } from "../../../../../src/application/context/goals/GoalView.js";
 import { SessionInstructionSignal } from "../../../../../src/application/context/sessions/SessionInstructionSignal.js";
@@ -12,7 +11,6 @@ describe("LocalStartSessionGateway", () => {
   let sessionContextQueryHandler: jest.Mocked<SessionContextQueryHandler>;
   let startSessionCommandHandler: jest.Mocked<StartSessionCommandHandler>;
   let brownfieldStatusReader: jest.Mocked<IBrownfieldStatusReader>;
-  let activityMirrorAssembler: jest.Mocked<ActivityMirrorAssembler>;
   let gateway: LocalStartSessionGateway;
 
   function createBaseContextView(
@@ -45,15 +43,10 @@ describe("LocalStartSessionGateway", () => {
       isUnprimed: jest.fn().mockResolvedValue(false),
     } as jest.Mocked<IBrownfieldStatusReader>;
 
-    activityMirrorAssembler = {
-      assemble: jest.fn().mockResolvedValue(null),
-    } as unknown as jest.Mocked<ActivityMirrorAssembler>;
-
     gateway = new LocalStartSessionGateway(
       sessionContextQueryHandler,
       startSessionCommandHandler,
       brownfieldStatusReader,
-      activityMirrorAssembler
     );
   });
 
@@ -251,47 +244,6 @@ describe("LocalStartSessionGateway", () => {
       const result = await gateway.startSession({});
 
       expect(result.context.instructions).toContain(SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED);
-    });
-  });
-
-  describe("activity mirror", () => {
-    it("should include activity mirror from assembler", async () => {
-      const mirror = {
-        sessionCount: 3,
-        entitiesRegistered: 5,
-        decisionsRecorded: 2,
-        relationsAdded: 1,
-        goalsAdded: 1,
-      };
-      activityMirrorAssembler.assemble.mockResolvedValue(mirror);
-
-      const result = await gateway.startSession({});
-
-      expect(result.activityMirror).toBe(mirror);
-    });
-
-    it("should return null activity mirror when assembler returns null", async () => {
-      activityMirrorAssembler.assemble.mockResolvedValue(null);
-
-      const result = await gateway.startSession({});
-
-      expect(result.activityMirror).toBeNull();
-    });
-
-    it("should call assembler before session start command", async () => {
-      const callOrder: string[] = [];
-      activityMirrorAssembler.assemble.mockImplementation(async () => {
-        callOrder.push("assemble");
-        return null;
-      });
-      startSessionCommandHandler.execute.mockImplementation(async () => {
-        callOrder.push("startSession");
-        return { sessionId: "session_test-123" };
-      });
-
-      await gateway.startSession({});
-
-      expect(callOrder).toEqual(["assemble", "startSession"]);
     });
   });
 

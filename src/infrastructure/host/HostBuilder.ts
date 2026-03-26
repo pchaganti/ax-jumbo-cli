@@ -481,7 +481,6 @@ import { UpdateTelemetryConsentCommandHandler } from "../../application/context/
 import { LocalUpdateTelemetryConsentGateway } from "../../application/context/telemetry/update/LocalUpdateTelemetryConsentGateway.js";
 import { UpdateTelemetryConsentController } from "../../application/context/telemetry/update/UpdateTelemetryConsentController.js";
 import { LocalStartSessionGateway } from "../../application/context/sessions/start/LocalStartSessionGateway.js";
-import { ActivityMirrorAssembler } from "../../application/context/sessions/start/ActivityMirrorAssembler.js";
 import { EndSessionController } from "../../application/context/sessions/end/EndSessionController.js";
 import { LocalEndSessionGateway } from "../../application/context/sessions/end/LocalEndSessionGateway.js";
 import { EndSessionCommandHandler } from "../../application/context/sessions/end/EndSessionCommandHandler.js";
@@ -977,12 +976,10 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       sessionStartedEventStore,
       eventBus
     );
-    const activityMirrorAssembler = new ActivityMirrorAssembler(eventStore);
     const startSessionGateway = new LocalStartSessionGateway(
       sessionContextQueryHandler,
       startSessionCommandHandler,
       brownfieldStatusReader,
-      activityMirrorAssembler
     );
     const sessionStartController = new SessionStartController(
       startSessionGateway

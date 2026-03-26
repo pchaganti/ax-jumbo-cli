@@ -5,7 +5,6 @@ import { StartSessionCommandHandler } from "./StartSessionCommandHandler.js";
 import { SessionContextQueryHandler } from "../get/SessionContextQueryHandler.js";
 import { IBrownfieldStatusReader } from "./IBrownfieldStatusReader.js";
 import { ContextualSessionView } from "../get/ContextualSessionView.js";
-import { ActivityMirrorAssembler } from "./ActivityMirrorAssembler.js";
 import { SessionInstructionSignal } from "../SessionInstructionSignal.js";
 
 export class LocalStartSessionGateway implements IStartSessionGateway {
@@ -13,7 +12,6 @@ export class LocalStartSessionGateway implements IStartSessionGateway {
     private readonly sessionContextQueryHandler: SessionContextQueryHandler,
     private readonly startSessionCommandHandler: StartSessionCommandHandler,
     private readonly brownfieldStatusReader: IBrownfieldStatusReader,
-    private readonly activityMirrorAssembler: ActivityMirrorAssembler
   ) {}
 
   async startSession(request: SessionStartRequest): Promise<SessionStartResponse> {
@@ -26,13 +24,10 @@ export class LocalStartSessionGateway implements IStartSessionGateway {
     // 3. Build start-specific instructions
     const instructions = this.buildStartInstructions(contextualSessionView, isUnprimed);
 
-    // 4. Assemble activity mirror (before session start event is written)
-    const activityMirror = await this.activityMirrorAssembler.assemble();
-
-    // 5. Execute session start command
+    // 4. Execute session start command
     const result = await this.startSessionCommandHandler.execute({});
 
-    // 6. Return enriched context with session ID and activity mirror
+    // 5. Return enriched context with session ID
     return {
       context: {
         ...contextualSessionView,
@@ -40,7 +35,6 @@ export class LocalStartSessionGateway implements IStartSessionGateway {
         scope: "session-start",
       },
       sessionId: result.sessionId,
-      activityMirror,
     };
   }
 
