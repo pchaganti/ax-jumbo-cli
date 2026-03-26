@@ -24,6 +24,17 @@ describe("AgentFileProtocol", () => {
     await fs.remove(tmpDir);
   });
 
+  describe("getAvailableAgents()", () => {
+    it("should return the configured agent list derived from configurers", () => {
+      expect(protocol.getAvailableAgents()).toEqual([
+        { id: "claude", name: "Claude" },
+        { id: "gemini", name: "Gemini" },
+        { id: "copilot", name: "Copilot" },
+        { id: "github-hooks", name: "GitHub Hooks" },
+      ]);
+    });
+  });
+
   describe("ensureJumboMd()", () => {
     it("should create JUMBO.md if it doesn't exist", async () => {
       await protocol.ensureJumboMd(tmpDir);
@@ -146,6 +157,27 @@ describe("AgentFileProtocol", () => {
   });
 
   describe("ensureAgentConfigurations()", () => {
+    it("should only configure the selected agents and their skill directories", async () => {
+      const templateSkillPath = path.join(tmpDir, "assets", "skills", "my-skill");
+      await fs.ensureDir(templateSkillPath);
+      await fs.writeFile(path.join(templateSkillPath, "SKILL.md"), "# My Skill\n", "utf-8");
+
+      await protocol.ensureAgentConfigurations(tmpDir, ["claude", "github-hooks"]);
+
+      expect(await fs.pathExists(path.join(tmpDir, "CLAUDE.md"))).toBe(true);
+      expect(await fs.pathExists(path.join(tmpDir, ".claude", "settings.json"))).toBe(true);
+      expect(await fs.pathExists(path.join(tmpDir, ".github", "hooks", "hooks.json"))).toBe(true);
+
+      expect(await fs.pathExists(path.join(tmpDir, "GEMINI.md"))).toBe(false);
+      expect(await fs.pathExists(path.join(tmpDir, ".gemini", "settings.json"))).toBe(false);
+      expect(await fs.pathExists(path.join(tmpDir, ".github", "copilot-instructions.md"))).toBe(false);
+
+      expect(await fs.pathExists(path.join(tmpDir, ".claude", "skills", "my-skill", "SKILL.md"))).toBe(true);
+      expect(await fs.pathExists(path.join(tmpDir, ".vibe", "skills", "my-skill", "SKILL.md"))).toBe(true);
+      expect(await fs.pathExists(path.join(tmpDir, ".gemini", "skills", "my-skill", "SKILL.md"))).toBe(false);
+      expect(await fs.pathExists(path.join(tmpDir, ".agents", "skills", "my-skill", "SKILL.md"))).toBe(false);
+    });
+
     it("should install skills from template root outside project root", async () => {
       const externalTemplateRoot = await fs.mkdtemp(path.join(process.cwd(), "external-template-skills-"));
       protocol = new AgentFileProtocol(externalTemplateRoot);
@@ -679,6 +711,36 @@ describe("AgentFileProtocol", () => {
             path: ".vibe/skills/my-skill",
             description: expect.stringContaining("assets/skills"),
           }),
+        ])
+      );
+    });
+
+    it("should filter agent-specific planned changes to the selected agents", async () => {
+      const templateSkillPath = path.join(tmpDir, "assets", "skills", "my-skill");
+      await fs.ensureDir(templateSkillPath);
+      await fs.writeFile(path.join(templateSkillPath, "SKILL.md"), "# My Skill\n", "utf-8");
+
+      const changes = await protocol.getPlannedFileChanges(tmpDir, ["gemini", "copilot"]);
+
+      expect(changes).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: "JUMBO.md" }),
+          expect.objectContaining({ path: "AGENTS.md" }),
+          expect.objectContaining({ path: "GEMINI.md" }),
+          expect.objectContaining({ path: ".gemini/settings.json" }),
+          expect.objectContaining({ path: ".github/copilot-instructions.md" }),
+          expect.objectContaining({ path: ".gemini/skills/my-skill" }),
+          expect.objectContaining({ path: ".agents/skills/my-skill" }),
+        ])
+      );
+
+      expect(changes).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: "CLAUDE.md" }),
+          expect.objectContaining({ path: ".claude/settings.json" }),
+          expect.objectContaining({ path: ".github/hooks/hooks.json" }),
+          expect.objectContaining({ path: ".claude/skills/my-skill" }),
+          expect.objectContaining({ path: ".vibe/skills/my-skill" }),
         ])
       );
     });

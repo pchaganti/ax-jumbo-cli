@@ -15,9 +15,13 @@ export class LocalPlanProjectInitGateway implements IPlanProjectInitGateway {
 
   async planProjectInit(request: PlanProjectInitRequest): Promise<PlanProjectInitResponse> {
     const changes: PlannedFileChange[] = [];
+    const availableAgents = this.agentFileProtocol.getAvailableAgents();
 
     // Get agent file changes (AGENTS.md and all agent configurers)
-    const agentChanges = await this.agentFileProtocol.getPlannedFileChanges(request.projectRoot);
+    const agentChanges = await this.agentFileProtocol.getPlannedFileChanges(
+      request.projectRoot,
+      request.selectedAgentIds
+    );
     changes.push(...agentChanges);
 
     // Get settings file change (if needed)
@@ -30,6 +34,6 @@ export class LocalPlanProjectInitGateway implements IPlanProjectInitGateway {
     const gitignoreChanges = await this.gitignoreProtocol.getPlannedFileChanges(request.projectRoot);
     changes.push(...gitignoreChanges);
 
-    return { plannedChanges: changes };
+    return { availableAgents, plannedChanges: changes };
   }
 }

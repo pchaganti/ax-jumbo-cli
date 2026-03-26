@@ -19,6 +19,13 @@ import { IConfigurer } from "./IConfigurer.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 
 export class ClaudeConfigurer implements IConfigurer {
+  readonly agent = {
+    id: "claude",
+    name: "Claude",
+  } as const;
+
+  readonly skillPlatforms = [".claude/skills"] as const;
+
   /**
    * Configure all Claude Code requirements for Jumbo
    *

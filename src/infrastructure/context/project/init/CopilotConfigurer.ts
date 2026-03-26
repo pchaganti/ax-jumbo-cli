@@ -17,6 +17,13 @@ import { IConfigurer } from "./IConfigurer.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 
 export class CopilotConfigurer implements IConfigurer {
+  readonly agent = {
+    id: "copilot",
+    name: "Copilot",
+  } as const;
+
+  readonly skillPlatforms = [".agents/skills"] as const;
+
   /**
    * Configure all GitHub Copilot requirements for Jumbo
    *

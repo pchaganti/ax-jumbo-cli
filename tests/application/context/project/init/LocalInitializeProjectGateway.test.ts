@@ -28,6 +28,7 @@ describe("LocalInitializeProjectGateway", () => {
       repairJumboMd: jest.fn<IAgentFileProtocol["repairJumboMd"]>().mockResolvedValue(undefined),
       repairAgentsMd: jest.fn<IAgentFileProtocol["repairAgentsMd"]>().mockResolvedValue(undefined),
       repairAgentConfigurations: jest.fn<IAgentFileProtocol["repairAgentConfigurations"]>().mockResolvedValue(undefined),
+      getAvailableAgents: jest.fn<IAgentFileProtocol["getAvailableAgents"]>().mockReturnValue([]),
       getPlannedFileChanges: jest.fn<IAgentFileProtocol["getPlannedFileChanges"]>().mockResolvedValue([]),
     } as jest.Mocked<IAgentFileProtocol>;
 
@@ -39,6 +40,7 @@ describe("LocalInitializeProjectGateway", () => {
       name: "my-project",
       purpose: "A test project",
       projectRoot: "/home/user/project",
+      selectedAgentIds: ["claude"],
     };
 
     const plannedChanges: PlannedFileChange[] = [
@@ -48,6 +50,7 @@ describe("LocalInitializeProjectGateway", () => {
     ];
 
     mockPlanGateway.planProjectInit.mockResolvedValue({
+      availableAgents: [{ id: "claude", name: "Claude" }],
       plannedChanges,
     });
 
@@ -66,10 +69,11 @@ describe("LocalInitializeProjectGateway", () => {
       name: "my-project",
       purpose: "A test project",
       projectRoot: "/home/user/project",
+      selectedAgentIds: ["claude"],
     };
 
     const callOrder: string[] = [];
-    mockPlanGateway.planProjectInit.mockResolvedValue({ plannedChanges: [] });
+    mockPlanGateway.planProjectInit.mockResolvedValue({ availableAgents: [], plannedChanges: [] });
     mockAgentFileProtocol.ensureJumboMd.mockImplementation(async () => {
       callOrder.push("ensureJumboMd");
     });
@@ -89,15 +93,17 @@ describe("LocalInitializeProjectGateway", () => {
       name: "my-project",
       purpose: undefined,
       projectRoot: "/home/user/project",
+      selectedAgentIds: ["gemini"],
     };
 
-    mockPlanGateway.planProjectInit.mockResolvedValue({ plannedChanges: [] });
+    mockPlanGateway.planProjectInit.mockResolvedValue({ availableAgents: [], plannedChanges: [] });
     mockCommandHandler.execute.mockResolvedValue({ projectId: "project" });
 
     await gateway.initializeProject(request);
 
     expect(mockPlanGateway.planProjectInit).toHaveBeenCalledWith({
       projectRoot: "/home/user/project",
+      selectedAgentIds: ["gemini"],
     });
   });
 
@@ -106,16 +112,18 @@ describe("LocalInitializeProjectGateway", () => {
       name: "my-project",
       purpose: "Build great things",
       projectRoot: "/home/user/project",
+      selectedAgentIds: ["copilot"],
     };
 
-    mockPlanGateway.planProjectInit.mockResolvedValue({ plannedChanges: [] });
+    mockPlanGateway.planProjectInit.mockResolvedValue({ availableAgents: [], plannedChanges: [] });
     mockCommandHandler.execute.mockResolvedValue({ projectId: "project" });
 
     await gateway.initializeProject(request);
 
     expect(mockCommandHandler.execute).toHaveBeenCalledWith(
       { name: "my-project", purpose: "Build great things" },
-      "/home/user/project"
+      "/home/user/project",
+      ["copilot"]
     );
   });
 
@@ -124,16 +132,18 @@ describe("LocalInitializeProjectGateway", () => {
       name: "minimal-project",
       purpose: undefined,
       projectRoot: "/home/user/minimal",
+      selectedAgentIds: undefined,
     };
 
-    mockPlanGateway.planProjectInit.mockResolvedValue({ plannedChanges: [] });
+    mockPlanGateway.planProjectInit.mockResolvedValue({ availableAgents: [], plannedChanges: [] });
     mockCommandHandler.execute.mockResolvedValue({ projectId: "project" });
 
     await gateway.initializeProject(request);
 
     expect(mockCommandHandler.execute).toHaveBeenCalledWith(
       { name: "minimal-project", purpose: undefined },
-      "/home/user/minimal"
+      "/home/user/minimal",
+      undefined
     );
   });
 });

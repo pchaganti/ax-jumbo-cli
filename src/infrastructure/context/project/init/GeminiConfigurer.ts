@@ -16,6 +16,13 @@ import { IConfigurer } from "./IConfigurer.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 
 export class GeminiConfigurer implements IConfigurer {
+  readonly agent = {
+    id: "gemini",
+    name: "Gemini",
+  } as const;
+
+  readonly skillPlatforms = [".gemini/skills"] as const;
+
   /**
    * Configure all Gemini CLI requirements for Jumbo
    *

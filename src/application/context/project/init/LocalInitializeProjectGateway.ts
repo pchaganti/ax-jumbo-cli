@@ -15,6 +15,7 @@ export class LocalInitializeProjectGateway implements IInitializeProjectGateway 
   async initializeProject(request: InitializeProjectRequest): Promise<InitializeProjectResponse> {
     const planResponse = await this.planProjectInitGateway.planProjectInit({
       projectRoot: request.projectRoot,
+      selectedAgentIds: request.selectedAgentIds,
     });
 
     // Ensure JUMBO.md exists before ensureAgentsMd (called inside commandHandler.execute)
@@ -22,7 +23,8 @@ export class LocalInitializeProjectGateway implements IInitializeProjectGateway 
 
     const result = await this.commandHandler.execute(
       { name: request.name, purpose: request.purpose },
-      request.projectRoot
+      request.projectRoot,
+      request.selectedAgentIds
     );
 
     return {

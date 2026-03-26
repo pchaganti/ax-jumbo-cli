@@ -17,6 +17,7 @@ import { IProjectInitializedEventWriter } from "./IProjectInitializedEventWriter
 import { IEventBus } from "../../../messaging/IEventBus.js";
 import { IProjectInitReader } from "./IProjectInitReader.js";
 import { IAgentFileProtocol } from "./IAgentFileProtocol.js";
+import { AgentId } from "./AgentSelection.js";
 import { IGitignoreProtocol } from "./IGitignoreProtocol.js";
 import { ISettingsInitializer } from "../../../settings/ISettingsInitializer.js";
 import { Project } from "../../../../domain/project/Project.js";
@@ -34,7 +35,8 @@ export class InitializeProjectCommandHandler {
 
   async execute(
     command: InitializeProjectCommand,
-    projectRoot: string
+    projectRoot: string,
+    selectedAgentIds?: readonly AgentId[]
   ): Promise<{ projectId: string }> {
     // Check if project already exists (precondition)
     const existingProject = await this.reader.getProject();
@@ -62,7 +64,7 @@ export class InitializeProjectCommandHandler {
     await this.agentFileProtocol.ensureAgentsMd(projectRoot);
 
     // 6. Configure all supported agents (side effect)
-    await this.agentFileProtocol.ensureAgentConfigurations(projectRoot);
+    await this.agentFileProtocol.ensureAgentConfigurations(projectRoot, selectedAgentIds);
 
     // 7. Ensure default settings file exists (side effect)
     await this.settingsInitializer.ensureSettingsFileExists();

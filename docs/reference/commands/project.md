@@ -32,15 +32,15 @@ jumbo project init --non-interactive --name <name> [options]
 |--------|-------------|
 | `--name <name>` | Project name (required in non-interactive mode) |
 | `--purpose <purpose>` | High-level project purpose |
-| `--boundary <items...>` | What's out of scope (can specify multiple) |
 | `--non-interactive` | Skip interactive prompts |
 
 ### Behavior
 
 1. Creates `.jumbo/` directory with event store and projections
-2. Configures Claude Code SessionStart hook (`.claude/settings.json`)
-3. Creates Copilot instructions (`.github/copilot-instructions.md`)
-4. Updates `AGENTS.md` for other AI agents
+2. In interactive mode, prompts for Claude, Gemini, Copilot, and GitHub Hooks selection before confirmation
+3. Filters planned changes and agent-specific file creation to the selected agents
+4. Always creates `JUMBO.md` and `AGENTS.md`
+5. In non-interactive mode, configures all supported agents
 
 ### Examples
 
@@ -55,14 +55,6 @@ Initialize without prompts:
 ```bash
 > jumbo project init --non-interactive --name "MyProject" --purpose "AI memory management"
 ```
-
-Initialize with boundaries:
-
-```bash
-> jumbo project init --non-interactive --name "MyProject" --boundary "Mobile app" --boundary "Billing"
-```
-
----
 
 ## jumbo project update
 

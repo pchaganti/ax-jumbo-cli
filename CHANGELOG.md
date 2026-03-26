@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Interactive agent selection in init**: `jumbo init` now presents a checkbox prompt for Claude, Gemini, Copilot, and GitHub Hooks before confirmation. Planned changes, agent-specific files, and template-managed skills are filtered to the selected agents, while non-interactive mode still configures all agents.
+
+### Changed
+
+- **Internal**: Logging now writes daily log files (`yyyyddmm.log`) instead of a single unbounded `jumbo.log` file.
+
 ## [2.5.0] - 2026-03-26
 
 ### Added
