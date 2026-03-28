@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.2] - 2026-03-28
+
 ### Changed
 
 - **Internal**: Centralized all entity ID generation through `IdGenerator` utility using `crypto.randomUUID()`, replacing scattered direct calls and unsafe `Date.now()+Math.random()` patterns across 10 command handlers.
