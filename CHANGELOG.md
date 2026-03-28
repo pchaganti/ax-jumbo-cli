@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-03-28
+
+### Fixed
+
+- **Node.js v22 compatibility**: Replaced `uuid` (pure ESM) with Node.js built-in `crypto.randomUUID()` to resolve `ERR_REQUIRE_ESM` errors when running on Node.js v22.
+
+### Removed
+
+- **uuid dependency**: Removed `uuid` and `@types/uuid` packages — no longer needed.
+
 ## [2.7.0] - 2026-03-28
 
 ### Added
