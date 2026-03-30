@@ -18,7 +18,7 @@ export class GitHubHooksConfigurer implements IConfigurer {
     name: "GitHub Hooks",
   } as const;
 
-  readonly skillPlatforms = [".vibe/skills"] as const;
+  readonly skillPlatforms = [] as const;
 
   /**
    * Configure all GitHub hooks requirements for Jumbo
