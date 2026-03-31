@@ -82,6 +82,8 @@ A goal is **right-sized** when:
 - `--prerequisite-goals <ids>`: Hard dependency — goal cannot start until prerequisites are complete.
 - `--previous-goal <id>` / `--next-goal <id>`: Suggested ordering — chains goals for sequential flow.
 
+When chaining goals, prefix each goal's title with its position in the chain (e.g., `1/3 Deprecate Architecture entity`, `2/3 Migrate context packets`, `3/3 Remove Architecture entity`). This communicates execution order to users and agents reviewing the backlog.
+
 ### 4. Author Each Goal
 
 For each goal, compose the three pillars: **objective**, **criteria**, and **scope**.
