@@ -51,6 +51,7 @@ export const Colors = {
 export const BrandColors = {
   jumboBlue: chalk.rgb(102, 180, 244),
   jumboBlueRaw: [102, 180, 244] as const,
+  accentCyan: chalk.rgb(64, 208, 208),
 } as const;
 
 /**
@@ -86,7 +87,7 @@ export const Layout = {
   itemSpacing: "\n",
 
   // Width limits
-  maxWidth: 80,
+  maxWidth: 90,
 
   // Padding
   padding: {
@@ -179,6 +180,33 @@ export function truncate(text: string, maxLength: number): string {
   const len = visualLength(text);
   if (len <= maxLength) return text;
   return stripAnsi(text).substring(0, maxLength - 3) + Symbols.ellipsis;
+}
+
+/**
+ * Word-wrap text at word boundaries to fit within maxWidth.
+ * Returns an array of lines, each prefixed with the specified indent.
+ */
+export function wordWrap(text: string, maxWidth: number, indentWidth: number): string[] {
+  const indent = " ".repeat(indentWidth);
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    if (current.length === 0) {
+      current = word;
+    } else if (current.length + 1 + word.length <= maxWidth) {
+      current += " " + word;
+    } else {
+      lines.push(indent + current);
+      current = word;
+    }
+  }
+  if (current.length > 0) {
+    lines.push(indent + current);
+  }
+
+  return lines;
 }
 
 function isBackgroundLight(): boolean {

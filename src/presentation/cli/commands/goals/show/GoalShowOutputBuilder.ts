@@ -1,11 +1,50 @@
 import { TerminalOutputBuilder } from '../../../output/TerminalOutputBuilder.js';
 import { TerminalOutput } from '../../../output/TerminalOutput.js';
 import { ContextualGoalView } from '../../../../../application/context/goals/get/ContextualGoalView.js';
-import { Colors } from '../../../rendering/StyleConfig.js';
+import { Colors, BrandColors, Symbols, Templates, wordWrap } from '../../../rendering/StyleConfig.js';
+
+/**
+ * Layout constants matching the design system grid.
+ *
+ *   x=24  accent bar, dividers (2 leading spaces)
+ *   x=38  section headings (bar + space)
+ *   x=42  content: fields, body text, bullet markers
+ *   x=54  indented: bullet text, scope items
+ *
+ * Max content width: 72 monospace characters from x=24.
+ */
+const EDGE = "  ";                // 2 spaces → x=24
+const HEADING_PAD = "   ";        // bar(1) + space(1) + 1 extra = heading at x=38
+const CONTENT_PAD = "     ";      // 5 spaces from x=24 → x=42 (content column)
+const INDENT_PAD = "         ";   // 9 spaces from x=24 → x=54 (indented column)
+const DIVIDER_WIDTH = 90;
+const WRAP_CONTENT = 83;          // max chars at x=42 (90 - 7 leading)
+const WRAP_INDENT = 81;           // max chars at x=54 (90 - 9 leading)
+
+const STATUS_DISPLAY: Record<string, { symbol: string; color: (s: string) => string; label: string }> = {
+  doing:       { symbol: Symbols.filledCircle, color: Colors.success,  label: "In Progress" },
+  blocked:     { symbol: Symbols.cross,        color: Colors.error,    label: "Blocked" },
+  defined:     { symbol: Symbols.dot,          color: Colors.muted,    label: "Planned" },
+  done:        { symbol: Symbols.check,        color: Colors.success,  label: "Completed" },
+  refined:     { symbol: Symbols.check,        color: Colors.accent,   label: "Ready to Start" },
+  paused:      { symbol: Symbols.dot,          color: Colors.warning,  label: "Paused" },
+  "in-review": { symbol: Symbols.filledCircle, color: Colors.warning,  label: "Awaiting QA" },
+  approved:    { symbol: Symbols.check,        color: Colors.success,  label: "Ready for Codification" },
+  rejected:    { symbol: Symbols.cross,        color: Colors.error,    label: "Needs Rework" },
+  submitted:   { symbol: Symbols.filledCircle, color: Colors.success,  label: "Submitted" },
+  unblocked:   { symbol: Symbols.filledCircle, color: Colors.accent,   label: "Ready to Resume" },
+};
 
 /**
  * Specialized builder for goal.show command output.
  * Encapsulates all output rendering for the show goal command.
+ *
+ * Visual language follows the Jumbo design system (mockups/design-system.svg):
+ * - BrandColors.jumboBlue accent bar (|) as structural element at x=24
+ * - Section headings at x=38, content at x=42, indented at x=54
+ * - Only two dividers: after metadata block, before architecture band
+ * - BrandColors.accentCyan for entity names in Band 2
+ * - Static footer with ➤ arrow
  *
  * Pattern: Output builders contain ALL prompt and output content.
  * Command files must not duplicate or add additional output after calling the builder.
@@ -17,34 +56,90 @@ export class GoalShowOutputBuilder {
     this.builder = new TerminalOutputBuilder();
   }
 
-  /**
-   * Format status with visual indicator
-   */
+  private bar(): string {
+    return BrandColors.jumboBlue(Symbols.accentBar);
+  }
+
+  private divider(): string {
+    return `${EDGE}${Colors.dim("─".repeat(DIVIDER_WIDTH))}`;
+  }
+
+  private heading(title: string): string {
+    return `${EDGE}${this.bar()} ${Colors.bold(BrandColors.jumboBlue(title))}`;
+  }
+
+  private metaField(label: string, value: string, labelWidth = 9): string {
+    const padded = (label + ":").padEnd(labelWidth);
+    return `${EDGE}${CONTENT_PAD}${Colors.muted(padded)}${value}`;
+  }
+
+  private contentLine(text: string): string {
+    return `${EDGE}${CONTENT_PAD}${text}`;
+  }
+
+  private indentLine(text: string): string {
+    return `${EDGE}${INDENT_PAD}${text}`;
+  }
+
   private formatStatus(status: string): string {
-    switch (status) {
-      case "doing":
-        return "doing (in progress)";
-      case "blocked":
-        return "blocked";
-      case "defined":
-        return "defined (planned)";
-      case "done":
-        return "done (completed)";
-      case "refined":
-        return "refined (ready to start)";
-      case "paused":
-        return "paused (temporarily stopped)";
-      case "in-review":
-        return "in-review (awaiting QA)";
-      case "approved":
-        return "approved (ready for codification)";
-      case "rejected":
-        return "rejected (needs rework)";
-      case "unblocked":
-        return "unblocked (ready to resume)";
-      default:
-        return status;
+    const entry = STATUS_DISPLAY[status];
+    if (!entry) return Colors.primary(status);
+    return `${entry.color(entry.symbol)} ${Colors.bold(Colors.primary(status))}`;
+  }
+
+  private wrapContent(text: string): string[] {
+    return wordWrap(text, WRAP_CONTENT, 0).map(line =>
+      `${EDGE}${CONTENT_PAD}${Colors.primary(line.trimStart())}`
+    );
+  }
+
+  private wrapContentWithPrefix(prefix: string, text: string): string[] {
+    const prefixLen = prefix.length + 1; // prefix + space
+    const firstLineMax = WRAP_CONTENT - prefixLen;
+    const words = text.split(/\s+/);
+    const resultLines: string[] = [];
+    let current = "";
+    let isFirst = true;
+
+    for (const word of words) {
+      const max = isFirst ? firstLineMax : WRAP_CONTENT;
+      if (current.length === 0) {
+        current = word;
+      } else if (current.length + 1 + word.length <= max) {
+        current += " " + word;
+      } else {
+        if (isFirst) {
+          resultLines.push(`${EDGE}${CONTENT_PAD}${BrandColors.accentCyan(prefix)} ${Colors.primary(current)}`);
+          isFirst = false;
+        } else {
+          resultLines.push(`${EDGE}${CONTENT_PAD}${Colors.primary(current)}`);
+        }
+        current = word;
+      }
     }
+    if (current.length > 0) {
+      if (isFirst) {
+        resultLines.push(`${EDGE}${CONTENT_PAD}${BrandColors.accentCyan(prefix)} ${Colors.primary(current)}`);
+      } else {
+        resultLines.push(`${EDGE}${CONTENT_PAD}${Colors.primary(current)}`);
+      }
+    }
+
+    return resultLines;
+  }
+
+  private wrapBulletContinuation(text: string): string[] {
+    const lines = wordWrap(text, WRAP_INDENT, 0);
+    const result: string[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      const trimmed = lines[i].trimStart();
+      if (i === 0) {
+        result.push(`${EDGE}${CONTENT_PAD}${Colors.dim("·")} ${Colors.primary(trimmed)}`);
+      } else {
+        result.push(`${EDGE}${INDENT_PAD}${Colors.primary(trimmed)}`);
+      }
+    }
+    return result;
   }
 
   /**
@@ -55,153 +150,207 @@ export class GoalShowOutputBuilder {
     this.builder.reset();
     const goal = contextualView.goal;
     const context = contextualView.context;
+    const lines: string[] = [];
 
-    let output = Colors.gradientA("\n=== Goal Details ===\n") + "\n" +
-                 Colors.gradientB("Goal ID:    ") + Colors.gradientC(goal.goalId) + "\n" +
-                 Colors.gradientB("Title:      ") + Colors.gradientC(goal.title) + "\n" +
-                 Colors.gradientB("Objective:  ") + Colors.gradientC(goal.objective) + "\n" +
-                 Colors.gradientB("Status:     ") + Colors.gradientC(this.formatStatus(goal.status)) + "\n" +
-                 Colors.gradientB("Version:    ") + Colors.gradientC(String(goal.version)) + "\n" +
-                 Colors.gradientB("Created:    ") + Colors.gradientC(goal.createdAt) + "\n" +
-                 Colors.gradientB("Updated:    ") + Colors.gradientC(goal.updatedAt);
+    // ── Band 1: Goal Identity + Details ──
 
-    if (goal.note) {
-      output += "\n\n" + Colors.gradientB("Note:") + "\n  " + Colors.gradientC(goal.note);
-    }
+    // Header: "| Goal" heading with title as content below
+    lines.push("");
+    lines.push(this.heading("Goal"));
+    lines.push(this.contentLine(Colors.primary(goal.title || "Untitled Goal")));
 
-    if (goal.reviewIssues) {
-      output += "\n\n" + Colors.gradientB("Review Issues:") + "\n  " + Colors.gradientC(goal.reviewIssues);
-    }
+    // Metadata block
+    lines.push("");
+    lines.push(this.metaField("Id", Colors.muted(goal.goalId)));
+    lines.push(this.metaField("Status", this.formatStatus(goal.status)));
+    lines.push(this.metaField("Version", Colors.muted(String(goal.version))));
+    lines.push(this.metaField("Created", Colors.muted(goal.createdAt)));
+    lines.push(this.metaField("Updated", Colors.muted(goal.updatedAt)));
 
-    if (goal.successCriteria.length > 0) {
-      output += "\n\n" + Colors.gradientB("Success Criteria:");
-      for (const criterion of goal.successCriteria) {
-        output += "\n  - " + Colors.gradientC(criterion);
-      }
-    }
-
-    if (goal.scopeIn.length > 0 || goal.scopeOut.length > 0) {
-      output += "\n\n" + Colors.gradientB("Scope:");
-      if (goal.scopeIn.length > 0) {
-        output += "\n  " + Colors.gradientB("In:");
-        for (const item of goal.scopeIn) {
-          output += "\n    - " + Colors.gradientC(item);
-        }
-      }
-      if (goal.scopeOut.length > 0) {
-        output += "\n  " + Colors.gradientB("Out:");
-        for (const item of goal.scopeOut) {
-          output += "\n    - " + Colors.gradientC(item);
-        }
-      }
+    if (goal.nextGoalId) {
+      lines.push(this.metaField("Next", Colors.muted(goal.nextGoalId)));
     }
 
     if (goal.prerequisiteGoals && goal.prerequisiteGoals.length > 0) {
-      output += "\n\n" + Colors.gradientB("Prerequisite Goals:");
       for (const prereqId of goal.prerequisiteGoals) {
-        output += "\n  - " + Colors.gradientC(prereqId);
+        lines.push(this.metaField("Prereq", Colors.muted(prereqId)));
       }
     }
 
-    if (goal.nextGoalId) {
-      output += "\n\n" + Colors.gradientB("Next Goal:  ") + Colors.gradientC(goal.nextGoalId);
+    // Divider 1: metadata → objective
+    lines.push("");
+    lines.push(this.divider());
+    lines.push("");
+
+    // Objective — wrapped at ~66 chars
+    lines.push(this.heading("Objective"));
+    lines.push(...this.wrapContent(goal.objective));
+
+    // Note
+    if (goal.note) {
+      lines.push("");
+      lines.push(this.heading("Note"));
+      lines.push(...this.wrapContent(goal.note));
     }
 
+    // Review Issues
+    if (goal.reviewIssues) {
+      lines.push("");
+      lines.push(this.heading("Review Issues"));
+      lines.push(this.contentLine(Colors.warning(goal.reviewIssues)));
+    }
+
+    // Success Criteria — bullet at x=42, text/continuation at x=54
+    if (goal.successCriteria.length > 0) {
+      lines.push("");
+      lines.push(this.heading("Success Criteria"));
+      for (const criterion of goal.successCriteria) {
+        lines.push(...this.wrapBulletContinuation(criterion));
+      }
+    }
+
+    // Scope
+    if (goal.scopeIn.length > 0 || goal.scopeOut.length > 0) {
+      lines.push("");
+      lines.push(this.heading("Scope"));
+      if (goal.scopeIn.length > 0) {
+        lines.push(this.contentLine(Colors.bold("In:")));
+        for (const item of goal.scopeIn) {
+          lines.push(this.indentLine(`${Colors.success(Symbols.check)} ${Colors.primary(item)}`));
+        }
+      }
+      if (goal.scopeOut.length > 0) {
+        lines.push(this.contentLine(Colors.bold("Out:")));
+        for (const item of goal.scopeOut) {
+          lines.push(this.indentLine(`${Colors.error(Symbols.cross)} ${Colors.dim(item)}`));
+        }
+      }
+    }
+
+    // Workspace
     if (goal.branch || goal.worktree) {
-      output += "\n\n" + Colors.gradientB("Workspace:");
+      lines.push("");
+      lines.push(this.heading("Workspace"));
       if (goal.branch) {
-        output += "\n  " + Colors.gradientB("Branch:    ") + Colors.gradientC(goal.branch);
+        lines.push(this.metaField("Branch", Colors.primary(goal.branch)));
       }
       if (goal.worktree) {
-        output += "\n  " + Colors.gradientB("Worktree:  ") + Colors.gradientC(goal.worktree);
+        lines.push(this.metaField("Worktree", Colors.primary(goal.worktree)));
       }
     }
 
+    // Claim
     if (goal.claimedBy) {
-      output += "\n\n" + Colors.gradientB("Claim:") +
-                "\n  " + Colors.gradientB("Claimed By:  ") + Colors.gradientC(goal.claimedBy) +
-                "\n  " + Colors.gradientB("Claimed At:  ") + Colors.gradientC(goal.claimedAt!) +
-                "\n  " + Colors.gradientB("Expires At:  ") + Colors.gradientC(goal.claimExpiresAt!);
+      lines.push("");
+      lines.push(this.heading("Claim"));
+      lines.push(this.metaField("Claimed By", Colors.primary(goal.claimedBy)));
+      lines.push(this.metaField("Claimed At", Colors.muted(goal.claimedAt!)));
+      lines.push(this.metaField("Expires At", Colors.muted(goal.claimExpiresAt!)));
     }
 
-    this.builder.addPrompt(output);
+    this.builder.addPrompt(lines.join("\n"));
 
-    // Architecture section
-    if (context.architecture) {
-      const arch = context.architecture;
-      let archOutput = Colors.gradientA("\n=== Architecture ===\n") + "\n" +
-                       Colors.gradientB("Description: ") + Colors.gradientC(arch.description) + "\n" +
-                       Colors.gradientB("Organization: ") + Colors.gradientC(arch.organization);
+    // ── Band 2: Related Architecture Context ──
 
-      if (arch.patterns && arch.patterns.length > 0) {
-        archOutput += "\n\n" + Colors.gradientB("Design Patterns:");
-        for (const pattern of arch.patterns) {
-          archOutput += "\n  - " + Colors.gradientC(pattern);
+    const hasArchContext = context.architecture ||
+      context.components.length > 0 ||
+      context.dependencies.length > 0 ||
+      context.decisions.length > 0 ||
+      context.invariants.length > 0 ||
+      context.guidelines.length > 0;
+
+    if (hasArchContext) {
+      const band2: string[] = [];
+
+      // Divider 2: goal details → architecture context
+      band2.push(this.divider());
+
+      if (context.architecture) {
+        const arch = context.architecture;
+        band2.push("");
+        band2.push(this.heading("Architecture"));
+        band2.push(this.metaField("Description", Colors.primary(arch.description)));
+        band2.push(this.metaField("Organization", Colors.primary(arch.organization)));
+
+        if (arch.patterns && arch.patterns.length > 0) {
+          band2.push("");
+          band2.push(this.contentLine(Colors.bold("Design Patterns:")));
+          for (const pattern of arch.patterns) {
+            band2.push(...this.wrapBulletContinuation(pattern));
+          }
+        }
+
+        if (arch.principles && arch.principles.length > 0) {
+          band2.push("");
+          band2.push(this.contentLine(Colors.bold("Principles:")));
+          for (const principle of arch.principles) {
+            band2.push(...this.wrapBulletContinuation(principle));
+          }
         }
       }
 
-      if (arch.principles && arch.principles.length > 0) {
-        archOutput += "\n\n" + Colors.gradientB("Principles:");
-        for (const principle of arch.principles) {
-          archOutput += "\n  - " + Colors.gradientC(principle);
+      if (context.components.length > 0) {
+        band2.push("");
+        band2.push(this.heading("Related Components"));
+        for (let i = 0; i < context.components.length; i++) {
+          if (i > 0) band2.push("");
+          band2.push(this.contentLine(BrandColors.accentCyan(context.components[i].entity.name)));
+          band2.push(...this.wrapContent(context.components[i].entity.description));
         }
       }
 
-      this.builder.addPrompt(archOutput);
-    }
-
-    // Components section
-    if (context.components.length > 0) {
-      let componentsOutput = Colors.gradientA("\n=== Related Components ===\n");
-      for (const component of context.components) {
-        componentsOutput += "\n- " + Colors.gradientB(component.entity.name + ":") + " \n\t" + Colors.gradientC(component.entity.description);
+      if (context.dependencies.length > 0) {
+        band2.push("");
+        band2.push(this.heading("Related Dependencies"));
+        for (let i = 0; i < context.dependencies.length; i++) {
+          if (i > 0) band2.push("");
+          const dependency = context.dependencies[i];
+          const version = dependency.entity.versionConstraint ? `@${dependency.entity.versionConstraint}` : "";
+          const purpose = dependency.entity.contract || dependency.entity.endpoint || "External dependency";
+          band2.push(this.contentLine(BrandColors.accentCyan(`${dependency.entity.ecosystem}:${dependency.entity.packageName}${version}`)));
+          band2.push(...this.wrapContent(purpose));
+        }
       }
-      this.builder.addPrompt(componentsOutput);
-    }
 
-    // Dependencies section
-    if (context.dependencies.length > 0) {
-      let dependenciesOutput = Colors.gradientA("\n=== Related Dependencies ===\n");
-      for (const dependency of context.dependencies) {
-        const version = dependency.entity.versionConstraint ? `@${dependency.entity.versionConstraint}` : "";
-        const purpose = dependency.entity.contract || dependency.entity.endpoint || "External dependency";
-        dependenciesOutput += "\n- " + Colors.gradientB(`${dependency.entity.ecosystem}:${dependency.entity.packageName}${version} (${dependency.entity.name}):`) + " \n\t" + Colors.gradientC(purpose);
+      if (context.decisions.length > 0) {
+        band2.push("");
+        band2.push(this.heading("Related Decisions"));
+        for (let i = 0; i < context.decisions.length; i++) {
+          if (i > 0) band2.push("");
+          band2.push(this.contentLine(BrandColors.accentCyan(context.decisions[i].entity.title)));
+          band2.push(...this.wrapContent(context.decisions[i].entity.rationale ?? ""));
+        }
       }
-      this.builder.addPrompt(dependenciesOutput);
-    }
 
-    // Decisions section
-    if (context.decisions.length > 0) {
-      let decisionsOutput = Colors.gradientA("\n=== Related Decisions ===\n");
-      for (const decision of context.decisions) {
-        decisionsOutput += "\n- " + Colors.gradientB(decision.entity.title + ":") + " \n\t" + Colors.gradientC(decision.entity.rationale);
+      if (context.invariants.length > 0) {
+        band2.push("");
+        band2.push(this.heading("Invariants"));
+        for (let i = 0; i < context.invariants.length; i++) {
+          if (i > 0) band2.push("");
+          band2.push(this.contentLine(BrandColors.accentCyan(context.invariants[i].entity.title)));
+          band2.push(...this.wrapContent(context.invariants[i].entity.description));
+        }
       }
-      this.builder.addPrompt(decisionsOutput);
-    }
 
-    // Invariants section
-    if (context.invariants.length > 0) {
-      let invariantsOutput = Colors.gradientA("\n=== Invariants ===\n");
-      for (const invariant of context.invariants) {
-        invariantsOutput += "\n- " + Colors.gradientB(invariant.entity.title + ":") + " \n\t" + Colors.gradientC(invariant.entity.description);
+      if (context.guidelines.length > 0) {
+        band2.push("");
+        band2.push(this.heading("Guidelines"));
+        for (let i = 0; i < context.guidelines.length; i++) {
+          if (i > 0) band2.push("");
+          band2.push(...this.wrapContentWithPrefix(
+            `[${context.guidelines[i].entity.category}]`,
+            context.guidelines[i].entity.description
+          ));
+        }
       }
-      this.builder.addPrompt(invariantsOutput);
+
+      this.builder.addPrompt("\n\n" + band2.join("\n"));
     }
 
-    // Guidelines section
-    if (context.guidelines.length > 0) {
-      let guidelinesOutput = Colors.gradientA("\n=== Guidelines ===\n");
-      for (const guideline of context.guidelines) {
-        guidelinesOutput += "\n- " + Colors.gradientB(guideline.entity.category + ":") + " \n\t" + Colors.gradientC(guideline.entity.description);
-      }
-      this.builder.addPrompt(guidelinesOutput);
-    }
-
-    // Closing note
+    // Footer — divider + directive
     this.builder.addPrompt(
-      "\n---\n" +
-      "NOTE: To load this goal with full LLM implementation instructions,\n" +
-      `run: jumbo goal start --id ${goal.goalId}\n`
+      "\n" + this.divider() + "\n\n" +
+      `${EDGE}${Colors.primary("➤")} ${Colors.primary(`To start: jumbo goal start --id ${goal.goalId}`)}\n`
     );
 
     return this.builder.build();
@@ -254,7 +403,7 @@ export class GoalShowOutputBuilder {
    */
   buildGoalNotFoundError(goalId: string): TerminalOutput {
     this.builder.reset();
-    this.builder.addPrompt("✗ Goal not found");
+    this.builder.addPrompt(Templates.errorMessage("Goal not found"));
     this.builder.addData({ message: `No goal exists with ID: ${goalId}` });
     return this.builder.build();
   }
@@ -265,7 +414,7 @@ export class GoalShowOutputBuilder {
    */
   buildFailureError(error: Error | string): TerminalOutput {
     this.builder.reset();
-    this.builder.addPrompt("✗ Failed to show goal");
+    this.builder.addPrompt(Templates.errorMessage("Failed to show goal"));
     this.builder.addData({
       message: error instanceof Error ? error.message : error
     });
