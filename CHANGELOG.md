@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.1] - 2026-04-11
+
+### Changed
+
+- **`goal show` output**: Refined output rendering to align with the design library — updated layout, styling, and symbol usage in `GoalShowOutputBuilder` and `StyleConfig`.
+- **README**: Added reference to the Shared Jumbo Memories repository.
+
 ## [2.11.0] - 2026-04-05
 
 ### Added
