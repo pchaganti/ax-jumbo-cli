@@ -64,14 +64,18 @@ export async function goalShow(
     }
 
   } catch (error) {
+    const outputBuilder = new GoalShowOutputBuilder();
+
     // Handle goal not found case
     if (error instanceof Error && error.message.includes("Goal not found")) {
-      renderer.error("Goal not found", `No goal exists with ID: ${options.id}`);
+      const output = outputBuilder.buildGoalNotFoundError(options.id);
+      renderer.info(output.toHumanReadable());
       process.exit(1);
     }
 
     // Handle other errors
-    renderer.error("Failed to show goal", error instanceof Error ? error : String(error));
+    const output = outputBuilder.buildFailureError(error instanceof Error ? error : String(error));
+    renderer.info(output.toHumanReadable());
     process.exit(1);
   }
   // NO CLEANUP - infrastructure manages itself!
