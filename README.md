@@ -52,15 +52,34 @@ Those solve the core problems. These make Jumbo pleasant to use:
 
 ## Quick Start
 
-<p style="background: #000000; padding: 15px 15px 15px 15px; font-size:16px; color: #eeeeee; font-family: 'Courier New', Courier, monospace; font-weight:bold">
-> <span style="color: #f9c741;">npm</span> <span style="color: #ababab;">i -g</span> jumbo-cli
-<br>
-> <span style="color: #f9c741;">jumbo</span> init
-<br>
-> <span style="color: #f9c741;">claude</span>
-<p>
+1. Install Jumbo globally
+``` bash
+> npm i -g jumbo-cli
+```
+
+2. Browse your project folder and initialize Jumbo
+``` bash
+> jumbo init
+```
+Jumbo will guide you in getting started.
+
+3. Run your agent as normal (claude, codex, gemini, vibe)  
+
+``` bash
+> claude
+[Nudge your agent once its running]
+> Follow instructions
+```
 
 Jumbo will automatically orient the agent about your project and available goals.
+
+> [!NOTE]
+> Goals are the heart of Jumbo. Every memory, guideline, and constraint attaches to a goal — so define your work there first. (see `jumbo goal add --help`)
+> 
+> Your agent can help define goals too. It knows how to use Jumbo.
+
+> [!TIP]
+> Hit the ground running with the [Jumbo Memories](https://github.com/jumbocontext/jumbo-memories) repo — a curated library of best practice guidelines and invariants ready to drop into any project.
 
 See the [Getting started](docs/getting-started/first-run.md) guide for the full workflow.
 
