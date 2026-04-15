@@ -293,6 +293,7 @@ describe("SqliteGoalContextAssembler", () => {
         principles: ["Separation of concerns"],
         dataStores: [],
         stack: ["TypeScript", "Node.js"],
+        deprecated: false,
         version: 1,
         createdAt: "2025-01-01T00:00:00Z",
         updatedAt: "2025-01-01T00:00:00Z"
