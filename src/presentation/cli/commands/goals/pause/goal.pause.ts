@@ -34,11 +34,11 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal pause --id goal_abc123 --reason ContextCompressed",
+      command: "jumbo goal pause --id abc123 --reason ContextCompressed",
       description: "Pause a goal due to context compression"
     },
     {
-      command: "jumbo goal pause --id goal_abc123 --reason Other --note \"Need to switch priorities\"",
+      command: "jumbo goal pause --id abc123 --reason Other --note \"Need to switch priorities\"",
       description: "Pause a goal with a custom note"
     }
   ],

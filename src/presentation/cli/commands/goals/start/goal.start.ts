@@ -23,8 +23,8 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal start --id goal_abc123",
-      description: "Start working on the goal with ID 'goal_abc123'"
+      command: "jumbo goal start --id abc123",
+      description: "Start working on the goal with ID 'abc123'"
     }
   ],
   related: ["goal update-progress", "goal complete"]

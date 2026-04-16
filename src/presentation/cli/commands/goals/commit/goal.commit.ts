@@ -25,7 +25,7 @@ export const metadata: CommandMetadata = {
   options: [CONTINUE_OPTION],
   examples: [
     {
-      command: "jumbo goal commit --id goal_abc123",
+      command: "jumbo goal commit --id abc123",
       description: "Commit the goal after refinement is complete"
     }
   ],

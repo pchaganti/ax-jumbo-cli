@@ -39,11 +39,11 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal refine --id goal_abc123",
+      command: "jumbo goal refine --id abc123",
       description: "Start refinement and display goal details for review"
     },
     {
-      command: "jumbo goal refine --id goal_abc123 --interactive",
+      command: "jumbo goal refine --id abc123 --interactive",
       description: "Refine with interactive prompts to register relations"
     }
   ],

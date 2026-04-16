@@ -26,7 +26,7 @@ export const metadata: CommandMetadata = {
   options: [],
   examples: [
     {
-      command: "jumbo goal review --id goal_abc123",
+      command: "jumbo goal review --id abc123",
       description: "Start QA review on a submitted goal"
     }
   ],

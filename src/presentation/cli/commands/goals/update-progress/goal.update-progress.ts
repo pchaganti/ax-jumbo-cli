@@ -28,7 +28,7 @@ export const metadata: CommandMetadata = {
   options: [],
   examples: [
     {
-      command: "jumbo goal update-progress --id goal_abc123 --task-description \"Implemented user login form\"",
+      command: "jumbo goal update-progress --id abc123 --task-description \"Implemented user login form\"",
       description: "Record progress on a goal"
     }
   ],

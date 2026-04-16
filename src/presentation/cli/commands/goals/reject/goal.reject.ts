@@ -30,7 +30,7 @@ export const metadata: CommandMetadata = {
   options: [CONTINUE_OPTION],
   examples: [
     {
-      command: 'jumbo goal reject --id goal_abc123 --review-issues "Missing error handling in API endpoint"',
+      command: 'jumbo goal reject --id abc123 --review-issues "Missing error handling in API endpoint"',
       description: "Reject a goal with review issues"
     }
   ],

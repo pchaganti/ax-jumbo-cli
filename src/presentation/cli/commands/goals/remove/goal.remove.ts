@@ -23,7 +23,7 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal remove --id goal_abc123",
+      command: "jumbo goal remove --id abc123",
       description: "Remove a goal"
     }
   ],

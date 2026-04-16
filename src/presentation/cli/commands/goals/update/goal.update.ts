@@ -66,19 +66,19 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal update --id goal_abc123 --title \"New Title\"",
+      command: "jumbo goal update --id abc123 --title \"New Title\"",
       description: "Update a goal's title only"
     },
     {
-      command: "jumbo goal update --id goal_abc123 --objective \"Updated goal\"",
+      command: "jumbo goal update --id abc123 --objective \"Updated goal\"",
       description: "Update a goal's objective only"
     },
     {
-      command: "jumbo goal update --id goal_abc123 --criteria \"Criterion 1\" --criteria \"Criterion 2\"",
+      command: "jumbo goal update --id abc123 --criteria \"Criterion 1\" --criteria \"Criterion 2\"",
       description: "Update success criteria only"
     },
     {
-      command: "jumbo goal update --id goal_abc123 --objective \"New objective\" --scope-in \"Component A\"",
+      command: "jumbo goal update --id abc123 --objective \"New objective\" --scope-in \"Component A\"",
       description: "Update multiple fields at once"
     }
   ],
