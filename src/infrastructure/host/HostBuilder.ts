@@ -375,6 +375,8 @@ import { RelationReactivatedEventHandler } from "../../application/context/relat
 import { ReactivateRelationCommandHandler } from "../../application/context/relations/reactivate/ReactivateRelationCommandHandler.js";
 import { RelationReactivationCascade } from "../../application/context/relations/reactivate/RelationReactivationCascade.js";
 import { RelationMaintenanceGoalRegistrar } from "../../application/context/relations/maintain/RelationMaintenanceGoalRegistrar.js";
+import { RelationDiscoveryGoalRegistrar } from "../../application/context/relations/discover/RelationDiscoveryGoalRegistrar.js";
+import { RelationDiscoveryEventHandler } from "../../application/context/relations/discover/RelationDiscoveryEventHandler.js";
 import { RelationRemovedEventHandler } from "../../application/context/relations/remove/RelationRemovedEventHandler.js";
 import { RemoveRelationCommandHandler } from "../../application/context/relations/remove/RemoveRelationCommandHandler.js";
 import { LocalRemoveRelationGateway } from "../../application/context/relations/remove/LocalRemoveRelationGateway.js";
@@ -1713,6 +1715,14 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       relationViewReader,
       addGoalCommandHandler
     );
+    const relationDiscoveryGoalRegistrar = new RelationDiscoveryGoalRegistrar(
+      goalStatusReader,
+      addGoalCommandHandler,
+      logger
+    );
+    const relationDiscoveryEventHandler = new RelationDiscoveryEventHandler(
+      relationDiscoveryGoalRegistrar
+    );
     const removeRelationGateway = new LocalRemoveRelationGateway(
       removeRelationCommandHandler,
       relationRemovedProjector
@@ -1923,6 +1933,13 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     eventBus.subscribe("InvariantAddedEvent", invariantAddedEventHandler);
     eventBus.subscribe("InvariantUpdatedEvent", invariantUpdatedEventHandler);
     eventBus.subscribe("InvariantRemovedEvent", invariantRemovedEventHandler);
+
+    // Relation discovery - auto-register goals for newly created entities
+    eventBus.subscribe("ComponentAddedEvent", relationDiscoveryEventHandler);
+    eventBus.subscribe("DecisionAddedEvent", relationDiscoveryEventHandler);
+    eventBus.subscribe("DependencyAddedEvent", relationDiscoveryEventHandler);
+    eventBus.subscribe("GuidelineAddedEvent", relationDiscoveryEventHandler);
+    eventBus.subscribe("InvariantAddedEvent", relationDiscoveryEventHandler);
 
     // Project Knowledge Category - Project events - decomposed by use case
     eventBus.subscribe("ProjectInitializedEvent", projectInitializedEventHandler);
