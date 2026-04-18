@@ -25,7 +25,7 @@ export const metadata: CommandMetadata = {
   options: [CONTINUE_OPTION],
   examples: [
     {
-      command: "jumbo goal submit --id goal_abc123",
+      command: "jumbo goal submit --id abc123",
       description: "Submit a goal after implementation is complete"
     }
   ],

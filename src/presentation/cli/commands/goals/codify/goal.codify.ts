@@ -25,7 +25,7 @@ export const metadata: CommandMetadata = {
   options: [],
   examples: [
     {
-      command: "jumbo goal codify --id goal_abc123",
+      command: "jumbo goal codify --id abc123",
       description: "Start codifying an approved goal"
     }
   ],

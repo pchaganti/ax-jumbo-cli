@@ -39,11 +39,11 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal refine --id goal_abc123",
+      command: "jumbo goal refine --id abc123",
       description: "Start refinement and display goal details for review"
     },
     {
-      command: "jumbo goal refine --id goal_abc123 --interactive",
+      command: "jumbo goal refine --id abc123 --interactive",
       description: "Refine with interactive prompts to register relations"
     }
   ],
@@ -128,9 +128,10 @@ async function runInteractiveRelationFlow(
   const activeComponents = components.filter((c: ComponentView) => c.status === 'active');
   const activeGuidelines = guidelines.filter((g: GuidelineView) => !g.isRemoved);
 
-  console.log("\n=== Goal Refinement: Register Relations ===\n");
-  console.log("Select entities that this goal relates to.");
-  console.log("Relations help track what components, decisions, and invariants are involved.\n");
+  const refineOutputBuilder = new GoalRefineOutputBuilder();
+  const headerOutput = refineOutputBuilder.buildInteractiveFlowHeader();
+  const renderer = Renderer.getInstance();
+  renderer.info(headerOutput.toHumanReadable());
 
   // Step 1: Select related components
   const componentResult = await promptService.selectEntities<ComponentView>(

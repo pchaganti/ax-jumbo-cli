@@ -24,7 +24,7 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal show --id goal_abc123",
+      command: "jumbo goal show --id abc123",
       description: "Show complete goal details"
     }
   ],

@@ -31,11 +31,11 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal resume --id goal_abc123",
+      command: "jumbo goal resume --id abc123",
       description: "Resume working on a paused or in-progress goal"
     },
     {
-      command: "jumbo goal resume --id goal_abc123 --note \"Ready to continue\"",
+      command: "jumbo goal resume --id abc123 --note \"Ready to continue\"",
       description: "Resume a paused goal with a note"
     }
   ],

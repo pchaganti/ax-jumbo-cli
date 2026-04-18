@@ -27,7 +27,7 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal block --id goal_abc123 --note \"Waiting for API credentials\"",
+      command: "jumbo goal block --id abc123 --note \"Waiting for API credentials\"",
       description: "Block a goal with a reason"
     }
   ],

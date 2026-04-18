@@ -29,11 +29,11 @@ export const metadata: CommandMetadata = {
   ],
   examples: [
     {
-      command: "jumbo goal unblock --id goal_abc123",
+      command: "jumbo goal unblock --id abc123",
       description: "Unblock a goal"
     },
     {
-      command: "jumbo goal unblock --id goal_abc123 --note \"API credentials received\"",
+      command: "jumbo goal unblock --id abc123 --note \"API credentials received\"",
       description: "Unblock a goal with resolution note"
     }
   ],
