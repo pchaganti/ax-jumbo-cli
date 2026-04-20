@@ -89,6 +89,7 @@ import { valueUpdate, metadata as valueUpdateMeta } from '../../commands/value-p
 import { workPause, metadata as workPauseMeta } from '../../commands/work/pause/work.pause.js';
 import { workRefine, metadata as workRefineMeta } from '../../commands/work/refine/work.refine.js';
 import { workResume, metadata as workResumeMeta } from '../../commands/work/resume/work.resume.js';
+import { workReview, metadata as workReviewMeta } from '../../commands/work/review/work.review.js';
 
 export const commands: RegisteredCommand[] = [
   {
@@ -490,5 +491,10 @@ export const commands: RegisteredCommand[] = [
     path: 'work resume',
     metadata: workResumeMeta,
     handler: workResume
+  },
+  {
+    path: 'work review',
+    metadata: workReviewMeta,
+    handler: workReview
   }
 ];
