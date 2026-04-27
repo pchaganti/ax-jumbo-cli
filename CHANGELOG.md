@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Relation cleanup on removal**: Removing components or goals now prunes their relations via `RelationRemovedEvent` instead of deactivating them, and `session start` no longer includes the deactivated-relations warning block.
+
 ## [2.15.0] - 2026-04-26
 
 ### Changed
