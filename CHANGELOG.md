@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **TUI foundation**: Ink + React terminal UI with app shell (header/body/footer flexbox layout), screen router (Cockpit, Goals, Memory, Session), keyboard navigation (arrow keys, number keys 1-4, q to quit), and shared design tokens (colors, spacing, glyphs). All screens are placeholder stubs awaiting content in future goals.
+
 ## [3.0.3] - 2026-05-02
 
 ### Changed
