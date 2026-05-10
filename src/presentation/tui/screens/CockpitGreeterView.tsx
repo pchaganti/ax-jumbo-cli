@@ -3,39 +3,11 @@ import { Box, Text } from "ink";
 import { TuiColors } from "../../shared/DesignTokens.js";
 import { KeyBadge } from "../components/KeyBadge.js";
 
-interface CockpitGreeterViewProps {
-  directory?: string;
-}
-
-export function CockpitGreeterView({
-  directory = process.cwd(),
-}: CockpitGreeterViewProps): React.ReactElement {
+export function CockpitGreeterView(): React.ReactElement {
   return (
     <Box flexDirection="column" paddingX={2} paddingY={1}>
-      <Box
-        borderStyle="round"
-        borderColor={TuiColors.panelBorder}
-        paddingX={1}
-        flexDirection="column"
-      >
-        <Box>
-          <Box width={14}>
-            <Text color={TuiColors.label}>Directory</Text>
-          </Box>
-          <Text color={TuiColors.primary}>{directory}</Text>
-        </Box>
-        <Box>
-          <Box width={14}>
-            <Text color={TuiColors.label}>Status</Text>
-          </Box>
-          <Text color={TuiColors.primary} bold>
-            Uninitialized
-          </Text>
-        </Box>
-      </Box>
-
       <Box marginTop={1}>
-        <Text color={TuiColors.primary} wrap="wrap">
+        <Text color={TuiColors.secondary} wrap="wrap">
           Hi, I'm Jumbo. I give your coding agents the memory they're missing
           and help you manage the context you provide to them when completing
           tasks. So you can focus on what your building and not have to repeat
@@ -43,12 +15,7 @@ export function CockpitGreeterView({
         </Text>
       </Box>
 
-      <Box
-        marginTop={2}
-        flexDirection="column"
-        alignItems="center"
-        width="100%"
-      >
+      <Box marginTop={2} flexDirection="column" alignItems="center">
         <Box alignItems="center" gap={1}>
           <Text color={TuiColors.primary}>Press </Text>
           <KeyBadge char="i" />

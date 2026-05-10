@@ -1,6 +1,8 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Box } from "ink";
 import { AnimatedBanner } from "../components/AnimatedBanner.js";
+import { generateCustomInfoBoxLines } from "../../cli/banner/AnimationFrames.js";
+import { TuiLayout } from "../../shared/DesignTokens.js";
 import { CockpitGreeterView } from "./CockpitGreeterView.js";
 import { CockpitUnprimedView } from "./CockpitUnprimedView.js";
 import { CockpitPrimedEmptyView } from "./CockpitPrimedEmptyView.js";
@@ -29,17 +31,28 @@ export function CockpitScreen({
     setBannerComplete(true);
   }, []);
 
+  const infoBoxLines = useMemo(() => {
+    if (state === "uninitialized") {
+      return generateCustomInfoBoxLines([
+        { label: "Directory", value: process.cwd() },
+        { label: "Status", value: "Uninitialized" },
+      ]);
+    }
+    return undefined;
+  }, [state]);
+
   return (
-    <Box flexDirection="column" flexGrow={1}>
+    <Box flexDirection="column" flexGrow={1} alignItems="center">
       {(!bannerComplete || showBanner) && (
         <AnimatedBanner
           onComplete={handleBannerComplete}
           persist={showBanner}
           version={PLACEHOLDER_VERSION}
+          infoBoxLines={infoBoxLines}
         />
       )}
       {bannerComplete && (
-        <Box flexDirection="column" flexGrow={1}>
+        <Box flexDirection="column" width={TuiLayout.bannerWidth}>
           {state === "uninitialized" && <CockpitGreeterView />}
           {state === "unprimed" && <CockpitUnprimedView />}
           {state === "primed-empty" && <CockpitPrimedEmptyView />}

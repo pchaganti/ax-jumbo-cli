@@ -29,6 +29,10 @@ export const TuiColors = {
   keyBadgeBackground: BaseColors.brandBlueMuted,
 } as const;
 
+export const TuiLayout = {
+  bannerWidth: 105,
+} as const;
+
 export const TuiSpacing = {
   headerHeight: 1,
   footerHeight: 1,

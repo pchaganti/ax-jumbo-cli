@@ -4,21 +4,6 @@ import { render } from "ink-testing-library";
 import { CockpitGreeterView } from "../../../../src/presentation/tui/screens/CockpitGreeterView.js";
 
 describe("CockpitGreeterView", () => {
-  it("renders the directory label", () => {
-    const { lastFrame } = render(<CockpitGreeterView directory="/projects/test" />);
-    expect(lastFrame()).toContain("Directory");
-  });
-
-  it("renders the provided directory path", () => {
-    const { lastFrame } = render(<CockpitGreeterView directory="/projects/test" />);
-    expect(lastFrame()).toContain("/projects/test");
-  });
-
-  it("renders the status as Uninitialized", () => {
-    const { lastFrame } = render(<CockpitGreeterView directory="/projects/test" />);
-    expect(lastFrame()).toContain("Uninitialized");
-  });
-
   it("renders the welcome message", () => {
     const { lastFrame } = render(<CockpitGreeterView />);
     expect(lastFrame()).toContain("Hi, I'm Jumbo");

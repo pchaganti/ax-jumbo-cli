@@ -1,5 +1,5 @@
 
-const INFO_BOX_WIDTH = 58; // Total width including borders
+export const INFO_BOX_WIDTH = 58; // Total width including borders
 
 function truncate(text: string, maxLength: number): string {
     if (text.length <= maxLength) return text;
@@ -29,9 +29,10 @@ function buildFrame(
     baseLines: string[],
     revealChars: number,
     version: string,
-    projectName: string | null
+    projectName: string | null,
+    infoBoxLines?: string[]
 ): string[] {
-    const infoLines = generateInfoBoxLines(version, projectName);
+    const infoLines = infoBoxLines ?? generateInfoBoxLines(version, projectName);
 
     return baseLines.map(line => {
         // Replace each {{INFO_N}} token with the revealed portion of that info line
@@ -47,7 +48,7 @@ function buildFrame(
     });
 }
 
-function getFrame(index: number, version: string, projectName: string | null): string[]{
+function getFrame(index: number, version: string, projectName: string | null, infoBoxLines?: string[]): string[]{
     switch(index) { 
         case 0: {
             //statements;
@@ -1585,7 +1586,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                                        ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                                         ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 5, version, projectName);
+            ], 5, version, projectName, infoBoxLines);
         } 
         case 81: {
         	return buildFrame([
@@ -1603,7 +1604,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                                       ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                                        ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 6, version, projectName);
+            ], 6, version, projectName, infoBoxLines);
         } 
         case 82: {
         	return buildFrame([
@@ -1621,7 +1622,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                                      ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                                       ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 7, version, projectName);
+            ], 7, version, projectName, infoBoxLines);
         } 
         case 83: {
         	return buildFrame([
@@ -1639,7 +1640,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                                     ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                                      ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 8, version, projectName);
+            ], 8, version, projectName, infoBoxLines);
         } 
         case 84: {
         	return buildFrame([
@@ -1657,7 +1658,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                                    ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                                     ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 9, version, projectName);
+            ], 9, version, projectName, infoBoxLines);
         } 
         case 85: {
         	return buildFrame([
@@ -1675,7 +1676,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                                   ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                                    ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 10, version, projectName);
+            ], 10, version, projectName, infoBoxLines);
         } 
         case 86: {
         	return buildFrame([
@@ -1693,7 +1694,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                                  ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                                   ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 11, version, projectName);
+            ], 11, version, projectName, infoBoxLines);
         } 
         case 87: {
         	return buildFrame([
@@ -1711,7 +1712,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                                 ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                                  ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 12, version, projectName);
+            ], 12, version, projectName, infoBoxLines);
         } 
         case 88: {
         	return buildFrame([
@@ -1729,7 +1730,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                                ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                                 ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 13, version, projectName);
+            ], 13, version, projectName, infoBoxLines);
         } 
         case 89: {
         	return buildFrame([
@@ -1747,7 +1748,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                               ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                                ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 14, version, projectName);
+            ], 14, version, projectName, infoBoxLines);
         } 
         case 90: {
         	return buildFrame([
@@ -1765,7 +1766,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                              ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                               ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 15, version, projectName);
+            ], 15, version, projectName, infoBoxLines);
         } 
         case 91: {
         	return buildFrame([
@@ -1783,7 +1784,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                             ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                              ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 16, version, projectName);
+            ], 16, version, projectName, infoBoxLines);
         } 
         case 92: {
         	return buildFrame([
@@ -1801,7 +1802,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                            ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                             ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 17, version, projectName);
+            ], 17, version, projectName, infoBoxLines);
         } 
         case 93: {
         	return buildFrame([
@@ -1819,7 +1820,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                           ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                            ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 18, version, projectName);
+            ], 18, version, projectName, infoBoxLines);
         } 
         case 94: {
         	return buildFrame([
@@ -1837,7 +1838,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                          ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                           ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 19, version, projectName);
+            ], 19, version, projectName, infoBoxLines);
         } 
         case 95: {
         	return buildFrame([
@@ -1855,7 +1856,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                         ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                          ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 20, version, projectName);
+            ], 20, version, projectName, infoBoxLines);
         } 
         case 96: {
         	return buildFrame([
@@ -1873,7 +1874,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                        ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                         ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 21, version, projectName);
+            ], 21, version, projectName, infoBoxLines);
         } 
         case 97: {
         	return buildFrame([
@@ -1891,7 +1892,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                       ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                        ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 22, version, projectName);
+            ], 22, version, projectName, infoBoxLines);
         } 
         case 98: {
         	return buildFrame([
@@ -1909,7 +1910,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                      ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                       ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 23, version, projectName);
+            ], 23, version, projectName, infoBoxLines);
         } 
         case 99: {
         	return buildFrame([
@@ -1927,7 +1928,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                     ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                      ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 24, version, projectName);
+            ], 24, version, projectName, infoBoxLines);
         } 
         case 100: {
         	return buildFrame([
@@ -1945,7 +1946,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                    ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                     ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 25, version, projectName);
+            ], 25, version, projectName, infoBoxLines);
         } 
         case 101: {
         	return buildFrame([
@@ -1963,7 +1964,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                   ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                    ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 26, version, projectName);
+            ], 26, version, projectName, infoBoxLines);
         } 
         case 102: {
         	return buildFrame([
@@ -1981,7 +1982,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                  ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                   ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 27, version, projectName);
+            ], 27, version, projectName, infoBoxLines);
         } 
         case 103: {
         	return buildFrame([
@@ -1999,7 +2000,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                 ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                  ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 28, version, projectName);
+            ], 28, version, projectName, infoBoxLines);
         } 
         case 104: {
         	return buildFrame([
@@ -2017,7 +2018,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                                ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                 ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 29, version, projectName);
+            ], 29, version, projectName, infoBoxLines);
         } 
         case 105: {
         	return buildFrame([
@@ -2035,7 +2036,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                               ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                                ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 30, version, projectName);
+            ], 30, version, projectName, infoBoxLines);
         } 
         case 106: {
         	return buildFrame([
@@ -2053,7 +2054,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                              ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                               ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 31, version, projectName);
+            ], 31, version, projectName, infoBoxLines);
         } 
         case 107: {
         	return buildFrame([
@@ -2071,7 +2072,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                             ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                              ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 32, version, projectName);
+            ], 32, version, projectName, infoBoxLines);
         } 
         case 108: {
         	return buildFrame([
@@ -2089,7 +2090,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                            ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                             ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 33, version, projectName);
+            ], 33, version, projectName, infoBoxLines);
         } 
         case 109: {
         	return buildFrame([
@@ -2107,7 +2108,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                           ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                            ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 34, version, projectName);
+            ], 34, version, projectName, infoBoxLines);
         } 
         case 110: {
         	return buildFrame([
@@ -2125,7 +2126,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                          ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                           ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 35, version, projectName);
+            ], 35, version, projectName, infoBoxLines);
         } 
         case 111: {
         	return buildFrame([
@@ -2143,7 +2144,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                         ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                          ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 36, version, projectName);
+            ], 36, version, projectName, infoBoxLines);
         } 
         case 112: {
         	return buildFrame([
@@ -2161,7 +2162,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                        ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                         ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 37, version, projectName);
+            ], 37, version, projectName, infoBoxLines);
         } 
         case 113: {
         	return buildFrame([
@@ -2179,7 +2180,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                       ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                        ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 38, version, projectName);
+            ], 38, version, projectName, infoBoxLines);
         } 
         case 114: {
         	return buildFrame([
@@ -2197,7 +2198,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                      ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                       ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 39, version, projectName);
+            ], 39, version, projectName, infoBoxLines);
         } 
         case 115: {
         	return buildFrame([
@@ -2215,7 +2216,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                     ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                      ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 40, version, projectName);
+            ], 40, version, projectName, infoBoxLines);
         } 
         case 116: {
         	return buildFrame([
@@ -2233,7 +2234,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                    ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                     ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 41, version, projectName);
+            ], 41, version, projectName, infoBoxLines);
         } 
         case 117: {
         	return buildFrame([
@@ -2251,7 +2252,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                   ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                    ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 42, version, projectName);
+            ], 42, version, projectName, infoBoxLines);
         } 
         case 118: {
         	return buildFrame([
@@ -2269,7 +2270,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                  ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                   ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 43, version, projectName);
+            ], 43, version, projectName, infoBoxLines);
         } 
         case 119: {
         	return buildFrame([
@@ -2287,7 +2288,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                 ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                  ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 44, version, projectName);
+            ], 44, version, projectName, infoBoxLines);
         } 
         case 120: {
         	return buildFrame([
@@ -2305,7 +2306,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                                ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                 ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 45, version, projectName);
+            ], 45, version, projectName, infoBoxLines);
         } 
         case 121: {
         	return buildFrame([
@@ -2323,7 +2324,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                               ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                                ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 46, version, projectName);
+            ], 46, version, projectName, infoBoxLines);
         } 
         case 122: {
         	return buildFrame([
@@ -2341,7 +2342,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                              ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                               ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 47, version, projectName);
+            ], 47, version, projectName, infoBoxLines);
         } 
         case 123: {
         	return buildFrame([
@@ -2359,7 +2360,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                             ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                              ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 48, version, projectName);
+            ], 48, version, projectName, infoBoxLines);
         } 
         case 124: {
         	return buildFrame([
@@ -2377,7 +2378,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                            ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                             ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 49, version, projectName);
+            ], 49, version, projectName, infoBoxLines);
         } 
         case 125: {
         	return buildFrame([
@@ -2395,7 +2396,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
             "                           ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
             "                            ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
             "                                                                                                         ",
-            ], 50, version, projectName);
+            ], 50, version, projectName, infoBoxLines);
         } 
         case 126: {
         	return buildFrame([
@@ -2413,7 +2414,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                           ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
                 "                            ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 50, version, projectName);
+            ], 50, version, projectName, infoBoxLines);
         } 
         case 127: {
         	return buildFrame([
@@ -2431,7 +2432,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                          ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
                 "                           ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 51, version, projectName);
+            ], 51, version, projectName, infoBoxLines);
         } 
         case 128: {
         	return buildFrame([
@@ -2449,7 +2450,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                         ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
                 "                          ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 52, version, projectName);
+            ], 52, version, projectName, infoBoxLines);
         } 
         case 129: {
         	return buildFrame([
@@ -2467,7 +2468,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                        ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
                 "                         ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 53, version, projectName);
+            ], 53, version, projectName, infoBoxLines);
         } 
         case 130: {
         	return buildFrame([
@@ -2485,7 +2486,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                       ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
                 "                        ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 54, version, projectName);
+            ], 54, version, projectName, infoBoxLines);
         } 
         case 131: {
         	return buildFrame([
@@ -2503,7 +2504,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                      ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
                 "                       ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 55, version, projectName);
+            ], 55, version, projectName, infoBoxLines);
         } 
         case 132: {
         	return buildFrame([
@@ -2521,7 +2522,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                     ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
                 "                      ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 56, version, projectName);
+            ], 56, version, projectName, infoBoxLines);
         } 
         case 133: {
         	return buildFrame([
@@ -2539,7 +2540,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                     ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓{{INFO_3}}     ",
                 "                      ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓ {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 57, version, projectName);
+            ], 57, version, projectName, infoBoxLines);
         } 
         case 134: {
         	return buildFrame([
@@ -2557,7 +2558,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                   ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓ {{INFO_3}}     ",
                 "                    ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓  {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 135: {
         	return buildFrame([
@@ -2575,7 +2576,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                  ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓  {{INFO_3}}     ",
                 "                   ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓   {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 136: {
         	return buildFrame([
@@ -2593,7 +2594,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                 ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓   {{INFO_3}}     ",
                 "                  ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓    {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 137: {
         	return buildFrame([
@@ -2611,7 +2612,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "                ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓    {{INFO_3}}     ",
                 "                 ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓     {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 138: {
         	return buildFrame([
@@ -2629,7 +2630,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "               ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓     {{INFO_3}}     ",
                 "                ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓      {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 139: {
         	return buildFrame([
@@ -2647,7 +2648,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "              ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓      {{INFO_3}}     ",
                 "               ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓       {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 140: {
         	return buildFrame([
@@ -2665,7 +2666,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "             ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓       {{INFO_3}}     ",
                 "              ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓        {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 141: {
         	return buildFrame([
@@ -2683,7 +2684,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "            ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓        {{INFO_3}}     ",
                 "             ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓         {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 142: {
         	return buildFrame([
@@ -2701,7 +2702,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "           ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓         {{INFO_3}}     ",
                 "            ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓          {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 143: {
         	return buildFrame([
@@ -2719,7 +2720,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "          ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓          {{INFO_3}}     ",
                 "           ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓           {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 144: {
         	return buildFrame([
@@ -2737,7 +2738,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "         ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓           {{INFO_3}}     ",
                 "          ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓            {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
         } 
         case 145: {
         	return buildFrame([
@@ -2755,7 +2756,7 @@ function getFrame(index: number, version: string, projectName: string | null): s
                 "        ▓▒▒▒▒▒▒▒▓    ▓▒▒▒▒▒▒▒▓            {{INFO_3}}     ",
                 "         ▓▒▒▒▒▒▓      ▓▒▒▒▒▒▓             {{INFO_4}}     ",
                 "                                                                                                         ",
-            ], 58, version, projectName);
+            ], 58, version, projectName, infoBoxLines);
             } 
         default: {
           return [];
@@ -2767,6 +2768,33 @@ export function getFrameCount(): number {
     return 146;
 }
 
-export function getAnimationFrame(index: number, version: string, projectName: string | null): string[] {
-    return getFrame(index, version, projectName);
+export function getAnimationFrame(index: number, version: string, projectName: string | null, infoBoxLines?: string[]): string[] {
+    return getFrame(index, version, projectName, infoBoxLines);
+}
+
+export function generateCustomInfoBoxLines(
+    rows: Array<{ label: string; value: string }>,
+): string[] {
+    const innerWidth = INFO_BOX_WIDTH - 2;
+    const lines: string[] = [];
+
+    lines.push(`╭${'─'.repeat(innerWidth)}╮`);
+
+    for (const row of rows) {
+        const labelCol = row.label.padEnd(13);
+        const content = `${labelCol}${row.value}`;
+        const truncated = content.length > innerWidth - 2
+            ? content.slice(0, innerWidth - 5) + '...'
+            : content;
+        const padding = Math.max(0, innerWidth - truncated.length - 2);
+        lines.push(`│ ${truncated}${' '.repeat(padding)} │`);
+    }
+
+    lines.push(`╰${'─'.repeat(innerWidth)}╯`);
+
+    while (lines.length < 5) {
+        lines.push(' '.repeat(INFO_BOX_WIDTH));
+    }
+
+    return lines;
 }

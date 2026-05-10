@@ -10,9 +10,7 @@ interface KeyBadgeProps {
 export function KeyBadge({ char, label }: KeyBadgeProps): React.ReactElement {
   return (
     <Box alignItems="center" gap={1}>
-      <Box borderStyle="round" borderColor={TuiColors.keyBadge} backgroundColor={TuiColors.keyBadgeBackground} paddingLeft={1} paddingRight={1}>
-        <Text color={TuiColors.keyBadge} bold>{char}</Text>
-      </Box>
+      <Text backgroundColor={TuiColors.keyBadgeBackground} color={TuiColors.keyBadge} bold>{` ${char} `}</Text>
       {label !== undefined && <Text color={TuiColors.muted}>{label}</Text>}
     </Box>
   );

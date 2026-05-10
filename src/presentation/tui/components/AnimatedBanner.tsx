@@ -4,12 +4,14 @@ import {
   getAnimationFrame,
   getFrameCount,
 } from "../../cli/banner/AnimationFrames.js";
+import { TuiColors } from "../../shared/DesignTokens.js";
 
 interface AnimatedBannerProps {
   onComplete: () => void;
   version?: string;
   projectName?: string | null;
   persist?: boolean;
+  infoBoxLines?: string[];
 }
 
 const TOTAL_FRAMES = getFrameCount();
@@ -24,12 +26,21 @@ type BannerPhase = "walking" | "holding" | "erasing" | "persisted" | "complete";
 type RGB = [number, number, number];
 
 const ANCHOR_COLORS: RGB[] = [
-  [0, 72, 182],
-  [1, 173, 97],
-  [124, 197, 62],
-  [255, 210, 61],
-  [249, 124, 37],
-  [232, 44, 49],
+  [102, 180, 244],
+  [170, 0, 212],
+  [255, 42, 42],
+  [255, 131, 7],
+  [255, 204, 0],
+  [68, 170, 0],
+];
+
+const ANCHOR_COLORS_HEX = [
+  "#66b4f4",
+  "#aa00d4",
+  "#ff2a2a",
+  "#ff8307",
+  "#ffcc00",
+  "#44aa00",
 ];
 
 function lerpRgb(a: RGB, b: RGB, t: number): RGB {
@@ -113,7 +124,7 @@ function colorizeLineToSegments(
         boxSegment += line[i];
         i++;
       }
-      segments.push({ text: boxSegment, color: "#9be9f8" });
+      segments.push({ text: boxSegment, color: TuiColors.keyBadge });
     } else if (
       char === "A" &&
       line.slice(i).startsWith("AI memory like an elephant")
@@ -149,6 +160,7 @@ export function AnimatedBanner({
   version = "",
   projectName = null,
   persist = false,
+  infoBoxLines,
 }: AnimatedBannerProps): React.ReactElement | null {
   const [frame, setFrame] = useState(0);
   const [phase, setPhase] = useState<BannerPhase>("walking");
@@ -197,6 +209,7 @@ export function AnimatedBanner({
       TOTAL_FRAMES - 1,
       version,
       projectName,
+      infoBoxLines,
     );
     const totalLines = finalFrame.length;
     setVisibleLines(totalLines);
@@ -212,7 +225,7 @@ export function AnimatedBanner({
       });
     }, ERASE_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [phase, version, projectName]);
+  }, [phase, version, projectName, infoBoxLines]);
 
   useEffect(() => {
     if (phase === "complete") handleComplete();
@@ -229,8 +242,8 @@ export function AnimatedBanner({
   const elephantHex = getGradientHex(colorProgress);
 
   const currentFrame = phase === "walking"
-    ? getAnimationFrame(frame, version, projectName)
-    : getAnimationFrame(TOTAL_FRAMES - 1, version, projectName);
+    ? getAnimationFrame(frame, version, projectName, infoBoxLines)
+    : getAnimationFrame(TOTAL_FRAMES - 1, version, projectName, infoBoxLines);
 
   const linesToRender =
     visibleLines !== null ? currentFrame.slice(0, visibleLines) : currentFrame;
