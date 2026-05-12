@@ -4,7 +4,7 @@ import {
   getAnimationFrame,
   getFrameCount,
 } from "../../cli/banner/AnimationFrames.js";
-import { TuiColors } from "../../shared/DesignTokens.js";
+import { SemanticColors } from "../../shared/DesignTokens.js";
 
 interface AnimatedBannerProps {
   onComplete: () => void;
@@ -125,7 +125,7 @@ function colorizeLineToSegments(
         boxSegment += line[i];
         i++;
       }
-      segments.push({ text: boxSegment, color: TuiColors.keyBadge });
+      segments.push({ text: boxSegment, color: SemanticColors.keyBadge });
     } else if (
       char === "A" &&
       line.slice(i).startsWith("AI memory like an elephant")

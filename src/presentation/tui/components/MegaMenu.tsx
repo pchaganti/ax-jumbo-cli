@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { BaseColors, TuiColors, TuiGlyphs } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 import {
   MEGA_MENU_SECTIONS,
   MAX_MENU_DEPTH,
@@ -66,8 +66,8 @@ function MenuColumn({
                 isHighlighted
                   ? BaseColors.brandBlue
                   : isActiveColumn
-                    ? TuiColors.primary
-                    : TuiColors.muted
+                    ? SemanticColors.primary
+                    : SemanticColors.muted
               }
               bold={isHighlighted}
             >
@@ -162,11 +162,11 @@ export function MegaMenu({
       flexDirection="column"
       width={terminalWidth}
       borderStyle="single"
-      borderColor={TuiColors.muted}
+      borderColor={SemanticColors.muted}
       paddingX={1}
     >
       <Box marginBottom={1}>
-        <Text color={TuiColors.headline} bold>
+        <Text color={SemanticColors.headline} bold>
           Navigate
         </Text>
       </Box>
@@ -176,7 +176,7 @@ export function MegaMenu({
           if (items.length === 0) {
             return (
               <Box key={level} width={COLUMN_WIDTH}>
-                <Text color={TuiColors.muted}> </Text>
+                <Text color={SemanticColors.muted}> </Text>
               </Box>
             );
           }
@@ -185,7 +185,7 @@ export function MegaMenu({
             <React.Fragment key={level}>
               {level > 0 && (
                 <Box marginX={1}>
-                  <Text color={TuiColors.muted}>{TuiGlyphs.accentBar}</Text>
+                  <Text color={SemanticColors.muted}>{TuiGlyphs.accentBar}</Text>
                 </Box>
               )}
               <MenuColumn
@@ -200,7 +200,7 @@ export function MegaMenu({
         })}
       </Box>
       <Box marginTop={1}>
-        <Text color={TuiColors.muted}>
+        <Text color={SemanticColors.muted}>
           ←→ drill {TuiGlyphs.dot} enter select {TuiGlyphs.dot} esc{" "}
           {activeLevel > 0 ? "back" : "close"}
         </Text>

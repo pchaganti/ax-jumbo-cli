@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { BaseColors, TuiColors, TuiGlyphs } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 
 export function GoalsScreen(): React.ReactElement {
   return (
@@ -8,7 +8,7 @@ export function GoalsScreen(): React.ReactElement {
       <Text color={BaseColors.brandBlue}>
         {TuiGlyphs.accentBar} Goals
       </Text>
-      <Text color={TuiColors.muted}>
+      <Text color={SemanticColors.muted}>
         Goal backlog and lifecycle management
       </Text>
     </Box>

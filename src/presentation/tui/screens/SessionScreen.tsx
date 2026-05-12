@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { BaseColors, TuiColors, TuiGlyphs } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 
 export function SessionScreen(): React.ReactElement {
   return (
@@ -8,7 +8,7 @@ export function SessionScreen(): React.ReactElement {
       <Text color={BaseColors.brandBlue}>
         {TuiGlyphs.accentBar} Session
       </Text>
-      <Text color={TuiColors.muted}>
+      <Text color={SemanticColors.muted}>
         Current session focus and history
       </Text>
     </Box>

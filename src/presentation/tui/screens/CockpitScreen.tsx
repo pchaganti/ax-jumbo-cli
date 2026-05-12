@@ -14,7 +14,7 @@ export type CockpitState =
   | "primed-empty"
   | "primed";
 
-const PLACEHOLDER_COCKPIT_STATE: CockpitState = "unprimed";
+const PLACEHOLDER_COCKPIT_STATE: CockpitState = "primed";
 const PLACEHOLDER_VERSION = "0.0.0";
 
 interface CockpitScreenProps {
@@ -60,7 +60,7 @@ export function CockpitScreen({
         </Box>
       )}
       {bannerComplete && (
-        <Box flexDirection="column" width={TuiLayout.bannerWidth}>
+        <Box flexDirection="column">
           {state === "uninitialized" && <CockpitGreeterView />}
           {state === "unprimed" && <CockpitUnprimedView />}
           {state === "primed-empty" && <CockpitPrimedEmptyView />}

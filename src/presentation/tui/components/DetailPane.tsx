@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { BaseColors, TuiColors } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors } from "../../shared/DesignTokens.js";
 import { Panel } from "./Panel.js";
 
 interface DetailPaneEntry {
@@ -26,8 +26,8 @@ export function DetailPane({
     <Panel title={title} titleColor={titleColor} width={width}>
       {entries.map((entry) => (
         <Box key={entry.label}>
-          <Text color={TuiColors.muted}>{entry.label}: </Text>
-          <Text color={entry.valueColor ?? TuiColors.primary}>
+          <Text color={SemanticColors.muted}>{entry.label}: </Text>
+          <Text color={entry.valueColor ?? SemanticColors.primary}>
             {entry.value}
           </Text>
         </Box>

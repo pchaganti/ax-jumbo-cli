@@ -1,19 +1,19 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { BaseColors, TuiColors, TuiGlyphs } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 import { SectionHeading } from "../components/SectionHeading.js";
 import { StatusIndicator } from "../components/StatusIndicator.js";
 
 const GOAL_STATUS_COLORS: Record<string, string> = {
-  doing: TuiColors.success,
-  refused: TuiColors.muted,
-  submitted: TuiColors.info,
-  blocked: TuiColors.error,
-  approved: TuiColors.accent,
+  doing: SemanticColors.success,
+  refused: SemanticColors.muted,
+  submitted: SemanticColors.info,
+  blocked: SemanticColors.error,
+  approved: SemanticColors.accent,
 };
 
 const PLACEHOLDER_GOALS = [
-  { title: "Implement user authentication", status: "doing" },
+  { title: "Implement user authentication blah blah blah blah blah", status: "doing" },
   { title: "Add dashboard analytics", status: "refused" },
   { title: "Write API documentation", status: "submitted" },
   { title: "Refactor database layer", status: "blocked" },
@@ -63,17 +63,29 @@ const PLACEHOLDER_SELECTED_GOAL = {
 export function CockpitLaunchpadView(): React.ReactElement {
   return (
     <Box flexDirection="row" paddingX={1} flexGrow={1}>
-      <Box flexDirection="column" flexBasis="40%" paddingRight={2}>
+      <Box flexDirection="column" flexBasis="50%" paddingRight={2}>
         <SectionHeading title="GOALS" />
         {PLACEHOLDER_GOALS.map((goal) => (
           <Box key={goal.title}>
-            <Text color={TuiColors.primary}>
-              {TuiGlyphs.bullet} {goal.title}
-            </Text>
-            <Text color={GOAL_STATUS_COLORS[goal.status] ?? TuiColors.muted}>
-              {" "}
-              [{goal.status}]
-            </Text>
+            <Box flexDirection="row">
+              <Box flexDirection="column" flexBasis="5%" />
+              <Box flexDirection="column" flexBasis="3%">
+                <Text color={GOAL_STATUS_COLORS[goal.status] ?? SemanticColors.muted}>
+                  {TuiGlyphs.bullet}
+                </Text>
+              </Box>
+              <Box flexDirection="column" flexBasis="72%" flexWrap="wrap">
+                <Text color={SemanticColors.primary}>
+                  {goal.title.substring(0,34)}{goal.title.length > 35 ? "..." : ""}
+                </Text>
+              </Box>
+              <Box flexDirection="column" flexBasis="20%" flexWrap="wrap">
+                <Text color={SemanticColors.muted}>
+                  {" "}
+                  [{goal.status}]
+                </Text>
+              </Box>
+            </Box>
           </Box>
         ))}
         <Box
@@ -83,11 +95,11 @@ export function CockpitLaunchpadView(): React.ReactElement {
           width="100%"
         >
           <Text>
-            <Text color={TuiColors.primary}>Press </Text>
+            <Text color={SemanticColors.primary}>Press </Text>
             <Text color={BaseColors.brandBlue} bold>
               [g]
             </Text>
-            <Text color={TuiColors.primary}> to add a goal</Text>
+            <Text color={SemanticColors.primary}> to add a goal</Text>
           </Text>
         </Box>
 
@@ -100,46 +112,48 @@ export function CockpitLaunchpadView(): React.ReactElement {
         </Box>
       </Box>
 
-      <Box flexDirection="column" flexBasis="60%">
-        <SectionHeading title="META-DATA" />
+      <Box flexDirection="column" flexBasis="50%">
+        <SectionHeading title="Goal Details" />
         {PLACEHOLDER_SELECTED_GOAL.meta.map((entry) => (
           <Box key={entry.label}>
             <Box width={18}>
-              <Text color={TuiColors.muted}>{entry.label}:</Text>
+              <Text color={SemanticColors.muted}>{entry.label}:</Text>
             </Box>
-            <Text color={TuiColors.primary}>{entry.value}</Text>
+            <Text color={SemanticColors.primary}>{entry.value}</Text>
           </Box>
         ))}
 
-        <SectionHeading title="OBJECTIVE" />
-        <Text color={TuiColors.primary} wrap="wrap">
-          {PLACEHOLDER_SELECTED_GOAL.objective}
-        </Text>
+        <SectionHeading title="OBJECTIVE" dimmed={true} />
+        <Box>
+          <Text color={SemanticColors.primary} wrap="wrap">
+            {PLACEHOLDER_SELECTED_GOAL.objective}
+          </Text>
+        </Box>
 
-        <SectionHeading title="CRITERIA" />
+        <SectionHeading title="CRITERIA" dimmed={true} />
         {PLACEHOLDER_SELECTED_GOAL.criteria.map((criterion) => (
           <Box key={criterion}>
-            <Text color={TuiColors.accent}>{TuiGlyphs.bullet} </Text>
-            <Text color={TuiColors.primary}>{criterion}</Text>
+            <Text color={SemanticColors.accent}>{TuiGlyphs.bullet} </Text>
+            <Text color={SemanticColors.primary}>{criterion}</Text>
           </Box>
         ))}
 
         <SectionHeading title="SCOPE-IN" />
         {PLACEHOLDER_SELECTED_GOAL.scopeIn.map((path) => (
           <Box key={path}>
-            <Text color={TuiColors.accent}>{TuiGlyphs.bullet} </Text>
-            <Text color={TuiColors.primary}>{path}</Text>
+            <Text color={SemanticColors.accent}>{TuiGlyphs.bullet} </Text>
+            <Text color={SemanticColors.primary}>{path}</Text>
           </Box>
         ))}
 
         <SectionHeading title="RELATED-INVARIANTS" />
         {PLACEHOLDER_SELECTED_GOAL.invariants.map((invariant) => (
           <Box key={invariant.title} flexDirection="column" marginBottom={1}>
-            <Text color={TuiColors.accent} bold>
+            <Text color={SemanticColors.accent} bold>
               {invariant.title}
             </Text>
             <Box paddingLeft={2}>
-              <Text color={TuiColors.primary} wrap="wrap">
+              <Text color={SemanticColors.primary} wrap="wrap">
                 {invariant.description}
               </Text>
             </Box>

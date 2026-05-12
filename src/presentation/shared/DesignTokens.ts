@@ -4,7 +4,8 @@ export const BaseColors = {
   accent: "#40c8c8",
   muted: "#808080",
   brandBlue: "#66b4f4",
-  brandBlueMuted: "#031c30ff",
+  brandBlue50: "#0a528c",
+  brandBlue10: "#031c30",
   brandPurple: "#aa00d4",
   brandRed: "#ff2a2a",
   brandOrange: "#ff8307",
@@ -13,7 +14,7 @@ export const BaseColors = {
   brandMagenta: "#ff00aa",
 } as const;
 
-export const TuiColors = {
+export const SemanticColors = {
   primary: BaseColors.primary,
   secondary: BaseColors.secondary,
   accent: BaseColors.brandMagenta,
@@ -26,7 +27,7 @@ export const TuiColors = {
   panelBorder: BaseColors.brandBlue,
   label: BaseColors.brandBlue,
   keyBadge: BaseColors.brandBlue,
-  keyBadgeBackground: BaseColors.brandBlueMuted,
+  keyBadgeBackground: BaseColors.brandBlue10,
 } as const;
 
 export const TuiLayout = {

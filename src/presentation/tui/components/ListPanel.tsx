@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { BaseColors, TuiColors, TuiGlyphs } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 import { Panel } from "./Panel.js";
 
 interface ListPanelItem {
@@ -27,18 +27,18 @@ export function ListPanel({
   return (
     <Panel title={title} titleColor={titleColor} width={width}>
       {items.length === 0 ? (
-        <Text color={TuiColors.muted} italic>
+        <Text color={SemanticColors.muted} italic>
           {emptyMessage}
         </Text>
       ) : (
         items.map((item) => (
           <Box key={item.label}>
-            <Text color={item.color ?? TuiColors.accent}>
+            <Text color={item.color ?? SemanticColors.accent}>
               {TuiGlyphs.bullet}{" "}
             </Text>
-            <Text color={TuiColors.primary}>{item.label}</Text>
+            <Text color={SemanticColors.primary}>{item.label}</Text>
             {item.detail && (
-              <Text color={TuiColors.muted}> {item.detail}</Text>
+              <Text color={SemanticColors.muted}> {item.detail}</Text>
             )}
           </Box>
         ))

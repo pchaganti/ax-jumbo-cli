@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { BaseColors, TuiColors, TuiGlyphs } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 
 interface HeaderProps {
   projectName: string;
@@ -19,9 +19,9 @@ export function Header({
         <Text color={BaseColors.brandBlue} bold>
           {projectName}
         </Text>
-        <Text color={TuiColors.muted}>v{version}</Text>
+        <Text color={SemanticColors.muted}>v{version}</Text>
       </Box>
-      <Text color={TuiColors.muted} dimColor>
+      <Text color={SemanticColors.muted} dimColor>
         {TuiGlyphs.divider.repeat(terminalWidth)}
       </Text>
     </Box>

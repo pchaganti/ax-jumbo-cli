@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { BaseColors, TuiColors } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors } from "../../shared/DesignTokens.js";
 
 interface PanelProps {
   title: string;
@@ -12,8 +12,8 @@ interface PanelProps {
 
 export function Panel({
   title,
-  titleColor = TuiColors.headline,
-  borderColor = TuiColors.muted,
+  titleColor = SemanticColors.headline,
+  borderColor = SemanticColors.muted,
   width,
   children,
 }: PanelProps): React.ReactElement {

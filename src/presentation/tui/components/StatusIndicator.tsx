@@ -1,14 +1,14 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { BaseColors, TuiColors, TuiGlyphs } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 
 export type StatusLevel = "active" | "idle" | "off" | "error";
 
 const STATUS_COLORS: Record<StatusLevel, string> = {
-  active: TuiColors.success,
-  idle: TuiColors.info,
-  off: TuiColors.muted,
-  error: TuiColors.error,
+  active: SemanticColors.success,
+  idle: SemanticColors.info,
+  off: SemanticColors.muted,
+  error: SemanticColors.error,
 };
 
 interface StatusIndicatorProps {
@@ -25,7 +25,7 @@ export function StatusIndicator({
   return (
     <Box>
       <Text color={color}>{TuiGlyphs.filledCircle} </Text>
-      <Text color={TuiColors.primary}>{label}: </Text>
+      <Text color={SemanticColors.primary}>{label}: </Text>
       <Text color={color}>{status}</Text>
     </Box>
   );
