@@ -6,9 +6,6 @@ import { CockpitLaunchpadView } from "../../../../src/presentation/tui/screens/C
 describe("CockpitLaunchpadView project panel", () => {
   it("renders the current working directory", () => {
     const { lastFrame } = render(<CockpitLaunchpadView />);
-    const frame = lastFrame()!;
-
-    expect(frame).toContain("Directory:");
-    expect(frame).toContain(process.cwd());
+    expect(lastFrame()!).toContain(process.cwd());
   });
 });

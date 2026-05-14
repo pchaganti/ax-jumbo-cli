@@ -2,12 +2,13 @@ import fs from "fs-extra";
 import * as path from "path";
 import { FileLogger } from "../../../src/infrastructure/logging/FileLogger";
 import { LogLevel } from "../../../src/application/logging/ILogger";
+import os from "os";
 
 describe("FileLogger", () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(process.cwd(), "test-logs-"));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "test-logs-"));
   });
 
   afterEach(async () => {

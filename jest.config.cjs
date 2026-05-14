@@ -1,6 +1,7 @@
 module.exports = {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
+  maxWorkers: '50%',
   roots: ['<rootDir>/tests'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
