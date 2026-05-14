@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { BaseColors, SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
+import { SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 import { Panel } from "./Panel.js";
 
 interface ListPanelItem {

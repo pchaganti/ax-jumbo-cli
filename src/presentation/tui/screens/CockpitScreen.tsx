@@ -2,7 +2,6 @@ import React, { useState, useCallback, useMemo } from "react";
 import { Box } from "ink";
 import { AnimatedBanner } from "../components/AnimatedBanner.js";
 import { generateCustomInfoBoxLines } from "../../cli/banner/AnimationFrames.js";
-import { TuiLayout } from "../../shared/DesignTokens.js";
 import { CockpitGreeterView } from "./CockpitGreeterView.js";
 import { CockpitUnprimedView } from "./CockpitUnprimedView.js";
 import { CockpitPrimedEmptyView } from "./CockpitPrimedEmptyView.js";
@@ -48,19 +47,19 @@ export function CockpitScreen({
   }, [state]);
 
   return (
-    <Box flexDirection="column" flexGrow={1} alignItems="center">
+    <Box flexDirection="column" flexGrow={1} width="100%">
       {(!bannerComplete || showBanner) && (
-        <Box marginTop={1}>
-        <AnimatedBanner
-          onComplete={handleBannerComplete}
-          persist={showBanner}
-          version={PLACEHOLDER_VERSION}
-          infoBoxLines={infoBoxLines}
-        />
+        <Box alignSelf="center" marginTop={1} flexShrink={0}>
+          <AnimatedBanner
+            onComplete={handleBannerComplete}
+            persist={showBanner}
+            version={PLACEHOLDER_VERSION}
+            infoBoxLines={infoBoxLines}
+          />
         </Box>
       )}
       {bannerComplete && (
-        <Box flexDirection="column">
+        <Box flexDirection="column" flexGrow={1} width="100%">
           {state === "uninitialized" && <CockpitGreeterView />}
           {state === "unprimed" && <CockpitUnprimedView />}
           {state === "primed-empty" && <CockpitPrimedEmptyView />}

@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Text } from "ink";
+import { Text } from "ink";
 import { BaseColors, SemanticColors } from "../../shared/DesignTokens.js";
 
 interface SectionHeadingProps {
@@ -12,10 +12,8 @@ export function SectionHeading({
   dimmed,
 }: SectionHeadingProps): React.ReactElement {
   return (
-    <Box marginTop={1} marginBottom={0}>
-      <Text color={dimmed ? BaseColors.brandBlue50 : SemanticColors.headline} bold>
-        | {title}
-      </Text>
-    </Box>
+    <Text color={dimmed ? BaseColors.brandBlue50 : SemanticColors.headline} bold>
+      | {title}
+    </Text>
   );
 }

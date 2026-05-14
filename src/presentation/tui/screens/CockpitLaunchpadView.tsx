@@ -1,165 +1,467 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Text } from "ink";
-import { BaseColors, SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 import { SectionHeading } from "../components/SectionHeading.js";
-import { StatusIndicator } from "../components/StatusIndicator.js";
+import { BaseColors } from "../../shared/DesignTokens.js";
 
-const GOAL_STATUS_COLORS: Record<string, string> = {
-  doing: SemanticColors.success,
-  refused: SemanticColors.muted,
-  submitted: SemanticColors.info,
-  blocked: SemanticColors.error,
-  approved: SemanticColors.accent,
+interface GlyphStyle {
+  color: string;
+  dimColor?: boolean;
+}
+
+type GlyphColorMap = Readonly<Record<string, string>>;
+type GlyphPalette = readonly string[];
+
+interface RefinerGlyphCell {
+  glyph: string;
+  color: string;
+}
+
+const REFINER_FRAME_COUNT = 9;
+const REFINER_GRID_WIDTH = 35;
+const REFINER_GRID_HEIGHT = 10;
+const REFINER_GRID_SIZE = REFINER_GRID_WIDTH * REFINER_GRID_HEIGHT;
+const REVIEWER_FRAME_COUNT = 6;
+const CODIFIER_FRAME_COUNT = 6;
+const CODIFIER_GRID_WIDTH = 35;
+const CODIFIER_GRID_HEIGHT = 10;
+const CODIFIER_GROUP_LENGTH = 4;
+const CODIFIER_ROW_REPEAT_COUNT = 7;
+const DEFAULT_REFINER_FRAME_DURATION_MS = 500;
+const DEFAULT_REVIEWER_FRAME_DURATION_MS = 350;
+const DEFAULT_CODIFIER_FRAME_DURATION_MS = 200;
+const DEFAULT_CODIFIER_GLYPH_STYLE: GlyphStyle = {
+  color: BaseColors.shade3,
+  dimColor: false,
 };
 
-const PLACEHOLDER_GOALS = [
-  { title: "Implement user authentication blah blah blah blah blah", status: "doing" },
-  { title: "Add dashboard analytics", status: "refused" },
-  { title: "Write API documentation", status: "submitted" },
-  { title: "Refactor database layer", status: "blocked" },
-  { title: "Fix skipped state", status: "approved" },
-  { title: "Extend Xyz entity", status: "refused" },
-];
+const REFINER_GLYPHS = [
+  "•",
+] as const;
 
-const PLACEHOLDER_SELECTED_GOAL = {
-  meta: [
-    { label: "id", value: "abcd1234-5678-90ab-cdef-25ef30dfe323" },
-    { label: "title", value: "Add dashboard analytics" },
-    { label: "manager", value: "c6a959fb-dfe5-4e96-8b1c-2f2d9d4b9d3d" },
-    { label: "prerequisite(s)", value: "fc630366-abe7-ac7b-fe31-5b2347a48bb3" },
-  ],
-  objective:
-    "Integrate analytics tracking into the dashboard to surface usage patterns, " +
-    "performance metrics, and user engagement data for stakeholder reporting.",
-  criteria: [
-    "Dashboard renders analytics widgets with live data",
-    "Usage patterns surfaced through chart components",
-    "Performance metrics update on configurable interval",
-    "User engagement data exportable as CSV",
-    "All analytics queries respect tenant isolation",
-    "Dashboard loads within acceptable latency threshold",
-  ],
-  scopeIn: [
-    "src/presentation/dashboard",
-    "src/application/analytics",
-    "src/domain/analytics",
-    "tests/presentation/dashboard",
-    "tests/application/analytics",
-  ],
-  invariants: [
-    {
-      title: "Single Responsibility",
-      description:
-        "Each class/module has one reason to change.",
-    },
-    {
-      title: "Dependency Inversion",
-      description:
-        "Depend on abstractions, not concretions. Application depends only on abstractions.",
-    },
-  ],
+const CODIFIER_ALPHANUMERIC_GLYPHS = [
+  ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+] as const;
+
+const REFINER_GLYPH_COLORS = [
+  BaseColors.primary,
+  BaseColors.shade1,
+  BaseColors.shade2,
+  BaseColors.shade3,
+  BaseColors.shade4,
+  BaseColors.shade5,
+  BaseColors.shade6,
+  BaseColors.shade7,
+] as const;
+
+const DEFAULT_CODIFIER_GLYPH_COLORS: GlyphColorMap = {
+  "█": BaseColors.shade2,
+  "░": BaseColors.shade3,
+};
+const DEFAULT_REVIEWER_GLYPH_COLORS: GlyphColorMap = {
+  "█": BaseColors.shade1,
+  "░": BaseColors.shade4,
+  "│": BaseColors.shade7,
 };
 
-export function CockpitLaunchpadView(): React.ReactElement {
+interface CockpitLaunchpadViewProps {
+  refinerGlyphPalette?: GlyphPalette;
+  reviewerGlyphColors?: GlyphColorMap;
+  codifierGlyphColors?: GlyphColorMap;
+  refinerFrameDurationMs?: number;
+  reviewerFrameDurationMs?: number;
+  codifierFrameDurationMs?: number;
+}
+
+export function CockpitLaunchpadView({
+  refinerGlyphPalette = REFINER_GLYPH_COLORS,
+  reviewerGlyphColors = DEFAULT_REVIEWER_GLYPH_COLORS,
+  codifierGlyphColors = DEFAULT_CODIFIER_GLYPH_COLORS,
+  refinerFrameDurationMs = DEFAULT_REFINER_FRAME_DURATION_MS,
+  reviewerFrameDurationMs = DEFAULT_REVIEWER_FRAME_DURATION_MS,
+  codifierFrameDurationMs = DEFAULT_CODIFIER_FRAME_DURATION_MS,
+}: CockpitLaunchpadViewProps = {}): React.ReactElement {
+  const currentDirectory = process.cwd();
+  const [reviewerFrameIndex, setReviewerFrameIndex] = useState(0);
+  const [refinerFrameIndex, setRefinerFrameIndex] = useState(0);
+  const [codifierFrameIndex, setCodifierFrameIndex] = useState(0);
+
+  useEffect(() => {
+    if (reviewerFrameDurationMs <= 0) return;
+
+    const timer = setInterval(() => {
+      setReviewerFrameIndex((previousFrameIndex) =>
+        (previousFrameIndex + 1) % REVIEWER_FRAME_COUNT
+      );
+    }, reviewerFrameDurationMs);
+
+    return () => clearInterval(timer);
+  }, [reviewerFrameDurationMs]);
+
+  useEffect(() => {
+    if (REFINER_FRAME_COUNT <= 1 || refinerFrameDurationMs <= 0) return;
+
+    const timer = setInterval(() => {
+      setRefinerFrameIndex((previousFrameIndex) =>
+        (previousFrameIndex + 1) % REFINER_FRAME_COUNT
+      );
+    }, refinerFrameDurationMs);
+
+    return () => clearInterval(timer);
+  }, [refinerFrameDurationMs]);
+
+  useEffect(() => {
+    if (codifierFrameDurationMs <= 0) return;
+
+    const timer = setInterval(() => {
+      setCodifierFrameIndex((previousFrameIndex) =>
+        (previousFrameIndex + 1) % CODIFIER_FRAME_COUNT
+      );
+    }, codifierFrameDurationMs);
+
+    return () => clearInterval(timer);
+  }, [codifierFrameDurationMs]);
+
   return (
-    <Box flexDirection="row" paddingX={1} flexGrow={1}>
-      <Box flexDirection="column" flexBasis="50%" paddingRight={2}>
-        <SectionHeading title="GOALS" />
-        {PLACEHOLDER_GOALS.map((goal) => (
-          <Box key={goal.title}>
-            <Box flexDirection="row">
-              <Box flexDirection="column" flexBasis="5%" />
-              <Box flexDirection="column" flexBasis="3%">
-                <Text color={GOAL_STATUS_COLORS[goal.status] ?? SemanticColors.muted}>
-                  {TuiGlyphs.bullet}
-                </Text>
-              </Box>
-              <Box flexDirection="column" flexBasis="72%" flexWrap="wrap">
-                <Text color={SemanticColors.primary}>
-                  {goal.title.substring(0,34)}{goal.title.length > 35 ? "..." : ""}
-                </Text>
-              </Box>
-              <Box flexDirection="column" flexBasis="20%" flexWrap="wrap">
-                <Text color={SemanticColors.muted}>
-                  {" "}
-                  [{goal.status}]
-                </Text>
-              </Box>
-            </Box>
-          </Box>
-        ))}
+    <Box flexDirection="column" width="100%" height="100%">
+      {/* Top row */}
+      <Box flexDirection="row" flexGrow={1} flexBasis={0} width="100%">
         <Box
-          marginTop={1}
           flexDirection="column"
-          alignItems="center"
-          width="100%"
-        >
-          <Text>
-            <Text color={SemanticColors.primary}>Press </Text>
-            <Text color={BaseColors.brandBlue} bold>
-              [g]
+          flexGrow={1}
+          flexBasis={0}
+          height="100%"
+          padding={1}>
+            <Text color={BaseColors.shade3} bold>
+              PROJECT// <Text color={BaseColors.shade4}>{currentDirectory}</Text>
             </Text>
-            <Text color={SemanticColors.primary}> to add a goal</Text>
-          </Text>
-        </Box>
-
-        <SectionHeading title="WORKERS" />
-        <Box flexDirection="column">
-          <StatusIndicator label="Auto Goal Refiner" status="active" />
-          <StatusIndicator label="Auto Goal Reviewer" status="error" />
-          <StatusIndicator label="Auto Goal Implementor" status="error" />
-          <StatusIndicator label="Auto Goal Codifier" status="idle" />
-        </Box>
-      </Box>
-
-      <Box flexDirection="column" flexBasis="50%">
-        <SectionHeading title="Goal Details" />
-        {PLACEHOLDER_SELECTED_GOAL.meta.map((entry) => (
-          <Box key={entry.label}>
-            <Box width={18}>
-              <Text color={SemanticColors.muted}>{entry.label}:</Text>
-            </Box>
-            <Text color={SemanticColors.primary}>{entry.value}</Text>
-          </Box>
-        ))}
-
-        <SectionHeading title="OBJECTIVE" dimmed={true} />
-        <Box>
-          <Text color={SemanticColors.primary} wrap="wrap">
-            {PLACEHOLDER_SELECTED_GOAL.objective}
-          </Text>
-        </Box>
-
-        <SectionHeading title="CRITERIA" dimmed={true} />
-        {PLACEHOLDER_SELECTED_GOAL.criteria.map((criterion) => (
-          <Box key={criterion}>
-            <Text color={SemanticColors.accent}>{TuiGlyphs.bullet} </Text>
-            <Text color={SemanticColors.primary}>{criterion}</Text>
-          </Box>
-        ))}
-
-        <SectionHeading title="SCOPE-IN" />
-        {PLACEHOLDER_SELECTED_GOAL.scopeIn.map((path) => (
-          <Box key={path}>
-            <Text color={SemanticColors.accent}>{TuiGlyphs.bullet} </Text>
-            <Text color={SemanticColors.primary}>{path}</Text>
-          </Box>
-        ))}
-
-        <SectionHeading title="RELATED-INVARIANTS" />
-        {PLACEHOLDER_SELECTED_GOAL.invariants.map((invariant) => (
-          <Box key={invariant.title} flexDirection="column" marginBottom={1}>
-            <Text color={SemanticColors.accent} bold>
-              {invariant.title}
-            </Text>
-            <Box paddingLeft={2}>
-              <Text color={SemanticColors.primary} wrap="wrap">
-                {invariant.description}
+            <Box flexDirection="column" marginTop={1}>
+              <Text color={BaseColors.shade4}>
+                Name: <Text color={BaseColors.shade2}>My Project</Text>
+              </Text>
+              <Text color={BaseColors.shade4}>
+                Purpose: 
+              </Text>
+              <Text color={BaseColors.shade2}>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
               </Text>
             </Box>
+        </Box>
+        <Box
+          flexDirection="column"
+          flexGrow={1}
+          flexBasis={0}
+          height="100%"
+          padding={1}>
+          <Text color={BaseColors.shade3} bold>
+            SESSION//
+          </Text>
+        </Box>
+      </Box>
+      {/* Bottom row */}
+      <Box flexDirection="row" flexGrow={1} flexBasis={0} width="100%">
+        <Box
+          flexDirection="column"
+          flexGrow={1}
+          flexBasis={0}
+          height="100%"
+          alignItems="center"
+          padding={1}>
+          <Box width={35} alignItems="center">
+            <Text color={BaseColors.shade4} bold>
+              REVIEWER// <Text color={BaseColors.shade5}>(idle)</Text>
+            </Text>
           </Box>
-        ))}
+          <Box flexDirection="column" flexWrap="nowrap" width={35}>
+            {getReviewerFrame(reviewerFrameIndex).map((line, lineIndex) => (
+              <Text key={`${reviewerFrameIndex}-${lineIndex}`}>
+                {getStyledGlyphSegments(line, reviewerGlyphColors).map((segment, segmentIndex) => (
+                  <Text
+                    key={`${reviewerFrameIndex}-${lineIndex}-${segmentIndex}`}
+                    color={segment.color}
+                    dimColor={segment.dimColor}>
+                    {segment.text}
+                  </Text>
+                ))}
+              </Text>
+            ))}
+          </Box>
+        </Box>
+        <Box
+          flexDirection="column"
+          flexGrow={1}
+          flexBasis={0}
+          height="100%"
+          alignItems="center"
+          padding={1}>
+          <Box width={35} alignItems="center">
+            <Text color={BaseColors.shade4} bold>
+              REFINER// <Text color={BaseColors.shade5}>(idle)</Text>
+            </Text>
+          </Box>
+          <Box flexDirection="column" flexWrap="nowrap" width={35}>
+            {getRefinerFrame(refinerFrameIndex, refinerGlyphPalette).map((line, lineIndex) => (
+              <Text key={`${refinerFrameIndex}-${lineIndex}`}>
+                {getRefinerGlyphSegments(line).map((segment, segmentIndex) => (
+                  <Text
+                    key={`${refinerFrameIndex}-${lineIndex}-${segmentIndex}`}
+                    color={segment.color}>
+                    {segment.text}
+                  </Text>
+                ))}
+              </Text>
+            ))}
+          </Box>
+        </Box>
+        <Box
+          flexDirection="column"
+          flexGrow={1}
+          flexBasis={0}
+          height="100%"
+          alignItems="center"
+          padding={1}>
+          <Box width={35} alignItems="center">
+            <Text color={BaseColors.shade4} bold>
+              CODIFIER//
+            </Text>
+          </Box>
+          <Box flexDirection="column" flexWrap="nowrap" width={35}>
+            {getCodifierFrame(codifierFrameIndex).map((line, lineIndex) => (
+              <Text key={`${codifierFrameIndex}-${lineIndex}`}>
+                {getStyledGlyphSegments(line, codifierGlyphColors).map((segment, segmentIndex) => (
+                  <Text
+                    key={`${codifierFrameIndex}-${lineIndex}-${segmentIndex}`}
+                    color={segment.color}
+                    dimColor={segment.dimColor}>
+                    {segment.text}
+                  </Text>
+                ))}
+              </Text>
+            ))}
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
+}
+
+export function getCodifierFrame(index: number): string[] {
+  if (index < 0 || index >= CODIFIER_FRAME_COUNT) {
+    return ["error"];
+  }
+
+  const random = createSeededRandom(createSeed(index + CODIFIER_FRAME_COUNT));
+
+  return Array.from({ length: CODIFIER_GRID_HEIGHT }, () => {
+    const groups = new Set<string>();
+
+    while (groups.size < CODIFIER_ROW_REPEAT_COUNT) {
+      groups.add(
+        Array.from({ length: CODIFIER_GROUP_LENGTH }, () =>
+          pickRandomValue(CODIFIER_ALPHANUMERIC_GLYPHS, random)
+        ).join("")
+      );
+    }
+
+    return Array.from(groups).map((group) => `${group}.`).join("");
+  });
+}
+
+function getReviewerFrame(index: number): string[] {
+  switch(index) { 
+    case 0: {
+      return [
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "  ███ ███ ███ ███ ███ ███ ███ ███  ",
+        "  ░░░ ░░░ ░░░ ░░░ ░░░ ░░░ ░░░ ░░░  ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+      ];
+    }
+    case 1: {
+      return [
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "  ███  │   │   │  ███  │  ███ ███  ",
+        "  ░░░ ███  │  ███ ░░░ ███ ░░░ ░░░  ",
+        "   │  ░░░ ███ ░░░  │  ░░░  │   │   ",
+        "   │   │  ░░░  │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+      ];
+    }
+    case 2: {
+      return [
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "  ███  │   │   │   │   │   │  ███  ",
+        "  ░░░  │   │  ███  │  ███  │  ░░░  ",
+        "   │  ███  │  ░░░ ███ ░░░ ███  │   ",
+        "   │  ░░░  │   │  ░░░  │  ░░░  │   ",
+        "   │   │  ███  │   │   │   │   │   ",
+        "   │   │  ░░░  │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+      ];
+    }
+    case 3: {
+      return [
+        "   │   │   │   │   │   │   │   │   ",
+        "  ███  │   │   │   │   │   │   │   ",
+        "  ░░░  │   │   │   │  ███  │  ███  ",
+        "   │  ███  │   │   │  ░░░ ███ ░░░  ",
+        "   │  ░░░  │  ███  │   │  ░░░  │   ",
+        "   │   │   │  ░░░ ███  │   │   │   ",
+        "   │   │   │   │  ░░░  │   │   │   ",
+        "   │   │  ███  │   │   │   │   │   ",
+        "   │   │  ░░░  │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+      ];
+    }
+    case 4: {
+      return [
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "  ███  │   │   │   │   │   │  ███  ",
+        "  ░░░  │   │  ███  │  ███  │  ░░░  ",
+        "   │  ███  │  ░░░ ███ ░░░ ███  │   ",
+        "   │  ░░░  │   │  ░░░  │  ░░░  │   ",
+        "   │   │  ███  │   │   │   │   │   ",
+        "   │   │  ░░░  │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+      ];
+    }
+    case 5: {
+      return [
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "  ███  │   │   │   │   │   │  ███  ",
+        "  ░░░  │   │  ███  │  ███  │  ░░░  ",
+        "   │  ███  │  ░░░ ███ ░░░ ███  │   ",
+        "   │  ░░░  │   │  ░░░  │  ░░░  │   ",
+        "   │   │  ███  │   │   │   │   │   ",
+        "   │   │  ░░░  │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+        "   │   │   │   │   │   │   │   │   ",
+      ];
+    }
+    default: {
+      return [
+        "error"
+      ];
+    }
+  }
+}
+
+function getRefinerFrame(
+  index: number,
+  glyphPalette: GlyphPalette,
+): RefinerGlyphCell[][] {
+  if (index < 0 || index >= REFINER_FRAME_COUNT) {
+    return [[{ glyph: "error", color: DEFAULT_CODIFIER_GLYPH_STYLE.color }]];
+  }
+
+  const glyphGrid = createRefinerGlyphGrid(index, glyphPalette);
+
+  return Array.from({ length: REFINER_GRID_HEIGHT }, (_, rowIndex) => {
+    const start = rowIndex * REFINER_GRID_WIDTH;
+    return glyphGrid.slice(start, start + REFINER_GRID_WIDTH);
+  });
+}
+
+function getRefinerGlyphSegments(
+  line: RefinerGlyphCell[],
+): Array<{ text: string; color: string }> {
+  const segments: Array<{ text: string; color: string }> = [];
+
+  for (const cell of line) {
+    const previousSegment = segments[segments.length - 1];
+
+    if (previousSegment !== undefined && previousSegment.color === cell.color) {
+      previousSegment.text += cell.glyph;
+      continue;
+    }
+
+    segments.push({ text: cell.glyph, color: cell.color });
+  }
+
+  return segments;
+}
+
+function getStyledGlyphSegments(
+  line: string,
+  glyphColors: GlyphColorMap,
+): Array<GlyphStyle & { text: string }> {
+  const segments: Array<GlyphStyle & { text: string }> = [];
+
+  for (const character of line) {
+    const glyphStyle = getGlyphStyle(character, glyphColors);
+    const previousSegment = segments[segments.length - 1];
+
+    if (
+      previousSegment !== undefined
+      && previousSegment.color === glyphStyle.color
+      && previousSegment.dimColor === glyphStyle.dimColor
+    ) {
+      previousSegment.text += character;
+      continue;
+    }
+
+    segments.push({
+      text: character,
+      color: glyphStyle.color,
+      dimColor: glyphStyle.dimColor,
+    });
+  }
+
+  return segments;
+}
+
+function getGlyphStyle(
+  character: string,
+  glyphColors: GlyphColorMap,
+): GlyphStyle {
+  const color = glyphColors[character];
+
+  if (color === undefined) {
+    return DEFAULT_CODIFIER_GLYPH_STYLE;
+  }
+
+  return { color };
+}
+
+function createRefinerGlyphGrid(
+  frameIndex: number,
+  glyphPalette: GlyphPalette,
+): RefinerGlyphCell[] {
+  const random = createSeededRandom(createSeed(frameIndex));
+
+  return Array.from({ length: REFINER_GRID_SIZE }, () => ({
+    glyph: pickRandomValue(REFINER_GLYPHS, random),
+    color: pickRandomValue(glyphPalette, random),
+  }));
+}
+
+function createSeed(frameIndex: number): number {
+  return (frameIndex + 1) * 1009 + REFINER_GRID_SIZE * 9176;
+}
+
+function createSeededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 0x100000000;
+  };
+}
+
+function pickRandomValue<T>(values: readonly T[], random: () => number): T {
+  return values[Math.floor(random() * values.length)];
 }

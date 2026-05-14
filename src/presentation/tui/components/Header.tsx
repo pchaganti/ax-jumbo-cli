@@ -14,16 +14,16 @@ export function Header({
   terminalWidth,
 }: HeaderProps): React.ReactElement {
   return (
-    <Box flexDirection="column" width={terminalWidth}>
+    <Box flexDirection="column" width={terminalWidth} backgroundColor={BaseColors.grey0}>
       <Box justifyContent="space-between" paddingX={1}>
         <Text color={BaseColors.brandBlue} bold>
           {projectName}
         </Text>
-        <Text color={SemanticColors.muted}>v{version}</Text>
+        <Text color={BaseColors.brandBlue}>v{version}</Text>
       </Box>
-      <Text color={SemanticColors.muted} dimColor>
+      {/* <Text color={SemanticColors.muted} dimColor>
         {TuiGlyphs.divider.repeat(terminalWidth)}
-      </Text>
+      </Text> */}
     </Box>
   );
 }

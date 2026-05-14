@@ -57,7 +57,6 @@ function MenuColumn({
         const isCurrentScreen =
           columnLevel === 0 && index === activeScreenIndex;
         const hasChildren = "children" in item && item.children && item.children.length > 0;
-        const shortcut = "shortcut" in item ? item.shortcut : undefined;
 
         return (
           <Box key={item.key}>

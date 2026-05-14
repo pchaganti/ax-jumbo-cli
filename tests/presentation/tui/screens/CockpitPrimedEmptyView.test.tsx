@@ -6,7 +6,7 @@ import { CockpitPrimedEmptyView } from "../../../../src/presentation/tui/screens
 describe("CockpitPrimedEmptyView", () => {
   it("announces project memory is ready", () => {
     const { lastFrame } = render(<CockpitPrimedEmptyView />);
-    expect(lastFrame()).toContain("Project memory is ready");
+    expect(lastFrame()).toContain("Project memory is stored");
   });
 
   it("explains what goals are", () => {
@@ -26,7 +26,7 @@ describe("CockpitPrimedEmptyView", () => {
 
   it("renders the add goal key indicator", () => {
     const { lastFrame } = render(<CockpitPrimedEmptyView />);
-    expect(lastFrame()).toContain("[g]");
+    expect(lastFrame()).toMatch(/Press[\s\S]*to add a goal/);
   });
 
   it("renders the add goal call-to-action", () => {

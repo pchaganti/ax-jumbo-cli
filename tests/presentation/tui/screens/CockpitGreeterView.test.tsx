@@ -16,7 +16,7 @@ describe("CockpitGreeterView", () => {
 
   it("renders the initialize key indicator", () => {
     const { lastFrame } = render(<CockpitGreeterView />);
-    expect(lastFrame()).toContain("│ i │");
+    expect(lastFrame()).toMatch(/Press[\s\S]*to initialize/);
   });
 
   it("renders the initialize call-to-action", () => {

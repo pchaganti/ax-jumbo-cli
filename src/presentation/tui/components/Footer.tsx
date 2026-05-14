@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 import { KeyBadge } from "./KeyBadge.js";
 
 interface FooterProps {
@@ -9,10 +9,10 @@ interface FooterProps {
 
 export function Footer({ terminalWidth }: FooterProps): React.ReactElement {
   return (
-    <Box flexDirection="column" width={terminalWidth}>
-      <Text color={SemanticColors.muted} dimColor>
+    <Box flexDirection="column" width={terminalWidth} backgroundColor={BaseColors.grey0}>
+      {/* <Text color={SemanticColors.muted} dimColor>
         {TuiGlyphs.divider.repeat(terminalWidth)}
-      </Text>
+      </Text> */}
       <Box justifyContent="space-between" paddingX={1}>
         <Box gap={2}>
           <KeyBadge char="m" label="menu" />

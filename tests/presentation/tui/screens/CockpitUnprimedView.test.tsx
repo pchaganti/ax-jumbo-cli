@@ -11,7 +11,7 @@ describe("CockpitUnprimedView", () => {
 
   it("explains the value of priming", () => {
     const { lastFrame } = render(<CockpitUnprimedView />);
-    expect(lastFrame()).toContain("Goals work best");
+    expect(lastFrame()).toContain("project context");
   });
 
   it("instructs to open another shell", () => {
@@ -26,6 +26,6 @@ describe("CockpitUnprimedView", () => {
 
   it("mentions future instructions prompt", () => {
     const { lastFrame } = render(<CockpitUnprimedView />);
-    expect(lastFrame()).toContain("future instructions");
+    expect(lastFrame()).toContain("follow instructions");
   });
 });

@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { BaseColors, SemanticColors } from "../../shared/DesignTokens.js";
+import { SemanticColors } from "../../shared/DesignTokens.js";
 
 interface PanelProps {
   title: string;
