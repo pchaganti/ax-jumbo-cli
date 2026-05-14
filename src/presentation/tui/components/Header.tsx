@@ -14,7 +14,7 @@ export function Header({
   terminalWidth,
 }: HeaderProps): React.ReactElement {
   return (
-    <Box flexDirection="column" width={terminalWidth} backgroundColor={BaseColors.grey0}>
+    <Box flexDirection="column" width={terminalWidth}>
       <Box justifyContent="space-between" paddingX={1}>
         <Text color={BaseColors.brandBlue} bold>
           {projectName}

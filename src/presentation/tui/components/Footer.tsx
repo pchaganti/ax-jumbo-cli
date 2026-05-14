@@ -9,7 +9,7 @@ interface FooterProps {
 
 export function Footer({ terminalWidth }: FooterProps): React.ReactElement {
   return (
-    <Box flexDirection="column" width={terminalWidth} backgroundColor={BaseColors.grey0}>
+    <Box flexDirection="column" width={terminalWidth}>
       {/* <Text color={SemanticColors.muted} dimColor>
         {TuiGlyphs.divider.repeat(terminalWidth)}
       </Text> */}

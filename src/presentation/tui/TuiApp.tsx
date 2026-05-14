@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Box, useApp, useInput, useStdout } from "ink";
 import { Header } from "./components/Header.js";
 import { Footer } from "./components/Footer.js";
 import { MegaMenu } from "./components/MegaMenu.js";
 import { ScreenRouter } from "./ScreenRouter.js";
+import { InitFlow } from "./flows/InitFlow.js";
 import { DEFAULT_SCREEN_INDEX } from "./ScreenDefinitions.js";
 
 const PLACEHOLDER_PROJECT_NAME = "Jumbo";
@@ -39,9 +40,10 @@ export function TuiApp(): React.ReactElement {
     DEFAULT_SCREEN_INDEX,
   );
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
+  const [initFlowOpen, setInitFlowOpen] = useState(false);
 
   useInput((input) => {
-    if (megaMenuOpen) {
+    if (megaMenuOpen || initFlowOpen) {
       return;
     }
     if (input === "q") {
@@ -50,7 +52,18 @@ export function TuiApp(): React.ReactElement {
     if (input === "m" || input === "M") {
       setMegaMenuOpen(true);
     }
+    if (input === "i" || input === "I") {
+      setInitFlowOpen(true);
+    }
   });
+
+  const handleInitComplete = useCallback((_values: Record<string, string>) => {
+    setInitFlowOpen(false);
+  }, []);
+
+  const handleInitCancel = useCallback(() => {
+    setInitFlowOpen(false);
+  }, []);
 
   const handleScreenSelect = (index: number) => {
     setActiveScreenIndex(index);
@@ -70,16 +83,31 @@ export function TuiApp(): React.ReactElement {
           terminalWidth={columns}
         />
       </Box>
-      <Box flexGrow={1} flexDirection="column">
-        {megaMenuOpen ? (
-          <MegaMenu
-            activeScreenIndex={activeScreenIndex}
-            onScreenSelect={handleScreenSelect}
-            onClose={handleMegaMenuClose}
-            terminalWidth={columns}
-          />
-        ) : (
-          <ScreenRouter activeScreenIndex={activeScreenIndex} />
+      <Box flexGrow={1} flexDirection="column" position="relative">
+        <Box flexGrow={1} flexDirection="column">
+          {megaMenuOpen ? (
+            <MegaMenu
+              activeScreenIndex={activeScreenIndex}
+              onScreenSelect={handleScreenSelect}
+              onClose={handleMegaMenuClose}
+              terminalWidth={columns}
+            />
+          ) : (
+            <ScreenRouter activeScreenIndex={activeScreenIndex} />
+          )}
+        </Box>
+        {initFlowOpen && (
+          <Box
+            position="absolute"
+            width="100%"
+            height="100%"
+            flexDirection="column"
+          >
+            <InitFlow
+              onComplete={handleInitComplete}
+              onCancel={handleInitCancel}
+            />
+          </Box>
         )}
       </Box>
       <Box flexShrink={0}>
