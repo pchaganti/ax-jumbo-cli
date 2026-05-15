@@ -5,6 +5,7 @@ import { Footer } from "./components/Footer.js";
 import { MegaMenu } from "./components/MegaMenu.js";
 import { ScreenRouter } from "./ScreenRouter.js";
 import { InitFlow } from "./flows/InitFlow.js";
+import type { InitFlowActionControllers } from "./flows/InitFlow.js";
 import { DEFAULT_SCREEN_INDEX } from "./ScreenDefinitions.js";
 import {
   TuiStateReaderProvider,
@@ -42,28 +43,42 @@ interface TuiAppProps {
   readonly version?: string;
   readonly stateReaderControllers?: TuiStateReaderControllers;
   readonly stateReaderOptions?: TuiStateReaderOptions;
+  readonly actionControllers?: InitFlowActionControllers;
+  readonly initialFlow?: "cockpit" | "init";
 }
 
 export function TuiApp({
   version = "",
   stateReaderControllers,
   stateReaderOptions,
+  actionControllers,
+  initialFlow = "cockpit",
 }: TuiAppProps = {}): React.ReactElement {
   return (
     <TuiStateReaderProvider
       controllers={stateReaderControllers}
       options={stateReaderOptions}
     >
-      <TuiAppFrame version={version} />
+      <TuiAppFrame
+        version={version}
+        actionControllers={actionControllers}
+        initialFlow={initialFlow}
+      />
     </TuiStateReaderProvider>
   );
 }
 
 interface TuiAppFrameProps {
   readonly version: string;
+  readonly actionControllers?: InitFlowActionControllers;
+  readonly initialFlow: "cockpit" | "init";
 }
 
-function TuiAppFrame({ version }: TuiAppFrameProps): React.ReactElement {
+function TuiAppFrame({
+  version,
+  actionControllers,
+  initialFlow,
+}: TuiAppFrameProps): React.ReactElement {
   const { exit } = useApp();
   const { columns, rows } = useTerminalDimensions();
   const projectContext = useProjectContext();
@@ -71,7 +86,7 @@ function TuiAppFrame({ version }: TuiAppFrameProps): React.ReactElement {
     DEFAULT_SCREEN_INDEX,
   );
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
-  const [initFlowOpen, setInitFlowOpen] = useState(false);
+  const [initFlowOpen, setInitFlowOpen] = useState(initialFlow === "init");
 
   useInput((input) => {
     if (megaMenuOpen || initFlowOpen) {
@@ -88,13 +103,22 @@ function TuiAppFrame({ version }: TuiAppFrameProps): React.ReactElement {
     }
   });
 
-  const handleInitComplete = useCallback((_values: Record<string, string>) => {
-    setInitFlowOpen(false);
-  }, []);
+  const handleInitComplete = useCallback(
+    (_values: Record<string, string>) => {
+      setInitFlowOpen(false);
+      if (initialFlow === "init") {
+        exit();
+      }
+    },
+    [exit, initialFlow],
+  );
 
   const handleInitCancel = useCallback(() => {
     setInitFlowOpen(false);
-  }, []);
+    if (initialFlow === "init") {
+      exit();
+    }
+  }, [exit, initialFlow]);
 
   const handleScreenSelect = (index: number) => {
     setActiveScreenIndex(index);
@@ -140,6 +164,7 @@ function TuiAppFrame({ version }: TuiAppFrameProps): React.ReactElement {
             flexDirection="column"
           >
             <InitFlow
+              actionControllers={actionControllers}
               onComplete={handleInitComplete}
               onCancel={handleInitCancel}
             />
@@ -147,7 +172,10 @@ function TuiAppFrame({ version }: TuiAppFrameProps): React.ReactElement {
         )}
       </Box>
       <Box flexShrink={0}>
-        <Footer terminalWidth={columns} />
+        <Footer
+          terminalWidth={columns}
+          shortcutsEnabled={!megaMenuOpen && !initFlowOpen}
+        />
       </Box>
     </Box>
   );

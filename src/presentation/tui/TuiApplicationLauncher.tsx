@@ -4,11 +4,13 @@ import type { IApplicationContainer } from "../../application/host/IApplicationC
 import { GetProjectSummaryQueryHandler } from "../../application/context/project/query/GetProjectSummaryQueryHandler.js";
 import { TuiApp } from "./TuiApp.js";
 import type { TuiStateReaderControllers } from "./state/TuiStateReader.js";
+import type { InitFlowActionControllers } from "./flows/InitFlow.js";
 
 export class TuiApplicationLauncher {
   constructor(
     private readonly version: string,
     private readonly container: IApplicationContainer | null,
+    private readonly initialFlow: "cockpit" | "init" = "cockpit",
   ) {}
 
   async launch(): Promise<void> {
@@ -16,6 +18,8 @@ export class TuiApplicationLauncher {
       <TuiApp
         version={this.version}
         stateReaderControllers={this.buildStateReaderControllers()}
+        actionControllers={this.buildActionControllers()}
+        initialFlow={this.initialFlow}
       />,
     );
 
@@ -38,6 +42,20 @@ export class TuiApplicationLauncher {
       getDependenciesController: this.container.getDependenciesController,
       getGuidelinesController: this.container.getGuidelinesController,
       getInvariantsController: this.container.getInvariantsController,
+    };
+  }
+
+  private buildActionControllers(): InitFlowActionControllers {
+    if (this.container === null) {
+      return {};
+    }
+
+    return {
+      planProjectInitController: this.container.planProjectInitController,
+      initializeProjectController: this.container.initializeProjectController,
+      addAudienceController: this.container.addAudienceController,
+      addValuePropositionController:
+        this.container.addValuePropositionController,
     };
   }
 }

@@ -53,6 +53,10 @@ describe("TuiApplicationLauncher", () => {
       getDependenciesController: { handle: jest.fn() },
       getGuidelinesController: { handle: jest.fn() },
       getInvariantsController: { getAllInvariants: jest.fn() },
+      planProjectInitController: { handle: jest.fn() },
+      initializeProjectController: { handle: jest.fn() },
+      addAudienceController: { handle: jest.fn() },
+      addValuePropositionController: { handle: jest.fn() },
     };
 
     const launcher = new TuiApplicationLauncher(
@@ -68,6 +72,12 @@ describe("TuiApplicationLauncher", () => {
         getGoalsController: object;
         getSessionsController: object;
       };
+      actionControllers: {
+        planProjectInitController: object;
+        initializeProjectController: object;
+        addAudienceController: object;
+        addValuePropositionController: object;
+      };
     }>;
     expect(element.props.stateReaderControllers.getProjectSummaryQueryHandler)
       .toBeDefined();
@@ -76,6 +86,18 @@ describe("TuiApplicationLauncher", () => {
     );
     expect(element.props.stateReaderControllers.getSessionsController).toBe(
       container.getSessionsController,
+    );
+    expect(element.props.actionControllers.planProjectInitController).toBe(
+      container.planProjectInitController,
+    );
+    expect(element.props.actionControllers.initializeProjectController).toBe(
+      container.initializeProjectController,
+    );
+    expect(element.props.actionControllers.addAudienceController).toBe(
+      container.addAudienceController,
+    );
+    expect(element.props.actionControllers.addValuePropositionController).toBe(
+      container.addValuePropositionController,
     );
   });
 });

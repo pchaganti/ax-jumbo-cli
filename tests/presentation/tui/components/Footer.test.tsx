@@ -33,4 +33,15 @@ describe("Footer", () => {
     expect(lastFrame()).toContain("notifications (0)");
     expect(lastFrame()).not.toContain("Daemon failure detected");
   });
+
+  it("does not toggle the notification drawer when shortcuts are disabled", async () => {
+    const { lastFrame, stdin } = render(
+      <Footer terminalWidth={80} shortcutsEnabled={false} />,
+    );
+
+    stdin.write("n");
+    await tick();
+
+    expect(lastFrame()).not.toContain("Notifications");
+  });
 });

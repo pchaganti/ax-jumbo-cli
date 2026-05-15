@@ -7,12 +7,16 @@ import type { NotificationDrawerNotification } from "./NotificationDrawer.js";
 
 interface FooterProps {
   terminalWidth: number;
+  shortcutsEnabled?: boolean;
 }
 
 const CURRENT_NOTIFICATIONS: readonly NotificationDrawerNotification[] = [];
 export const NOTIFICATION_NOTIFIER_COLOR = BaseColors.brandYellow;
 
-export function Footer({ terminalWidth }: FooterProps): React.ReactElement {
+export function Footer({
+  terminalWidth,
+  shortcutsEnabled = true,
+}: FooterProps): React.ReactElement {
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<
     readonly string[]
@@ -30,6 +34,10 @@ export function Footer({ terminalWidth }: FooterProps): React.ReactElement {
   ).length;
 
   useInput((input) => {
+    if (!shortcutsEnabled) {
+      return;
+    }
+
     if (input === "n" || input === "N") {
       setNotificationDrawerOpen((isOpen) => !isOpen);
     }

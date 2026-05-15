@@ -12,6 +12,8 @@ export interface WizardStepField {
   readonly key: string;
   readonly label: string;
   readonly placeholder?: string;
+  readonly required?: boolean;
+  readonly validate?: (value: string, values: Record<string, string>) => string | null;
 }
 
 export interface WizardStepDefinition {
@@ -25,6 +27,8 @@ export interface WizardProps {
   readonly steps: readonly WizardStepDefinition[];
   readonly onConfirm: (values: Record<string, string>) => void;
   readonly onCancel: () => void;
+  readonly dispatchError?: string | null;
+  readonly disabled?: boolean;
 }
 
 const OVERLAY_MIN_WIDTH = 60;
@@ -34,6 +38,8 @@ export function Wizard({
   steps,
   onConfirm,
   onCancel,
+  dispatchError = null,
+  disabled = false,
 }: WizardProps): React.ReactElement {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -78,6 +84,10 @@ export function Wizard({
   };
 
   useInput((input, key) => {
+    if (disabled) {
+      return;
+    }
+
     if (key.escape) {
       onCancel();
       return;
@@ -115,8 +125,13 @@ export function Wizard({
       const errors: Record<string, string> = {};
       for (const field of fields) {
         const fieldValue = currentValues[field.key] ?? "";
-        if (fieldValue.trim().length === 0) {
+        if (field.required !== false && fieldValue.trim().length === 0) {
           errors[field.key] = "Required";
+          continue;
+        }
+        const validationError = field.validate?.(fieldValue, currentValues);
+        if (validationError !== undefined && validationError !== null) {
+          errors[field.key] = validationError;
         }
       }
       if (Object.keys(errors).length > 0) {
@@ -200,6 +215,14 @@ export function Wizard({
           })}
         </Box>
 
+        {dispatchError !== null && (
+          <Box marginTop={1} width={innerWidth}>
+            <Text color={SemanticColors.error} wrap="wrap">
+              {dispatchError}
+            </Text>
+          </Box>
+        )}
+
         <Box marginTop={1} width={innerWidth}>
           <Text
             color={BaseColors.shade5}
@@ -212,7 +235,10 @@ export function Wizard({
         <Box marginTop={1} width={innerWidth}>
           <Box gap={2}>
             {!isFirstStep && <KeyBadge char="←" label="Back" />}
-            <KeyBadge char="⏎" label={isLastStep ? "Confirm" : "Next"} />
+            <KeyBadge
+              char="⏎"
+              label={disabled ? "Working" : isLastStep ? "Confirm" : "Next"}
+            />
             <KeyBadge char="esc" label="Cancel" />
             <KeyBadge char="tab" label="Next field" />
           </Box>
