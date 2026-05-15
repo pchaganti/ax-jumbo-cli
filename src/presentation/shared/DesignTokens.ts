@@ -38,6 +38,7 @@ export const BaseColors = {
   brandMagenta70: "#cc0088",
   brandMagenta50: "#800055",
   brandMagenta10: "#33001a",
+  dialog: "#B6D8BA",
 } as const;
 
 export const SemanticColors = {
@@ -61,6 +62,7 @@ export const SemanticColors = {
   surface: BaseColors.black,
   surfaceRaised: BaseColors.shade6,
   focusBorder: BaseColors.brandMagenta,
+  dialog: BaseColors.dialog,
 } as const;
 
 export const TuiLayout = {

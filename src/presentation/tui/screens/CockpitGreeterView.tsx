@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { SemanticColors, TuiLayout } from "../../shared/DesignTokens.js";
+import { BaseColors, SemanticColors, TuiLayout } from "../../shared/DesignTokens.js";
 import { CenteredPrompt } from "../components/CenteredPrompt.js";
 
 export function CockpitGreeterView(): React.ReactElement {
@@ -11,7 +11,7 @@ export function CockpitGreeterView(): React.ReactElement {
           <Box flexBasis="3%" />
           <Box flexDirection="column" flexBasis="94%">
             <Box marginTop={1}>
-              <Text color={SemanticColors.primary} wrap="wrap">
+              <Text color={SemanticColors.dialog} wrap="wrap">
                 Hi, I'm Jumbo. I give your coding agents the memory they're missing
                 and help you manage the context you provide to them when completing
                 tasks. So you can focus on what your building and not have to repeat

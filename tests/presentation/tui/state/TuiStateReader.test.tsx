@@ -11,6 +11,23 @@ import type { GoalView } from "../../../../src/application/context/goals/GoalVie
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 50));
 
+async function waitForFrame(
+  readFrame: () => string | undefined,
+  expectedText: string,
+): Promise<string> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const frame = readFrame() ?? "";
+
+    if (frame.includes(expectedText)) {
+      return frame;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+
+  return readFrame() ?? "";
+}
+
 const GOAL_VIEW: GoalView = {
   goalId: "goal_reader",
   title: "Wire reader",
@@ -60,9 +77,9 @@ describe("TuiStateReader", () => {
       </TuiStateReaderProvider>,
     );
 
-    await tick();
+    const frame = await waitForFrame(lastFrame, "Jumbo Project");
 
-    expect(lastFrame()).toContain("Jumbo Project");
+    expect(frame).toContain("Jumbo Project");
     unmount();
   });
 
