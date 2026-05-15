@@ -213,7 +213,7 @@ describe("Wizard", () => {
     expect(lastFrame()).toContain("Cancel");
   });
 
-  it("renders a bordered overlay", () => {
+  it("renders a structured overlay", () => {
     const { lastFrame } = render(
       <Wizard
         title="Setup"
@@ -223,8 +223,9 @@ describe("Wizard", () => {
       />,
     );
     const frame = lastFrame()!;
-    expect(frame).toContain("╭");
-    expect(frame).toContain("╯");
+    expect(frame).toContain("Setup");
+    expect(frame).toContain("First Step");
+    expect(frame).toContain("──");
   });
 
   it("handles backspace to delete characters", async () => {

@@ -27,7 +27,6 @@ export interface WizardProps {
   readonly onCancel: () => void;
 }
 
-const OVERLAY_BORDER_COLOR = SemanticColors.panelBorder;
 const OVERLAY_MIN_WIDTH = 60;
 
 export function Wizard({
@@ -166,6 +165,12 @@ export function Wizard({
         <Box flexDirection="column" gap={0}>
           <Text color={SemanticColors.headline} bold>
             {TuiGlyphs.accentBar} {title}
+          </Text>
+          <Text color={SemanticColors.primary} bold>
+            {currentStep.title}
+          </Text>
+          <Text color={SemanticColors.secondary}>
+            Step {currentStepIndex + 1} of {totalSteps}
           </Text>
         </Box>
 

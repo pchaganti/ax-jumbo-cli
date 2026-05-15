@@ -54,10 +54,10 @@ describe("WizardTextInput", () => {
     expect(lastFrame()).not.toContain("▎");
   });
 
-  it("renders the input prompt character", () => {
+  it("renders the cursor for an empty focused input", () => {
     const { lastFrame } = render(
       <WizardTextInput label="Name" value="" onChange={() => {}} />,
     );
-    expect(lastFrame()).toContain(">");
+    expect(lastFrame()).toContain("▎");
   });
 });
