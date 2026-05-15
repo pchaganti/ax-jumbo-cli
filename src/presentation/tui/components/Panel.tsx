@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { SemanticColors } from "../../shared/DesignTokens.js";
+import { SemanticColors, TuiLayout } from "../../shared/DesignTokens.js";
 
 interface PanelProps {
   title: string;
@@ -23,6 +23,7 @@ export function Panel({
       borderStyle="round"
       borderColor={borderColor}
       paddingX={1}
+      minWidth={TuiLayout.panelMinWidth}
       width={width}
     >
       {title ? (

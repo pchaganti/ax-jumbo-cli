@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import { SectionHeading } from "../components/SectionHeading.js";
 import { BaseColors } from "../../shared/DesignTokens.js";
+import { useProjectContext } from "../state/TuiStateReader.js";
 
 interface GlyphStyle {
   color: string;
@@ -81,6 +82,10 @@ export function CockpitLaunchpadView({
   codifierFrameDurationMs = DEFAULT_CODIFIER_FRAME_DURATION_MS,
 }: CockpitLaunchpadViewProps = {}): React.ReactElement {
   const currentDirectory = process.cwd();
+  const projectContext = useProjectContext();
+  const projectName = projectContext.data?.name ?? "Jumbo";
+  const projectPurpose =
+    projectContext.data?.purpose ?? "Project context has not been loaded.";
   const [reviewerFrameIndex, setReviewerFrameIndex] = useState(0);
   const [refinerFrameIndex, setRefinerFrameIndex] = useState(0);
   const [codifierFrameIndex, setCodifierFrameIndex] = useState(0);
@@ -136,14 +141,14 @@ export function CockpitLaunchpadView({
             </Text>
             <Box flexDirection="column" marginTop={1}>
               <Text color={BaseColors.shade3}>
-                Name: <Text color={BaseColors.shade2}>My Project</Text>
-              </Text>
-              <Text color={BaseColors.shade3}>
-                Purpose: 
-              </Text>
-              <Text color={BaseColors.shade1}>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              </Text>
+              Name: <Text color={BaseColors.shade2}>{projectName}</Text>
+            </Text>
+            <Text color={BaseColors.shade3}>
+              Purpose: 
+            </Text>
+            <Text color={BaseColors.shade1}>
+                {projectPurpose}
+            </Text>
             </Box>
         </Box>
         <Box

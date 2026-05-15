@@ -3,7 +3,12 @@ import { describe, expect, it } from "@jest/globals";
 import { render } from "ink-testing-library";
 import { ScreenRouter } from "../../../src/presentation/tui/ScreenRouter.js";
 
-const frameAt = (i: number) => render(<ScreenRouter activeScreenIndex={i} />).lastFrame()!;
+const frameAt = (i: number) => {
+  const { lastFrame, unmount } = render(<ScreenRouter activeScreenIndex={i} />);
+  const frame = lastFrame()!;
+  unmount();
+  return frame;
+};
 
 describe("ScreenRouter", () => {
   it("renders distinct output for each screen index", () => {

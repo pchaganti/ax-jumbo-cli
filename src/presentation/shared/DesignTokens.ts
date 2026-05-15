@@ -58,10 +58,18 @@ export const SemanticColors = {
   inputLabel: BaseColors.brandBlue,
   keyBadge: BaseColors.brandBlue,
   keyBadgeBackground: BaseColors.brandBlue10,
+  surface: BaseColors.black,
+  surfaceRaised: BaseColors.shade6,
+  focusBorder: BaseColors.brandMagenta,
 } as const;
 
 export const TuiLayout = {
   bannerWidth: 105,
+  panelMinWidth: 28,
+  listPanelWidth: 54,
+  detailPanelWidth: 74,
+  contentPaddingX: 1,
+  contentPaddingTop: 1,
 } as const;
 
 export const TuiSpacing = {

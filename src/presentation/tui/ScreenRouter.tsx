@@ -8,9 +8,11 @@ import { GoalsScreen } from "./screens/GoalsScreen.js";
 import { GuidelinesScreen } from "./screens/GuidelinesScreen.js";
 import { InvariantsScreen } from "./screens/InvariantsScreen.js";
 import { SessionScreen } from "./screens/SessionScreen.js";
+import type { ProjectLifecycleState } from "../../application/context/project/ProjectLifecycleState.js";
 
 interface ScreenRouterProps {
   activeScreenIndex: number;
+  projectLifecycleState?: ProjectLifecycleState;
 }
 
 const SCREEN_COMPONENTS: Record<
@@ -29,11 +31,16 @@ const SCREEN_COMPONENTS: Record<
 
 export function ScreenRouter({
   activeScreenIndex,
+  projectLifecycleState,
 }: ScreenRouterProps): React.ReactElement {
   const definition = SCREEN_DEFINITIONS[activeScreenIndex];
   const ScreenComponent = definition
     ? SCREEN_COMPONENTS[definition.key]
     : SCREEN_COMPONENTS.cockpit;
+
+  if ((definition?.key ?? "cockpit") === "cockpit") {
+    return <CockpitScreen state={projectLifecycleState} />;
+  }
 
   return <ScreenComponent />;
 }

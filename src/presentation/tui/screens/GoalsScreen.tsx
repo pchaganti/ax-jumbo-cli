@@ -4,30 +4,44 @@ import {
   BaseColors,
   SemanticColors,
   TuiGlyphs,
+  TuiLayout,
 } from "../../shared/DesignTokens.js";
+import type { GoalStatusType } from "../../../domain/goals/Constants.js";
+import type { GoalView } from "../../../application/context/goals/GoalView.js";
 import { DetailPane } from "../components/DetailPane.js";
 import { KeyBadge } from "../components/KeyBadge.js";
 import { Panel } from "../components/Panel.js";
 import { GoalAuthoringFlow } from "../flows/GoalAuthoringFlow.js";
+import { useGoalsList } from "../state/TuiStateReader.js";
 
-type GoalStatus =
+type DisplayGoalStatus =
   | "defined"
   | "refined"
   | "doing"
   | "blocked"
   | "in-review"
-  | "done";
+  | "done"
+  | "paused"
+  | "approved"
+  | "rejected"
+  | "submitted"
+  | "codifying"
+  | "in-refinement"
+  | "unblocked";
 
 interface GoalListEntry {
   readonly id: string;
   readonly title: string;
-  readonly status: GoalStatus;
+  readonly status: DisplayGoalStatus;
   readonly objective: string;
   readonly criteria: readonly string[];
   readonly scopeIn: readonly string[];
   readonly scopeOut: readonly string[];
-  readonly relatedEntities: readonly string[];
-  readonly lifecycleActions: readonly string[];
+  readonly progress: readonly string[];
+  readonly prerequisiteGoals: readonly string[];
+  readonly note?: string;
+  readonly reviewIssues?: string;
+  readonly nextGoalId?: string;
 }
 
 const STATUS_FILTERS = [
@@ -41,75 +55,24 @@ const STATUS_FILTERS = [
 ] as const;
 type GoalStatusFilter = (typeof STATUS_FILTERS)[number];
 
-const STATUS_COLORS: Record<GoalStatus, string> = {
+const STATUS_COLORS: Record<DisplayGoalStatus, string> = {
   defined: SemanticColors.muted,
   refined: SemanticColors.info,
   doing: SemanticColors.success,
   blocked: SemanticColors.error,
   "in-review": SemanticColors.warning,
   done: BaseColors.brandGreen70,
+  paused: SemanticColors.warning,
+  approved: SemanticColors.success,
+  rejected: SemanticColors.error,
+  submitted: SemanticColors.info,
+  codifying: SemanticColors.accent,
+  "in-refinement": SemanticColors.info,
+  unblocked: SemanticColors.warning,
 };
 
-const PLACEHOLDER_GOALS: readonly GoalListEntry[] = [
-  {
-    id: "goal_s2_prototype",
-    title: "Prototype Goals screen",
-    status: "doing",
-    objective:
-      "Render a placeholder Goals screen with list, detail, and lifecycle hints.",
-    criteria: [
-      "Filterable goal list renders status indicators",
-      "Selected goal details are visible",
-      "Lifecycle hints match selected status",
-    ],
-    scopeIn: ["src/presentation/tui/screens", "src/presentation/tui/flows"],
-    scopeOut: ["src/application", "src/domain", "src/infrastructure"],
-    relatedEntities: ["S2 Goals screen", "X4 Goal authoring wizard"],
-    lifecycleActions: ["submit", "block", "pause"],
-  },
-  {
-    id: "goal_x4_authoring",
-    title: "Draft goal authoring flow",
-    status: "refined",
-    objective:
-      "Collect objective, criteria, scope, and related entities with the X1 wizard primitive.",
-    criteria: [
-      "Wizard uses four ordered steps",
-      "Scope captures in and out boundaries",
-      "Related entities can be entered before submit",
-    ],
-    scopeIn: ["src/presentation/tui/flows"],
-    scopeOut: ["Request wiring", "Persistence"],
-    relatedEntities: ["X1 Wizard primitive", "AddGoal future action"],
-    lifecycleActions: ["start", "remove", "reset"],
-  },
-  {
-    id: "goal_memory_placeholder",
-    title: "Prototype Memory screen",
-    status: "defined",
-    objective:
-      "Sketch memory browsing patterns before wiring real entity state.",
-    criteria: ["Category columns render", "Detail view shows selected memory"],
-    scopeIn: ["src/presentation/tui/screens"],
-    scopeOut: ["Entity Requests"],
-    relatedEntities: ["S3 Memory screen"],
-    lifecycleActions: ["refine", "start", "remove"],
-  },
-  {
-    id: "goal_daemon_integration",
-    title: "Wire daemon controls",
-    status: "blocked",
-    objective:
-      "Connect daemon health controls after subprocess infrastructure exists.",
-    criteria: ["Health row shows status", "Failures produce notifications"],
-    scopeIn: ["src/presentation/tui/components"],
-    scopeOut: ["Daemon implementation"],
-    relatedEntities: ["C2 Footer", "C3 Notifications"],
-    lifecycleActions: ["unblock", "reset"],
-  },
-] as const;
-
 const DETAIL_JOIN_SEPARATOR = "\n";
+const EMPTY_FIELD_VALUE = "None";
 
 export function GoalsScreen(): React.ReactElement {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -117,12 +80,20 @@ export function GoalsScreen(): React.ReactElement {
   const [authoringOpen, setAuthoringOpen] = useState(false);
 
   const activeFilter = STATUS_FILTERS[filterIndex];
+  const requestedStatus =
+    activeFilter === "all" ? undefined : (activeFilter as GoalStatusType);
+  const goalsList = useGoalsList(requestedStatus);
   const visibleGoals = useMemo(
-    () =>
-      activeFilter === "all"
-        ? PLACEHOLDER_GOALS
-        : PLACEHOLDER_GOALS.filter((goal) => goal.status === activeFilter),
-    [activeFilter],
+    () => {
+      const responseGoals = goalsList.data?.goals;
+
+      if (responseGoals !== undefined) {
+        return responseGoals.map(toGoalListEntry);
+      }
+
+      return [];
+    },
+    [goalsList.data],
   );
   const selectedGoal = visibleGoals[selectedIndex] ?? visibleGoals[0];
 
@@ -186,7 +157,7 @@ export function GoalsScreen(): React.ReactElement {
             Goals
           </Text>
           <Text color={SemanticColors.secondary}>
-            Placeholder backlog and lifecycle management
+            Backlog and lifecycle management
           </Text>
         </Box>
         <Text color={SemanticColors.muted}>
@@ -195,7 +166,18 @@ export function GoalsScreen(): React.ReactElement {
       </Box>
 
       <Box gap={2}>
-        <Panel title="Goal List" width={54}>
+        <Panel title="Goal List" width={TuiLayout.listPanelWidth}>
+          {goalsList.loading && goalsList.data === null && (
+            <Text color={SemanticColors.muted}>Loading goals</Text>
+          )}
+          {goalsList.error !== null && (
+            <Text color={SemanticColors.error}>{goalsList.error.message}</Text>
+          )}
+          {!goalsList.loading &&
+            goalsList.error === null &&
+            visibleGoals.length === 0 && (
+              <Text color={SemanticColors.muted}>No goals available</Text>
+            )}
           {visibleGoals.map((goal, goalIndex) => {
             const isSelected = goal.id === selectedGoal?.id;
             return (
@@ -222,7 +204,7 @@ export function GoalsScreen(): React.ReactElement {
         {selectedGoal && (
           <DetailPane
             title="Goal Detail"
-            width={74}
+            width={TuiLayout.detailPanelWidth}
             entries={[
               { label: "ID", value: selectedGoal.id },
               { label: "Title", value: selectedGoal.title },
@@ -245,12 +227,25 @@ export function GoalsScreen(): React.ReactElement {
                 value: selectedGoal.scopeOut.join(DETAIL_JOIN_SEPARATOR),
               },
               {
-                label: "Related",
-                value: selectedGoal.relatedEntities.join(DETAIL_JOIN_SEPARATOR),
+                label: "Prerequisites",
+                value:
+                  selectedGoal.prerequisiteGoals
+                    .join(DETAIL_JOIN_SEPARATOR) || EMPTY_FIELD_VALUE,
               },
               {
-                label: "Actions",
-                value: selectedGoal.lifecycleActions.join(DETAIL_JOIN_SEPARATOR),
+                label: "Progress",
+                value:
+                  selectedGoal.progress.join(DETAIL_JOIN_SEPARATOR)
+                  || EMPTY_FIELD_VALUE,
+              },
+              { label: "Note", value: selectedGoal.note ?? EMPTY_FIELD_VALUE },
+              {
+                label: "Review issues",
+                value: selectedGoal.reviewIssues ?? EMPTY_FIELD_VALUE,
+              },
+              {
+                label: "Next goal",
+                value: selectedGoal.nextGoalId ?? EMPTY_FIELD_VALUE,
               },
             ]}
           />
@@ -260,9 +255,6 @@ export function GoalsScreen(): React.ReactElement {
       {selectedGoal && (
         <Panel title="Action Hints">
           <Box gap={2}>
-            {selectedGoal.lifecycleActions.map((action) => (
-              <KeyBadge key={action} char={action.charAt(0)} label={action} />
-            ))}
             <KeyBadge char="a" label="author" />
             <KeyBadge char="↑↓" label="select" />
             <KeyBadge char="←→" label="filter" />
@@ -271,4 +263,21 @@ export function GoalsScreen(): React.ReactElement {
       )}
     </Box>
   );
+}
+
+function toGoalListEntry(goal: GoalView): GoalListEntry {
+  return {
+    id: goal.goalId,
+    title: goal.title,
+    status: goal.status as DisplayGoalStatus,
+    objective: goal.objective,
+    criteria: goal.successCriteria,
+    scopeIn: goal.scopeIn,
+    scopeOut: goal.scopeOut,
+    progress: goal.progress,
+    prerequisiteGoals: goal.prerequisiteGoals ?? [],
+    note: goal.note,
+    reviewIssues: goal.reviewIssues,
+    nextGoalId: goal.nextGoalId,
+  };
 }

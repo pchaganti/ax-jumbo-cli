@@ -6,6 +6,12 @@ import { MegaMenu } from "./components/MegaMenu.js";
 import { ScreenRouter } from "./ScreenRouter.js";
 import { InitFlow } from "./flows/InitFlow.js";
 import { DEFAULT_SCREEN_INDEX } from "./ScreenDefinitions.js";
+import {
+  TuiStateReaderProvider,
+  useProjectContext,
+  type TuiStateReaderControllers,
+  type TuiStateReaderOptions,
+} from "./state/TuiStateReader.js";
 
 const PLACEHOLDER_PROJECT_NAME = "Jumbo";
 const PLACEHOLDER_VERSION = "0.0.0";
@@ -33,9 +39,29 @@ function useTerminalDimensions(): { columns: number; rows: number } {
   return dimensions;
 }
 
-export function TuiApp(): React.ReactElement {
+interface TuiAppProps {
+  readonly stateReaderControllers?: TuiStateReaderControllers;
+  readonly stateReaderOptions?: TuiStateReaderOptions;
+}
+
+export function TuiApp({
+  stateReaderControllers,
+  stateReaderOptions,
+}: TuiAppProps = {}): React.ReactElement {
+  return (
+    <TuiStateReaderProvider
+      controllers={stateReaderControllers}
+      options={stateReaderOptions}
+    >
+      <TuiAppFrame />
+    </TuiStateReaderProvider>
+  );
+}
+
+function TuiAppFrame(): React.ReactElement {
   const { exit } = useApp();
   const { columns, rows } = useTerminalDimensions();
+  const projectContext = useProjectContext();
   const [activeScreenIndex, setActiveScreenIndex] = useState(
     DEFAULT_SCREEN_INDEX,
   );
@@ -78,7 +104,7 @@ export function TuiApp(): React.ReactElement {
     <Box flexDirection="column" width={columns} height={rows}>
       <Box flexShrink={0}>
         <Header
-          projectName={PLACEHOLDER_PROJECT_NAME}
+          projectName={projectContext.data?.name ?? PLACEHOLDER_PROJECT_NAME}
           version={PLACEHOLDER_VERSION}
           terminalWidth={columns}
         />
@@ -93,7 +119,10 @@ export function TuiApp(): React.ReactElement {
               terminalWidth={columns}
             />
           ) : (
-            <ScreenRouter activeScreenIndex={activeScreenIndex} />
+            <ScreenRouter
+              activeScreenIndex={activeScreenIndex}
+              projectLifecycleState={projectContext.data?.lifecycleState}
+            />
           )}
         </Box>
         {initFlowOpen && (

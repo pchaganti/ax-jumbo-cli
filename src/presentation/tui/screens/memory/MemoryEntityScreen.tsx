@@ -18,9 +18,9 @@ import type {
 const LIST_WIDTH = 46;
 const DETAIL_WIDTH = 78;
 const MEMORY_REPLAY_EVENTS = [
-  "Created placeholder entity",
-  "Linked entity into memory graph",
-  "Updated projected detail view",
+  "Loaded entity read model",
+  "Selected entity row",
+  "Rendered projected detail view",
 ] as const;
 
 interface MemoryEntityScreenProps {
@@ -28,6 +28,8 @@ interface MemoryEntityScreenProps {
   readonly title: string;
   readonly subtitle: string;
   readonly rows: readonly MemoryEntityRow[];
+  readonly loading?: boolean;
+  readonly error?: Error | null;
 }
 
 export function MemoryEntityScreen({
@@ -35,6 +37,8 @@ export function MemoryEntityScreen({
   title,
   subtitle,
   rows,
+  loading = false,
+  error = null,
 }: MemoryEntityScreenProps): React.ReactElement {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [eventIndex, setEventIndex] = useState(0);
@@ -75,16 +79,26 @@ export function MemoryEntityScreen({
       <Box gap={2}>
         <EntityColumn
           title={`${title} List`}
-          entries={rows.map((row) => ({
-            id: row.id,
-            label: labelForRow(entityType, row),
-          }))}
+          entries={
+            loading && rows.length === 0
+              ? [{ id: "loading", label: `Loading ${title.toLowerCase()}` }]
+              : rows.map((row) => ({
+                  id: row.id,
+                  label: labelForRow(entityType, row),
+                }))
+          }
           selectedId={selectedEntity?.id}
           isActive={true}
           width={LIST_WIDTH}
         />
 
-        {selectedEntity && (
+        {error !== null && (
+          <Panel title="Read Error" width={DETAIL_WIDTH}>
+            <Text color={SemanticColors.error}>{error.message}</Text>
+          </Panel>
+        )}
+
+        {error === null && selectedEntity && (
           <EntityDetailView
             entityType={entityType}
             entity={selectedEntity}

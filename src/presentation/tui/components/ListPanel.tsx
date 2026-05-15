@@ -1,6 +1,10 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { SemanticColors, TuiGlyphs } from "../../shared/DesignTokens.js";
+import {
+  SemanticColors,
+  TuiGlyphs,
+  TuiLayout,
+} from "../../shared/DesignTokens.js";
 import { Panel } from "./Panel.js";
 
 interface ListPanelItem {
@@ -25,7 +29,11 @@ export function ListPanel({
   width,
 }: ListPanelProps): React.ReactElement {
   return (
-    <Panel title={title} titleColor={titleColor} width={width}>
+    <Panel
+      title={title}
+      titleColor={titleColor}
+      width={width ?? TuiLayout.listPanelWidth}
+    >
       {items.length === 0 ? (
         <Text color={SemanticColors.muted} italic>
           {emptyMessage}

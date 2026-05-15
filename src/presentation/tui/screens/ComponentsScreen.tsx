@@ -1,14 +1,30 @@
 import React from "react";
 import { MemoryEntityScreen } from "./memory/MemoryEntityScreen.js";
-import { PLACEHOLDER_COMPONENTS } from "./memory/MemoryPlaceholderData.js";
+import { useComponentsList } from "../state/TuiStateReader.js";
+import type { ComponentView } from "../../../application/context/components/ComponentView.js";
 
 export function ComponentsScreen(): React.ReactElement {
+  const componentsList = useComponentsList();
+
   return (
     <MemoryEntityScreen
       entityType="component"
       title="Components"
       subtitle="Focused component memory list and selected component detail"
-      rows={PLACEHOLDER_COMPONENTS}
+      rows={(componentsList.data?.components ?? []).map(toComponentEntityRow)}
+      loading={componentsList.loading}
+      error={componentsList.error}
     />
   );
+}
+
+function toComponentEntityRow(component: ComponentView) {
+  return {
+    id: component.componentId,
+    name: component.name,
+    type: component.type,
+    description: component.description,
+    responsibility: component.responsibility,
+    path: component.path,
+  };
 }
