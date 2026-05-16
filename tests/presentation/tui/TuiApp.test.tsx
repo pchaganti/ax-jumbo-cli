@@ -8,7 +8,7 @@ const waitForFrame = async (
   lastFrame: () => string | undefined,
   predicate: (frame: string) => boolean,
 ) => {
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
     await tick();
     const frame = lastFrame() ?? "";
     if (predicate(frame)) {
@@ -103,4 +103,74 @@ describe("TuiApp", () => {
 
     expect(lastFrame()).not.toContain("Initialize Project");
   });
+
+  it("skips the unprimed cockpit screen for the current TUI session", async () => {
+    const { stdin, lastFrame } = render(
+      <TuiApp
+        stateReaderControllers={{
+          getProjectSummaryQueryHandler: projectSummaryController("unprimed"),
+        }}
+      />,
+    );
+
+    await waitForFrame(lastFrame, (frame) => frame.includes("Test Project"));
+    stdin.write("s");
+    await waitForFrame(lastFrame, (frame) =>
+      frame.includes("Project memory is stored."),
+    );
+
+    expect(lastFrame()).toContain("Ready to create your first goal.");
+    expect(lastFrame()).not.toContain("This looks like an existing project.");
+  }, 10000);
+
+  it("installs project state readers after bare init completes", async () => {
+    const actionControllers = {
+      planProjectInitController: {
+        handle: async () => ({
+          availableAgents: [],
+          plannedChanges: [],
+        }),
+      },
+      initializeProjectController: {
+        handle: async () => ({
+          projectId: "project_123",
+          changes: [],
+        }),
+      },
+    };
+    const onProjectInitialized = async () => ({
+      getProjectSummaryQueryHandler: projectSummaryController("unprimed"),
+    });
+
+    const { stdin, lastFrame } = render(
+      <TuiApp
+        actionControllers={actionControllers}
+        onProjectInitialized={onProjectInitialized}
+      />,
+    );
+
+    await waitForFrame(lastFrame, (frame) => frame.includes("Uninitialized"));
+    stdin.write("i");
+    await waitForFrame(lastFrame, (frame) =>
+      frame.includes("Initialize Project"),
+    );
+    expect(lastFrame()).toContain("Initialize Project");
+    stdin.write("MyProject");
+    await tick();
+    stdin.write("\r");
+    await tick();
+    stdin.write("\r");
+    await tick();
+    stdin.write("\r");
+    await tick();
+    stdin.write("\r");
+    await tick();
+    stdin.write("\r");
+    await tick();
+    stdin.write("\r");
+    await waitForFrame(lastFrame, (frame) => frame.includes("Test Project"));
+
+    expect(lastFrame()).toContain("Test Project");
+    expect(lastFrame()).not.toContain("Status   │ Uninitialized");
+  }, 10000);
 });

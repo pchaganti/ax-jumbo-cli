@@ -44,6 +44,7 @@ interface TuiAppProps {
   readonly stateReaderControllers?: TuiStateReaderControllers;
   readonly stateReaderOptions?: TuiStateReaderOptions;
   readonly actionControllers?: InitFlowActionControllers;
+  readonly onProjectInitialized?: () => Promise<TuiStateReaderControllers>;
 }
 
 export function TuiApp({
@@ -51,15 +52,29 @@ export function TuiApp({
   stateReaderControllers,
   stateReaderOptions,
   actionControllers,
+  onProjectInitialized,
 }: TuiAppProps = {}): React.ReactElement {
+  const [activeStateReaderControllers, setActiveStateReaderControllers] =
+    useState(stateReaderControllers);
+
+  const handleProjectInitialized = useCallback(async (): Promise<boolean> => {
+    if (onProjectInitialized === undefined) {
+      return false;
+    }
+
+    setActiveStateReaderControllers(await onProjectInitialized());
+    return true;
+  }, [onProjectInitialized]);
+
   return (
     <TuiStateReaderProvider
-      controllers={stateReaderControllers}
+      controllers={activeStateReaderControllers}
       options={stateReaderOptions}
     >
       <TuiAppFrame
         version={version}
         actionControllers={actionControllers}
+        onProjectInitialized={handleProjectInitialized}
       />
     </TuiStateReaderProvider>
   );
@@ -68,11 +83,13 @@ export function TuiApp({
 interface TuiAppFrameProps {
   readonly version: string;
   readonly actionControllers?: InitFlowActionControllers;
+  readonly onProjectInitialized: () => Promise<boolean>;
 }
 
 function TuiAppFrame({
   version,
   actionControllers,
+  onProjectInitialized,
 }: TuiAppFrameProps): React.ReactElement {
   const { exit } = useApp();
   const { columns, rows } = useTerminalDimensions();
@@ -82,10 +99,21 @@ function TuiAppFrame({
   );
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [initFlowOpen, setInitFlowOpen] = useState(false);
+  const [unprimedSkipped, setUnprimedSkipped] = useState(false);
   const projectLifecycleState =
     projectContext.data?.lifecycleState ?? "uninitialized";
+  const routedProjectLifecycleState =
+    projectLifecycleState === "unprimed" && unprimedSkipped
+      ? "primed-empty"
+      : projectLifecycleState;
   const initShortcutEnabled =
     !projectContext.loading && projectLifecycleState === "uninitialized";
+
+  useEffect(() => {
+    if (projectLifecycleState !== "unprimed") {
+      setUnprimedSkipped(false);
+    }
+  }, [projectLifecycleState]);
 
   useInput((input) => {
     if (megaMenuOpen || initFlowOpen) {
@@ -100,14 +128,24 @@ function TuiAppFrame({
     if (initShortcutEnabled && (input === "i" || input === "I")) {
       setInitFlowOpen(true);
     }
+    if (
+      activeScreenIndex === DEFAULT_SCREEN_INDEX &&
+      projectLifecycleState === "unprimed" &&
+      (input === "s" || input === "S")
+    ) {
+      setUnprimedSkipped(true);
+    }
   });
 
   const handleInitComplete = useCallback(
     async (_values: Record<string, string>) => {
-      await projectContext.refresh();
+      const installedStateReaders = await onProjectInitialized();
+      if (!installedStateReaders) {
+        await projectContext.refresh();
+      }
       setInitFlowOpen(false);
     },
-    [projectContext],
+    [onProjectInitialized, projectContext],
   );
 
   const handleInitCancel = useCallback(() => {
@@ -144,7 +182,7 @@ function TuiAppFrame({
           ) : (
             <ScreenRouter
               activeScreenIndex={activeScreenIndex}
-              projectLifecycleState={projectLifecycleState}
+              projectLifecycleState={routedProjectLifecycleState}
             />
           )}
         </Box>

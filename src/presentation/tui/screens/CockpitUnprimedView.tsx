@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { BaseColors, SemanticColors, TuiLayout } from "../../shared/DesignTokens.js";
+import { CenteredPrompt } from "../components/CenteredPrompt.js";
 import { SectionHeading } from "../components/SectionHeading.js";
 
 export function CockpitUnprimedView(): React.ReactElement {
@@ -38,6 +39,13 @@ export function CockpitUnprimedView(): React.ReactElement {
             </Box>
           </Box>
           <Box flexBasis="10%" />
+        </Box>
+        <Box marginTop={2}>
+          <CenteredPrompt
+            keyChar="s"
+            prefix="Press "
+            suffix=" to skip this screen for now"
+          />
         </Box>
       </Box>
     </Box>

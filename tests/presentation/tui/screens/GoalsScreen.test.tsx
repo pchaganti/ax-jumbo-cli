@@ -54,7 +54,6 @@ describe("GoalsScreen", () => {
     expect(frame).toContain("Goal List");
     expect(frame).toContain("Real goal");
     expect(frame).toContain("doing");
-    expect(frame).toContain("●");
     unmount();
   });
 

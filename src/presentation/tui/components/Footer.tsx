@@ -57,21 +57,20 @@ export function Footer({
           terminalWidth={terminalWidth}
         />
       )}
-      {/* <Text color={SemanticColors.muted} dimColor>
-        {TuiGlyphs.divider.repeat(terminalWidth)}
-      </Text> */}
       <Box justifyContent="space-between" paddingX={1}>
         <Box gap={2}>
           <KeyBadge char="m" label="menu" />
           <KeyBadge char="q" label="quit" />
           <KeyBadge char="h" label="help" />
         </Box>
-        <Box alignItems="center" gap={1}>
-          <KeyBadge char="n" />
-          <Text color={NOTIFICATION_NOTIFIER_COLOR}>
-            {TuiGlyphs.filledCircle} notifications ({unreadNotificationCount})
-          </Text>
-        </Box>
+        {unreadNotificationCount > 0 && (
+          <Box alignItems="center" gap={1}>
+            <KeyBadge char="n" />
+            <Text color={NOTIFICATION_NOTIFIER_COLOR}>
+              {TuiGlyphs.filledCircle} notifications ({unreadNotificationCount})
+            </Text>
+          </Box>
+        )}
       </Box>
     </Box>
   );

@@ -30,8 +30,6 @@ describe("Footer", () => {
     await tick();
 
     expect(lastFrame()).toContain("No notifications");
-    expect(lastFrame()).toContain("notifications (0)");
-    expect(lastFrame()).not.toContain("Daemon failure detected");
   });
 
   it("does not toggle the notification drawer when shortcuts are disabled", async () => {

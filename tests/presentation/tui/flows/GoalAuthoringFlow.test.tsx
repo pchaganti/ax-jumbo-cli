@@ -26,13 +26,13 @@ describe("GoalAuthoringFlow", () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     stdin.write("\r");
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(lastFrame()).toContain("Criteria");
+    expect(lastFrame()).toContain("Success criteria");
 
     stdin.write("Renders goals");
     await new Promise((resolve) => setTimeout(resolve, 50));
     stdin.write("\r");
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(lastFrame()).toContain("Scope");
+    expect(lastFrame()).toContain("Scope in");
 
     stdin.write("src/presentation/tui");
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -42,7 +42,7 @@ describe("GoalAuthoringFlow", () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     stdin.write("\r");
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(lastFrame()).toContain("Related Entities");
+    expect(lastFrame()).toContain("Related entities");
     unmount();
   });
 });

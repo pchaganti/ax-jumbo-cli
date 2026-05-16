@@ -26,6 +26,7 @@ import {
 } from "./banner/BannerOrchestrator.js";
 import { Renderer } from "./rendering/Renderer.js";
 import { TuiApplicationLauncher } from "../tui/TuiApplicationLauncher.js";
+import type { TuiStateReaderControllers } from "../tui/state/TuiStateReader.js";
 import type { InitFlowActionControllers } from "../tui/flows/InitFlow.js";
 import {
   CLI_FLAGS,
@@ -102,6 +103,7 @@ export class AppRunner {
   private readonly container: IApplicationContainer | null;
   private readonly version: string;
   private readonly bareTuiActionControllers: InitFlowActionControllers;
+  private readonly bareTuiStateReaderControllerFactory?: () => Promise<TuiStateReaderControllers>;
 
   /**
    * Creates a new AppRunner.
@@ -113,10 +115,13 @@ export class AppRunner {
     version: string,
     container: IApplicationContainer | null = null,
     bareTuiActionControllers: InitFlowActionControllers = {},
+    bareTuiStateReaderControllerFactory?: () => Promise<TuiStateReaderControllers>,
   ) {
     this.version = version;
     this.container = container;
     this.bareTuiActionControllers = bareTuiActionControllers;
+    this.bareTuiStateReaderControllerFactory =
+      bareTuiStateReaderControllerFactory;
   }
 
   /**
@@ -134,6 +139,7 @@ export class AppRunner {
         this.version,
         this.container,
         this.bareTuiActionControllers,
+        this.bareTuiStateReaderControllerFactory,
       ).launch();
       return;
     }

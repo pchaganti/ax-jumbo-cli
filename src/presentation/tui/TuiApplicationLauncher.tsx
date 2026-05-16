@@ -11,6 +11,7 @@ export class TuiApplicationLauncher {
     private readonly version: string,
     private readonly container: IApplicationContainer | null,
     private readonly fallbackActionControllers: InitFlowActionControllers = {},
+    private readonly fallbackStateReaderControllerFactory?: () => Promise<TuiStateReaderControllers>,
   ) {}
 
   async launch(): Promise<void> {
@@ -19,28 +20,31 @@ export class TuiApplicationLauncher {
         version={this.version}
         stateReaderControllers={this.buildStateReaderControllers()}
         actionControllers={this.buildActionControllers()}
+        onProjectInitialized={this.fallbackStateReaderControllerFactory}
       />,
     );
 
     await application.waitUntilExit();
   }
 
-  private buildStateReaderControllers(): TuiStateReaderControllers {
-    if (this.container === null) {
+  private buildStateReaderControllers(
+    container: IApplicationContainer | null = this.container,
+  ): TuiStateReaderControllers {
+    if (container === null) {
       return {};
     }
 
     return {
       getProjectSummaryQueryHandler: new GetProjectSummaryQueryHandler(
-        this.container.projectContextReader,
+        container.projectContextReader,
       ),
-      getGoalsController: this.container.getGoalsController,
-      getSessionsController: this.container.getSessionsController,
-      getComponentsController: this.container.getComponentsController,
-      getDecisionsController: this.container.getDecisionsController,
-      getDependenciesController: this.container.getDependenciesController,
-      getGuidelinesController: this.container.getGuidelinesController,
-      getInvariantsController: this.container.getInvariantsController,
+      getGoalsController: container.getGoalsController,
+      getSessionsController: container.getSessionsController,
+      getComponentsController: container.getComponentsController,
+      getDecisionsController: container.getDecisionsController,
+      getDependenciesController: container.getDependenciesController,
+      getGuidelinesController: container.getGuidelinesController,
+      getInvariantsController: container.getInvariantsController,
     };
   }
 

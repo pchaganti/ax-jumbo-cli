@@ -24,6 +24,7 @@ import { ARGV, FAILURE_EXIT_CODE } from "./presentation/cli/Constants.js";
 import { ProjectRootResolver } from "./infrastructure/context/project/ProjectRootResolver.js";
 import { planCliBootstrap } from "./presentation/cli/CliBootstrapPlan.js";
 import type { InitFlowActionControllers } from "./presentation/tui/flows/InitFlow.js";
+import type { TuiStateReaderControllers } from "./presentation/tui/state/TuiStateReader.js";
 import type { InitializeProjectRequest } from "./application/context/project/init/InitializeProjectRequest.js";
 import type { InitializeProjectResponse } from "./application/context/project/init/InitializeProjectResponse.js";
 import type { AddAudienceRequest } from "./application/context/audiences/add/AddAudienceRequest.js";
@@ -35,6 +36,7 @@ import { FsGitignoreProtocol } from "./infrastructure/context/project/init/FsGit
 import { FsSettingsInitializer } from "./infrastructure/settings/FsSettingsInitializer.js";
 import { LocalPlanProjectInitGateway } from "./application/context/project/init/LocalPlanProjectInitGateway.js";
 import { PlanProjectInitController } from "./application/context/project/init/PlanProjectInitController.js";
+import { GetProjectSummaryQueryHandler } from "./application/context/project/query/GetProjectSummaryQueryHandler.js";
 
 /**
  * Determines if the invocation requires full infrastructure.
@@ -118,6 +120,9 @@ async function main(): Promise<void> {
   // Step 4: Build container if needed
   let container: IApplicationContainer | null = null;
   let bareTuiActionControllers: InitFlowActionControllers = {};
+  let bareTuiStateReaderControllerFactory:
+    | (() => Promise<TuiStateReaderControllers>)
+    | undefined;
 
   if (bootstrapPlan.requiresInfrastructure) {
     const jumboRoot = path.join(bootstrapPlan.projectRoot!, ".jumbo");
@@ -126,10 +131,19 @@ async function main(): Promise<void> {
     container = await builder.build();
   } else if (argv.length === ARGV.NODE_AND_SCRIPT_ARG_COUNT) {
     bareTuiActionControllers = buildBareTuiActionControllers(process.cwd());
+    bareTuiStateReaderControllerFactory = async () =>
+      buildTuiStateReaderControllers(
+        await buildContainerForProjectRoot(process.cwd()),
+      );
   }
 
   // Step 5: Run the application
-  const appRunner = new AppRunner(version, container, bareTuiActionControllers);
+  const appRunner = new AppRunner(
+    version,
+    container,
+    bareTuiActionControllers,
+    bareTuiStateReaderControllerFactory,
+  );
   await appRunner.run();
 }
 
@@ -180,6 +194,23 @@ async function buildContainerForProjectRoot(
   const host = new Host(path.join(projectRoot, ".jumbo"));
   const container = await host.createBuilder().build();
   return container;
+}
+
+function buildTuiStateReaderControllers(
+  container: IApplicationContainer,
+): TuiStateReaderControllers {
+  return {
+    getProjectSummaryQueryHandler: new GetProjectSummaryQueryHandler(
+      container.projectContextReader,
+    ),
+    getGoalsController: container.getGoalsController,
+    getSessionsController: container.getSessionsController,
+    getComponentsController: container.getComponentsController,
+    getDecisionsController: container.getDecisionsController,
+    getDependenciesController: container.getDependenciesController,
+    getGuidelinesController: container.getGuidelinesController,
+    getInvariantsController: container.getInvariantsController,
+  };
 }
 
 main();

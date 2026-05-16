@@ -1,9 +1,12 @@
 import React from "react";
 import { describe, expect, it, jest } from "@jest/globals";
 import { render } from "ink-testing-library";
+import stripAnsi from "strip-ansi";
 import { Tumbler } from "../../../../src/presentation/tui/components/Tumbler.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 50));
+const plainFrame = (lastFrame: () => string | undefined) =>
+  stripAnsi(lastFrame() ?? "");
 
 describe("Tumbler", () => {
   const items = [
@@ -19,7 +22,7 @@ describe("Tumbler", () => {
       <Tumbler items={items} initialFocusedKey="zero" />,
     );
 
-    expect(lastFrame()).toContain(
+    expect(plainFrame(lastFrame)).toContain(
       "  Item -2\n  Item -1\n▸ Item 0\n  Item 1\n  Item 2",
     );
   });
@@ -32,7 +35,7 @@ describe("Tumbler", () => {
     stdin.write("\x1B[B");
     await tick();
 
-    expect(lastFrame()).toContain(
+    expect(plainFrame(lastFrame)).toContain(
       "  Item -1\n  Item 0\n▸ Item 1\n  Item 2\n  Item -2",
     );
   });
@@ -45,7 +48,7 @@ describe("Tumbler", () => {
     stdin.write("\x1B[A");
     await tick();
 
-    expect(lastFrame()).toContain(
+    expect(plainFrame(lastFrame)).toContain(
       "  Item 2\n  Item -2\n▸ Item -1\n  Item 0\n  Item 1",
     );
   });
@@ -58,7 +61,7 @@ describe("Tumbler", () => {
     stdin.write("\x1B[B");
     await tick();
 
-    expect(lastFrame()).toContain("▸ Item -2");
+    expect(plainFrame(lastFrame)).toContain("▸ Item -2");
   });
 
   it("wraps from the first item to the last item", async () => {
@@ -69,7 +72,7 @@ describe("Tumbler", () => {
     stdin.write("\x1B[A");
     await tick();
 
-    expect(lastFrame()).toContain("▸ Item 2");
+    expect(plainFrame(lastFrame)).toContain("▸ Item 2");
   });
 
   it("notifies consumers when the focused item changes", async () => {
@@ -99,7 +102,7 @@ describe("Tumbler", () => {
     stdin.write("\x1B[B");
     await tick();
 
-    expect(lastFrame()).toContain("▸ Item 0");
+    expect(plainFrame(lastFrame)).toContain("▸ Item 0");
   });
 
   it("renders an empty message", () => {
@@ -107,7 +110,7 @@ describe("Tumbler", () => {
       <Tumbler items={[]} emptyMessage="Nothing available" />,
     );
 
-    expect(lastFrame()).toContain("Nothing available");
+    expect(plainFrame(lastFrame)).toContain("Nothing available");
   });
 
   it("normalizes even visible counts to keep a center row", () => {
@@ -115,7 +118,7 @@ describe("Tumbler", () => {
       <Tumbler items={items} initialFocusedKey="zero" visibleCount={4} />,
     );
 
-    expect(lastFrame()).toContain(
+    expect(plainFrame(lastFrame)).toContain(
       "  Item -2\n  Item -1\n▸ Item 0\n  Item 1\n  Item 2",
     );
   });
@@ -128,8 +131,8 @@ describe("Tumbler", () => {
       />,
     );
 
-    expect(lastFrame()).toContain("▸ A very lo...");
-    expect(lastFrame()).not.toContain("A very long display value");
+    expect(plainFrame(lastFrame)).toContain("▸ A very lo...");
+    expect(plainFrame(lastFrame)).not.toContain("A very long display value");
   });
 
   it("uses dots only when max display length cannot fit a full ellipsis", () => {
@@ -140,6 +143,6 @@ describe("Tumbler", () => {
       />,
     );
 
-    expect(lastFrame()).toContain("▸ ..");
+    expect(plainFrame(lastFrame)).toContain("▸ ..");
   });
 });

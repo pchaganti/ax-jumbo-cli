@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Box, Text } from "ink";
 import { Wizard } from "../components/Wizard.js";
-import type { WizardStepDefinition } from "../components/Wizard.js";
+import type { WizardInputKey, WizardStepDefinition } from "../components/Wizard.js";
 import { dispatchTuiAction } from "../actions/TuiActionDispatcher.js";
 import type { TuiRequestController } from "../actions/TuiActionDispatcher.js";
 import type { PlanProjectInitRequest } from "../../../application/context/project/init/PlanProjectInitRequest.js";
@@ -36,6 +36,14 @@ type InitFlowStage =
   | "confirmation"
   | "success";
 
+type InitFlowRollback = "audience" | "value-proposition" | "plan";
+
+interface InitFlowStageHistoryEntry {
+  readonly stage: InitFlowStage;
+  readonly restoreStepIndex: number;
+  readonly rollback?: InitFlowRollback;
+}
+
 const INIT_FLOW_STAGES_WITH_AGENT_SELECTION: readonly InitFlowStage[] = [
   "project",
   "audience-gate",
@@ -54,6 +62,7 @@ const INIT_FLOW_STAGES_WITHOUT_AGENT_SELECTION: readonly InitFlowStage[] = [
   "value",
   "confirmation",
 ] as const;
+const CONFIRMATION_FILE_REVIEW_PAGE_SIZE = 10;
 
 interface ProjectDetails {
   readonly name: string;
@@ -150,7 +159,13 @@ const AUDIENCE_STEPS: readonly WizardStepDefinition[] = [
       {
         key: "audiencePriority",
         label: "Audience priority",
-        placeholder: "primary, secondary, or tertiary",
+        kind: "single-select",
+        options: [
+          { value: "primary", label: "Primary" },
+          { value: "secondary", label: "Secondary" },
+          { value: "tertiary", label: "Tertiary" },
+        ],
+        defaultValue: "primary",
         validate: validateAudiencePriority,
       },
       {
@@ -222,12 +237,26 @@ const VALUE_STEPS: readonly WizardStepDefinition[] = [
   },
 ] as const;
 
+const INIT_FLOW_STAGE_STEP_COUNTS: Readonly<Record<InitFlowStage, number>> = {
+  project: PROJECT_STEPS.length,
+  "audience-gate": AUDIENCE_GATE_STEPS.length,
+  audience: AUDIENCE_STEPS.length,
+  "value-gate": VALUE_GATE_STEPS.length,
+  value: VALUE_STEPS.length,
+  "agent-selection": 1,
+  confirmation: 1,
+  success: 0,
+};
+
 export function InitFlow({
   actionControllers = {},
   onComplete,
   onCancel,
 }: InitFlowProps): React.ReactElement {
   const [stage, setStage] = useState<InitFlowStage>("project");
+  const [stageHistory, setStageHistory] = useState<
+    InitFlowStageHistoryEntry[]
+  >([]);
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(
     null,
   );
@@ -243,17 +272,72 @@ export function InitFlow({
   const [dispatchError, setDispatchError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const [wizardKey, setWizardKey] = useState(0);
+  const [restoreStepIndex, setRestoreStepIndex] = useState(0);
+  const [confirmationReviewOpen, setConfirmationReviewOpen] = useState(false);
+  const [confirmationReviewOffset, setConfirmationReviewOffset] = useState(0);
 
   const agentSelectionSteps = useMemo(
     () => buildAgentSelectionSteps(planResponse),
     [planResponse],
   );
   const confirmationSteps = useMemo(
-    () => buildConfirmationSteps(planResponse?.plannedChanges ?? []),
-    [planResponse],
+    () =>
+      buildConfirmationSteps(
+        planResponse?.plannedChanges ?? [],
+        confirmationReviewOpen,
+        confirmationReviewOffset,
+      ),
+    [confirmationReviewOffset, confirmationReviewOpen, planResponse],
   );
 
   const resetWizard = () => setWizardKey((current) => current + 1);
+  const navigateToStage = (
+    nextStage: InitFlowStage,
+    rollback?: InitFlowRollback,
+  ) => {
+    setStageHistory((current) => [
+      ...current,
+      {
+        stage,
+        restoreStepIndex: Math.max(INIT_FLOW_STAGE_STEP_COUNTS[stage] - 1, 0),
+        rollback,
+      },
+    ]);
+    setStage(nextStage);
+    setRestoreStepIndex(0);
+    resetWizard();
+  };
+
+  const handleWizardBack = () => {
+    const previousEntry = stageHistory[stageHistory.length - 1];
+    if (previousEntry === undefined) {
+      return;
+    }
+    setStageHistory(stageHistory.slice(0, -1));
+    applyRollback(previousEntry.rollback);
+    setStage(previousEntry.stage);
+    setRestoreStepIndex(previousEntry.restoreStepIndex);
+    resetWizard();
+  };
+
+  const applyRollback = (rollback: InitFlowRollback | undefined) => {
+    if (rollback === "audience") {
+      setAudiences((current) => current.slice(0, -1));
+      return;
+    }
+
+    if (rollback === "value-proposition") {
+      setValuePropositions((current) => current.slice(0, -1));
+      return;
+    }
+
+    if (rollback === "plan") {
+      setPlanResponse(null);
+      setSelectedAgentIds(undefined);
+      setConfirmationReviewOpen(false);
+      setConfirmationReviewOffset(0);
+    }
+  };
 
   const handleProjectConfirm = async (values: Record<string, string>) => {
     const nextProjectDetails = {
@@ -261,17 +345,11 @@ export function InitFlow({
       purpose: (values.purpose ?? "").trim() || undefined,
     };
     setProjectDetails(nextProjectDetails);
-    setStage("audience-gate");
-    resetWizard();
+    navigateToStage("audience-gate");
   };
 
   const handleAudienceGateConfirm = (values: Record<string, string>) => {
-    if (isYes(values.addAudience ?? "")) {
-      setStage("audience");
-    } else {
-      setStage("value-gate");
-    }
-    resetWizard();
+    navigateToStage(isYes(values.addAudience ?? "") ? "audience" : "value-gate");
   };
 
   const handleAudienceConfirm = (values: Record<string, string>) => {
@@ -283,18 +361,19 @@ export function InitFlow({
         priority: toAudiencePriority(values.audiencePriority),
       },
     ]);
-    setStage(isYes(values.addAnotherAudience ?? "") ? "audience" : "value-gate");
-    resetWizard();
+    navigateToStage(
+      isYes(values.addAnotherAudience ?? "") ? "audience" : "value-gate",
+      "audience",
+    );
   };
 
   const handleValueGateConfirm = async (values: Record<string, string>) => {
     if (isYes(values.addValueProposition ?? "")) {
-      setStage("value");
-      resetWizard();
+      navigateToStage("value");
       return;
     }
 
-    await planProjectInit(undefined);
+    await planProjectInit(undefined, "plan");
   };
 
   const handleValueConfirm = async (values: Record<string, string>) => {
@@ -313,12 +392,11 @@ export function InitFlow({
     setValuePropositions(nextValuePropositions);
 
     if (isYes(values.addAnotherValueProposition ?? "")) {
-      setStage("value");
-      resetWizard();
+      navigateToStage("value", "value-proposition");
       return;
     }
 
-    await planProjectInit(undefined);
+    await planProjectInit(undefined, "value-proposition");
   };
 
   const handleAgentSelectionConfirm = async (values: Record<string, string>) => {
@@ -327,6 +405,40 @@ export function InitFlow({
     );
     setSelectedAgentIds(parsedAgentIds);
     await planProjectInit(parsedAgentIds);
+  };
+
+  const handleWizardInput = (input: string, key: WizardInputKey): boolean => {
+    if (stage !== "confirmation") {
+      return false;
+    }
+
+    const plannedChanges = planResponse?.plannedChanges ?? [];
+    if (input === "v" || input === "V") {
+      setConfirmationReviewOpen((isOpen) => !isOpen);
+      setConfirmationReviewOffset(0);
+      return true;
+    }
+
+    if (!confirmationReviewOpen) {
+      return false;
+    }
+
+    if (key.upArrow) {
+      setConfirmationReviewOffset((offset) => Math.max(offset - 1, 0));
+      return true;
+    }
+
+    if (key.downArrow) {
+      setConfirmationReviewOffset((offset) =>
+        Math.min(
+          offset + 1,
+          Math.max(plannedChanges.length - CONFIRMATION_FILE_REVIEW_PAGE_SIZE, 0),
+        ),
+      );
+      return true;
+    }
+
+    return false;
   };
 
   const handleConfirmationConfirm = async (values: Record<string, string>) => {
@@ -340,6 +452,7 @@ export function InitFlow({
 
   const planProjectInit = async (
     nextSelectedAgentIds: readonly AgentId[] | undefined,
+    rollback?: InitFlowRollback,
   ) => {
     const controller = actionControllers.planProjectInitController;
     if (controller === undefined) {
@@ -365,11 +478,10 @@ export function InitFlow({
       nextSelectedAgentIds === undefined &&
       result.response.availableAgents.length > 0
     ) {
-      setStage("agent-selection");
+      navigateToStage("agent-selection", rollback);
     } else {
-      setStage("confirmation");
+      navigateToStage("confirmation", rollback);
     }
-    resetWizard();
   };
 
   const initializeProject = async () => {
@@ -442,9 +554,25 @@ export function InitFlow({
         handleConfirmationConfirm,
       })}
       onCancel={onCancel}
+      onBack={stageHistory.length > 0 ? handleWizardBack : undefined}
+      initialStepIndex={restoreStepIndex}
+      initialValues={resolveInitialValues(stage, projectDetails)}
       dispatchError={dispatchError}
       disabled={working}
-      progressLabel={resolveProgressLabel(stage, planResponse)}
+      progressLabel={(currentStepIndex) =>
+        resolveProgressLabel(stage, planResponse, currentStepIndex)
+      }
+      extraHints={
+        stage === "confirmation"
+          ? [
+              {
+                char: "v",
+                label: confirmationReviewOpen ? "Summary" : "View files",
+              },
+            ]
+          : []
+      }
+      onInput={handleWizardInput}
     />
   );
 }
@@ -488,6 +616,20 @@ function resolveConfirmHandler(
   return handlers.handleConfirmationConfirm;
 }
 
+function resolveInitialValues(
+  stage: InitFlowStage,
+  projectDetails: ProjectDetails | null,
+): Record<string, string> {
+  if (stage !== "project" || projectDetails === null) {
+    return {};
+  }
+
+  return {
+    projectName: projectDetails.name,
+    purpose: projectDetails.purpose ?? "",
+  };
+}
+
 function buildAgentSelectionSteps(
   planResponse: PlanProjectInitResponse | null,
 ): readonly WizardStepDefinition[] {
@@ -517,11 +659,15 @@ function buildAgentSelectionSteps(
 
 function buildConfirmationSteps(
   plannedChanges: readonly PlannedFileChange[],
+  reviewOpen: boolean,
+  reviewOffset: number,
 ): readonly WizardStepDefinition[] {
   return [
     {
       title: "Confirmation",
-      description: formatPlannedChanges(plannedChanges),
+      description: reviewOpen
+        ? formatPlannedChangeReview(plannedChanges, reviewOffset)
+        : formatPlannedChangeSummary(plannedChanges),
       fields: [
         {
           key: "confirmInitialization",
@@ -539,6 +685,7 @@ function buildConfirmationSteps(
 function resolveProgressLabel(
   stage: InitFlowStage,
   planResponse: PlanProjectInitResponse | null,
+  currentStepIndex: number,
 ): string | undefined {
   const stages =
     planResponse !== null && planResponse.availableAgents.length === 0
@@ -549,17 +696,91 @@ function resolveProgressLabel(
     return undefined;
   }
 
-  return `${stageIndex + 1}/${stages.length}`;
+  const completedSteps = stages
+    .slice(0, stageIndex)
+    .reduce((total, flowStage) => total + INIT_FLOW_STAGE_STEP_COUNTS[flowStage], 0);
+  const totalSteps = stages.reduce(
+    (total, flowStage) => total + INIT_FLOW_STAGE_STEP_COUNTS[flowStage],
+    0,
+  );
+
+  return `${completedSteps + currentStepIndex + 1}/${totalSteps}`;
 }
 
-function formatPlannedChanges(plannedChanges: readonly PlannedFileChange[]): string {
+function formatPlannedChangeSummary(
+  plannedChanges: readonly PlannedFileChange[],
+): string {
   if (plannedChanges.length === 0) {
     return "No file changes are required. Confirm to initialize project state.";
   }
 
-  return plannedChanges
-    .map((change) => `${change.action}: ${change.path} - ${change.description}`)
-    .join("\n");
+  const createCount = plannedChanges.filter((change) => change.action === "create").length;
+  const modifyCount = plannedChanges.filter((change) => change.action === "modify").length;
+  const groupCounts = summarizePlannedChangeGroups(plannedChanges);
+
+  return [
+    "Jumbo will create project memory and configure selected agents.",
+    "",
+    "Planned changes",
+    `Create: ${createCount} files`,
+    `Modify: ${modifyCount} files`,
+    "",
+    "Existing content is preserved.",
+    "Jumbo only creates missing files and appends or updates managed configuration where needed.",
+    "",
+    "Agent configuration",
+    ...groupCounts.map((group) => `${group.label}: ${group.count} files`),
+  ].join("\n");
+}
+
+function formatPlannedChangeReview(
+  plannedChanges: readonly PlannedFileChange[],
+  reviewOffset: number,
+): string {
+  if (plannedChanges.length === 0) {
+    return "No file changes are required.";
+  }
+
+  const visibleChanges = plannedChanges.slice(
+    reviewOffset,
+    reviewOffset + CONFIRMATION_FILE_REVIEW_PAGE_SIZE,
+  );
+  const from = reviewOffset + 1;
+  const to = reviewOffset + visibleChanges.length;
+
+  return [
+    `Files ${from}-${to} of ${plannedChanges.length}`,
+    "",
+    ...visibleChanges.map(
+      (change) =>
+        `${change.action}: ${change.path} - ${change.description}`,
+    ),
+  ].join("\n");
+}
+
+function summarizePlannedChangeGroups(
+  plannedChanges: readonly PlannedFileChange[],
+): readonly { readonly label: string; readonly count: number }[] {
+  const counts = new Map<string, number>();
+  for (const change of plannedChanges) {
+    const group = classifyPlannedChangeGroup(change.path);
+    counts.set(group, (counts.get(group) ?? 0) + 1);
+  }
+
+  return ["Shared", "Claude", "Codex", "Gemini", "Copilot", "Cursor", "Vibe"]
+    .map((label) => ({ label, count: counts.get(label) ?? 0 }))
+    .filter((group) => group.count > 0);
+}
+
+function classifyPlannedChangeGroup(path: string): string {
+  if (path === "CLAUDE.md" || path.startsWith(".claude/")) return "Claude";
+  if (path.startsWith(".codex/")) return "Codex";
+  if (path === "GEMINI.md" || path.startsWith(".gemini/")) return "Gemini";
+  if (path.startsWith(".github/")) return "Copilot";
+  if (path.startsWith(".cursor/")) return "Cursor";
+  if (path.startsWith(".vibe/")) return "Vibe";
+
+  return "Shared";
 }
 
 function validateYesNo(value: string): string | null {

@@ -58,6 +58,23 @@ describe("TuiApplicationLauncher", () => {
     expect(element.props.actionControllers).toBe(actionControllers);
   });
 
+  it("passes fallback state reader factory when no container exists", async () => {
+    const factory = jest.fn<() => Promise<object>>().mockResolvedValue({});
+    const launcher = new TuiApplicationLauncher(
+      "1.2.3",
+      null,
+      {},
+      factory,
+    );
+
+    await launcher.launch();
+
+    const element = mockRender.mock.calls[0][0] as React.ReactElement<{
+      onProjectInitialized: object;
+    }>;
+    expect(element.props.onProjectInitialized).toBe(factory);
+  });
+
   it("maps container controllers into TUI state reader controllers", async () => {
     const container: Partial<IApplicationContainer> = {
       projectContextReader: {

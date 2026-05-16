@@ -76,7 +76,12 @@ describe("AppRunner", () => {
     await runner.run();
 
     expect(mockLaunchTui).toHaveBeenCalledTimes(1);
-    expect(TuiApplicationLauncher).toHaveBeenCalledWith("1.2.3", null, {});
+    expect(TuiApplicationLauncher).toHaveBeenCalledWith(
+      "1.2.3",
+      null,
+      {},
+      undefined,
+    );
     expect(createProgram).not.toHaveBeenCalled();
   });
 
@@ -93,6 +98,22 @@ describe("AppRunner", () => {
       "1.2.3",
       null,
       actionControllers,
+      undefined,
+    );
+  });
+
+  it("passes fallback state reader controller factory to bare TUI launches", async () => {
+    process.argv = ["node", "jumbo"];
+    const factory = jest.fn();
+
+    const runner = new AppRunner("1.2.3", null, {}, factory);
+    await runner.run();
+
+    expect(TuiApplicationLauncher).toHaveBeenCalledWith(
+      "1.2.3",
+      null,
+      {},
+      factory,
     );
   });
 

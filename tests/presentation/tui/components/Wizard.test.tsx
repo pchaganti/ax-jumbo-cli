@@ -5,6 +5,7 @@ import { Wizard } from "../../../../src/presentation/tui/components/Wizard.js";
 import type { WizardStepDefinition } from "../../../../src/presentation/tui/components/Wizard.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 50));
+const SHIFT_TAB = "\x1B[Z";
 
 const TWO_STEP_CONFIG: WizardStepDefinition[] = [
   {
@@ -64,6 +65,24 @@ const MULTI_SELECT_CONFIG: WizardStepDefinition[] = [
           { value: "beta", label: "Beta" },
         ],
         defaultValue: "alpha,beta",
+      },
+    ],
+  },
+];
+
+const SINGLE_SELECT_CONFIG: WizardStepDefinition[] = [
+  {
+    title: "Choice",
+    fields: [
+      {
+        key: "choice",
+        label: "Choice",
+        kind: "single-select",
+        options: [
+          { value: "alpha", label: "Alpha" },
+          { value: "beta", label: "Beta" },
+        ],
+        defaultValue: "alpha",
       },
     ],
   },
@@ -289,6 +308,69 @@ describe("Wizard", () => {
     expect(lastFrame()).not.toContain("Back");
   });
 
+  it("shows left-arrow back hint when parent back is available", () => {
+    const { lastFrame } = render(
+      <Wizard
+        title="Setup"
+        steps={SINGLE_STEP_CONFIG}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+        onBack={() => {}}
+      />,
+    );
+    expect(lastFrame()).toContain("←");
+    expect(lastFrame()).toContain("Back");
+  });
+
+  it("shows back hint on first step when a parent back handler is available on a toggle", () => {
+    const { lastFrame } = render(
+      <Wizard
+        title="Setup"
+        steps={YES_NO_CONFIG}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+        onBack={() => {}}
+      />,
+    );
+    expect(lastFrame()).toContain("←");
+    expect(lastFrame()).toContain("Back");
+  });
+
+  it("calls parent back handler from the first step", async () => {
+    const handleBack = jest.fn();
+    const { stdin } = render(
+      <Wizard
+        title="Setup"
+        steps={YES_NO_CONFIG}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+        onBack={handleBack}
+      />,
+    );
+    stdin.write("\x1B[D");
+    await tick();
+    expect(handleBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("types b into focused text fields instead of navigating back", async () => {
+    const handleBack = jest.fn();
+    const { lastFrame, stdin } = render(
+      <Wizard
+        title="Setup"
+        steps={SINGLE_STEP_CONFIG}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+        onBack={handleBack}
+      />,
+    );
+
+    stdin.write("b");
+    await tick();
+
+    expect(lastFrame()).toContain("b");
+    expect(handleBack).not.toHaveBeenCalled();
+  });
+
   it("shows Confirm label on last step", async () => {
     const { lastFrame, stdin } = render(
       <Wizard
@@ -367,7 +449,31 @@ describe("Wizard", () => {
     expect(lastFrame()).toContain("Smith");
   });
 
-  it("shows Back hint on second step", async () => {
+  it("moves back to the previous field with shift-tab", async () => {
+    const { lastFrame, stdin } = render(
+      <Wizard
+        title="Setup"
+        steps={MULTI_FIELD_CONFIG}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+    stdin.write("Alice");
+    await tick();
+    stdin.write("\t");
+    await tick();
+    stdin.write("Smith");
+    await tick();
+    stdin.write(SHIFT_TAB);
+    await tick();
+    stdin.write("a");
+    await tick();
+
+    expect(lastFrame()).toContain("Alicea");
+    expect(lastFrame()).toContain("Smith");
+  });
+
+  it("shows left-arrow back hint on second step when focused field is text", async () => {
     const { lastFrame, stdin } = render(
       <Wizard
         title="Setup"
@@ -380,6 +486,7 @@ describe("Wizard", () => {
     await tick();
     stdin.write("\r");
     await tick();
+    expect(lastFrame()).toContain("←");
     expect(lastFrame()).toContain("Back");
   });
 
@@ -439,7 +546,7 @@ describe("Wizard", () => {
     expect(lastFrame()).toContain("Toggle");
   });
 
-  it("toggles yes/no fields with arrow keys and submits the selected value", async () => {
+  it("toggles yes/no fields with space and submits the selected value", async () => {
     const handleConfirm = jest.fn();
     const { stdin } = render(
       <Wizard
@@ -450,7 +557,7 @@ describe("Wizard", () => {
       />,
     );
 
-    stdin.write("\x1B[D");
+    stdin.write(" ");
     await tick();
     stdin.write("\r");
     await tick();
@@ -492,5 +599,41 @@ describe("Wizard", () => {
     await tick();
 
     expect(handleConfirm).toHaveBeenCalledWith({ choices: "beta" });
+  });
+
+  it("renders single-select fields with one selected option", () => {
+    const { lastFrame } = render(
+      <Wizard
+        title="Setup"
+        steps={SINGLE_SELECT_CONFIG}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+
+    expect(lastFrame()).toContain("Choice");
+    expect(lastFrame()).toContain("▸ (x) Alpha");
+    expect(lastFrame()).toContain("( ) Beta");
+    expect(lastFrame()).toContain("space");
+    expect(lastFrame()).toContain("Toggle");
+  });
+
+  it("changes single-select value with down arrow and submits the selected value", async () => {
+    const handleConfirm = jest.fn();
+    const { stdin } = render(
+      <Wizard
+        title="Setup"
+        steps={SINGLE_SELECT_CONFIG}
+        onConfirm={handleConfirm}
+        onCancel={() => {}}
+      />,
+    );
+
+    stdin.write("\x1B[B");
+    await tick();
+    stdin.write("\r");
+    await tick();
+
+    expect(handleConfirm).toHaveBeenCalledWith({ choice: "beta" });
   });
 });
