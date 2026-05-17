@@ -24,6 +24,10 @@ const REFINER_GRID_WIDTH = 35;
 const REFINER_GRID_HEIGHT = 10;
 const REFINER_GRID_SIZE = REFINER_GRID_WIDTH * REFINER_GRID_HEIGHT;
 const REVIEWER_FRAME_COUNT = 6;
+const REVIEWER_GRID_WIDTH = 35;
+const REVIEWER_GRID_HEIGHT = 10;
+const REVIEWER_GRID_SIZE = REVIEWER_GRID_WIDTH * REVIEWER_GRID_HEIGHT;
+const REVIEWER_SEED_OFFSET = 37;
 const CODIFIER_FRAME_COUNT = 6;
 const CODIFIER_GRID_WIDTH = 35;
 const CODIFIER_GRID_HEIGHT = 10;
@@ -42,6 +46,16 @@ const RETRY_OPTIONS = [1, 2, 3, 5] as const;
 
 const REFINER_GLYPHS = [
   "•",
+] as const;
+
+const REVIEWER_GLYPHS = [
+  "◇",
+  "◆",
+  "□",
+  "■",
+  "△",
+  "▽",
+  "○",
 ] as const;
 
 const CODIFIER_ALPHANUMERIC_GLYPHS = [
@@ -64,9 +78,13 @@ const DEFAULT_CODIFIER_GLYPH_COLORS: GlyphColorMap = {
   "░": BaseColors.shade2,
 };
 const DEFAULT_REVIEWER_GLYPH_COLORS: GlyphColorMap = {
-  "█": BaseColors.primary,
-  "░": BaseColors.shade3,
-  "│": BaseColors.shade6,
+  "◇": BaseColors.primary,
+  "◆": BaseColors.tint1,
+  "□": BaseColors.shade2,
+  "■": BaseColors.shade3,
+  "△": BaseColors.shade4,
+  "▽": BaseColors.shade5,
+  "○": BaseColors.shade6,
 };
 
 interface CockpitLaunchpadViewProps {
@@ -467,98 +485,25 @@ export function getCodifierFrame(index: number): string[] {
   });
 }
 
-function getReviewerFrame(index: number): string[] {
-  switch(index) { 
-    case 0: {
-      return [
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "  ███ ███ ███ ███ ███ ███ ███ ███  ",
-        "  ░░░ ░░░ ░░░ ░░░ ░░░ ░░░ ░░░ ░░░  ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-      ];
-    }
-    case 1: {
-      return [
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "  ███  │   │   │  ███  │  ███ ███  ",
-        "  ░░░ ███  │  ███ ░░░ ███ ░░░ ░░░  ",
-        "   │  ░░░ ███ ░░░  │  ░░░  │   │   ",
-        "   │   │  ░░░  │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-      ];
-    }
-    case 2: {
-      return [
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "  ███  │   │   │   │   │   │  ███  ",
-        "  ░░░  │   │  ███  │  ███  │  ░░░  ",
-        "   │  ███  │  ░░░ ███ ░░░ ███  │   ",
-        "   │  ░░░  │   │  ░░░  │  ░░░  │   ",
-        "   │   │  ███  │   │   │   │   │   ",
-        "   │   │  ░░░  │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-      ];
-    }
-    case 3: {
-      return [
-        "   │   │   │   │   │   │   │   │   ",
-        "  ███  │   │   │   │   │   │   │   ",
-        "  ░░░  │   │   │   │  ███  │  ███  ",
-        "   │  ███  │   │   │  ░░░ ███ ░░░  ",
-        "   │  ░░░  │  ███  │   │  ░░░  │   ",
-        "   │   │   │  ░░░ ███  │   │   │   ",
-        "   │   │   │   │  ░░░  │   │   │   ",
-        "   │   │  ███  │   │   │   │   │   ",
-        "   │   │  ░░░  │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-      ];
-    }
-    case 4: {
-      return [
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "  ███  │   │   │   │   │   │  ███  ",
-        "  ░░░  │   │  ███  │  ███  │  ░░░  ",
-        "   │  ███  │  ░░░ ███ ░░░ ███  │   ",
-        "   │  ░░░  │   │  ░░░  │  ░░░  │   ",
-        "   │   │  ███  │   │   │   │   │   ",
-        "   │   │  ░░░  │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-      ];
-    }
-    case 5: {
-      return [
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "  ███  │   │   │   │   │   │  ███  ",
-        "  ░░░  │   │  ███  │  ███  │  ░░░  ",
-        "   │  ███  │  ░░░ ███ ░░░ ███  │   ",
-        "   │  ░░░  │   │  ░░░  │  ░░░  │   ",
-        "   │   │  ███  │   │   │   │   │   ",
-        "   │   │  ░░░  │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-        "   │   │   │   │   │   │   │   │   ",
-      ];
-    }
-    default: {
-      return [
-        "error"
-      ];
-    }
+export function getReviewerFrame(index: number): string[] {
+  if (index < 0 || index >= REVIEWER_FRAME_COUNT) {
+    return ["error"];
   }
+
+  const glyphGrid = createReviewerGlyphGrid(index);
+
+  return Array.from({ length: REVIEWER_GRID_HEIGHT }, (_, rowIndex) => {
+    const start = rowIndex * REVIEWER_GRID_WIDTH;
+    return glyphGrid.slice(start, start + REVIEWER_GRID_WIDTH).join("");
+  });
+}
+
+function createReviewerGlyphGrid(frameIndex: number): string[] {
+  const random = createSeededRandom(createSeed(frameIndex + REVIEWER_SEED_OFFSET));
+
+  return Array.from({ length: REVIEWER_GRID_SIZE }, () =>
+    pickRandomValue(REVIEWER_GLYPHS, random)
+  );
 }
 
 function getRefinerFrame(
