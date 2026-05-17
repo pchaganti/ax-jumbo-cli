@@ -220,18 +220,17 @@ export function CockpitLaunchpadView({
           padding={1}>
           <Box width={35} alignItems="center">
             <Text color={BaseColors.shade3} bold>
-              REVIEWER// <Text color={BaseColors.shade4}>({reviewerStatus.status})</Text>
+              REFINER// <Text color={BaseColors.shade4}>({refinerStatus.status})</Text>
             </Text>
           </Box>
-          <DaemonControlLine shortcut="v" snapshot={reviewerStatus} pendingConfig={daemonConfig} />
+          <DaemonControlLine shortcut="r" snapshot={refinerStatus} pendingConfig={daemonConfig} />
           <Box flexDirection="column" flexWrap="nowrap" width={35}>
-            {getReviewerFrame(reviewerFrameIndex).map((line, lineIndex) => (
-              <Text key={`${reviewerFrameIndex}-${lineIndex}`}>
-                {getStyledGlyphSegments(line, reviewerGlyphColors).map((segment, segmentIndex) => (
+            {getRefinerFrame(refinerFrameIndex, refinerGlyphPalette).map((line, lineIndex) => (
+              <Text key={`${refinerFrameIndex}-${lineIndex}`}>
+                {getRefinerGlyphSegments(line).map((segment, segmentIndex) => (
                   <Text
-                    key={`${reviewerFrameIndex}-${lineIndex}-${segmentIndex}`}
-                    color={segment.color}
-                    dimColor={segment.dimColor}>
+                    key={`${refinerFrameIndex}-${lineIndex}-${segmentIndex}`}
+                    color={segment.color}>
                     {segment.text}
                   </Text>
                 ))}
@@ -248,17 +247,18 @@ export function CockpitLaunchpadView({
           padding={1}>
           <Box width={35} alignItems="center">
             <Text color={BaseColors.shade3} bold>
-              REFINER// <Text color={BaseColors.shade4}>({refinerStatus.status})</Text>
+              REVIEWER// <Text color={BaseColors.shade4}>({reviewerStatus.status})</Text>
             </Text>
           </Box>
-          <DaemonControlLine shortcut="r" snapshot={refinerStatus} pendingConfig={daemonConfig} />
+          <DaemonControlLine shortcut="v" snapshot={reviewerStatus} pendingConfig={daemonConfig} />
           <Box flexDirection="column" flexWrap="nowrap" width={35}>
-            {getRefinerFrame(refinerFrameIndex, refinerGlyphPalette).map((line, lineIndex) => (
-              <Text key={`${refinerFrameIndex}-${lineIndex}`}>
-                {getRefinerGlyphSegments(line).map((segment, segmentIndex) => (
+            {getReviewerFrame(reviewerFrameIndex).map((line, lineIndex) => (
+              <Text key={`${reviewerFrameIndex}-${lineIndex}`}>
+                {getStyledGlyphSegments(line, reviewerGlyphColors).map((segment, segmentIndex) => (
                   <Text
-                    key={`${refinerFrameIndex}-${lineIndex}-${segmentIndex}`}
-                    color={segment.color}>
+                    key={`${reviewerFrameIndex}-${lineIndex}-${segmentIndex}`}
+                    color={segment.color}
+                    dimColor={segment.dimColor}>
                     {segment.text}
                   </Text>
                 ))}

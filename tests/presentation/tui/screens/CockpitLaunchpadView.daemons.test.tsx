@@ -12,6 +12,16 @@ const defaultConfig = {
   maxRetries: 3,
 };
 
+function renderedTextPosition(frame: string, text: string): number {
+  const position = frame.indexOf(text);
+
+  if (position !== -1) {
+    return position;
+  }
+
+  return frame.indexOf(text.slice(1));
+}
+
 describe("CockpitLaunchpadView daemon controls", () => {
   it("starts and stops real daemon targets through ISubprocessManager without replacing launchpad panels", async () => {
     const snapshots = new Map<TuiDaemonName, TuiSubprocessSnapshot>([
@@ -55,19 +65,35 @@ describe("CockpitLaunchpadView daemon controls", () => {
 
     expect(lastFrame()).toContain("PROJECT//");
     expect(lastFrame()).toContain("SESSION//");
-    expect(lastFrame()).toContain("REFINER//");
+    expect(lastFrame()).toContain("REVIEWER//");
     expect(lastFrame()).toContain("CODIFIER//");
     expect(lastFrame()).toContain("[a] codex [p] 30s [x] 3");
+
+    const frame = lastFrame() ?? "";
+    const refinerPosition = renderedTextPosition(frame, "REFINER//");
+    const reviewerPosition = renderedTextPosition(frame, "REVIEWER//");
+    const codifierPosition = renderedTextPosition(frame, "CODIFIER//");
+    expect(refinerPosition).toBeGreaterThanOrEqual(0);
+    expect(refinerPosition).toBeLessThan(reviewerPosition);
+    expect(reviewerPosition).toBeLessThan(codifierPosition);
 
     stdin.write("r");
     await tick();
     expect(manager.spawn).toHaveBeenCalledWith("refiner", defaultConfig);
-    expect(lastFrame()).toContain("REFINER// (running)");
-    expect(lastFrame()).toContain("refining goal_123");
+    expect(renderedTextPosition(lastFrame() ?? "", "REFINER// (running)")).toBeGreaterThanOrEqual(0);
+    expect(renderedTextPosition(lastFrame() ?? "", "refining goal_123")).toBeGreaterThanOrEqual(0);
 
     stdin.write("r");
     await tick();
     expect(manager.terminate).toHaveBeenCalledWith("refiner");
+
+    stdin.write("v");
+    await tick();
+    expect(manager.spawn).toHaveBeenCalledWith("reviewer", defaultConfig);
+
+    stdin.write("c");
+    await tick();
+    expect(manager.spawn).toHaveBeenCalledWith("codifier", defaultConfig);
     unmount();
   });
 
