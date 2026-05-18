@@ -6,7 +6,11 @@ import { MegaMenu } from "./components/MegaMenu.js";
 import { ScreenRouter } from "./ScreenRouter.js";
 import { InitFlow } from "./flows/InitFlow.js";
 import type { InitFlowActionControllers } from "./flows/InitFlow.js";
+import { GoalAuthoringFlow } from "./flows/GoalAuthoringFlow.js";
+import type { GoalAuthoringValues } from "./flows/GoalAuthoringFlow.js";
 import { DEFAULT_SCREEN_INDEX } from "./ScreenDefinitions.js";
+import { dispatchTuiAction } from "./actions/TuiActionDispatcher.js";
+import type { TuiRequestController } from "./actions/TuiActionDispatcher.js";
 import {
   TuiStateReaderProvider,
   useProjectContext,
@@ -16,8 +20,13 @@ import {
 import { SubprocessManagerProvider, useSubprocessManager } from "./subprocess/SubprocessManagerContext.js";
 import type { ISubprocessManager, TuiSubprocessSnapshot } from "./subprocess/ISubprocessManager.js";
 import type { NotificationDrawerNotification } from "./components/NotificationDrawer.js";
+import type { AddGoalRequest } from "../../application/context/goals/add/AddGoalRequest.js";
+import type { AddGoalResponse } from "../../application/context/goals/add/AddGoalResponse.js";
+import type { ProjectLifecycleState } from "../../application/context/project/ProjectLifecycleState.js";
 
 const PLACEHOLDER_PROJECT_NAME = "Jumbo";
+const GOAL_AUTHORING_UNAVAILABLE_ERROR =
+  "Goal registration is unavailable. Restart Jumbo and try again.";
 
 function useTerminalDimensions(): { columns: number; rows: number } {
   const { stdout } = useStdout();
@@ -46,9 +55,16 @@ interface TuiAppProps {
   readonly version?: string;
   readonly stateReaderControllers?: TuiStateReaderControllers;
   readonly stateReaderOptions?: TuiStateReaderOptions;
-  readonly actionControllers?: InitFlowActionControllers;
+  readonly actionControllers?: TuiAppActionControllers;
   readonly onProjectInitialized?: () => Promise<TuiStateReaderControllers>;
   readonly subprocessManager?: ISubprocessManager;
+}
+
+export interface TuiAppActionControllers extends InitFlowActionControllers {
+  readonly addGoalController?: TuiRequestController<
+    AddGoalRequest,
+    AddGoalResponse
+  >;
 }
 
 export function TuiApp({
@@ -101,7 +117,7 @@ export function TuiApp({
 
 interface TuiAppFrameProps {
   readonly version: string;
-  readonly actionControllers?: InitFlowActionControllers;
+  readonly actionControllers?: TuiAppActionControllers;
   readonly onProjectInitialized: () => Promise<boolean>;
   readonly subprocessManagerEnabled: boolean;
 }
@@ -121,6 +137,11 @@ function TuiAppFrame({
   );
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [initFlowOpen, setInitFlowOpen] = useState(false);
+  const [goalAuthoringOpen, setGoalAuthoringOpen] = useState(false);
+  const [goalAuthoringError, setGoalAuthoringError] = useState<string | null>(null);
+  const [goalAuthoringWorking, setGoalAuthoringWorking] = useState(false);
+  const [lifecycleRouteOverride, setLifecycleRouteOverride] =
+    useState<ProjectLifecycleState | null>(null);
   const [unprimedSkipped, setUnprimedSkipped] = useState(false);
   const [daemonStatuses, setDaemonStatuses] = useState<readonly TuiSubprocessSnapshot[]>(
     subprocessManager.getAllStatuses(),
@@ -128,17 +149,31 @@ function TuiAppFrame({
   const projectLifecycleState =
     projectContext.data?.lifecycleState ?? "uninitialized";
   const routedProjectLifecycleState =
-    projectLifecycleState === "unprimed" && unprimedSkipped
+    lifecycleRouteOverride ??
+    (projectLifecycleState === "unprimed" && unprimedSkipped
       ? "primed-empty"
-      : projectLifecycleState;
+      : projectLifecycleState);
   const initShortcutEnabled =
     !projectContext.loading && projectLifecycleState === "uninitialized";
+  const goalAuthoringShortcutEnabled =
+    !projectContext.loading &&
+    activeScreenIndex === DEFAULT_SCREEN_INDEX &&
+    routedProjectLifecycleState === "primed-empty";
 
   useEffect(() => {
     if (projectLifecycleState !== "unprimed") {
       setUnprimedSkipped(false);
     }
   }, [projectLifecycleState]);
+
+  useEffect(() => {
+    if (
+      lifecycleRouteOverride !== null &&
+      projectLifecycleState === lifecycleRouteOverride
+    ) {
+      setLifecycleRouteOverride(null);
+    }
+  }, [lifecycleRouteOverride, projectLifecycleState]);
 
   useEffect(() => {
     if (!subprocessManagerEnabled) {
@@ -156,7 +191,7 @@ function TuiAppFrame({
   }, [subprocessManager, subprocessManagerEnabled]);
 
   useInput((input) => {
-    if (megaMenuOpen || initFlowOpen) {
+    if (megaMenuOpen || initFlowOpen || goalAuthoringOpen) {
       return;
     }
     if (input === "q") {
@@ -168,6 +203,10 @@ function TuiAppFrame({
     if (initShortcutEnabled && (input === "i" || input === "I")) {
       setInitFlowOpen(true);
     }
+    if (goalAuthoringShortcutEnabled && (input === "g" || input === "G")) {
+      setGoalAuthoringError(null);
+      setGoalAuthoringOpen(true);
+    }
     if (
       activeScreenIndex === DEFAULT_SCREEN_INDEX &&
       projectLifecycleState === "unprimed" &&
@@ -177,19 +216,79 @@ function TuiAppFrame({
     }
   });
 
-  const handleInitComplete = useCallback(
-    async (_values: Record<string, string>) => {
-      const installedStateReaders = await onProjectInitialized();
-      if (!installedStateReaders) {
+  const completeStateChangingOverlay = useCallback(
+    async (
+      closeOverlay: () => void,
+      options: {
+        readonly lifecycleRouteOverride?: ProjectLifecycleState;
+        readonly reinstallStateReaders?: boolean;
+      } = {},
+    ) => {
+      if (options.lifecycleRouteOverride !== undefined) {
+        setLifecycleRouteOverride(options.lifecycleRouteOverride);
+        setActiveScreenIndex(DEFAULT_SCREEN_INDEX);
+      }
+
+      if (options.reinstallStateReaders) {
+        const installedStateReaders = await onProjectInitialized();
+        if (!installedStateReaders) {
+          await projectContext.refresh();
+        }
+      } else {
         await projectContext.refresh();
       }
-      setInitFlowOpen(false);
+
+      closeOverlay();
     },
     [onProjectInitialized, projectContext],
   );
 
+  const handleInitComplete = useCallback(
+    async (_values: Record<string, string>) => {
+      await completeStateChangingOverlay(
+        () => setInitFlowOpen(false),
+        { reinstallStateReaders: true },
+      );
+    },
+    [completeStateChangingOverlay],
+  );
+
   const handleInitCancel = useCallback(() => {
     setInitFlowOpen(false);
+  }, []);
+
+  const handleGoalAuthoringComplete = useCallback(
+    async (values: GoalAuthoringValues) => {
+      const addGoalController = actionControllers?.addGoalController;
+      if (addGoalController === undefined) {
+        setGoalAuthoringError(GOAL_AUTHORING_UNAVAILABLE_ERROR);
+        return;
+      }
+
+      setGoalAuthoringWorking(true);
+      setGoalAuthoringError(null);
+      const result = await dispatchTuiAction(
+        addGoalController,
+        toAddGoalRequest(values),
+      );
+      setGoalAuthoringWorking(false);
+
+      if (!result.ok) {
+        setGoalAuthoringError(result.error.message);
+        return;
+      }
+
+      await completeStateChangingOverlay(
+        () => setGoalAuthoringOpen(false),
+        { lifecycleRouteOverride: "primed" },
+      );
+    },
+    [actionControllers, completeStateChangingOverlay],
+  );
+
+  const handleGoalAuthoringCancel = useCallback(() => {
+    setGoalAuthoringError(null);
+    setGoalAuthoringOpen(false);
   }, []);
 
   const handleScreenSelect = (index: number) => {
@@ -240,17 +339,61 @@ function TuiAppFrame({
             />
           </Box>
         )}
+        {goalAuthoringOpen && (
+          <Box
+            position="absolute"
+            width="100%"
+            height="100%"
+            flexDirection="column"
+          >
+            <GoalAuthoringFlow
+              onComplete={handleGoalAuthoringComplete}
+              onCancel={handleGoalAuthoringCancel}
+              dispatchError={goalAuthoringError}
+              disabled={goalAuthoringWorking}
+            />
+          </Box>
+        )}
       </Box>
       <Box flexShrink={0}>
         <Footer
           terminalWidth={columns}
-          shortcutsEnabled={!megaMenuOpen && !initFlowOpen}
+          shortcutsEnabled={!megaMenuOpen && !initFlowOpen && !goalAuthoringOpen}
           daemonCounts={countDaemons(daemonStatuses)}
           notifications={buildDaemonFailureNotifications(daemonStatuses)}
         />
       </Box>
     </Box>
   );
+}
+
+function toAddGoalRequest(values: GoalAuthoringValues): AddGoalRequest {
+  return {
+    title: values.title,
+    objective: values.objective,
+    successCriteria: [...values.successCriteria],
+    scopeIn: optionalList(values.scopeIn),
+    scopeOut: optionalList(values.scopeOut),
+    nextGoalId: optionalText(values.nextGoal),
+    previousGoalId: optionalText(values.previousGoal),
+    prerequisiteGoals: optionalList(values.prerequisiteGoals),
+    branch: optionalText(values.branch),
+    worktree: optionalText(values.worktree),
+  };
+}
+
+function optionalText(value: string): string | undefined {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function optionalList(value: string): string[] | undefined {
+  const values = value
+    .split(/[\s,]+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  return values.length > 0 ? values : undefined;
 }
 
 function countDaemons(statuses: readonly TuiSubprocessSnapshot[]): {

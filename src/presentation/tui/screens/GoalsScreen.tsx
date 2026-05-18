@@ -12,6 +12,7 @@ import { KeyBadge } from "../components/KeyBadge.js";
 import { Panel } from "../components/Panel.js";
 import { Tumbler } from "../components/Tumbler.js";
 import { GoalAuthoringFlow } from "../flows/GoalAuthoringFlow.js";
+import type { GoalAuthoringValues } from "../flows/GoalAuthoringFlow.js";
 import { useGoalsList } from "../state/TuiStateReader.js";
 
 type DisplayGoalStatus =
@@ -123,7 +124,7 @@ export function GoalsScreen(): React.ReactElement {
     }
   });
 
-  const handleAuthoringComplete = (_values: Record<string, string>) => {
+  const handleAuthoringComplete = (_values: GoalAuthoringValues) => {
     setAuthoringOpen(false);
   };
 

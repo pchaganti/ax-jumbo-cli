@@ -3,15 +3,15 @@ import { render } from "ink";
 import type { IApplicationContainer } from "../../application/host/IApplicationContainer.js";
 import { GetProjectSummaryQueryHandler } from "../../application/context/project/query/GetProjectSummaryQueryHandler.js";
 import { TuiApp } from "./TuiApp.js";
+import type { TuiAppActionControllers } from "./TuiApp.js";
 import type { TuiStateReaderControllers } from "./state/TuiStateReader.js";
-import type { InitFlowActionControllers } from "./flows/InitFlow.js";
 import { TuiSubprocessManager } from "./subprocess/TuiSubprocessManager.js";
 
 export class TuiApplicationLauncher {
   constructor(
     private readonly version: string,
     private readonly container: IApplicationContainer | null,
-    private readonly fallbackActionControllers: InitFlowActionControllers = {},
+    private readonly fallbackActionControllers: TuiAppActionControllers = {},
     private readonly fallbackStateReaderControllerFactory?: () => Promise<TuiStateReaderControllers>,
   ) {}
 
@@ -50,7 +50,7 @@ export class TuiApplicationLauncher {
     };
   }
 
-  private buildActionControllers(): InitFlowActionControllers {
+  private buildActionControllers(): TuiAppActionControllers {
     if (this.container === null) {
       return this.fallbackActionControllers;
     }
@@ -61,6 +61,7 @@ export class TuiApplicationLauncher {
       addAudienceController: this.container.addAudienceController,
       addValuePropositionController:
         this.container.addValuePropositionController,
+      addGoalController: this.container.addGoalController,
     };
   }
 }
