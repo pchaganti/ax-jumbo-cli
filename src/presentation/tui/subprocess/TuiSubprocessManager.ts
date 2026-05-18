@@ -6,7 +6,8 @@ import type { ILogger } from "../../../application/logging/ILogger.js";
 import { ISubprocessManager, TuiDaemonConfig, TuiDaemonEventSnapshot, TuiDaemonName, TuiSubprocessSnapshot } from "./ISubprocessManager.js";
 
 const execFileAsync = promisify(execFile);
-const RING_BUFFER_SIZE = 25;
+const OUTPUT_RING_BUFFER_SIZE = 25;
+const EVENT_RING_BUFFER_SIZE = 50;
 const DEFAULT_DAEMON_CONFIG: TuiDaemonConfig = {
   agentId: "codex",
   pollIntervalMs: 30_000,
@@ -87,8 +88,12 @@ export class TuiSubprocessManager implements ISubprocessManager {
       const text = chunk.toString();
       const lines = this.appendLines(managed.stdout, text);
       this.logger.info("Daemon subprocess stdout", { daemon: name, text });
-      managed.events.push(...lines.map(parseDaemonEvent).filter((event): event is TuiDaemonEventSnapshot => event !== null));
-      while (managed.events.length > RING_BUFFER_SIZE) {
+      const events = lines.map(parseDaemonEvent).filter((event): event is TuiDaemonEventSnapshot => event !== null);
+      for (const event of events) {
+        this.logger.info("Daemon subprocess event", { daemon: name, event });
+      }
+      managed.events.push(...events);
+      while (managed.events.length > EVENT_RING_BUFFER_SIZE) {
         managed.events.shift();
       }
     });
@@ -224,7 +229,7 @@ export class TuiSubprocessManager implements ISubprocessManager {
   private appendLines(buffer: string[], value: string): string[] {
     const lines = value.split(/\r?\n/).filter((line) => line.length > 0);
     buffer.push(...lines);
-    while (buffer.length > RING_BUFFER_SIZE) {
+    while (buffer.length > OUTPUT_RING_BUFFER_SIZE) {
       buffer.shift();
     }
     return lines;
@@ -252,7 +257,10 @@ function parseDaemonEvent(line: string): TuiDaemonEventSnapshot | null {
     if (typeof parsed.daemon !== "string" || typeof parsed.status !== "string") {
       return null;
     }
-    return parsed;
+    return {
+      ...parsed,
+      timestampMs: parsed.timestampMs ?? Date.now(),
+    };
   } catch {
     return null;
   }

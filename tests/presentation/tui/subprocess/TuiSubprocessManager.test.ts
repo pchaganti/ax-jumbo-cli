@@ -79,10 +79,12 @@ describe("TuiSubprocessManager", () => {
     });
   });
 
-  it("passes configured agent, poll interval, and retry flags and parses daemon events", async () => {
+  it("passes configured agent, poll interval, and retry flags, parses daemon events, and logs them", async () => {
     const child = childProcess();
     spawnMock.mockReturnValue(child);
-    const manager = new TuiSubprocessManager();
+    jest.spyOn(Date, "now").mockReturnValue(1767272400000);
+    const testLogger = logger();
+    const manager = new TuiSubprocessManager(testLogger);
 
     await manager.spawn("refiner", {
       agentId: "claude",
@@ -113,11 +115,47 @@ describe("TuiSubprocessManager", () => {
       {
         daemon: "refiner",
         status: "processing",
+        timestampMs: 1767272400000,
         goalId: "goal_123",
         attempt: 2,
         maxRetries: 5,
       },
     ]);
+    expect(testLogger.info).toHaveBeenCalledWith("Daemon subprocess event", {
+      daemon: "refiner",
+      event: {
+        daemon: "refiner",
+        status: "processing",
+        timestampMs: 1767272400000,
+        goalId: "goal_123",
+        attempt: 2,
+        maxRetries: 5,
+      },
+    });
+  });
+
+  it("keeps only the latest 50 parsed daemon events in memory", async () => {
+    const child = childProcess();
+    spawnMock.mockReturnValue(child);
+    const manager = new TuiSubprocessManager();
+
+    await manager.spawn("refiner");
+
+    const eventLines = Array.from({ length: 55 }, (_, index) =>
+      JSON.stringify({
+        daemon: "refiner",
+        status: "processing",
+        goalId: `goal_${index}`,
+        attempt: 1,
+        maxRetries: 3,
+      })
+    ).join("\n");
+    child.stdout.emit("data", Buffer.from(`${eventLines}\n`));
+
+    const events = manager.getStatus("refiner").events;
+    expect(events).toHaveLength(50);
+    expect(events[0]).toEqual(expect.objectContaining({ goalId: "goal_5" }));
+    expect(events[49]).toEqual(expect.objectContaining({ goalId: "goal_54" }));
   });
 
   it("logs daemon stderr and child process failures through ILogger", async () => {

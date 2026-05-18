@@ -1,5 +1,15 @@
 export type TuiDaemonName = "reviewer" | "refiner" | "codifier";
 export type TuiSubprocessStatus = "stopped" | "running" | "failed";
+export type TuiDaemonEventStatus =
+  | "starting"
+  | "stopping"
+  | "failed"
+  | "idle"
+  | "processing"
+  | "completed"
+  | "skipped"
+  | "exhausted"
+  | "codifying";
 
 export interface TuiDaemonConfig {
   readonly agentId: string;
@@ -11,7 +21,8 @@ export type TuiDaemonConfigs = Readonly<Record<TuiDaemonName, TuiDaemonConfig>>;
 
 export interface TuiDaemonEventSnapshot {
   readonly daemon: string;
-  readonly status: string;
+  readonly status: TuiDaemonEventStatus | (string & {});
+  readonly timestampMs?: number;
   readonly goalId?: string;
   readonly attempt?: number;
   readonly maxRetries?: number;

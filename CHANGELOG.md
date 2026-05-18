@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **TUI init flow**: Added a production-oriented project initialization wizard inside the TUI that collects project name, purpose, optional audiences, optional value propositions, agent selection, planned changes, confirmation, and inline dispatch errors using the shared wizard primitive.
 - **TUI notification prototype**: Footer notification badge with placeholder unread count, N-key drawer toggle, placeholder notification list, and individual dismiss actions.
 - **TUI dedicated memory entity screens**: Memory navigation now groups Decisions, Invariants, Components, Dependencies, and Guidelines under a first-level Memory menu category, with each entity type opening a focused placeholder list/detail screen and static event replay controls.
+- **Cockpit daemon Events panel**: Renamed the upper-right Cockpit panel from Session to Events and added bounded, timestamped daemon activity rows derived from refiner, reviewer, and codifier subprocess snapshots.
 
 ### Changed
 

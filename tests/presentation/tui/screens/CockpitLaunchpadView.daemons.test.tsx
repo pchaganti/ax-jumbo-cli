@@ -6,11 +6,14 @@ import { SubprocessManagerProvider } from "../../../../src/presentation/tui/subp
 import type { ISubprocessManager, TuiDaemonConfig, TuiDaemonName, TuiSubprocessSnapshot } from "../../../../src/presentation/tui/subprocess/ISubprocessManager.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 50));
+const pollTick = () => new Promise((resolve) => setTimeout(resolve, 550));
 const defaultConfig = {
   agentId: "codex",
   pollIntervalMs: 30000,
   maxRetries: 3,
 };
+const eventTimestampMs = new Date(2099, 0, 1, 12, 0, 0).getTime();
+const laterEventTimestampMs = new Date(2099, 0, 1, 12, 0, 1).getTime();
 
 function createSnapshots(config: TuiDaemonConfig = defaultConfig): Map<TuiDaemonName, TuiSubprocessSnapshot> {
   return new Map<TuiDaemonName, TuiSubprocessSnapshot>([
@@ -42,7 +45,7 @@ describe("CockpitLaunchpadView daemon controls", () => {
           pid: 123,
           stdout: ["{\"daemon\":\"refiner\",\"status\":\"processing\",\"goalId\":\"goal_123456\",\"attempt\":1,\"maxRetries\":3}"],
           stderr: [],
-          events: [{ daemon: "refiner", status: "processing", goalId: "goal_123456", attempt: 1, maxRetries: 3 }],
+          events: [{ daemon: "refiner", status: "processing", timestampMs: eventTimestampMs, goalId: "goal_123456", attempt: 1, maxRetries: 3 }],
         };
         snapshots.set(name, next);
         return next;
@@ -68,7 +71,8 @@ describe("CockpitLaunchpadView daemon controls", () => {
     );
 
     expect(lastFrame()).toContain("PROJECT//");
-    expect(lastFrame()).toContain("SESSION//");
+    expect(lastFrame()).toContain("EVENTS//");
+    expect(lastFrame()).not.toContain("SESSION//");
     expect(lastFrame()).toContain("REVIEWER//");
     expect(lastFrame()).toContain("CODIFIER//");
     expect(renderedTextPosition(lastFrame() ?? "", "[r] start pid -")).toBeGreaterThanOrEqual(0);
@@ -87,7 +91,8 @@ describe("CockpitLaunchpadView daemon controls", () => {
     await tick();
     expect(manager.spawn).toHaveBeenCalledWith("refiner", defaultConfig);
     expect(renderedTextPosition(lastFrame() ?? "", "REFINER// (running)")).toBeGreaterThanOrEqual(0);
-    expect(renderedTextPosition(lastFrame() ?? "", "refining goal_123")).toBeGreaterThanOrEqual(0);
+    expect(lastFrame()).not.toContain("refining goal_123");
+    expect(renderedTextPosition(lastFrame() ?? "", "12:00:00 refiner  processing goal_123 1/3")).toBeGreaterThanOrEqual(0);
 
     stdin.write("r");
     await tick();
@@ -104,6 +109,302 @@ describe("CockpitLaunchpadView daemon controls", () => {
     stdin.write("c");
     await tick();
     expect(manager.spawn).toHaveBeenCalledWith("codifier", defaultConfig);
+    unmount();
+  });
+
+  it("renders daemon event rows after subprocess snapshots update", async () => {
+    const snapshots = createSnapshots();
+    const manager: ISubprocessManager = {
+      spawn: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminate: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminateAll: jest.fn(async () => {}),
+      getStatus: jest.fn((name: TuiDaemonName) => snapshots.get(name)!),
+      getAllStatuses: jest.fn(() => Array.from(snapshots.values())),
+    };
+
+    const { lastFrame, unmount } = render(
+      <SubprocessManagerProvider manager={manager}>
+        <CockpitLaunchpadView
+          reviewerFrameDurationMs={0}
+          refinerFrameDurationMs={0}
+          codifierFrameDurationMs={0}
+        />
+      </SubprocessManagerProvider>,
+    );
+
+    expect(lastFrame()).not.toContain("reviewer idle");
+    expect(lastFrame()).not.toContain("refiner  idle");
+    expect(lastFrame()).not.toContain("codifier idle");
+
+    snapshots.set("reviewer", {
+      name: "reviewer",
+      status: "running",
+      config: defaultConfig,
+      pid: 456,
+      stdout: ["{\"daemon\":\"reviewer\",\"status\":\"completed\",\"goalId\":\"goal_reviewed\",\"attempt\":2,\"maxRetries\":3}"],
+      stderr: [],
+      events: [
+        { daemon: "reviewer", status: "processing", timestampMs: eventTimestampMs, goalId: "goal_reviewed", attempt: 1, maxRetries: 3 },
+        { daemon: "reviewer", status: "completed", timestampMs: laterEventTimestampMs, goalId: "goal_reviewed", attempt: 2, maxRetries: 3 },
+      ],
+    });
+    snapshots.set("refiner", {
+      name: "refiner",
+      status: "failed",
+      config: defaultConfig,
+      stdout: [],
+      stderr: ["agent refused task"],
+      events: [],
+      exitCode: 1,
+    });
+    snapshots.set("codifier", {
+      name: "codifier",
+      status: "running",
+      config: defaultConfig,
+      pid: 789,
+      stdout: ["{\"daemon\":\"codifier\",\"status\":\"codifying\",\"goalId\":\"goal_codify\",\"attempt\":1,\"maxRetries\":3}"],
+      stderr: [],
+      events: [
+        { daemon: "codifier", status: "codifying", timestampMs: eventTimestampMs, goalId: "goal_codify", attempt: 1, maxRetries: 3 },
+      ],
+    });
+
+    await pollTick();
+
+    expect(renderedTextPosition(lastFrame() ?? "", "12:00:00 reviewer processing goal_rev 1/3")).toBeGreaterThanOrEqual(0);
+    expect(renderedTextPosition(lastFrame() ?? "", "12:00:01 reviewer completed  goal_rev 2/3")).toBeGreaterThanOrEqual(0);
+    expect(renderedTextPosition(lastFrame() ?? "", "refiner  failed     agent refused task")).toBeGreaterThanOrEqual(0);
+    expect(renderedTextPosition(lastFrame() ?? "", "12:00:00 codifier codifying  goal_cod 1/3")).toBeGreaterThanOrEqual(0);
+    unmount();
+  });
+
+  it("keeps recent daemon events visible after later snapshots no longer include them", async () => {
+    const snapshots = createSnapshots();
+    const manager: ISubprocessManager = {
+      spawn: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminate: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminateAll: jest.fn(async () => {}),
+      getStatus: jest.fn((name: TuiDaemonName) => snapshots.get(name)!),
+      getAllStatuses: jest.fn(() => Array.from(snapshots.values())),
+    };
+
+    const { lastFrame, unmount } = render(
+      <SubprocessManagerProvider manager={manager}>
+        <CockpitLaunchpadView
+          reviewerFrameDurationMs={0}
+          refinerFrameDurationMs={0}
+          codifierFrameDurationMs={0}
+        />
+      </SubprocessManagerProvider>,
+    );
+
+    snapshots.set("reviewer", {
+      name: "reviewer",
+      status: "running",
+      config: defaultConfig,
+      pid: 456,
+      stdout: [],
+      stderr: [],
+      events: [
+        { daemon: "reviewer", status: "completed", timestampMs: laterEventTimestampMs, goalId: "goal_reviewed", attempt: 2, maxRetries: 3 },
+      ],
+    });
+
+    await pollTick();
+    expect(renderedTextPosition(lastFrame() ?? "", "12:00:01 reviewer completed  goal_rev 2/3")).toBeGreaterThanOrEqual(0);
+
+    snapshots.set("reviewer", {
+      name: "reviewer",
+      status: "stopped",
+      config: defaultConfig,
+      stdout: [],
+      stderr: [],
+      events: [],
+    });
+
+    await pollTick();
+    expect(renderedTextPosition(lastFrame() ?? "", "12:00:01 reviewer completed  goal_rev 2/3")).toBeGreaterThanOrEqual(0);
+    unmount();
+  });
+
+  it("renders lifecycle, skipped, and exhausted statuses as event rows", () => {
+    const snapshots = new Map<TuiDaemonName, TuiSubprocessSnapshot>([
+      ["reviewer", {
+        name: "reviewer",
+        status: "running",
+        config: defaultConfig,
+        pid: 456,
+        stdout: ["raw reviewer tail"],
+        stderr: [],
+        events: [],
+      }],
+      ["refiner", {
+        name: "refiner",
+        status: "running",
+        config: defaultConfig,
+        pid: 123,
+        stdout: [],
+        stderr: ["waiting for process exit"],
+        events: [],
+        stopRequested: true,
+      }],
+      ["codifier", {
+        name: "codifier",
+        status: "running",
+        config: defaultConfig,
+        pid: 789,
+        stdout: [],
+        stderr: [],
+        events: [
+          { daemon: "codifier", status: "skipped", timestampMs: eventTimestampMs, goalId: "goal_skip", maxRetries: 3 },
+          { daemon: "codifier", status: "exhausted", timestampMs: laterEventTimestampMs, goalId: "goal_done", attempt: 3, maxRetries: 3 },
+        ],
+      }],
+    ]);
+    const manager: ISubprocessManager = {
+      spawn: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminate: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminateAll: jest.fn(async () => {}),
+      getStatus: jest.fn((name: TuiDaemonName) => snapshots.get(name)!),
+      getAllStatuses: jest.fn(() => Array.from(snapshots.values())),
+    };
+
+    const { lastFrame, unmount } = render(
+      <SubprocessManagerProvider manager={manager}>
+        <CockpitLaunchpadView
+          reviewerFrameDurationMs={0}
+          refinerFrameDurationMs={0}
+          codifierFrameDurationMs={0}
+        />
+      </SubprocessManagerProvider>,
+    );
+
+    expect(renderedTextPosition(lastFrame() ?? "", "reviewer starting")).toBeGreaterThanOrEqual(0);
+    expect(renderedTextPosition(lastFrame() ?? "", "refiner  stopping")).toBeGreaterThanOrEqual(0);
+    expect(renderedTextPosition(lastFrame() ?? "", "codifier skipped")).toBeGreaterThanOrEqual(0);
+    expect(renderedTextPosition(lastFrame() ?? "", "goal_ski -/3")).toBeGreaterThanOrEqual(0);
+    expect(renderedTextPosition(lastFrame() ?? "", "codifier exhausted")).toBeGreaterThanOrEqual(0);
+    expect(renderedTextPosition(lastFrame() ?? "", "goal_don 3/3")).toBeGreaterThanOrEqual(0);
+    unmount();
+  });
+
+  it("does not duplicate synthetic starting events across snapshot polls", async () => {
+    const snapshots = createSnapshots();
+    snapshots.set("reviewer", {
+      name: "reviewer",
+      status: "running",
+      config: defaultConfig,
+      pid: 456,
+      stdout: [],
+      stderr: [],
+      events: [],
+    });
+    const manager: ISubprocessManager = {
+      spawn: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminate: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminateAll: jest.fn(async () => {}),
+      getStatus: jest.fn((name: TuiDaemonName) => snapshots.get(name)!),
+      getAllStatuses: jest.fn(() => Array.from(snapshots.values())),
+    };
+
+    const { lastFrame, unmount } = render(
+      <SubprocessManagerProvider manager={manager}>
+        <CockpitLaunchpadView
+          reviewerFrameDurationMs={0}
+          refinerFrameDurationMs={0}
+          codifierFrameDurationMs={0}
+        />
+      </SubprocessManagerProvider>,
+    );
+
+    await pollTick();
+    await pollTick();
+
+    const frame = lastFrame() ?? "";
+    expect(frame.match(/reviewer starting/g)).toHaveLength(1);
+    unmount();
+  });
+
+  it("filters idle polling events out of the Events panel", async () => {
+    const snapshots = createSnapshots();
+    snapshots.set("reviewer", {
+      name: "reviewer",
+      status: "running",
+      config: defaultConfig,
+      pid: 456,
+      stdout: [],
+      stderr: [],
+      events: [
+        { daemon: "reviewer", status: "idle", timestampMs: eventTimestampMs },
+        { daemon: "reviewer", status: "processing", timestampMs: laterEventTimestampMs, goalId: "goal_reviewed", attempt: 1, maxRetries: 3 },
+      ],
+    });
+    const manager: ISubprocessManager = {
+      spawn: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminate: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminateAll: jest.fn(async () => {}),
+      getStatus: jest.fn((name: TuiDaemonName) => snapshots.get(name)!),
+      getAllStatuses: jest.fn(() => Array.from(snapshots.values())),
+    };
+
+    const { lastFrame, unmount } = render(
+      <SubprocessManagerProvider manager={manager}>
+        <CockpitLaunchpadView
+          reviewerFrameDurationMs={0}
+          refinerFrameDurationMs={0}
+          codifierFrameDurationMs={0}
+        />
+      </SubprocessManagerProvider>,
+    );
+
+    await tick();
+
+    expect(lastFrame()).not.toContain("reviewer idle");
+    expect(renderedTextPosition(lastFrame() ?? "", "12:00:01 reviewer processing goal_rev 1/3")).toBeGreaterThanOrEqual(0);
+    unmount();
+  });
+
+  it("keeps the rendered Events panel capped to the latest 10 rows", async () => {
+    const snapshots = createSnapshots();
+    snapshots.set("reviewer", {
+      name: "reviewer",
+      status: "running",
+      config: defaultConfig,
+      pid: 456,
+      stdout: [],
+      stderr: [],
+      events: Array.from({ length: 12 }, (_, index) => ({
+        daemon: "reviewer",
+        status: "processing" as const,
+        timestampMs: eventTimestampMs + index * 1000,
+        goalId: `goal_${index}`,
+        attempt: 1,
+        maxRetries: 3,
+      })),
+    });
+    const manager: ISubprocessManager = {
+      spawn: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminate: jest.fn(async (name: TuiDaemonName) => snapshots.get(name)!),
+      terminateAll: jest.fn(async () => {}),
+      getStatus: jest.fn((name: TuiDaemonName) => snapshots.get(name)!),
+      getAllStatuses: jest.fn(() => Array.from(snapshots.values())),
+    };
+
+    const { lastFrame, unmount } = render(
+      <SubprocessManagerProvider manager={manager}>
+        <CockpitLaunchpadView
+          reviewerFrameDurationMs={0}
+          refinerFrameDurationMs={0}
+          codifierFrameDurationMs={0}
+        />
+      </SubprocessManagerProvider>,
+    );
+
+    await tick();
+
+    expect(lastFrame()).toContain("reviewer processing goal_11 1/3");
+    expect(lastFrame()).not.toContain("reviewer processing goal_0 1/3");
+    expect(lastFrame()).not.toContain("reviewer processing goal_1 1/3");
     unmount();
   });
 
