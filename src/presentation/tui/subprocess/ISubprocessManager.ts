@@ -7,6 +7,8 @@ export interface TuiDaemonConfig {
   readonly maxRetries: number;
 }
 
+export type TuiDaemonConfigs = Readonly<Record<TuiDaemonName, TuiDaemonConfig>>;
+
 export interface TuiDaemonEventSnapshot {
   readonly daemon: string;
   readonly status: string;

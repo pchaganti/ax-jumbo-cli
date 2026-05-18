@@ -4,7 +4,7 @@ import { SectionHeading } from "../components/SectionHeading.js";
 import { BaseColors } from "../../shared/DesignTokens.js";
 import { useProjectContext } from "../state/TuiStateReader.js";
 import { useSubprocessManager } from "../subprocess/SubprocessManagerContext.js";
-import type { ISubprocessManager, TuiDaemonConfig, TuiDaemonName, TuiSubprocessSnapshot } from "../subprocess/ISubprocessManager.js";
+import type { ISubprocessManager, TuiDaemonConfig, TuiDaemonConfigs, TuiDaemonName, TuiSubprocessSnapshot } from "../subprocess/ISubprocessManager.js";
 
 interface GlyphStyle {
   color: string;
@@ -43,6 +43,16 @@ const DEFAULT_CODIFIER_GLYPH_STYLE: GlyphStyle = {
 const AGENT_OPTIONS = ["codex", "claude", "gemini", "copilot", "cursor", "vibe"] as const;
 const POLL_INTERVAL_OPTIONS_MS = [10_000, 30_000, 60_000, 120_000] as const;
 const RETRY_OPTIONS = [1, 2, 3, 5] as const;
+const DEFAULT_DAEMON_CONFIG: TuiDaemonConfig = {
+  agentId: "codex",
+  pollIntervalMs: 30_000,
+  maxRetries: 3,
+};
+const DEFAULT_DAEMON_CONFIGS: TuiDaemonConfigs = {
+  reviewer: DEFAULT_DAEMON_CONFIG,
+  refiner: DEFAULT_DAEMON_CONFIG,
+  codifier: DEFAULT_DAEMON_CONFIG,
+};
 
 const REFINER_GLYPHS = [
   "•",
@@ -113,11 +123,8 @@ export function CockpitLaunchpadView({
   const [reviewerFrameIndex, setReviewerFrameIndex] = useState(0);
   const [refinerFrameIndex, setRefinerFrameIndex] = useState(0);
   const [codifierFrameIndex, setCodifierFrameIndex] = useState(0);
-  const [daemonConfig, setDaemonConfig] = useState<TuiDaemonConfig>({
-    agentId: "codex",
-    pollIntervalMs: 30_000,
-    maxRetries: 3,
-  });
+  const [selectedDaemon, setSelectedDaemon] = useState<TuiDaemonName>("refiner");
+  const [daemonConfigs, setDaemonConfigs] = useState<TuiDaemonConfigs>(DEFAULT_DAEMON_CONFIGS);
   const [daemonStatuses, setDaemonStatuses] = useState<readonly TuiSubprocessSnapshot[]>(
     subprocessManager.getAllStatuses(),
   );
@@ -168,22 +175,22 @@ export function CockpitLaunchpadView({
 
   useInput((input) => {
     if (input === "v" || input === "V") {
-      void toggleDaemon("reviewer", subprocessManager, daemonConfig, setDaemonStatuses);
+      handleDaemonShortcut("reviewer", selectedDaemon, setSelectedDaemon, subprocessManager, daemonConfigs, setDaemonStatuses);
     }
     if (input === "r" || input === "R") {
-      void toggleDaemon("refiner", subprocessManager, daemonConfig, setDaemonStatuses);
+      handleDaemonShortcut("refiner", selectedDaemon, setSelectedDaemon, subprocessManager, daemonConfigs, setDaemonStatuses);
     }
     if (input === "c" || input === "C") {
-      void toggleDaemon("codifier", subprocessManager, daemonConfig, setDaemonStatuses);
+      handleDaemonShortcut("codifier", selectedDaemon, setSelectedDaemon, subprocessManager, daemonConfigs, setDaemonStatuses);
     }
     if (input === "a" || input === "A") {
-      setDaemonConfig((config) => nextAgentConfig(config));
+      setDaemonConfigs((configs) => nextDaemonConfigs(configs, selectedDaemon, nextAgentConfig));
     }
     if (input === "p" || input === "P") {
-      setDaemonConfig((config) => nextPollConfig(config));
+      setDaemonConfigs((configs) => nextDaemonConfigs(configs, selectedDaemon, nextPollConfig));
     }
     if (input === "x" || input === "X") {
-      setDaemonConfig((config) => nextRetryConfig(config));
+      setDaemonConfigs((configs) => nextDaemonConfigs(configs, selectedDaemon, nextRetryConfig));
     }
   });
 
@@ -237,11 +244,11 @@ export function CockpitLaunchpadView({
           alignItems="center"
           padding={1}>
           <Box width={35} alignItems="center">
-            <Text color={BaseColors.shade3} bold>
+            <Text color={selectedDaemon === "refiner" ? BaseColors.brandBlue : BaseColors.shade3} bold>
               REFINER// <Text color={BaseColors.shade4}>({refinerStatus.status})</Text>
             </Text>
           </Box>
-          <DaemonControlLine shortcut="r" snapshot={refinerStatus} pendingConfig={daemonConfig} />
+          <DaemonControlLine shortcut="r" snapshot={refinerStatus} pendingConfig={daemonConfigs.refiner} selected={selectedDaemon === "refiner"} />
           <Box flexDirection="column" flexWrap="nowrap" width={35}>
             {getRefinerFrame(refinerFrameIndex, refinerGlyphPalette).map((line, lineIndex) => (
               <Text key={`${refinerFrameIndex}-${lineIndex}`}>
@@ -264,11 +271,11 @@ export function CockpitLaunchpadView({
           alignItems="center"
           padding={1}>
           <Box width={35} alignItems="center">
-            <Text color={BaseColors.shade3} bold>
+            <Text color={selectedDaemon === "reviewer" ? BaseColors.brandBlue : BaseColors.shade3} bold>
               REVIEWER// <Text color={BaseColors.shade4}>({reviewerStatus.status})</Text>
             </Text>
           </Box>
-          <DaemonControlLine shortcut="v" snapshot={reviewerStatus} pendingConfig={daemonConfig} />
+          <DaemonControlLine shortcut="v" snapshot={reviewerStatus} pendingConfig={daemonConfigs.reviewer} selected={selectedDaemon === "reviewer"} />
           <Box flexDirection="column" flexWrap="nowrap" width={35}>
             {getReviewerFrame(reviewerFrameIndex).map((line, lineIndex) => (
               <Text key={`${reviewerFrameIndex}-${lineIndex}`}>
@@ -292,11 +299,11 @@ export function CockpitLaunchpadView({
           alignItems="center"
           padding={1}>
           <Box width={35} alignItems="center">
-            <Text color={BaseColors.shade3} bold>
+            <Text color={selectedDaemon === "codifier" ? BaseColors.brandBlue : BaseColors.shade3} bold>
               CODIFIER// <Text color={BaseColors.shade4}>({codifierStatus.status})</Text>
             </Text>
           </Box>
-          <DaemonControlLine shortcut="c" snapshot={codifierStatus} pendingConfig={daemonConfig} />
+          <DaemonControlLine shortcut="c" snapshot={codifierStatus} pendingConfig={daemonConfigs.codifier} selected={selectedDaemon === "codifier"} />
           <Box flexDirection="column" flexWrap="nowrap" width={35}>
             {getCodifierFrame(codifierFrameIndex).map((line, lineIndex) => (
               <Text key={`${codifierFrameIndex}-${lineIndex}`}>
@@ -321,10 +328,12 @@ function DaemonControlLine({
   shortcut,
   snapshot,
   pendingConfig,
+  selected,
 }: {
   readonly shortcut: string;
   readonly snapshot: TuiSubprocessSnapshot;
   readonly pendingConfig: TuiDaemonConfig;
+  readonly selected: boolean;
 }): React.ReactElement {
   const action = snapshot.status === "running" ? "stop" : "start";
   const config = snapshot.status === "running" ? snapshot.config : pendingConfig;
@@ -334,7 +343,7 @@ function DaemonControlLine({
   return (
     <Box width={35} flexDirection="column">
       <Text color={BaseColors.shade4}>
-        [{shortcut}] {action} pid {snapshot.pid ?? "-"}
+        [{shortcut}] {selected ? action : "select"} pid {snapshot.pid ?? "-"}
       </Text>
       <Text color={BaseColors.shade4}>
         [a] {config.agentId} [p] {Math.round(config.pollIntervalMs / 1000)}s [x] {config.maxRetries}
@@ -349,6 +358,22 @@ function DaemonControlLine({
       )}
     </Box>
   );
+}
+
+function handleDaemonShortcut(
+  name: TuiDaemonName,
+  selectedDaemon: TuiDaemonName,
+  setSelectedDaemon: (name: TuiDaemonName) => void,
+  manager: ISubprocessManager,
+  configs: TuiDaemonConfigs,
+  setDaemonStatuses: (statuses: readonly TuiSubprocessSnapshot[]) => void,
+): void {
+  if (selectedDaemon !== name) {
+    setSelectedDaemon(name);
+    return;
+  }
+
+  void toggleDaemon(name, manager, configs[name], setDaemonStatuses);
 }
 
 async function toggleDaemon(
@@ -373,11 +398,7 @@ function findDaemonStatus(
   return statuses.find((status) => status.name === name) ?? {
     name,
     status: "stopped",
-    config: {
-      agentId: "codex",
-      pollIntervalMs: 30_000,
-      maxRetries: 3,
-    },
+    config: DEFAULT_DAEMON_CONFIG,
     stdout: [],
     stderr: [],
     events: [],
@@ -457,6 +478,17 @@ function nextRetryConfig(config: TuiDaemonConfig): TuiDaemonConfig {
   const currentIndex = RETRY_OPTIONS.indexOf(config.maxRetries as typeof RETRY_OPTIONS[number]);
   const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % RETRY_OPTIONS.length;
   return { ...config, maxRetries: RETRY_OPTIONS[nextIndex] };
+}
+
+function nextDaemonConfigs(
+  configs: TuiDaemonConfigs,
+  selectedDaemon: TuiDaemonName,
+  nextConfig: (config: TuiDaemonConfig) => TuiDaemonConfig,
+): TuiDaemonConfigs {
+  return {
+    ...configs,
+    [selectedDaemon]: nextConfig(configs[selectedDaemon]),
+  };
 }
 
 function truncateTail(text: string, max = 35): string {

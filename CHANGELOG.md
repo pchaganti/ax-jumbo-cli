@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Cockpit daemon controls**: Refiner, Reviewer, and Codifier now keep independent agent, poll interval, and retry settings in the TUI. Pressing a daemon hotkey selects that panel, pressing the selected daemon hotkey again starts or stops it, and the selected daemon title is highlighted in blue.
 - **Cockpit daemon panel order**: Moved the launchpad daemon panels into Refiner, Reviewer, Codifier order so the visual flow matches the operator workflow.
 - **TUI notification footer priority**: Moved the placeholder notification notifier into the right footer status slot with an adjacent `n` key badge, replacing the previous daemon idle mockup.
 - **TUI footer notifications**: Removed placeholder notification rows from the footer drawer until real notification sources are wired.
