@@ -23,8 +23,8 @@ import { commands } from "./presentation/cli/commands/registry/generated-command
 import { ARGV, FAILURE_EXIT_CODE } from "./presentation/cli/Constants.js";
 import { ProjectRootResolver } from "./infrastructure/context/project/ProjectRootResolver.js";
 import { planCliBootstrap } from "./presentation/cli/CliBootstrapPlan.js";
-import type { InitFlowActionControllers } from "./presentation/tui/flows/InitFlow.js";
-import type { TuiStateReaderControllers } from "./presentation/tui/state/TuiStateReader.js";
+import type { InitFlowActionControllers } from "./presentation/tui/project-initialization/InitFlow.js";
+import type { TuiStateReaderControllers } from "./presentation/tui/state-reading/TuiStateReader.js";
 import type { InitializeProjectRequest } from "./application/context/project/init/InitializeProjectRequest.js";
 import type { InitializeProjectResponse } from "./application/context/project/init/InitializeProjectResponse.js";
 import type { AddAudienceRequest } from "./application/context/audiences/add/AddAudienceRequest.js";

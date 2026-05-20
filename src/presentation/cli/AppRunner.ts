@@ -25,9 +25,9 @@ import {
   isBareCommand,
 } from "./banner/BannerOrchestrator.js";
 import { Renderer } from "./rendering/Renderer.js";
-import { TuiApplicationLauncher } from "../tui/TuiApplicationLauncher.js";
-import type { TuiStateReaderControllers } from "../tui/state/TuiStateReader.js";
-import type { InitFlowActionControllers } from "../tui/flows/InitFlow.js";
+import { TuiApplicationLauncher } from "../tui/application-shell/TuiApplicationLauncher.js";
+import type { TuiStateReaderControllers } from "../tui/state-reading/TuiStateReader.js";
+import type { InitFlowActionControllers } from "../tui/project-initialization/InitFlow.js";
 import {
   CLI_FLAGS,
   ARGV,
