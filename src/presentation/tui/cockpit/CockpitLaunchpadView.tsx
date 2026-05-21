@@ -18,6 +18,11 @@ interface RefinerGlyphCell {
   color: string;
 }
 
+interface ReviewerGlyphCell {
+  glyph: string;
+  color: string;
+}
+
 interface DaemonEventRow {
   readonly key: string;
   readonly source: string;
@@ -39,9 +44,7 @@ const REVIEWER_FRAME_COUNT = 6;
 const REVIEWER_GRID_WIDTH = 35;
 const REVIEWER_GRID_HEIGHT = 10;
 const REVIEWER_GRID_SIZE = REVIEWER_GRID_WIDTH * REVIEWER_GRID_HEIGHT;
-const REVIEWER_SEED_OFFSET = 37;
 const CODIFIER_FRAME_COUNT = 6;
-const CODIFIER_GRID_WIDTH = 35;
 const CODIFIER_GRID_HEIGHT = 10;
 const CODIFIER_GROUP_LENGTH = 4;
 const CODIFIER_ROW_REPEAT_COUNT = 7;
@@ -78,24 +81,28 @@ const DAEMON_IDLE_VERBS = {
 } as const satisfies Record<TuiDaemonName, string>;
 const DAEMON_INFO_COPY = {
   reviewer: {
-    title: "REVIEWER// validates completed goal work",
+    title: "REVIEWER//",
     lines: [
-      "Runs the QA review loop for submitted goals.",
-      "Use it to catch regressions, missing tests, and unmet criteria before codification.",
+      "Orchestrate background agents to automatically review goal implementations as soon as they submitted.",
+      "",
+      "Approved goals will get picked up by the codifier (if running).",
+      "Rejected goals will get requeued with documented issues to be resolved."
     ],
   },
   refiner: {
-    title: "REFINER// prepares goals for implementation",
+    title: "REFINER//",
     lines: [
-      "Turns rough goal intent into concrete scope, criteria, and architectural context.",
-      "Use it before implementation when a goal needs sharper boundaries or better relations.",
+      "Automatically apply relevant memories to build goal context for the implementing agent.",
+      "",
+      "Goals are submitted when finished and ready for implementation."
     ],
   },
   codifier: {
-    title: "CODIFIER// reconciles approved work",
+    title: "CODIFIER//",
     lines: [
-      "Captures durable architecture context after QA approval.",
-      "Use it to record decisions, components, guidelines, and project memory before closure.",
+      "Codify implementation results automatically as soon as goals are approved.",
+      "",
+      "Missing decisions, components and documentation will be updated before goals are finally closed.",
     ],
   },
 } as const satisfies Record<TuiDaemonName, { readonly title: string; readonly lines: readonly string[] }>;
@@ -105,13 +112,7 @@ const REFINER_GLYPHS = [
 ] as const;
 
 const REVIEWER_GLYPHS = [
-  "◇",
-  "◆",
-  "□",
-  "■",
-  "△",
-  "▽",
-  "○",
+  "+",
 ] as const;
 
 const CODIFIER_ALPHANUMERIC_GLYPHS = [
@@ -129,23 +130,35 @@ const REFINER_GLYPH_COLORS = [
   BaseColors.shade6,
 ] as const;
 
+const REVIEWER_GLYPH_COLORS = [
+  BaseColors.tint1,
+  BaseColors.primary,
+  BaseColors.shade1,
+  BaseColors.shade2,
+  BaseColors.shade3,
+  BaseColors.shade4,
+  BaseColors.shade5,
+  BaseColors.shade6,
+] as const;
+
 const DEFAULT_CODIFIER_GLYPH_COLORS: GlyphColorMap = {
   "█": BaseColors.shade1,
   "░": BaseColors.shade2,
 };
 const DEFAULT_REVIEWER_GLYPH_COLORS: GlyphColorMap = {
-  "◇": BaseColors.primary,
-  "◆": BaseColors.tint1,
-  "□": BaseColors.shade2,
-  "■": BaseColors.shade3,
-  "△": BaseColors.shade4,
-  "▽": BaseColors.shade5,
-  "○": BaseColors.shade6,
+  "⌈": BaseColors.primary,
+  "⌉": BaseColors.tint1,
+  "⌊": BaseColors.shade2,
+  "⌋": BaseColors.shade3,
+  "⏚": BaseColors.shade4,
+  "⏛": BaseColors.shade5,
+  "⏗": BaseColors.shade6,
 };
 
 interface CockpitLaunchpadViewProps {
   shortcutsEnabled?: boolean;
   refinerGlyphPalette?: GlyphPalette;
+  reviewerGlyphPalette?: GlyphPalette;
   reviewerGlyphColors?: GlyphColorMap;
   codifierGlyphColors?: GlyphColorMap;
   refinerFrameDurationMs?: number;
@@ -156,7 +169,7 @@ interface CockpitLaunchpadViewProps {
 export function CockpitLaunchpadView({
   shortcutsEnabled = true,
   refinerGlyphPalette = REFINER_GLYPH_COLORS,
-  reviewerGlyphColors = DEFAULT_REVIEWER_GLYPH_COLORS,
+  reviewerGlyphPalette = REVIEWER_GLYPH_COLORS,
   codifierGlyphColors = DEFAULT_CODIFIER_GLYPH_COLORS,
   refinerFrameDurationMs = DEFAULT_REFINER_FRAME_DURATION_MS,
   reviewerFrameDurationMs = DEFAULT_REVIEWER_FRAME_DURATION_MS,
@@ -277,17 +290,29 @@ export function CockpitLaunchpadView({
 
   return (
     <Box flexDirection="column" width="100%" height="100%" paddingX={1}>
-      <Box flexShrink={0} paddingY={1}>
-        <Text color={BaseColors.shade2} bold>
-          COCKPIT// daily daemon control
+      <Box 
+        flexDirection="column"
+        flexShrink={0}
+        paddingX={1} 
+        marginY={1} 
+        borderColor={BaseColors.brandBlue}   
+        borderStyle="round">
+        <Box flexDirection="row">
+          <Text color={BaseColors.brandBlue}>
+            Welcome///
+          </Text>
+        </Box>
+        <Box flexDirection="row">
+        <Text color={BaseColors.shade1}>
+          Lighten the cognitive load required to manage multiple agents. Run the Jumbo worker agents 
+          to automate goal refinement, review and codification, so you can focus on defining goals
+          and overseeing implementation (if that's your thing).
         </Text>
-        <Text color={BaseColors.shade4}>
-          {"  "}selected {selectedDaemon}
-        </Text>
+        </Box>
       </Box>
       <Box flexDirection="row" flexShrink={0} height={13} width="100%" gap={1}>
         <DaemonPanel
-          title="REFINER//"
+          title="    ─── REFINER ─────────────────"
           selected={selectedDaemon === "refiner"}
           configuring={configuredDaemon === "refiner"}
           infoVisible={infoDaemon === "refiner"}
@@ -321,7 +346,7 @@ export function CockpitLaunchpadView({
           </Box>
         </DaemonPanel>
         <DaemonPanel
-          title="REVIEWER//"
+          title=" ─── REVIEWER ───────────────────"
           selected={selectedDaemon === "reviewer"}
           configuring={configuredDaemon === "reviewer"}
           infoVisible={infoDaemon === "reviewer"}
@@ -329,13 +354,12 @@ export function CockpitLaunchpadView({
           pendingConfig={daemonConfigs.reviewer}
         >
           <Box flexDirection="column" flexWrap="nowrap" width={35}>
-            {getRenderedDaemonFrame(getReviewerFrame(renderedReviewerFrameIndex)).map((line, lineIndex) => (
+            {getRenderedDaemonFrame(getReviewerFrame(renderedReviewerFrameIndex, reviewerGlyphPalette)).map((line, lineIndex) => (
               <Text key={`${renderedReviewerFrameIndex}-${lineIndex}`}>
-                {getStyledGlyphSegments(getGlyphLinePrefix(line, reviewerStatus, lineIndex), reviewerGlyphColors, reviewerStatus).map((segment, segmentIndex) => (
+                {getReviewerGlyphSegments(getReviewerLinePrefix(line, reviewerStatus, lineIndex), reviewerStatus).map((segment, segmentIndex) => (
                   <Text
                     key={`${renderedReviewerFrameIndex}-${lineIndex}-prefix-${segmentIndex}`}
-                    color={segment.color}
-                    dimColor={segment.dimColor}>
+                    color={segment.color}>
                     {segment.text}
                   </Text>
                 ))}
@@ -344,11 +368,10 @@ export function CockpitLaunchpadView({
                     {getDaemonPanelStatusLabel(reviewerStatus)}
                   </Text>
                 )}
-                {getStyledGlyphSegments(getGlyphLineSuffix(line, reviewerStatus, lineIndex), reviewerGlyphColors, reviewerStatus).map((segment, segmentIndex) => (
+                {getReviewerGlyphSegments(getReviewerLineSuffix(line, reviewerStatus, lineIndex), reviewerStatus).map((segment, segmentIndex) => (
                   <Text
                     key={`${renderedReviewerFrameIndex}-${lineIndex}-suffix-${segmentIndex}`}
-                    color={segment.color}
-                    dimColor={segment.dimColor}>
+                    color={segment.color}>
                     {segment.text}
                   </Text>
                 ))}
@@ -357,7 +380,7 @@ export function CockpitLaunchpadView({
           </Box>
         </DaemonPanel>
         <DaemonPanel
-          title="CODIFIER//"
+          title=" ─── CODIFIER ──────────────────"
           selected={selectedDaemon === "codifier"}
           configuring={configuredDaemon === "codifier"}
           infoVisible={infoDaemon === "codifier"}
@@ -398,7 +421,7 @@ export function CockpitLaunchpadView({
           <DaemonInfoOverlay name={infoDaemon} />
         )}
         <Text color={BaseColors.shade2} bold>
-          EVENTS// <Text color={BaseColors.shade4}>{getDaemonEventsHeader()}</Text>
+          EVENTS//
         </Text>
         <Box flexDirection="column" marginTop={1}>
           {daemonEventRows.map((row) => (
@@ -578,6 +601,30 @@ function getRefinerLineSuffix(
   snapshot: TuiSubprocessSnapshot,
   lineIndex: number,
 ): readonly RefinerGlyphCell[] {
+  if (!isDaemonStatusLine(lineIndex)) {
+    return [];
+  }
+
+  return line.slice(getDaemonStatusOverlayEnd(line.length, snapshot));
+}
+
+function getReviewerLinePrefix(
+  line: readonly ReviewerGlyphCell[],
+  snapshot: TuiSubprocessSnapshot,
+  lineIndex: number,
+): readonly ReviewerGlyphCell[] {
+  if (!isDaemonStatusLine(lineIndex)) {
+    return line;
+  }
+
+  return line.slice(0, getDaemonStatusOverlayStart(line.length, snapshot));
+}
+
+function getReviewerLineSuffix(
+  line: readonly ReviewerGlyphCell[],
+  snapshot: TuiSubprocessSnapshot,
+  lineIndex: number,
+): readonly ReviewerGlyphCell[] {
   if (!isDaemonStatusLine(lineIndex)) {
     return [];
   }
@@ -788,10 +835,6 @@ function formatDaemonEventRow(row: DaemonEventRow): string {
   return `${formatEventTimestamp(row.timestampMs)} ${row.source.padEnd(DAEMON_EVENT_SOURCE_WIDTH)} ${row.category.padEnd(DAEMON_EVENT_CATEGORY_WIDTH)}${message}`;
 }
 
-function getDaemonEventsHeader(): string {
-  return `time     ${"source".padEnd(DAEMON_EVENT_SOURCE_WIDTH)} ${"category".padEnd(DAEMON_EVENT_CATEGORY_WIDTH)} message`;
-}
-
 function formatEventTimestamp(timestampMs: number): string {
   const date = new Date(timestampMs);
   const hours = String(date.getHours()).padStart(2, "0");
@@ -927,25 +970,20 @@ export function getCodifierFrame(index: number): string[] {
   });
 }
 
-export function getReviewerFrame(index: number): string[] {
+export function getReviewerFrame(
+  index: number,
+  glyphPalette: GlyphPalette,
+): ReviewerGlyphCell[][] {
   if (index < 0 || index >= REVIEWER_FRAME_COUNT) {
-    return ["error"];
+    return [[{ glyph: "error", color: DEFAULT_CODIFIER_GLYPH_STYLE.color }]];
   }
 
-  const glyphGrid = createReviewerGlyphGrid(index);
+  const glyphGrid = createReviewerGlyphGrid(index, glyphPalette);
 
   return Array.from({ length: REVIEWER_GRID_HEIGHT }, (_, rowIndex) => {
     const start = rowIndex * REVIEWER_GRID_WIDTH;
-    return glyphGrid.slice(start, start + REVIEWER_GRID_WIDTH).join("");
+    return glyphGrid.slice(start, start + REVIEWER_GRID_WIDTH);
   });
-}
-
-function createReviewerGlyphGrid(frameIndex: number): string[] {
-  const random = createSeededRandom(createSeed(frameIndex + REVIEWER_SEED_OFFSET));
-
-  return Array.from({ length: REVIEWER_GRID_SIZE }, () =>
-    pickRandomValue(REVIEWER_GLYPHS, random)
-  );
 }
 
 function getRefinerFrame(
@@ -966,6 +1004,27 @@ function getRefinerFrame(
 
 function getRefinerGlyphSegments(
   line: readonly RefinerGlyphCell[],
+  snapshot: TuiSubprocessSnapshot,
+): Array<{ text: string; color: string }> {
+  const segments: Array<{ text: string; color: string }> = [];
+
+  for (const cell of line) {
+    const color = getDaemonGlyphColor(snapshot, cell.color);
+    const previousSegment = segments[segments.length - 1];
+
+    if (previousSegment !== undefined && previousSegment.color === color) {
+      previousSegment.text += cell.glyph;
+      continue;
+    }
+
+    segments.push({ text: cell.glyph, color });
+  }
+
+  return segments;
+}
+
+function getReviewerGlyphSegments(
+  line: readonly ReviewerGlyphCell[],
   snapshot: TuiSubprocessSnapshot,
 ): Array<{ text: string; color: string }> {
   const segments: Array<{ text: string; color: string }> = [];
@@ -1047,6 +1106,18 @@ function createRefinerGlyphGrid(
 
   return Array.from({ length: REFINER_GRID_SIZE }, () => ({
     glyph: pickRandomValue(REFINER_GLYPHS, random),
+    color: pickRandomValue(glyphPalette, random),
+  }));
+}
+
+function createReviewerGlyphGrid(
+  frameIndex: number,
+  glyphPalette: GlyphPalette,
+): ReviewerGlyphCell[] {
+  const random = createSeededRandom(createSeed(frameIndex));
+
+  return Array.from({ length: REVIEWER_GRID_SIZE }, () => ({
+    glyph: pickRandomValue(REVIEWER_GLYPHS, random),
     color: pickRandomValue(glyphPalette, random),
   }));
 }
