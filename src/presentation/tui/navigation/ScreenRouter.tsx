@@ -15,6 +15,9 @@ interface ScreenRouterProps {
   activeScreenIndex: number;
   projectLifecycleState?: ProjectLifecycleState;
   shortcutsEnabled?: boolean;
+  terminalWidth?: number;
+  terminalHeight?: number;
+  launchAnimationEnabled?: boolean;
   settingsReader?: Pick<ISettingsReader, "read" | "write">;
 }
 
@@ -36,6 +39,9 @@ export function ScreenRouter({
   activeScreenIndex,
   projectLifecycleState,
   shortcutsEnabled = true,
+  terminalWidth,
+  terminalHeight,
+  launchAnimationEnabled = true,
   settingsReader,
 }: ScreenRouterProps): React.ReactElement {
   const definition = SCREEN_DEFINITIONS[activeScreenIndex];
@@ -48,6 +54,9 @@ export function ScreenRouter({
       <CockpitScreen
         state={projectLifecycleState}
         shortcutsEnabled={shortcutsEnabled}
+        terminalWidth={terminalWidth}
+        terminalHeight={terminalHeight}
+        launchAnimationEnabled={launchAnimationEnabled}
         settingsReader={settingsReader}
       />
     );

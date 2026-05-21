@@ -1,7 +1,7 @@
 import React from "react";
 import { describe, expect, it, jest } from "@jest/globals";
 import { render } from "ink-testing-library";
-import { TuiApp } from "../../../../src/presentation/tui/application-shell/TuiApp.js";
+import { TuiApp as ProductionTuiApp } from "../../../../src/presentation/tui/application-shell/TuiApp.js";
 import type {
   ISubprocessManager,
   TuiDaemonName,
@@ -25,6 +25,12 @@ const waitForFrame = async (
   }
   throw new Error(`Timed out waiting for frame:\n${lastFrame() ?? ""}`);
 };
+
+function TuiApp(
+  props: React.ComponentProps<typeof ProductionTuiApp>,
+): React.ReactElement {
+  return <ProductionTuiApp launchAnimationEnabled={false} {...props} />;
+}
 
 describe("TuiApp", () => {
   const projectSummaryController = (

@@ -3,11 +3,11 @@ import { Box, Text } from "ink";
 import Yoga from "yoga-layout";
 
 const TARGET_STICKERS = 42;
-const FRAME_MS = 1;
+const FRAME_MS = 0;
 const FULL_BLOCK_COLOR = "#000000";
 const JUMBO_COLOR = "#ffffff";
 const CANDIDATES_PER_STICKER = 80;
-const FINAL_PAUSE_MS = 1650;
+const FINAL_PAUSE_MS = 650;
 const ERASE_FRAME_MS = 0;
 const ERASE_ROWS_PER_FRAME = 2;
 

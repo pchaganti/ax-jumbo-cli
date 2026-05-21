@@ -32,6 +32,7 @@ const COCKPIT_FOOTER_SHORTCUTS = [
   { char: "tab", label: "change focus" },
   { char: "g", label: "create goal" },
 ] as const;
+const TUI_FRAME_CHROME_ROWS = 2;
 
 function useTerminalDimensions(): { columns: number; rows: number } {
   const { stdout } = useStdout();
@@ -64,6 +65,7 @@ interface TuiAppProps {
   readonly onProjectInitialized?: () => Promise<TuiStateReaderControllers>;
   readonly subprocessManager?: ISubprocessManager;
   readonly settingsReader?: Pick<ISettingsReader, "read" | "write">;
+  readonly launchAnimationEnabled?: boolean;
 }
 
 export interface TuiAppActionControllers extends InitFlowActionControllers {
@@ -81,6 +83,7 @@ export function TuiApp({
   onProjectInitialized,
   subprocessManager,
   settingsReader,
+  launchAnimationEnabled = true,
 }: TuiAppProps = {}): React.ReactElement {
   const [activeStateReaderControllers, setActiveStateReaderControllers] =
     useState(stateReaderControllers);
@@ -108,6 +111,7 @@ export function TuiApp({
           onProjectInitialized={handleProjectInitialized}
           subprocessManagerEnabled={false}
           settingsReader={settingsReader}
+          launchAnimationEnabled={launchAnimationEnabled}
         />
       ) : (
         <SubprocessManagerProvider manager={activeSubprocessManager}>
@@ -117,6 +121,7 @@ export function TuiApp({
             onProjectInitialized={handleProjectInitialized}
             subprocessManagerEnabled={true}
             settingsReader={settingsReader}
+            launchAnimationEnabled={launchAnimationEnabled}
           />
         </SubprocessManagerProvider>
       )}
@@ -130,6 +135,7 @@ interface TuiAppFrameProps {
   readonly onProjectInitialized: () => Promise<boolean>;
   readonly subprocessManagerEnabled: boolean;
   readonly settingsReader?: Pick<ISettingsReader, "read" | "write">;
+  readonly launchAnimationEnabled: boolean;
 }
 
 function TuiAppFrame({
@@ -138,6 +144,7 @@ function TuiAppFrame({
   onProjectInitialized,
   subprocessManagerEnabled,
   settingsReader,
+  launchAnimationEnabled,
 }: TuiAppFrameProps): React.ReactElement {
   const { exit } = useApp();
   const subprocessManager = useSubprocessManager();
@@ -342,7 +349,10 @@ function TuiAppFrame({
               activeScreenIndex={activeScreenIndex}
               projectLifecycleState={routedProjectLifecycleState}
               shortcutsEnabled={frameShortcutsEnabled}
+              terminalWidth={columns}
+              terminalHeight={Math.max(1, rows - TUI_FRAME_CHROME_ROWS)}
               settingsReader={settingsReader}
+              launchAnimationEnabled={launchAnimationEnabled}
             />
           )}
         </Box>

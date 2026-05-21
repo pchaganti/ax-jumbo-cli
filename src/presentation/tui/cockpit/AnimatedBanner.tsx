@@ -128,9 +128,9 @@ function colorizeLineToSegments(
       segments.push({ text: boxSegment, color: SemanticColors.keyBadge });
     } else if (
       char === "A" &&
-      line.slice(i).startsWith("AI memory like an elephant")
+      line.slice(i).startsWith("Agent Context Orchestration")
     ) {
-      const tagline = "AI memory like an elephant";
+      const tagline = "Agent Context Orchestration";
       segments.push({ text: tagline, color: "#808080" });
       i += tagline.length;
     } else {
@@ -142,7 +142,7 @@ function colorizeLineToSegments(
         line[i] !== "█" &&
         line[i] !== "░" &&
         !"╭╮╰╯│─".includes(line[i]) &&
-        !(line[i] === "A" && line.slice(i).startsWith("AI memory like an elephant"))
+        !(line[i] === "A" && line.slice(i).startsWith("Agent Context Orchestration"))
       ) {
         plainSegment += line[i];
         i++;

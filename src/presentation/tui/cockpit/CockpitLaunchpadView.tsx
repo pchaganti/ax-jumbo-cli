@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
+import AnimatedBillboard from "../billboard/AnimatedBillboard.js";
 import { Panel } from "../ui-primitives/Panel.js";
 import { KeyBadge } from "../ui-primitives/KeyBadge.js";
 import { BaseColors } from "../../shared/DesignTokens.js";
@@ -32,6 +33,11 @@ interface DaemonEventRow {
   readonly timestampMs: number;
   readonly message: string;
   readonly color: string;
+}
+
+interface LaunchAnimationSize {
+  readonly width: number;
+  readonly height: number;
 }
 
 const RENDERED_DAEMON_EVENT_LIMIT = 10;
@@ -159,6 +165,7 @@ const DEFAULT_REVIEWER_GLYPH_COLORS: GlyphColorMap = {
 
 interface CockpitLaunchpadViewProps {
   shortcutsEnabled?: boolean;
+  launchAnimationSize?: LaunchAnimationSize;
   refinerGlyphPalette?: GlyphPalette;
   reviewerGlyphPalette?: GlyphPalette;
   reviewerGlyphColors?: GlyphColorMap;
@@ -171,6 +178,7 @@ interface CockpitLaunchpadViewProps {
 
 export function CockpitLaunchpadView({
   shortcutsEnabled = true,
+  launchAnimationSize,
   refinerGlyphPalette = REFINER_GLYPH_COLORS,
   reviewerGlyphPalette = REVIEWER_GLYPH_COLORS,
   codifierGlyphColors = DEFAULT_CODIFIER_GLYPH_COLORS,
@@ -180,6 +188,9 @@ export function CockpitLaunchpadView({
   settingsReader,
 }: CockpitLaunchpadViewProps = {}): React.ReactElement {
   const subprocessManager = useSubprocessManager();
+  const [launchAnimationDone, setLaunchAnimationDone] = useState(
+    launchAnimationSize === undefined,
+  );
   const [reviewerFrameIndex, setReviewerFrameIndex] = useState(0);
   const [refinerFrameIndex, setRefinerFrameIndex] = useState(0);
   const [codifierFrameIndex, setCodifierFrameIndex] = useState(0);
@@ -196,6 +207,18 @@ export function CockpitLaunchpadView({
   const [daemonEventRows, setDaemonEventRows] = useState<readonly DaemonEventRow[]>(() =>
     getDaemonEventRows(subprocessManager.getAllStatuses(), Date.now())
   );
+  const launchAnimationActive =
+    launchAnimationSize !== undefined && !launchAnimationDone;
+
+  useEffect(() => {
+    if (launchAnimationSize === undefined) {
+      setLaunchAnimationDone(true);
+    }
+  }, [launchAnimationSize]);
+
+  const handleLaunchAnimationDone = useCallback(() => {
+    setLaunchAnimationDone(true);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -351,6 +374,18 @@ export function CockpitLaunchpadView({
   const renderedRefinerFrameIndex = getRenderedFrameIndex(refinerStatus, refinerFrameIndex);
   const renderedReviewerFrameIndex = getRenderedFrameIndex(reviewerStatus, reviewerFrameIndex);
   const renderedCodifierFrameIndex = getRenderedFrameIndex(codifierStatus, codifierFrameIndex);
+
+  if (launchAnimationActive) {
+    return (
+      <Box flexDirection="column" flexGrow={1} width="100%" height="100%">
+        {AnimatedBillboard.trigger({
+          height: launchAnimationSize.height,
+          width: launchAnimationSize.width,
+          onDone: handleLaunchAnimationDone,
+        })}
+      </Box>
+    );
+  }
 
   return (
     <Box flexDirection="column" width="100%" height="100%" paddingX={1}>
