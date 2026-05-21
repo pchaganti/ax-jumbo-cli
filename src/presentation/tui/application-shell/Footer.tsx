@@ -9,11 +9,6 @@ interface FooterProps {
   terminalWidth: number;
   shortcutsEnabled?: boolean;
   contextualShortcuts?: readonly FooterShortcut[];
-  daemonCounts?: {
-    readonly running: number;
-    readonly stopped: number;
-    readonly failed: number;
-  };
   notifications?: readonly NotificationDrawerNotification[];
 }
 
@@ -28,7 +23,6 @@ export function Footer({
   terminalWidth,
   shortcutsEnabled = true,
   contextualShortcuts = [],
-  daemonCounts = { running: 0, stopped: 3, failed: 0 },
   notifications = [],
 }: FooterProps): React.ReactElement {
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
@@ -84,9 +78,6 @@ export function Footer({
             />
           ))}
         </Box>
-        <Text color={BaseColors.shade4}>
-          daemons {daemonCounts.running} run {daemonCounts.stopped} stop {daemonCounts.failed} fail
-        </Text>
         {unreadNotificationCount > 0 && (
           <Box alignItems="center" gap={1}>
             <KeyBadge char="n" />

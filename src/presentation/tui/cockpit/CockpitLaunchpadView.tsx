@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Panel } from "../ui-primitives/Panel.js";
+import { KeyBadge } from "../ui-primitives/KeyBadge.js";
 import { BaseColors } from "../../shared/DesignTokens.js";
 import { useSubprocessManager } from "../daemon-subprocesses/SubprocessManagerContext.js";
+import type { ISettingsReader } from "../../../application/settings/ISettingsReader.js";
 import type { ISubprocessManager, TuiDaemonConfig, TuiDaemonConfigs, TuiDaemonEventSnapshot, TuiDaemonEventStatus, TuiDaemonName, TuiSubprocessSnapshot } from "../daemon-subprocesses/ISubprocessManager.js";
 
 interface GlyphStyle {
@@ -164,6 +166,7 @@ interface CockpitLaunchpadViewProps {
   refinerFrameDurationMs?: number;
   reviewerFrameDurationMs?: number;
   codifierFrameDurationMs?: number;
+  settingsReader?: Pick<ISettingsReader, "read" | "write">;
 }
 
 export function CockpitLaunchpadView({
@@ -174,6 +177,7 @@ export function CockpitLaunchpadView({
   refinerFrameDurationMs = DEFAULT_REFINER_FRAME_DURATION_MS,
   reviewerFrameDurationMs = DEFAULT_REVIEWER_FRAME_DURATION_MS,
   codifierFrameDurationMs = DEFAULT_CODIFIER_FRAME_DURATION_MS,
+  settingsReader,
 }: CockpitLaunchpadViewProps = {}): React.ReactElement {
   const subprocessManager = useSubprocessManager();
   const [reviewerFrameIndex, setReviewerFrameIndex] = useState(0);
@@ -182,6 +186,9 @@ export function CockpitLaunchpadView({
   const [selectedDaemon, setSelectedDaemon] = useState<TuiDaemonName>("refiner");
   const [configuredDaemon, setConfiguredDaemon] = useState<TuiDaemonName | undefined>(undefined);
   const [infoDaemon, setInfoDaemon] = useState<TuiDaemonName | undefined>(undefined);
+  const [welcomeVisible, setWelcomeVisible] = useState<boolean | undefined>(
+    settingsReader === undefined ? true : undefined,
+  );
   const [daemonConfigs, setDaemonConfigs] = useState<TuiDaemonConfigs>(DEFAULT_DAEMON_CONFIGS);
   const [daemonStatuses, setDaemonStatuses] = useState<readonly TuiSubprocessSnapshot[]>(
     subprocessManager.getAllStatuses(),
@@ -189,6 +196,55 @@ export function CockpitLaunchpadView({
   const [daemonEventRows, setDaemonEventRows] = useState<readonly DaemonEventRow[]>(() =>
     getDaemonEventRows(subprocessManager.getAllStatuses(), Date.now())
   );
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (settingsReader === undefined) {
+      setWelcomeVisible(true);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    setWelcomeVisible(undefined);
+    void settingsReader.read()
+      .then((settings) => {
+        if (mounted) {
+          setWelcomeVisible(settings.tui?.showLaunchpadWelcome ?? true);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setWelcomeVisible(true);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [settingsReader]);
+
+  const hideWelcome = useCallback(async () => {
+    setWelcomeVisible(false);
+
+    if (settingsReader === undefined) {
+      return;
+    }
+
+    try {
+      const settings = await settingsReader.read();
+      await settingsReader.write({
+        ...settings,
+        tui: {
+          ...settings.tui,
+          showLaunchpadWelcome: false,
+        },
+      });
+    } catch {
+      // Keep the in-memory dismissal even if persistence is unavailable.
+    }
+  }, [settingsReader]);
 
   useEffect(() => {
     if (reviewerFrameDurationMs <= 0) return;
@@ -262,6 +318,14 @@ export function CockpitLaunchpadView({
           currentDaemon === selectedDaemon ? undefined : selectedDaemon
         );
       }
+      if (
+        (input === "x" || input === "X") &&
+        welcomeVisible === true &&
+        configuredDaemon === undefined
+      ) {
+        void hideWelcome();
+        return;
+      }
       if (input === "a" || input === "A") {
         if (configuredDaemon !== undefined) {
           setDaemonConfigs((configs) => nextDaemonConfigs(configs, configuredDaemon, nextAgentConfig));
@@ -290,26 +354,9 @@ export function CockpitLaunchpadView({
 
   return (
     <Box flexDirection="column" width="100%" height="100%" paddingX={1}>
-      <Box 
-        flexDirection="column"
-        flexShrink={0}
-        paddingX={1} 
-        marginY={1} 
-        borderColor={BaseColors.brandBlue}   
-        borderStyle="round">
-        <Box flexDirection="row">
-          <Text color={BaseColors.brandBlue}>
-            Welcome///
-          </Text>
-        </Box>
-        <Box flexDirection="row">
-        <Text color={BaseColors.shade1}>
-          Lighten the cognitive load required to manage multiple agents. Run the Jumbo worker agents 
-          to automate goal refinement, review and codification, so you can focus on defining goals
-          and overseeing implementation (if that's your thing).
-        </Text>
-        </Box>
-      </Box>
+      {welcomeVisible === true && (
+        <WelcomeBox />
+      )}
       <Box flexDirection="row" flexShrink={0} height={13} width="100%" gap={1}>
         <DaemonPanel
           title="    ─── REFINER ─────────────────"
@@ -435,6 +482,40 @@ export function CockpitLaunchpadView({
   );
 }
 
+function WelcomeBox(): React.ReactElement {
+  return (
+    <Box
+      flexDirection="column"
+      flexShrink={0}
+      paddingX={1}
+      marginY={1}
+      borderColor={BaseColors.brandBlue}
+      borderStyle="round"
+    >
+      <Box flexDirection="row">
+        <Text color={BaseColors.brandBlue}>
+          Welcome//
+        </Text>
+      </Box>
+      <Box flexDirection="row">
+        <Text color={BaseColors.shade1}>
+          Lighten the cognitive load required to manage multiple agents. Run the Jumbo worker agents
+          to automate goal refinement, review and codification, so you can focus on defining goals
+          and overseeing implementation (if that's your thing).
+        </Text>
+      </Box>
+      <Box marginTop={1} width="100%" justifyContent="flex-end">
+        <KeyBadge
+          char="x"
+          label="hide"
+          color={BaseColors.brandBlue}
+          labelColor={BaseColors.shade4}
+        />
+      </Box>
+    </Box>
+  );
+}
+
 function DaemonPanel({
   title,
   snapshot,
@@ -473,6 +554,7 @@ function DaemonPanel({
           <DaemonConfigWizard
             snapshot={snapshot}
             pendingConfig={pendingConfig}
+            selected={selected}
           />
         )}
       </Box>
@@ -501,12 +583,28 @@ function DaemonActionLine({
   readonly infoVisible: boolean;
 }): React.ReactElement {
   const action = snapshot.status === "running" ? "stop" : "start";
+  const badgeColor = getDaemonShortcutBadgeColor(selected);
 
   return (
-    <Box width={35} flexDirection="column" marginTop={1}>
-      <Text color={BaseColors.shade4}>
-        [s] {action}   [@] config   [i] info{infoVisible ? " open" : ""}
-      </Text>
+    <Box width={35} marginTop={1} gap={1}>
+      <KeyBadge
+        char="s"
+        label={action}
+        color={badgeColor}
+        labelColor={BaseColors.shade4}
+      />
+      <KeyBadge
+        char="@"
+        label="config"
+        color={badgeColor}
+        labelColor={BaseColors.shade4}
+      />
+      <KeyBadge
+        char="i"
+        label={infoVisible ? "info open" : "info"}
+        color={badgeColor}
+        labelColor={BaseColors.shade4}
+      />
     </Box>
   );
 }
@@ -545,22 +643,46 @@ function DaemonInfoOverlay({
 function DaemonConfigWizard({
   snapshot,
   pendingConfig,
+  selected,
 }: {
   readonly snapshot: TuiSubprocessSnapshot;
   readonly pendingConfig: TuiDaemonConfig;
+  readonly selected: boolean;
 }): React.ReactElement {
   const config = snapshot.status === "running" ? snapshot.config : pendingConfig;
+  const badgeColor = getDaemonShortcutBadgeColor(selected);
 
   return (
     <Box width={35} flexDirection="column">
       <Text color={BaseColors.shade4}>
         pid {snapshot.pid ?? "-"}
       </Text>
-      <Text color={BaseColors.shade4}>
-        [a] {config.agentId} [p] {Math.round(config.pollIntervalMs / 1000)}s [x] {config.maxRetries}
-      </Text>
+      <Box gap={1}>
+        <KeyBadge
+          char="a"
+          label={config.agentId}
+          color={badgeColor}
+          labelColor={BaseColors.shade4}
+        />
+        <KeyBadge
+          char="p"
+          label={`${Math.round(config.pollIntervalMs / 1000)}s`}
+          color={badgeColor}
+          labelColor={BaseColors.shade4}
+        />
+        <KeyBadge
+          char="x"
+          label={String(config.maxRetries)}
+          color={badgeColor}
+          labelColor={BaseColors.shade4}
+        />
+      </Box>
     </Box>
   );
+}
+
+function getDaemonShortcutBadgeColor(selected: boolean): string {
+  return selected ? BaseColors.brandBlue : BaseColors.shade4;
 }
 
 function getDaemonPanelStatusLabel(snapshot: TuiSubprocessSnapshot): string {

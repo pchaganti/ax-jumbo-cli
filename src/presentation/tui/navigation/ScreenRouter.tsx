@@ -9,11 +9,13 @@ import { GuidelinesScreen } from "../memory/guidelines/GuidelinesScreen.js";
 import { InvariantsScreen } from "../memory/invariants/InvariantsScreen.js";
 import { SessionScreen } from "../sessions/SessionScreen.js";
 import type { ProjectLifecycleState } from "../../../application/context/project/ProjectLifecycleState.js";
+import type { ISettingsReader } from "../../../application/settings/ISettingsReader.js";
 
 interface ScreenRouterProps {
   activeScreenIndex: number;
   projectLifecycleState?: ProjectLifecycleState;
   shortcutsEnabled?: boolean;
+  settingsReader?: Pick<ISettingsReader, "read" | "write">;
 }
 
 const SCREEN_COMPONENTS: Record<
@@ -34,6 +36,7 @@ export function ScreenRouter({
   activeScreenIndex,
   projectLifecycleState,
   shortcutsEnabled = true,
+  settingsReader,
 }: ScreenRouterProps): React.ReactElement {
   const definition = SCREEN_DEFINITIONS[activeScreenIndex];
   const ScreenComponent = definition
@@ -45,6 +48,7 @@ export function ScreenRouter({
       <CockpitScreen
         state={projectLifecycleState}
         shortcutsEnabled={shortcutsEnabled}
+        settingsReader={settingsReader}
       />
     );
   }

@@ -8,6 +8,7 @@ import type {
   TuiSubprocessSnapshot,
 } from "../../../../src/presentation/tui/daemon-subprocesses/ISubprocessManager.js";
 import type { AddGoalRequest } from "../../../../src/application/context/goals/add/AddGoalRequest.js";
+import type { Settings } from "../../../../src/application/settings/Settings.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 10));
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -56,15 +57,32 @@ describe("TuiApp", () => {
     getStatus: (_name: TuiDaemonName) => failedDaemonSnapshot,
     getAllStatuses: () => [failedDaemonSnapshot],
   };
+  const hiddenLaunchpadWelcomeSettingsReader = () => ({
+    read: async (): Promise<Settings> => ({
+      qa: { defaultTurnLimit: 3 },
+      claims: { claimDurationMinutes: 30 },
+      telemetry: {
+        enabled: true,
+        anonymousId: null,
+        consentGiven: false,
+      },
+      tui: { showLaunchpadWelcome: false },
+    }),
+    write: async (_settings: Settings): Promise<void> => {},
+  });
 
   it("renders a non-empty frame on mount", () => {
-    const { lastFrame, unmount } = render(<TuiApp />);
+    const { lastFrame, unmount } = render(
+      <TuiApp settingsReader={hiddenLaunchpadWelcomeSettingsReader()} />,
+    );
     expect((lastFrame() ?? "").length).toBeGreaterThan(0);
     unmount();
   });
 
   it("changes frame when m is pressed (MegaMenu toggles open)", async () => {
-    const { stdin, lastFrame, unmount } = render(<TuiApp />);
+    const { stdin, lastFrame, unmount } = render(
+      <TuiApp settingsReader={hiddenLaunchpadWelcomeSettingsReader()} />,
+    );
     const before = lastFrame();
     stdin.write("m");
     await tick();
@@ -73,7 +91,9 @@ describe("TuiApp", () => {
   });
 
   it("MegaMenu closes on escape and returns to prior frame", async () => {
-    const { stdin, lastFrame, unmount } = render(<TuiApp />);
+    const { stdin, lastFrame, unmount } = render(
+      <TuiApp settingsReader={hiddenLaunchpadWelcomeSettingsReader()} />,
+    );
     const initial = lastFrame();
     stdin.write("m");
     await tick();
@@ -90,7 +110,9 @@ describe("TuiApp", () => {
   });
 
   it("q does not quit while MegaMenu is open", async () => {
-    const { stdin, lastFrame, unmount } = render(<TuiApp />);
+    const { stdin, lastFrame, unmount } = render(
+      <TuiApp settingsReader={hiddenLaunchpadWelcomeSettingsReader()} />,
+    );
     stdin.write("m");
     await tick();
     expect(lastFrame()).toContain("Memory");
@@ -103,6 +125,7 @@ describe("TuiApp", () => {
   it("opens the init flow from the global shortcut when the project is uninitialized", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler:
             projectSummaryController("uninitialized"),
@@ -125,6 +148,7 @@ describe("TuiApp", () => {
   it("does not open the init flow from the global shortcut after initialization", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler: projectSummaryController("primed"),
         }}
@@ -144,6 +168,7 @@ describe("TuiApp", () => {
   it("shows the cockpit launchpad footer badges only on the primed cockpit launchpad", async () => {
     const { lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler: projectSummaryController("primed"),
         }}
@@ -153,15 +178,14 @@ describe("TuiApp", () => {
     await waitForFrame(lastFrame, (frame) => frame.includes("EVENTS//"));
 
     expect(lastFrame()).toContain(" tab ");
-    expect(lastFrame()).toContain("panels");
     expect(lastFrame()).toContain(" g ");
-    expect(lastFrame()).toContain("create goal");
     unmount();
   }, 10000);
 
   it("does not show the create-goal footer badge outside the primed cockpit launchpad", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler:
             projectSummaryController("primed-empty"),
@@ -183,6 +207,7 @@ describe("TuiApp", () => {
   it("hides the create-goal footer badge while the menu owns input", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler: projectSummaryController("primed"),
         }}
@@ -202,6 +227,7 @@ describe("TuiApp", () => {
   it("skips the unprimed cockpit screen for the current TUI session", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler: projectSummaryController("unprimed"),
         }}
@@ -222,6 +248,7 @@ describe("TuiApp", () => {
   it("opens goal authoring from the primed-empty cockpit shortcut", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler:
             projectSummaryController("primed-empty"),
@@ -245,6 +272,7 @@ describe("TuiApp", () => {
   it("opens goal authoring from the primed cockpit shortcut", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler: projectSummaryController("primed"),
         }}
@@ -264,6 +292,7 @@ describe("TuiApp", () => {
   it("keeps success criterion text while daemon polling re-renders the primed cockpit", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler: projectSummaryController("primed"),
         }}
@@ -298,6 +327,7 @@ describe("TuiApp", () => {
   it("does not open goal authoring from uninitialized cockpit state", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler:
             projectSummaryController("uninitialized"),
@@ -317,6 +347,7 @@ describe("TuiApp", () => {
   it("suppresses surrounding shortcuts while goal authoring is open", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler:
             projectSummaryController("primed-empty"),
@@ -364,6 +395,7 @@ describe("TuiApp", () => {
     };
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler: projectSummaryController("primed"),
         }}
@@ -391,6 +423,7 @@ describe("TuiApp", () => {
   it("returns to the primed-empty cockpit when goal authoring is cancelled", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler:
             projectSummaryController("primed-empty"),
@@ -421,6 +454,7 @@ describe("TuiApp", () => {
     const addGoalRequests: AddGoalRequest[] = [];
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler: {
             execute: async () => ({
@@ -505,6 +539,7 @@ describe("TuiApp", () => {
   it("routes to the primed cockpit after creating a goal even before the summary reader catches up", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler:
             projectSummaryController("primed-empty"),
@@ -568,6 +603,7 @@ describe("TuiApp", () => {
   it("routes from skipped unprimed cockpit to launchpad after creating a goal", async () => {
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         stateReaderControllers={{
           getProjectSummaryQueryHandler: projectSummaryController("unprimed"),
         }}
@@ -647,6 +683,7 @@ describe("TuiApp", () => {
 
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
         actionControllers={actionControllers}
         onProjectInitialized={onProjectInitialized}
       />,

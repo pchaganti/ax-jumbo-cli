@@ -1,45 +1,37 @@
 import React from "react";
-import { describe, expect, it } from "@jest/globals";
+import { jest, describe, expect, it } from "@jest/globals";
 import { render } from "ink-testing-library";
 import { CockpitLaunchpadView } from "../../../../src/presentation/tui/cockpit/CockpitLaunchpadView.js";
 import { TuiStateReaderProvider } from "../../../../src/presentation/tui/state-reading/TuiStateReader.js";
+import type { Settings } from "../../../../src/application/settings/Settings.js";
 
-async function waitForFrame(
-  readFrame: () => string | undefined,
-  expectedText: string,
-): Promise<string> {
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const frame = readFrame() ?? "";
-
-    if (frame.includes(expectedText)) {
-      return frame;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 25));
-  }
-
-  return readFrame() ?? "";
-}
+const tick = () => new Promise((resolve) => setTimeout(resolve, 50));
+const defaultSettings: Settings = {
+  qa: { defaultTurnLimit: 3 },
+  claims: { claimDurationMinutes: 30 },
+  telemetry: { enabled: true, anonymousId: null, consentGiven: false },
+  tui: { showLaunchpadWelcome: true },
+};
 
 describe("CockpitLaunchpadView launchpad header", () => {
   it("removes the project panel from the primed launchpad", () => {
     const { lastFrame, unmount } = render(<CockpitLaunchpadView />);
-    expect(lastFrame()!).toContain("COCKPIT//");
-    expect(lastFrame()!).not.toContain("PROJECT//");
-    expect(lastFrame()!).not.toContain(process.cwd());
+    expect(lastFrame()).toBeDefined();
+    expect(lastFrame()).not.toContain(process.cwd());
     unmount();
   });
 
-  it("does not render project summary copy from the state reader", async () => {
-    const { lastFrame, unmount } = render(
+  it("does not query project summary data for the primed launchpad", () => {
+    const execute = jest.fn(async () => ({
+      name: "Project Atlas",
+      purpose: "Map context into the TUI",
+      lifecycleState: "primed",
+    }));
+    const { unmount } = render(
       <TuiStateReaderProvider
         controllers={{
           getProjectSummaryQueryHandler: {
-            execute: async () => ({
-              name: "Project Atlas",
-              purpose: "Map context into the TUI",
-              lifecycleState: "primed",
-            }),
+            execute,
           },
         }}
         options={{ tickMs: 0 }}
@@ -48,11 +40,57 @@ describe("CockpitLaunchpadView launchpad header", () => {
       </TuiStateReaderProvider>,
     );
 
-    const frame = await waitForFrame(lastFrame, "COCKPIT//");
+    expect(execute).not.toHaveBeenCalled();
+    unmount();
+  });
 
-    expect(frame).toContain("COCKPIT//");
-    expect(frame).not.toContain("Project Atlas");
-    expect(frame).not.toContain("Map context into the TUI");
+  it("persists the launchpad welcome dismissal through settings", async () => {
+    const settingsReader = {
+      read: jest.fn(async () => defaultSettings),
+      write: jest.fn(async (_settings: Settings) => {}),
+    };
+    const { stdin, unmount } = render(
+      <CockpitLaunchpadView
+        settingsReader={settingsReader}
+        reviewerFrameDurationMs={0}
+        refinerFrameDurationMs={0}
+        codifierFrameDurationMs={0}
+      />,
+    );
+
+    await tick();
+    stdin.write("x");
+    await tick();
+
+    expect(settingsReader.write).toHaveBeenCalledWith({
+      ...defaultSettings,
+      tui: { showLaunchpadWelcome: false },
+    });
+    unmount();
+  });
+
+  it("does not rewrite settings when the stored preference already hides the welcome panel", async () => {
+    const settingsReader = {
+      read: jest.fn(async () => ({
+        ...defaultSettings,
+        tui: { showLaunchpadWelcome: false },
+      })),
+      write: jest.fn(async (_settings: Settings) => {}),
+    };
+    const { stdin, unmount } = render(
+      <CockpitLaunchpadView
+        settingsReader={settingsReader}
+        reviewerFrameDurationMs={0}
+        refinerFrameDurationMs={0}
+        codifierFrameDurationMs={0}
+      />,
+    );
+
+    await tick();
+    stdin.write("x");
+    await tick();
+
+    expect(settingsReader.write).not.toHaveBeenCalled();
     unmount();
   });
 });

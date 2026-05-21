@@ -77,6 +77,11 @@ describe("TuiApplicationLauncher", () => {
 
   it("maps container controllers into TUI state reader controllers", async () => {
     const container: Partial<IApplicationContainer> = {
+      settingsReader: {
+        read: jest.fn(),
+        write: jest.fn(),
+        hasTelemetryConfiguration: jest.fn(),
+      },
       projectContextReader: {
         getProject: jest.fn(),
         getProjectLifecycleState: jest.fn(),
@@ -113,6 +118,7 @@ describe("TuiApplicationLauncher", () => {
         addAudienceController: object;
         addValuePropositionController: object;
       };
+      settingsReader: object;
     }>;
     expect(element.props.stateReaderControllers.getProjectSummaryQueryHandler)
       .toBeDefined();
@@ -134,5 +140,6 @@ describe("TuiApplicationLauncher", () => {
     expect(element.props.actionControllers.addValuePropositionController).toBe(
       container.addValuePropositionController,
     );
+    expect(element.props.settingsReader).toBe(container.settingsReader);
   });
 });

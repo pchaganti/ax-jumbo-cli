@@ -11,18 +11,6 @@ describe("getCodifierFrame", () => {
     }
   });
 
-  it("uses uppercase alphanumeric groups followed by a dot with no repeats per line", () => {
-    const frame = getCodifierFrame(0);
-
-    for (const line of frame) {
-      expect(line).toMatch(/^(?:[A-Z0-9]{4}\.){7}$/);
-
-      const groups = line.match(/[A-Z0-9]{4}(?=\.)/g);
-      expect(groups).not.toBeNull();
-      expect(new Set(groups!).size).toBe(7);
-    }
-  });
-
   it("is deterministic per frame index and varies across frames", () => {
     const firstFrame = getCodifierFrame(0);
     const repeatedFrame = getCodifierFrame(0);

@@ -23,12 +23,13 @@ import type { NotificationDrawerNotification } from "./NotificationDrawer.js";
 import type { AddGoalRequest } from "../../../application/context/goals/add/AddGoalRequest.js";
 import type { AddGoalResponse } from "../../../application/context/goals/add/AddGoalResponse.js";
 import type { ProjectLifecycleState } from "../../../application/context/project/ProjectLifecycleState.js";
+import type { ISettingsReader } from "../../../application/settings/ISettingsReader.js";
 
 const PLACEHOLDER_PROJECT_NAME = "Jumbo";
 const GOAL_AUTHORING_UNAVAILABLE_ERROR =
   "Goal registration is unavailable. Restart Jumbo and try again.";
 const COCKPIT_FOOTER_SHORTCUTS = [
-  { char: "tab", label: "panels" },
+  { char: "tab", label: "change focus" },
   { char: "g", label: "create goal" },
 ] as const;
 
@@ -62,6 +63,7 @@ interface TuiAppProps {
   readonly actionControllers?: TuiAppActionControllers;
   readonly onProjectInitialized?: () => Promise<TuiStateReaderControllers>;
   readonly subprocessManager?: ISubprocessManager;
+  readonly settingsReader?: Pick<ISettingsReader, "read" | "write">;
 }
 
 export interface TuiAppActionControllers extends InitFlowActionControllers {
@@ -78,6 +80,7 @@ export function TuiApp({
   actionControllers,
   onProjectInitialized,
   subprocessManager,
+  settingsReader,
 }: TuiAppProps = {}): React.ReactElement {
   const [activeStateReaderControllers, setActiveStateReaderControllers] =
     useState(stateReaderControllers);
@@ -104,6 +107,7 @@ export function TuiApp({
           actionControllers={actionControllers}
           onProjectInitialized={handleProjectInitialized}
           subprocessManagerEnabled={false}
+          settingsReader={settingsReader}
         />
       ) : (
         <SubprocessManagerProvider manager={activeSubprocessManager}>
@@ -112,6 +116,7 @@ export function TuiApp({
             actionControllers={actionControllers}
             onProjectInitialized={handleProjectInitialized}
             subprocessManagerEnabled={true}
+            settingsReader={settingsReader}
           />
         </SubprocessManagerProvider>
       )}
@@ -124,6 +129,7 @@ interface TuiAppFrameProps {
   readonly actionControllers?: TuiAppActionControllers;
   readonly onProjectInitialized: () => Promise<boolean>;
   readonly subprocessManagerEnabled: boolean;
+  readonly settingsReader?: Pick<ISettingsReader, "read" | "write">;
 }
 
 function TuiAppFrame({
@@ -131,6 +137,7 @@ function TuiAppFrame({
   actionControllers,
   onProjectInitialized,
   subprocessManagerEnabled,
+  settingsReader,
 }: TuiAppFrameProps): React.ReactElement {
   const { exit } = useApp();
   const subprocessManager = useSubprocessManager();
@@ -335,6 +342,7 @@ function TuiAppFrame({
               activeScreenIndex={activeScreenIndex}
               projectLifecycleState={routedProjectLifecycleState}
               shortcutsEnabled={frameShortcutsEnabled}
+              settingsReader={settingsReader}
             />
           )}
         </Box>
@@ -373,7 +381,6 @@ function TuiAppFrame({
           terminalWidth={columns}
           shortcutsEnabled={frameShortcutsEnabled}
           contextualShortcuts={cockpitLaunchpadVisible ? COCKPIT_FOOTER_SHORTCUTS : []}
-          daemonCounts={countDaemons(daemonStatuses)}
           notifications={buildDaemonFailureNotifications(daemonStatuses)}
         />
       </Box>
@@ -408,18 +415,6 @@ function optionalList(value: string): string[] | undefined {
     .filter((item) => item.length > 0);
 
   return values.length > 0 ? values : undefined;
-}
-
-function countDaemons(statuses: readonly TuiSubprocessSnapshot[]): {
-  running: number;
-  stopped: number;
-  failed: number;
-} {
-  return {
-    running: statuses.filter((status) => status.status === "running").length,
-    stopped: statuses.filter((status) => status.status === "stopped").length,
-    failed: statuses.filter((status) => status.status === "failed").length,
-  };
 }
 
 function buildDaemonFailureNotifications(

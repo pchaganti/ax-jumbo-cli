@@ -23,6 +23,7 @@ export class TuiApplicationLauncher {
         actionControllers={this.buildActionControllers()}
         onProjectInitialized={this.fallbackStateReaderControllerFactory}
         subprocessManager={new TuiSubprocessManager(this.container?.logger)}
+        settingsReader={this.container?.settingsReader}
       />,
     );
 

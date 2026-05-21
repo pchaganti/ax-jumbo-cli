@@ -6,6 +6,7 @@ import { CockpitGreeterView } from "./CockpitGreeterView.js";
 import { CockpitUnprimedView } from "./CockpitUnprimedView.js";
 import { CockpitPrimedEmptyView } from "./CockpitPrimedEmptyView.js";
 import { CockpitLaunchpadView } from "./CockpitLaunchpadView.js";
+import type { ISettingsReader } from "../../../application/settings/ISettingsReader.js";
 
 export type CockpitState =
   | "uninitialized"
@@ -19,11 +20,13 @@ const PLACEHOLDER_VERSION = "0.0.0";
 interface CockpitScreenProps {
   state?: CockpitState;
   shortcutsEnabled?: boolean;
+  settingsReader?: Pick<ISettingsReader, "read" | "write">;
 }
 
 export function CockpitScreen({
   state = PLACEHOLDER_COCKPIT_STATE,
   shortcutsEnabled = true,
+  settingsReader,
 }: CockpitScreenProps = {}): React.ReactElement {
   const [bannerComplete, setBannerComplete] = useState(false);
   const showBanner = state === "uninitialized" || state === "unprimed";
@@ -66,7 +69,10 @@ export function CockpitScreen({
           {state === "unprimed" && <CockpitUnprimedView />}
           {state === "primed-empty" && <CockpitPrimedEmptyView />}
           {state === "primed" && (
-            <CockpitLaunchpadView shortcutsEnabled={shortcutsEnabled} />
+            <CockpitLaunchpadView
+              shortcutsEnabled={shortcutsEnabled}
+              settingsReader={settingsReader}
+            />
           )}
         </Box>
       )}
