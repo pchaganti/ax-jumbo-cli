@@ -12,6 +12,7 @@ interface AnimatedBannerProps {
   projectName?: string | null;
   persist?: boolean;
   infoBoxLines?: string[];
+  animated?: boolean;
 }
 
 const TOTAL_FRAMES = getFrameCount();
@@ -162,9 +163,12 @@ export function AnimatedBanner({
   projectName = null,
   persist = false,
   infoBoxLines,
+  animated = true,
 }: AnimatedBannerProps): React.ReactElement | null {
-  const [frame, setFrame] = useState(0);
-  const [phase, setPhase] = useState<BannerPhase>("walking");
+  const [frame, setFrame] = useState(animated ? 0 : TOTAL_FRAMES - 1);
+  const [phase, setPhase] = useState<BannerPhase>(
+    animated ? "walking" : persist ? "persisted" : "complete",
+  );
   const [visibleLines, setVisibleLines] = useState<number | null>(null);
   const startTimeRef = useRef<number>(performance.now());
 
@@ -173,7 +177,17 @@ export function AnimatedBanner({
   }, [onComplete]);
 
   useEffect(() => {
-    if (phase !== "walking") return;
+    if (animated) {
+      return;
+    }
+
+    setFrame(TOTAL_FRAMES - 1);
+    setPhase(persist ? "persisted" : "complete");
+    setVisibleLines(null);
+  }, [animated, persist]);
+
+  useEffect(() => {
+    if (!animated || phase !== "walking") return;
     const timer = setInterval(() => {
       const elapsed = performance.now() - startTimeRef.current;
       const targetFrame = Math.min(

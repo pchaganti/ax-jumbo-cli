@@ -161,6 +161,12 @@ function TuiAppFrame({
   const [lifecycleRouteOverride, setLifecycleRouteOverride] =
     useState<ProjectLifecycleState | null>(null);
   const [unprimedSkipped, setUnprimedSkipped] = useState(false);
+  const [bannerAnimationComplete, setBannerAnimationComplete] = useState(
+    !launchAnimationEnabled,
+  );
+  const [billboardAnimationComplete, setBillboardAnimationComplete] = useState(
+    !launchAnimationEnabled,
+  );
   const [daemonStatuses, setDaemonStatuses] = useState<readonly TuiSubprocessSnapshot[]>(
     subprocessManager.getAllStatuses(),
   );
@@ -191,6 +197,13 @@ function TuiAppFrame({
       setUnprimedSkipped(false);
     }
   }, [projectLifecycleState]);
+
+  useEffect(() => {
+    if (!launchAnimationEnabled) {
+      setBannerAnimationComplete(true);
+      setBillboardAnimationComplete(true);
+    }
+  }, [launchAnimationEnabled]);
 
   useEffect(() => {
     if (
@@ -326,6 +339,14 @@ function TuiAppFrame({
     setMegaMenuOpen(false);
   };
 
+  const handleBannerAnimationComplete = useCallback(() => {
+    setBannerAnimationComplete(true);
+  }, []);
+
+  const handleBillboardAnimationComplete = useCallback(() => {
+    setBillboardAnimationComplete(true);
+  }, []);
+
   return (
     <Box flexDirection="column" width={columns} height={rows}>
       <Box flexShrink={0}>
@@ -353,6 +374,10 @@ function TuiAppFrame({
               terminalHeight={Math.max(1, rows - TUI_FRAME_CHROME_ROWS)}
               settingsReader={settingsReader}
               launchAnimationEnabled={launchAnimationEnabled}
+              bannerAnimationComplete={bannerAnimationComplete}
+              billboardAnimationComplete={billboardAnimationComplete}
+              onBannerAnimationComplete={handleBannerAnimationComplete}
+              onBillboardAnimationComplete={handleBillboardAnimationComplete}
             />
           )}
         </Box>

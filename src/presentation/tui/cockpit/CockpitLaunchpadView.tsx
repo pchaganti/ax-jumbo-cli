@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import AnimatedBillboard from "../billboard/AnimatedBillboard.js";
+import type { AnimatedBillboardTriggerInput } from "../billboard/AnimatedBillboard.js";
 import { Panel } from "../ui-primitives/Panel.js";
 import { KeyBadge } from "../ui-primitives/KeyBadge.js";
 import { BaseColors } from "../../shared/DesignTokens.js";
@@ -16,14 +17,16 @@ interface GlyphStyle {
 type GlyphColorMap = Readonly<Record<string, string>>;
 type GlyphPalette = readonly string[];
 
-interface RefinerGlyphCell {
-  glyph: string;
-  color: string;
+interface GlyphCell {
+  readonly glyph: string;
+  readonly color: string;
 }
 
-interface ReviewerGlyphCell {
-  glyph: string;
-  color: string;
+interface RandomGlyphFrameConfig {
+  readonly frameCount: number;
+  readonly gridWidth: number;
+  readonly gridHeight: number;
+  readonly glyphs: readonly string[];
 }
 
 interface DaemonEventRow {
@@ -40,18 +43,18 @@ interface LaunchAnimationSize {
   readonly height: number;
 }
 
+export type LaunchAnimationRenderer = (
+  input: AnimatedBillboardTriggerInput,
+) => React.ReactElement;
+
 const RENDERED_DAEMON_EVENT_LIMIT = 10;
 const RENDERED_DAEMON_FRAME_HEIGHT = 5;
 const DAEMON_EVENT_SOURCE_WIDTH = 8;
 const DAEMON_EVENT_CATEGORY_WIDTH = 12;
+const DAEMON_PANEL_CONTENT_WIDTH = 35;
+const RANDOM_GLYPH_GRID_HEIGHT = 10;
 const REFINER_FRAME_COUNT = 9;
-const REFINER_GRID_WIDTH = 35;
-const REFINER_GRID_HEIGHT = 10;
-const REFINER_GRID_SIZE = REFINER_GRID_WIDTH * REFINER_GRID_HEIGHT;
 const REVIEWER_FRAME_COUNT = 6;
-const REVIEWER_GRID_WIDTH = 35;
-const REVIEWER_GRID_HEIGHT = 10;
-const REVIEWER_GRID_SIZE = REVIEWER_GRID_WIDTH * REVIEWER_GRID_HEIGHT;
 const CODIFIER_FRAME_COUNT = 6;
 const CODIFIER_GRID_HEIGHT = 10;
 const CODIFIER_GROUP_LENGTH = 4;
@@ -127,7 +130,7 @@ const CODIFIER_ALPHANUMERIC_GLYPHS = [
   ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
 ] as const;
 
-const REFINER_GLYPH_COLORS = [
+const DEFAULT_RANDOM_GLYPH_COLORS = [
   BaseColors.tint1,
   BaseColors.primary,
   BaseColors.shade1,
@@ -138,16 +141,19 @@ const REFINER_GLYPH_COLORS = [
   BaseColors.shade6,
 ] as const;
 
-const REVIEWER_GLYPH_COLORS = [
-  BaseColors.tint1,
-  BaseColors.primary,
-  BaseColors.shade1,
-  BaseColors.shade2,
-  BaseColors.shade3,
-  BaseColors.shade4,
-  BaseColors.shade5,
-  BaseColors.shade6,
-] as const;
+const REFINER_GLYPH_FRAME_CONFIG = {
+  frameCount: REFINER_FRAME_COUNT,
+  gridWidth: DAEMON_PANEL_CONTENT_WIDTH,
+  gridHeight: RANDOM_GLYPH_GRID_HEIGHT,
+  glyphs: REFINER_GLYPHS,
+} as const satisfies RandomGlyphFrameConfig;
+
+const REVIEWER_GLYPH_FRAME_CONFIG = {
+  frameCount: REVIEWER_FRAME_COUNT,
+  gridWidth: DAEMON_PANEL_CONTENT_WIDTH,
+  gridHeight: RANDOM_GLYPH_GRID_HEIGHT,
+  glyphs: REVIEWER_GLYPHS,
+} as const satisfies RandomGlyphFrameConfig;
 
 const DEFAULT_CODIFIER_GLYPH_COLORS: GlyphColorMap = {
   "█": BaseColors.shade1,
@@ -166,6 +172,8 @@ const DEFAULT_REVIEWER_GLYPH_COLORS: GlyphColorMap = {
 interface CockpitLaunchpadViewProps {
   shortcutsEnabled?: boolean;
   launchAnimationSize?: LaunchAnimationSize;
+  onLaunchAnimationDone?: () => void;
+  launchAnimationRenderer?: LaunchAnimationRenderer;
   refinerGlyphPalette?: GlyphPalette;
   reviewerGlyphPalette?: GlyphPalette;
   reviewerGlyphColors?: GlyphColorMap;
@@ -179,8 +187,10 @@ interface CockpitLaunchpadViewProps {
 export function CockpitLaunchpadView({
   shortcutsEnabled = true,
   launchAnimationSize,
-  refinerGlyphPalette = REFINER_GLYPH_COLORS,
-  reviewerGlyphPalette = REVIEWER_GLYPH_COLORS,
+  onLaunchAnimationDone,
+  launchAnimationRenderer = AnimatedBillboard.trigger,
+  refinerGlyphPalette = DEFAULT_RANDOM_GLYPH_COLORS,
+  reviewerGlyphPalette = DEFAULT_RANDOM_GLYPH_COLORS,
   codifierGlyphColors = DEFAULT_CODIFIER_GLYPH_COLORS,
   refinerFrameDurationMs = DEFAULT_REFINER_FRAME_DURATION_MS,
   reviewerFrameDurationMs = DEFAULT_REVIEWER_FRAME_DURATION_MS,
@@ -218,7 +228,8 @@ export function CockpitLaunchpadView({
 
   const handleLaunchAnimationDone = useCallback(() => {
     setLaunchAnimationDone(true);
-  }, []);
+    onLaunchAnimationDone?.();
+  }, [onLaunchAnimationDone]);
 
   useEffect(() => {
     let mounted = true;
@@ -378,7 +389,7 @@ export function CockpitLaunchpadView({
   if (launchAnimationActive) {
     return (
       <Box flexDirection="column" flexGrow={1} width="100%" height="100%">
-        {AnimatedBillboard.trigger({
+        {launchAnimationRenderer({
           height: launchAnimationSize.height,
           width: launchAnimationSize.width,
           onDone: handleLaunchAnimationDone,
@@ -392,84 +403,44 @@ export function CockpitLaunchpadView({
       {welcomeVisible === true && (
         <WelcomeBox />
       )}
-      <Box flexDirection="row" flexShrink={0} height={13} width="100%" gap={1}>
+      <Box flexDirection="row" flexShrink={0} height={13} width="100%" gap={1} marginY={1}>
         <DaemonPanel
-          title="    ─── REFINER ─────────────────"
+          title="REFINER//"
           selected={selectedDaemon === "refiner"}
           configuring={configuredDaemon === "refiner"}
           infoVisible={infoDaemon === "refiner"}
           snapshot={refinerStatus}
           pendingConfig={daemonConfigs.refiner}
         >
-          <Box flexDirection="column" flexWrap="nowrap" width={35}>
-            {getRenderedDaemonFrame(getRefinerFrame(renderedRefinerFrameIndex, refinerGlyphPalette)).map((line, lineIndex) => (
-              <Text key={`${renderedRefinerFrameIndex}-${lineIndex}`}>
-                {getRefinerGlyphSegments(getRefinerLinePrefix(line, refinerStatus, lineIndex), refinerStatus).map((segment, segmentIndex) => (
-                  <Text
-                    key={`${renderedRefinerFrameIndex}-${lineIndex}-prefix-${segmentIndex}`}
-                    color={segment.color}>
-                    {segment.text}
-                  </Text>
-                ))}
-                {isDaemonStatusLine(lineIndex) && (
-                  <Text color={getDaemonStatusColor(refinerStatus)} bold>
-                    {getDaemonPanelStatusLabel(refinerStatus)}
-                  </Text>
-                )}
-                {getRefinerGlyphSegments(getRefinerLineSuffix(line, refinerStatus, lineIndex), refinerStatus).map((segment, segmentIndex) => (
-                  <Text
-                    key={`${renderedRefinerFrameIndex}-${lineIndex}-suffix-${segmentIndex}`}
-                    color={segment.color}>
-                    {segment.text}
-                  </Text>
-                ))}
-              </Text>
-            ))}
-          </Box>
+          <GlyphCellDaemonFrame
+            frame={getRefinerFrame(renderedRefinerFrameIndex, refinerGlyphPalette)}
+            frameIndex={renderedRefinerFrameIndex}
+            snapshot={refinerStatus}
+          />
         </DaemonPanel>
         <DaemonPanel
-          title=" ─── REVIEWER ───────────────────"
+          title="REVIEWER//"
           selected={selectedDaemon === "reviewer"}
           configuring={configuredDaemon === "reviewer"}
           infoVisible={infoDaemon === "reviewer"}
           snapshot={reviewerStatus}
           pendingConfig={daemonConfigs.reviewer}
         >
-          <Box flexDirection="column" flexWrap="nowrap" width={35}>
-            {getRenderedDaemonFrame(getReviewerFrame(renderedReviewerFrameIndex, reviewerGlyphPalette)).map((line, lineIndex) => (
-              <Text key={`${renderedReviewerFrameIndex}-${lineIndex}`}>
-                {getReviewerGlyphSegments(getReviewerLinePrefix(line, reviewerStatus, lineIndex), reviewerStatus).map((segment, segmentIndex) => (
-                  <Text
-                    key={`${renderedReviewerFrameIndex}-${lineIndex}-prefix-${segmentIndex}`}
-                    color={segment.color}>
-                    {segment.text}
-                  </Text>
-                ))}
-                {isDaemonStatusLine(lineIndex) && (
-                  <Text color={getDaemonStatusColor(reviewerStatus)} bold>
-                    {getDaemonPanelStatusLabel(reviewerStatus)}
-                  </Text>
-                )}
-                {getReviewerGlyphSegments(getReviewerLineSuffix(line, reviewerStatus, lineIndex), reviewerStatus).map((segment, segmentIndex) => (
-                  <Text
-                    key={`${renderedReviewerFrameIndex}-${lineIndex}-suffix-${segmentIndex}`}
-                    color={segment.color}>
-                    {segment.text}
-                  </Text>
-                ))}
-              </Text>
-            ))}
-          </Box>
+          <GlyphCellDaemonFrame
+            frame={getReviewerFrame(renderedReviewerFrameIndex, reviewerGlyphPalette)}
+            frameIndex={renderedReviewerFrameIndex}
+            snapshot={reviewerStatus}
+          />
         </DaemonPanel>
         <DaemonPanel
-          title=" ─── CODIFIER ──────────────────"
+          title="CODIFIER//"
           selected={selectedDaemon === "codifier"}
           configuring={configuredDaemon === "codifier"}
           infoVisible={infoDaemon === "codifier"}
           snapshot={codifierStatus}
           pendingConfig={daemonConfigs.codifier}
         >
-          <Box flexDirection="column" flexWrap="nowrap" width={35}>
+          <Box flexDirection="column" flexWrap="nowrap" width={DAEMON_PANEL_CONTENT_WIDTH}>
             {getRenderedDaemonFrame(getCodifierFrame(renderedCodifierFrameIndex)).map((line, lineIndex) => (
               <Text key={`${renderedCodifierFrameIndex}-${lineIndex}`}>
                 {getStyledGlyphSegments(getGlyphLinePrefix(line, codifierStatus, lineIndex), codifierGlyphColors, codifierStatus).map((segment, segmentIndex) => (
@@ -534,12 +505,15 @@ function WelcomeBox(): React.ReactElement {
       </Box>
       <Box flexDirection="row">
         <Text color={BaseColors.shade1}>
-          Lighten the cognitive load required to manage multiple agents. Run the Jumbo worker agents
-          to automate goal refinement, review and codification, so you can focus on defining goals
-          and overseeing implementation (if that's your thing).
+          Run Jumbo worker daemons to keep goal workflows moving. 
+          Each worker watches Jumbo state, starts your configured agent when a goal is ready, 
+          and prompts it through the next CLI step: refinement, review, or codification.
+        </Text>
+        <Text color={BaseColors.shade1}>
+          You define and prioritize the work; Jumbo handles the repeatable agent handoffs.
         </Text>
       </Box>
-      <Box marginTop={1} width="100%" justifyContent="flex-end">
+      <Box width="100%" justifyContent="flex-end">
         <KeyBadge
           char="x"
           label="hide"
@@ -601,6 +575,50 @@ function getRenderedDaemonFrame<T>(frame: readonly T[]): readonly T[] {
   return frame.slice(0, RENDERED_DAEMON_FRAME_HEIGHT);
 }
 
+function GlyphCellDaemonFrame({
+  frame,
+  frameIndex,
+  snapshot,
+}: {
+  readonly frame: readonly (readonly GlyphCell[])[];
+  readonly frameIndex: number;
+  readonly snapshot: TuiSubprocessSnapshot;
+}): React.ReactElement {
+  return (
+    <Box flexDirection="column" flexWrap="nowrap" width={DAEMON_PANEL_CONTENT_WIDTH}>
+      {getRenderedDaemonFrame(frame).map((line, lineIndex) => (
+        <Text key={`${frameIndex}-${lineIndex}`}>
+          {getGlyphCellSegments(
+            getGlyphCellLinePrefix(line, snapshot, lineIndex),
+            snapshot,
+          ).map((segment, segmentIndex) => (
+            <Text
+              key={`${frameIndex}-${lineIndex}-prefix-${segmentIndex}`}
+              color={segment.color}>
+              {segment.text}
+            </Text>
+          ))}
+          {isDaemonStatusLine(lineIndex) && (
+            <Text color={getDaemonStatusColor(snapshot)} bold>
+              {getDaemonPanelStatusLabel(snapshot)}
+            </Text>
+          )}
+          {getGlyphCellSegments(
+            getGlyphCellLineSuffix(line, snapshot, lineIndex),
+            snapshot,
+          ).map((segment, segmentIndex) => (
+            <Text
+              key={`${frameIndex}-${lineIndex}-suffix-${segmentIndex}`}
+              color={segment.color}>
+              {segment.text}
+            </Text>
+          ))}
+        </Text>
+      ))}
+    </Box>
+  );
+}
+
 function getRenderedFrameIndex(
   snapshot: TuiSubprocessSnapshot,
   animatedFrameIndex: number,
@@ -621,7 +639,7 @@ function DaemonActionLine({
   const badgeColor = getDaemonShortcutBadgeColor(selected);
 
   return (
-    <Box width={35} marginTop={1} gap={1}>
+    <Box width={DAEMON_PANEL_CONTENT_WIDTH} marginTop={1} gap={1}>
       <KeyBadge
         char="s"
         label={action}
@@ -688,7 +706,7 @@ function DaemonConfigWizard({
   const badgeColor = getDaemonShortcutBadgeColor(selected);
 
   return (
-    <Box width={35} flexDirection="column">
+    <Box width={DAEMON_PANEL_CONTENT_WIDTH} flexDirection="column">
       <Text color={BaseColors.shade4}>
         pid {snapshot.pid ?? "-"}
       </Text>
@@ -741,11 +759,11 @@ function isDaemonStatusLine(lineIndex: number): boolean {
   return lineIndex === Math.floor(RENDERED_DAEMON_FRAME_HEIGHT / 2);
 }
 
-function getRefinerLinePrefix(
-  line: readonly RefinerGlyphCell[],
+function getGlyphCellLinePrefix(
+  line: readonly GlyphCell[],
   snapshot: TuiSubprocessSnapshot,
   lineIndex: number,
-): readonly RefinerGlyphCell[] {
+): readonly GlyphCell[] {
   if (!isDaemonStatusLine(lineIndex)) {
     return line;
   }
@@ -753,35 +771,11 @@ function getRefinerLinePrefix(
   return line.slice(0, getDaemonStatusOverlayStart(line.length, snapshot));
 }
 
-function getRefinerLineSuffix(
-  line: readonly RefinerGlyphCell[],
+function getGlyphCellLineSuffix(
+  line: readonly GlyphCell[],
   snapshot: TuiSubprocessSnapshot,
   lineIndex: number,
-): readonly RefinerGlyphCell[] {
-  if (!isDaemonStatusLine(lineIndex)) {
-    return [];
-  }
-
-  return line.slice(getDaemonStatusOverlayEnd(line.length, snapshot));
-}
-
-function getReviewerLinePrefix(
-  line: readonly ReviewerGlyphCell[],
-  snapshot: TuiSubprocessSnapshot,
-  lineIndex: number,
-): readonly ReviewerGlyphCell[] {
-  if (!isDaemonStatusLine(lineIndex)) {
-    return line;
-  }
-
-  return line.slice(0, getDaemonStatusOverlayStart(line.length, snapshot));
-}
-
-function getReviewerLineSuffix(
-  line: readonly ReviewerGlyphCell[],
-  snapshot: TuiSubprocessSnapshot,
-  lineIndex: number,
-): readonly ReviewerGlyphCell[] {
+): readonly GlyphCell[] {
   if (!isDaemonStatusLine(lineIndex)) {
     return [];
   }
@@ -1110,7 +1104,10 @@ export function getCodifierFrame(index: number): string[] {
     return ["error"];
   }
 
-  const random = createSeededRandom(createSeed(index + CODIFIER_FRAME_COUNT));
+  const random = createSeededRandom(createSeed(
+    index + CODIFIER_FRAME_COUNT,
+    DAEMON_PANEL_CONTENT_WIDTH * CODIFIER_GRID_HEIGHT,
+  ));
 
   return Array.from({ length: CODIFIER_GRID_HEIGHT }, () => {
     const groups = new Set<string>();
@@ -1130,58 +1127,36 @@ export function getCodifierFrame(index: number): string[] {
 export function getReviewerFrame(
   index: number,
   glyphPalette: GlyphPalette,
-): ReviewerGlyphCell[][] {
-  if (index < 0 || index >= REVIEWER_FRAME_COUNT) {
-    return [[{ glyph: "error", color: DEFAULT_CODIFIER_GLYPH_STYLE.color }]];
-  }
-
-  const glyphGrid = createReviewerGlyphGrid(index, glyphPalette);
-
-  return Array.from({ length: REVIEWER_GRID_HEIGHT }, (_, rowIndex) => {
-    const start = rowIndex * REVIEWER_GRID_WIDTH;
-    return glyphGrid.slice(start, start + REVIEWER_GRID_WIDTH);
-  });
+): GlyphCell[][] {
+  return getRandomGlyphFrame(index, glyphPalette, REVIEWER_GLYPH_FRAME_CONFIG);
 }
 
 function getRefinerFrame(
   index: number,
   glyphPalette: GlyphPalette,
-): RefinerGlyphCell[][] {
-  if (index < 0 || index >= REFINER_FRAME_COUNT) {
+): GlyphCell[][] {
+  return getRandomGlyphFrame(index, glyphPalette, REFINER_GLYPH_FRAME_CONFIG);
+}
+
+function getRandomGlyphFrame(
+  index: number,
+  glyphPalette: GlyphPalette,
+  config: RandomGlyphFrameConfig,
+): GlyphCell[][] {
+  if (index < 0 || index >= config.frameCount) {
     return [[{ glyph: "error", color: DEFAULT_CODIFIER_GLYPH_STYLE.color }]];
   }
 
-  const glyphGrid = createRefinerGlyphGrid(index, glyphPalette);
+  const glyphGrid = createRandomGlyphGrid(index, glyphPalette, config);
 
-  return Array.from({ length: REFINER_GRID_HEIGHT }, (_, rowIndex) => {
-    const start = rowIndex * REFINER_GRID_WIDTH;
-    return glyphGrid.slice(start, start + REFINER_GRID_WIDTH);
+  return Array.from({ length: config.gridHeight }, (_, rowIndex) => {
+    const start = rowIndex * config.gridWidth;
+    return glyphGrid.slice(start, start + config.gridWidth);
   });
 }
 
-function getRefinerGlyphSegments(
-  line: readonly RefinerGlyphCell[],
-  snapshot: TuiSubprocessSnapshot,
-): Array<{ text: string; color: string }> {
-  const segments: Array<{ text: string; color: string }> = [];
-
-  for (const cell of line) {
-    const color = getDaemonGlyphColor(snapshot, cell.color);
-    const previousSegment = segments[segments.length - 1];
-
-    if (previousSegment !== undefined && previousSegment.color === color) {
-      previousSegment.text += cell.glyph;
-      continue;
-    }
-
-    segments.push({ text: cell.glyph, color });
-  }
-
-  return segments;
-}
-
-function getReviewerGlyphSegments(
-  line: readonly ReviewerGlyphCell[],
+function getGlyphCellSegments(
+  line: readonly GlyphCell[],
   snapshot: TuiSubprocessSnapshot,
 ): Array<{ text: string; color: string }> {
   const segments: Array<{ text: string; color: string }> = [];
@@ -1255,32 +1230,22 @@ function getDaemonGlyphColor(
   return snapshot.status === "running" ? animatedColor : BaseColors.shade6;
 }
 
-function createRefinerGlyphGrid(
+function createRandomGlyphGrid(
   frameIndex: number,
   glyphPalette: GlyphPalette,
-): RefinerGlyphCell[] {
-  const random = createSeededRandom(createSeed(frameIndex));
+  config: RandomGlyphFrameConfig,
+): GlyphCell[] {
+  const gridSize = config.gridWidth * config.gridHeight;
+  const random = createSeededRandom(createSeed(frameIndex, gridSize));
 
-  return Array.from({ length: REFINER_GRID_SIZE }, () => ({
-    glyph: pickRandomValue(REFINER_GLYPHS, random),
+  return Array.from({ length: gridSize }, () => ({
+    glyph: pickRandomValue(config.glyphs, random),
     color: pickRandomValue(glyphPalette, random),
   }));
 }
 
-function createReviewerGlyphGrid(
-  frameIndex: number,
-  glyphPalette: GlyphPalette,
-): ReviewerGlyphCell[] {
-  const random = createSeededRandom(createSeed(frameIndex));
-
-  return Array.from({ length: REVIEWER_GRID_SIZE }, () => ({
-    glyph: pickRandomValue(REVIEWER_GLYPHS, random),
-    color: pickRandomValue(glyphPalette, random),
-  }));
-}
-
-function createSeed(frameIndex: number): number {
-  return (frameIndex + 1) * 1009 + REFINER_GRID_SIZE * 9176;
+function createSeed(frameIndex: number, gridSize: number): number {
+  return (frameIndex + 1) * 1009 + gridSize * 9176;
 }
 
 function createSeededRandom(seed: number): () => number {

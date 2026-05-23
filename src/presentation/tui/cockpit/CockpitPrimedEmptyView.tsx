@@ -26,21 +26,22 @@ export function CockpitPrimedEmptyView(): React.ReactElement {
         </Box>
         <Box marginTop={1}>
           <Text color={SemanticColors.primary} wrap="wrap">
-            Goals are the center of how Jumbo turns project memory into useful
-            work. A goal is simply an objective, success criteria, and scope.
+            With Jumbo, you define work as goals, not open-ended agent prompts.
+            A goal is the unit of work: an objective, success criteria, and scope.
           </Text>
         </Box>
         <Box marginTop={1}>
           <Text color={SemanticColors.primary} wrap="wrap">
-            That gives Jumbo's memory something to organize around. When the agent
-            starts the goal, Jumbo provides a focused context packet with relevant
-            project knowledge and execution instructions.
+            Goals give project memory a single object to organize around. When
+            an agent starts the goal with the Jumbo CLI, Jumbo returns focused
+            project knowledge and workflow instructions for that goal.
           </Text>
         </Box>
         <Box marginTop={1}>
           <Text color={SemanticColors.primary} wrap="wrap">
-            New memories are captured as corrections and discoveries arise, and
-            each completed goal leaves the system better prepared for the next one.
+            New memories are captured only through explicit Jumbo commands run
+            by the agent or by you as corrections, decisions, and discoveries
+            arise during the work.
           </Text>
         </Box>
       </Box>

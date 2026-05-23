@@ -6,6 +6,7 @@ import { CockpitGreeterView } from "./CockpitGreeterView.js";
 import { CockpitUnprimedView } from "./CockpitUnprimedView.js";
 import { CockpitPrimedEmptyView } from "./CockpitPrimedEmptyView.js";
 import { CockpitLaunchpadView } from "./CockpitLaunchpadView.js";
+import type { LaunchAnimationRenderer } from "./CockpitLaunchpadView.js";
 import type { ISettingsReader } from "../../../application/settings/ISettingsReader.js";
 
 export type CockpitState =
@@ -25,6 +26,11 @@ interface CockpitScreenProps {
   terminalWidth?: number;
   terminalHeight?: number;
   launchAnimationEnabled?: boolean;
+  bannerAnimationComplete?: boolean;
+  billboardAnimationComplete?: boolean;
+  onBannerAnimationComplete?: () => void;
+  onBillboardAnimationComplete?: () => void;
+  launchAnimationRenderer?: LaunchAnimationRenderer;
   settingsReader?: Pick<ISettingsReader, "read" | "write">;
 }
 
@@ -34,12 +40,26 @@ export function CockpitScreen({
   terminalWidth = DEFAULT_TERMINAL_WIDTH,
   terminalHeight = DEFAULT_COCKPIT_BODY_HEIGHT,
   launchAnimationEnabled = true,
+  bannerAnimationComplete,
+  billboardAnimationComplete = false,
+  onBannerAnimationComplete,
+  onBillboardAnimationComplete,
+  launchAnimationRenderer,
   settingsReader,
 }: CockpitScreenProps = {}): React.ReactElement {
-  const [bannerComplete, setBannerComplete] = useState(false);
+  const [localBannerComplete, setLocalBannerComplete] = useState(
+    !launchAnimationEnabled,
+  );
+  const bannerComplete =
+    !launchAnimationEnabled ||
+    bannerAnimationComplete === true ||
+    localBannerComplete;
+  const bannerAnimationActive = launchAnimationEnabled && !bannerComplete;
+  const billboardAnimationActive =
+    launchAnimationEnabled && !billboardAnimationComplete;
   const bannerPersists = state === "uninitialized" || state === "unprimed";
   const shouldRenderBanner =
-    state !== "primed" && (!bannerComplete || bannerPersists);
+    state !== "primed" && (bannerAnimationActive || bannerPersists);
   const shouldRenderContent = state === "primed" || bannerComplete;
   const launchAnimationSize = useMemo(
     () => ({
@@ -50,8 +70,9 @@ export function CockpitScreen({
   );
 
   const handleBannerComplete = useCallback(() => {
-    setBannerComplete(true);
-  }, []);
+    setLocalBannerComplete(true);
+    onBannerAnimationComplete?.();
+  }, [onBannerAnimationComplete]);
 
   const infoBoxLines = useMemo(() => {
     if (state === "uninitialized") {
@@ -78,6 +99,7 @@ export function CockpitScreen({
             persist={bannerPersists}
             version={PLACEHOLDER_VERSION}
             infoBoxLines={infoBoxLines}
+            animated={bannerAnimationActive}
           />
         </Box>
       )}
@@ -90,8 +112,10 @@ export function CockpitScreen({
             <CockpitLaunchpadView
               shortcutsEnabled={shortcutsEnabled}
               launchAnimationSize={
-                launchAnimationEnabled ? launchAnimationSize : undefined
+                billboardAnimationActive ? launchAnimationSize : undefined
               }
+              onLaunchAnimationDone={onBillboardAnimationComplete}
+              launchAnimationRenderer={launchAnimationRenderer}
               settingsReader={settingsReader}
             />
           )}

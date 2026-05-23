@@ -12,10 +12,14 @@ export function CockpitGreeterView(): React.ReactElement {
           <Box flexDirection="column" flexBasis="94%">
             <Box marginTop={1}>
               <Text color={BaseColors.brandBlue} wrap="wrap">
-                Hi, I'm Jumbo. I give your coding agents the memory they're missing
-                and help you manage the context you provide to them when completing
-                tasks. So you can focus on what your building and not have to repeat
-                yourself to them all the time.
+                Hi, I'm Jumbo. I help coding agents stay aligned with your project intent.
+
+                I capture the decisions, rules, corrections, and goals that matter, then
+                deliver the relevant context back to agents when they need it. That keeps
+                work consistent across sessions and agents without forcing you
+                to rebuild context every time.
+
+                Get started by initializing this project.
               </Text>
             </Box>
 

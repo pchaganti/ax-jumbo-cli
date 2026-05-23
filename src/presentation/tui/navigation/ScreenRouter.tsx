@@ -18,6 +18,10 @@ interface ScreenRouterProps {
   terminalWidth?: number;
   terminalHeight?: number;
   launchAnimationEnabled?: boolean;
+  bannerAnimationComplete?: boolean;
+  billboardAnimationComplete?: boolean;
+  onBannerAnimationComplete?: () => void;
+  onBillboardAnimationComplete?: () => void;
   settingsReader?: Pick<ISettingsReader, "read" | "write">;
 }
 
@@ -42,6 +46,10 @@ export function ScreenRouter({
   terminalWidth,
   terminalHeight,
   launchAnimationEnabled = true,
+  bannerAnimationComplete,
+  billboardAnimationComplete,
+  onBannerAnimationComplete,
+  onBillboardAnimationComplete,
   settingsReader,
 }: ScreenRouterProps): React.ReactElement {
   const definition = SCREEN_DEFINITIONS[activeScreenIndex];
@@ -57,6 +65,10 @@ export function ScreenRouter({
         terminalWidth={terminalWidth}
         terminalHeight={terminalHeight}
         launchAnimationEnabled={launchAnimationEnabled}
+        bannerAnimationComplete={bannerAnimationComplete}
+        billboardAnimationComplete={billboardAnimationComplete}
+        onBannerAnimationComplete={onBannerAnimationComplete}
+        onBillboardAnimationComplete={onBillboardAnimationComplete}
         settingsReader={settingsReader}
       />
     );

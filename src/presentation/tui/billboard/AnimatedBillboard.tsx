@@ -2,14 +2,16 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Text } from "ink";
 import Yoga from "yoga-layout";
 
-const TARGET_STICKERS = 42;
+const TARGET_STICKERS = 39;
+const STICKERS_PER_FRAME = 6;
 const FRAME_MS = 0;
 const FULL_BLOCK_COLOR = "#000000";
 const JUMBO_COLOR = "#ffffff";
-const CANDIDATES_PER_STICKER = 80;
+const CANDIDATES_PER_STICKER = 40;
 const FINAL_PAUSE_MS = 650;
 const ERASE_FRAME_MS = 0;
-const ERASE_ROWS_PER_FRAME = 2;
+const ERASE_ROWS_PER_FRAME = 3
+;
 
 const GLYPH = [
   "         ▓▒▒▒▒▒▒▒▒▒▓        ",
@@ -479,6 +481,7 @@ function AnimatedBillboardView({
     setStickers([createSticker(0, stage, [])]);
   }, [stage]);
 
+  /*
   useEffect(() => {
     if (phase !== "stickers" || stickers.length >= TARGET_STICKERS) {
       return;
@@ -491,6 +494,37 @@ function AnimatedBillboardView({
         }
 
         return [...current, createSticker(current.length, stage, current)];
+      });
+    }, FRAME_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [phase, stage, stickers.length]);
+  */
+
+  useEffect(() => {
+    if (phase !== "stickers" || stickers.length >= TARGET_STICKERS) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setStickers((current) => {
+        if (current.length >= TARGET_STICKERS) {
+          return current;
+        }
+
+        const next = [...current];
+        const batchSize = Math.min(
+          STICKERS_PER_FRAME,
+          TARGET_STICKERS - current.length,
+        );
+
+        for (let index = 0; index < batchSize; index += 1) {
+          next.push(createSticker(next.length, stage, next));
+        }
+
+        return next;
       });
     }, FRAME_MS);
 
