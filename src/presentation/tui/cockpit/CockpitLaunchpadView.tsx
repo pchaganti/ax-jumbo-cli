@@ -505,10 +505,10 @@ function WelcomeBox(): React.ReactElement {
       </Box>
       <Box flexDirection="row">
         <Text color={BaseColors.shade1}>
-          Run Jumbo worker daemons to keep goal workflows moving. 
-          Each worker watches Jumbo state, starts your configured agent when a goal is ready, 
-          and prompts it through the next CLI step: refinement, review, or codification.
+          Run Jumbo worker daemons to keep goal workflows moving. Each worker watches Jumbo state, starts your configured agent when a goal is ready, and prompts it through the next CLI step: refinement, review, or codification.
         </Text>
+      </Box>
+      <Box flexDirection="row" marginTop={1}>
         <Text color={BaseColors.shade1}>
           You define and prioritize the work; Jumbo handles the repeatable agent handoffs.
         </Text>
