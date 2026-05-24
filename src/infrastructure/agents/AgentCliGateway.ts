@@ -12,11 +12,13 @@ interface AgentCommand {
   readonly promptFlag?: string;
 }
 
+const CODEX_NON_INTERACTIVE_EXEC_ARGS = ["exec", "--skip-git-repo-check"] as const;
+
 const AGENT_COMMANDS: Record<SupportedAgentId, AgentCommand> = {
   claude: { executable: "claude", promptFlag: "-p" },
   gemini: { executable: "gemini", promptFlag: "-p" },
   copilot: { executable: "gh copilot", promptFlag: "-p" },
-  codex: { executable: "codex", args: ["exec"] },
+  codex: { executable: "codex", args: CODEX_NON_INTERACTIVE_EXEC_ARGS },
   cursor: { executable: "cursor", promptFlag: "-p" },
   vibe: { executable: "vibe", promptFlag: "-p" },
 };

@@ -75,6 +75,32 @@ describe("TuiApplicationLauncher", () => {
     expect(element.props.onProjectInitialized).toBe(factory);
   });
 
+  it("receives the subprocess manager through a launcher factory", async () => {
+    const subprocessManager = {
+      spawn: jest.fn(),
+      terminate: jest.fn(),
+      terminateAll: jest.fn(),
+      getStatus: jest.fn(),
+      getAllStatuses: jest.fn(() => []),
+    };
+    const factory = jest.fn(() => subprocessManager);
+    const launcher = new TuiApplicationLauncher(
+      "1.2.3",
+      null,
+      {},
+      undefined,
+      factory,
+    );
+
+    await launcher.launch();
+
+    const element = mockRender.mock.calls[0][0] as React.ReactElement<{
+      subprocessManager: object;
+    }>;
+    expect(factory).toHaveBeenCalledWith(undefined);
+    expect(element.props.subprocessManager).toBe(subprocessManager);
+  });
+
   it("maps container controllers into TUI state reader controllers", async () => {
     const container: Partial<IApplicationContainer> = {
       settingsReader: {

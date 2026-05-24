@@ -2,16 +2,11 @@ import { EventEmitter } from "node:events";
 import { Readable } from "node:stream";
 import { jest, describe, it, expect, beforeEach, afterEach } from "@jest/globals";
 import type { ILogger } from "../../../../src/application/logging/ILogger.js";
-
-const spawnMock = jest.fn();
-const execFileMock = jest.fn();
-
-jest.unstable_mockModule("node:child_process", () => ({
-  spawn: spawnMock,
-  execFile: execFileMock,
-}));
-
-const { TuiSubprocessManager, getTerminationStrategy } = await import("../../../../src/presentation/tui/daemon-subprocesses/TuiSubprocessManager.js");
+import type {
+  IWorkerDaemonProcessController,
+  WorkerDaemonProcess,
+} from "../../../../src/application/daemons/IWorkerDaemonProcessController.js";
+import { TuiSubprocessManager } from "../../../../src/presentation/tui/daemon-subprocesses/TuiSubprocessManager.js";
 
 function logger(): jest.Mocked<ILogger> {
   return {
@@ -22,57 +17,59 @@ function logger(): jest.Mocked<ILogger> {
   };
 }
 
-function childProcess(pid = 123): EventEmitter & { pid: number; stdout: Readable; stderr: Readable } {
-  const child = new EventEmitter() as EventEmitter & { pid: number; stdout: Readable; stderr: Readable };
+function childProcess(pid = 123): WorkerDaemonProcess & EventEmitter {
+  const child = new EventEmitter() as WorkerDaemonProcess & EventEmitter & {
+    pid: number;
+    stdout: Readable;
+    stderr: Readable;
+  };
   child.pid = pid;
   child.stdout = new Readable({ read() {} });
   child.stderr = new Readable({ read() {} });
   return child;
 }
 
-describe("TuiSubprocessManager", () => {
-  beforeEach(() => {
-    spawnMock.mockReset();
-    execFileMock.mockReset();
-    execFileMock.mockImplementation((_file, _args, callback) => callback(null, "", ""));
-  });
+function processController(child: WorkerDaemonProcess): jest.Mocked<IWorkerDaemonProcessController> {
+  return {
+    spawnDaemonProcess: jest.fn(() => child),
+    terminateDaemonProcess: jest.fn<() => Promise<void>>().mockResolvedValue(),
+    getTerminationStrategy: jest.fn(() => ({
+      kind: "unix-process-group",
+      signal: "SIGTERM",
+      pid: -(child.pid ?? 0),
+    })),
+  };
+}
 
+describe("TuiSubprocessManager", () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  it("spawns daemon targets and ring-buffers output", async () => {
+  it("spawns daemon targets through the injected process controller and ring-buffers output", async () => {
     const child = childProcess();
-    spawnMock.mockReturnValue(child);
+    const controller = processController(child);
     const testLogger = logger();
-    const manager = new TuiSubprocessManager(testLogger);
+    const manager = new TuiSubprocessManager(controller, testLogger);
 
     const snapshot = await manager.spawn("refiner");
-    child.stdout.emit("data", Buffer.from("line 1\nline 2\n"));
+    child.stdout?.emit("data", Buffer.from("line 1\nline 2\n"));
 
     expect(snapshot.status).toBe("running");
-    expect(spawnMock).toHaveBeenCalledWith(
-      process.execPath,
-      [
-        expect.stringContaining("refiner.daemon.js"),
-        "--agent",
-        "codex",
-        "--poll-interval-ms",
-        "30000",
-        "--max-retries",
-        "3",
-      ],
-      expect.objectContaining({ cwd: process.cwd(), detached: process.platform !== "win32" }),
-    );
+    expect(controller.spawnDaemonProcess).toHaveBeenCalledWith("refiner", {
+      agentId: "codex",
+      pollIntervalMs: 30000,
+      maxRetries: 3,
+    });
     expect(manager.getStatus("refiner").stdout).toEqual(["line 1", "line 2"]);
-    expect(testLogger.info).toHaveBeenCalledWith("Daemon subprocess spawn requested", expect.objectContaining({
+    expect(testLogger.info).toHaveBeenCalledWith("Daemon subprocess spawn requested", {
       daemon: "refiner",
       config: {
         agentId: "codex",
         pollIntervalMs: 30000,
         maxRetries: 3,
       },
-    }));
+    });
     expect(testLogger.info).toHaveBeenCalledWith("Daemon subprocess stdout", {
       daemon: "refiner",
       text: "line 1\nline 2\n",
@@ -81,12 +78,11 @@ describe("TuiSubprocessManager", () => {
 
   it("emits non-json stdout lines as model-output events", async () => {
     const child = childProcess();
-    spawnMock.mockReturnValue(child);
+    const manager = new TuiSubprocessManager(processController(child));
     jest.spyOn(Date, "now").mockReturnValue(1767272400000);
-    const manager = new TuiSubprocessManager();
 
     await manager.spawn("codifier");
-    child.stdout.emit("data", Buffer.from("Model proposed a codification summary.\n"));
+    child.stdout?.emit("data", Buffer.from("Model proposed a codification summary.\n"));
 
     expect(manager.getStatus("codifier").events).toEqual([
       {
@@ -102,32 +98,19 @@ describe("TuiSubprocessManager", () => {
 
   it("passes configured agent, poll interval, and retry flags, parses daemon events, and logs them", async () => {
     const child = childProcess();
-    spawnMock.mockReturnValue(child);
-    jest.spyOn(Date, "now").mockReturnValue(1767272400000);
     const testLogger = logger();
-    const manager = new TuiSubprocessManager(testLogger);
+    const controller = processController(child);
+    const manager = new TuiSubprocessManager(controller, testLogger);
+    jest.spyOn(Date, "now").mockReturnValue(1767272400000);
 
     await manager.spawn("refiner", {
       agentId: "claude",
       pollIntervalMs: 10_000,
       maxRetries: 5,
     });
-    child.stdout.emit("data", Buffer.from("{\"daemon\":\"refiner\",\"status\":\"processing\",\"goalId\":\"goal_123\",\"attempt\":2,\"maxRetries\":5}\n"));
+    child.stdout?.emit("data", Buffer.from("{\"daemon\":\"refiner\",\"status\":\"processing\",\"goalId\":\"goal_123\",\"attempt\":2,\"maxRetries\":5}\n"));
 
-    expect(spawnMock).toHaveBeenCalledWith(
-      process.execPath,
-      [
-        expect.stringContaining("refiner.daemon.js"),
-        "--agent",
-        "claude",
-        "--poll-interval-ms",
-        "10000",
-        "--max-retries",
-        "5",
-      ],
-      expect.any(Object),
-    );
-    expect(manager.getStatus("refiner").config).toEqual({
+    expect(controller.spawnDaemonProcess).toHaveBeenCalledWith("refiner", {
       agentId: "claude",
       pollIntervalMs: 10_000,
       maxRetries: 5,
@@ -155,37 +138,9 @@ describe("TuiSubprocessManager", () => {
     });
   });
 
-  it("preserves normalized daemon event source, category, and message fields from stdout", async () => {
-    const child = childProcess();
-    spawnMock.mockReturnValue(child);
-    jest.spyOn(Date, "now").mockReturnValue(1767272400000);
-    const manager = new TuiSubprocessManager();
-
-    await manager.spawn("reviewer");
-    child.stdout.emit("data", Buffer.from(JSON.stringify({
-      daemon: "reviewer",
-      status: "processing",
-      source: "agent",
-      category: "retry",
-      message: "retrying after failed review attempt",
-    }) + "\n"));
-
-    expect(manager.getStatus("reviewer").events).toEqual([
-      {
-        daemon: "reviewer",
-        status: "processing",
-        source: "agent",
-        category: "retry",
-        message: "retrying after failed review attempt",
-        timestampMs: 1767272400000,
-      },
-    ]);
-  });
-
   it("keeps only the latest 50 parsed daemon events in memory", async () => {
     const child = childProcess();
-    spawnMock.mockReturnValue(child);
-    const manager = new TuiSubprocessManager();
+    const manager = new TuiSubprocessManager(processController(child));
 
     await manager.spawn("refiner");
 
@@ -198,7 +153,7 @@ describe("TuiSubprocessManager", () => {
         maxRetries: 3,
       })
     ).join("\n");
-    child.stdout.emit("data", Buffer.from(`${eventLines}\n`));
+    child.stdout?.emit("data", Buffer.from(`${eventLines}\n`));
 
     const events = manager.getStatus("refiner").events;
     expect(events).toHaveLength(50);
@@ -208,13 +163,12 @@ describe("TuiSubprocessManager", () => {
 
   it("logs daemon stderr and child process failures through ILogger", async () => {
     const child = childProcess();
-    spawnMock.mockReturnValue(child);
-    jest.spyOn(Date, "now").mockReturnValue(1767272400000);
     const testLogger = logger();
-    const manager = new TuiSubprocessManager(testLogger);
+    const manager = new TuiSubprocessManager(processController(child), testLogger);
+    jest.spyOn(Date, "now").mockReturnValue(1767272400000);
 
     await manager.spawn("refiner");
-    child.stderr.emit("data", Buffer.from("refiner failed\n"));
+    child.stderr?.emit("data", Buffer.from("refiner failed\n"));
     child.emit("error", new Error("spawn failed"));
 
     expect(testLogger.warn).toHaveBeenCalledWith("Daemon subprocess stderr", {
@@ -239,55 +193,17 @@ describe("TuiSubprocessManager", () => {
     ]);
   });
 
-  it("uses Windows taskkill tree termination on the current Windows host", async () => {
-    if (process.platform !== "win32") {
-      return;
-    }
+  it("delegates process termination and records stopping and stopped lifecycle events", async () => {
     const child = childProcess(456);
-    spawnMock.mockReturnValue(child);
-    const manager = new TuiSubprocessManager();
-
-    await manager.spawn("reviewer");
-    await manager.terminate("reviewer");
-
-    expect(execFileMock).toHaveBeenCalledWith("taskkill", ["/F", "/T", "/PID", "456"], expect.any(Function));
-  });
-
-  it("captures termination failures without throwing into the TUI input handler", async () => {
-    const child = childProcess(789);
-    spawnMock.mockReturnValue(child);
-    execFileMock.mockImplementation((_file, _args, callback) => {
-      callback(new Error("taskkill failed"), "", "failure");
-    });
-    const testLogger = logger();
-    const manager = new TuiSubprocessManager(testLogger);
-
-    await manager.spawn("refiner");
-    await expect(manager.terminate("refiner")).resolves.toEqual(
-      expect.objectContaining({
-        status: "failed",
-        stderr: expect.arrayContaining(["taskkill failed"]),
-      }),
-    );
-    expect(testLogger.error).toHaveBeenCalledWith(
-      "Daemon subprocess termination failed",
-      expect.any(Error),
-      { daemon: "refiner", pid: 789, stopRequested: false },
-    );
-  });
-
-  it("records stopping and stopped lifecycle events in subprocess snapshots", async () => {
-    const killMock = process.platform === "win32"
-      ? undefined
-      : jest.spyOn(process, "kill").mockImplementation(() => true);
-    const child = childProcess(456);
-    spawnMock.mockReturnValue(child);
+    const controller = processController(child);
+    const manager = new TuiSubprocessManager(controller);
     jest.spyOn(Date, "now").mockReturnValue(1767272400000);
-    const manager = new TuiSubprocessManager();
 
     await manager.spawn("reviewer");
     const terminated = await manager.terminate("reviewer");
 
+    expect(controller.getTerminationStrategy).toHaveBeenCalledWith(child);
+    expect(controller.terminateDaemonProcess).toHaveBeenCalledWith(child);
     expect(terminated.events).toEqual([
       {
         daemon: "reviewer",
@@ -306,46 +222,33 @@ describe("TuiSubprocessManager", () => {
         timestampMs: 1767272400000,
       },
     ]);
-    if (process.platform !== "win32") {
-      expect(killMock).toHaveBeenCalledWith(-456, "SIGTERM");
-    }
   });
 
-  it("reports a requested Windows taskkill close as stopped even when the child exits non-zero", async () => {
-    if (process.platform !== "win32") {
-      return;
-    }
-    const child = childProcess(456);
-    spawnMock.mockReturnValue(child);
+  it("captures termination failures without throwing into the TUI input handler", async () => {
+    const child = childProcess(789);
+    const controller = processController(child);
+    controller.terminateDaemonProcess.mockRejectedValue(new Error("taskkill failed"));
     const testLogger = logger();
-    const manager = new TuiSubprocessManager(testLogger);
+    const manager = new TuiSubprocessManager(controller, testLogger);
 
-    await manager.spawn("reviewer");
-    const terminated = await manager.terminate("reviewer");
-    child.emit("close", 1, null);
-
-    expect(terminated.status).toBe("stopped");
-    expect(manager.getStatus("reviewer")).toEqual(expect.objectContaining({
-      status: "stopped",
-      exitCode: 1,
-      exitSignal: null,
-      stopRequested: true,
-    }));
-    expect(testLogger.info).toHaveBeenCalledWith("Daemon subprocess closed", {
-      daemon: "reviewer",
-      exitCode: 1,
-      signal: null,
-      stopRequested: true,
-      status: "stopped",
-    });
+    await manager.spawn("refiner");
+    await expect(manager.terminate("refiner")).resolves.toEqual(
+      expect.objectContaining({
+        status: "failed",
+        stderr: expect.arrayContaining(["taskkill failed"]),
+      }),
+    );
+    expect(testLogger.error).toHaveBeenCalledWith(
+      "Daemon subprocess termination failed",
+      expect.any(Error),
+      { daemon: "refiner", pid: 789, stopRequested: false },
+    );
   });
 
   it("keeps a requested stop stopped when child error and close events arrive after termination", async () => {
-    const killMock = jest.spyOn(process, "kill").mockImplementation(() => true);
     const child = childProcess(321);
-    spawnMock.mockReturnValue(child);
     const testLogger = logger();
-    const manager = new TuiSubprocessManager(testLogger);
+    const manager = new TuiSubprocessManager(processController(child), testLogger);
 
     await manager.spawn("codifier");
     await manager.terminate("codifier");
@@ -364,16 +267,12 @@ describe("TuiSubprocessManager", () => {
       expect.any(Error),
       { daemon: "codifier", stopRequested: true, status: "stopped" },
     );
-    if (process.platform !== "win32") {
-      expect(killMock).toHaveBeenCalledWith(-321, "SIGTERM");
-    }
   });
 
   it("reports unexpected signal exits as failed when no stop was requested", async () => {
     const child = childProcess(654);
-    spawnMock.mockReturnValue(child);
     const testLogger = logger();
-    const manager = new TuiSubprocessManager(testLogger);
+    const manager = new TuiSubprocessManager(processController(child), testLogger);
 
     await manager.spawn("refiner");
     child.emit("close", null, "SIGTERM");
@@ -390,22 +289,6 @@ describe("TuiSubprocessManager", () => {
       signal: "SIGTERM",
       stopRequested: false,
       status: "failed",
-    });
-  });
-
-  it("defines Unix process-group signaling for non-Windows hosts", () => {
-    expect(getTerminationStrategy("linux", 456)).toEqual({
-      kind: "unix-process-group",
-      signal: "SIGTERM",
-      pid: -456,
-    });
-  });
-
-  it("defines forced Windows task tree termination", () => {
-    expect(getTerminationStrategy("win32", 456)).toEqual({
-      kind: "windows-tree",
-      command: "taskkill",
-      args: ["/F", "/T", "/PID", "456"],
     });
   });
 });

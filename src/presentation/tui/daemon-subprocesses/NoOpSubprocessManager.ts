@@ -1,17 +1,13 @@
-import { ISubprocessManager, TuiDaemonConfig, TuiDaemonName, TuiSubprocessSnapshot } from "./ISubprocessManager.js";
-
-const DEFAULT_DAEMON_CONFIG: TuiDaemonConfig = {
-  agentId: "codex",
-  pollIntervalMs: 30_000,
-  maxRetries: 3,
-};
+import { ISubprocessManager, TuiDaemonName, TuiSubprocessSnapshot } from "./ISubprocessManager.js";
+import {
+  DEFAULT_WORKER_DAEMON_CONFIG,
+  WORKER_DAEMON_NAMES,
+} from "../../../application/daemons/WorkerDaemonCatalog.js";
 
 export class NoOpSubprocessManager implements ISubprocessManager {
-  private readonly snapshots: Map<TuiDaemonName, TuiSubprocessSnapshot> = new Map([
-    ["reviewer", this.createStoppedSnapshot("reviewer")],
-    ["refiner", this.createStoppedSnapshot("refiner")],
-    ["codifier", this.createStoppedSnapshot("codifier")],
-  ]);
+  private readonly snapshots: Map<TuiDaemonName, TuiSubprocessSnapshot> = new Map(
+    WORKER_DAEMON_NAMES.map((name) => [name, this.createStoppedSnapshot(name)]),
+  );
 
   async spawn(name: TuiDaemonName): Promise<TuiSubprocessSnapshot> {
     return this.getStatus(name);
@@ -35,7 +31,7 @@ export class NoOpSubprocessManager implements ISubprocessManager {
     return {
       name,
       status: "stopped",
-      config: DEFAULT_DAEMON_CONFIG,
+      config: DEFAULT_WORKER_DAEMON_CONFIG,
       stdout: [],
       stderr: [],
       events: [],

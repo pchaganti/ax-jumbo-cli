@@ -1,11 +1,14 @@
 import React from "react";
 import { render } from "ink";
 import type { IApplicationContainer } from "../../../application/host/IApplicationContainer.js";
+import type { ILogger } from "../../../application/logging/ILogger.js";
 import { GetProjectSummaryQueryHandler } from "../../../application/context/project/query/GetProjectSummaryQueryHandler.js";
 import { TuiApp } from "./TuiApp.js";
 import type { TuiAppActionControllers } from "./TuiApp.js";
 import type { TuiStateReaderControllers } from "../state-reading/TuiStateReader.js";
-import { TuiSubprocessManager } from "../daemon-subprocesses/TuiSubprocessManager.js";
+import type { ISubprocessManager } from "../daemon-subprocesses/ISubprocessManager.js";
+
+export type TuiSubprocessManagerFactory = (logger?: ILogger) => ISubprocessManager;
 
 export class TuiApplicationLauncher {
   constructor(
@@ -13,6 +16,7 @@ export class TuiApplicationLauncher {
     private readonly container: IApplicationContainer | null,
     private readonly fallbackActionControllers: TuiAppActionControllers = {},
     private readonly fallbackStateReaderControllerFactory?: () => Promise<TuiStateReaderControllers>,
+    private readonly subprocessManagerFactory?: TuiSubprocessManagerFactory,
   ) {}
 
   async launch(): Promise<void> {
@@ -22,7 +26,7 @@ export class TuiApplicationLauncher {
         stateReaderControllers={this.buildStateReaderControllers()}
         actionControllers={this.buildActionControllers()}
         onProjectInitialized={this.fallbackStateReaderControllerFactory}
-        subprocessManager={new TuiSubprocessManager(this.container?.logger)}
+        subprocessManager={this.subprocessManagerFactory?.(this.container?.logger)}
         settingsReader={this.container?.settingsReader}
       />,
     );

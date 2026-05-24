@@ -35,7 +35,7 @@ describe("AgentCliGateway", () => {
     stderrSpy.mockRestore();
   });
 
-  it("spawns codex exec with the prompt as a positional argument and records success telemetry", async () => {
+  it("spawns codex exec with the repository trust check bypassed for daemon automation", async () => {
     const child = childProcess();
     spawnMock.mockReturnValue(child);
 
@@ -46,7 +46,7 @@ describe("AgentCliGateway", () => {
     child.emit("close", 0);
 
     await expect(promise).resolves.toEqual({ exitCode: 0, stdout: "", stderr: "" });
-    expect(spawnMock).toHaveBeenCalledWith('codex exec "run codify"', [], {
+    expect(spawnMock).toHaveBeenCalledWith('codex exec --skip-git-repo-check "run codify"', [], {
       stdio: ["ignore", "pipe", "pipe"],
       shell: true,
     });

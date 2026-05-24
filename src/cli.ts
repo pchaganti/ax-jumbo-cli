@@ -17,6 +17,7 @@ import path from "path";
 import { Host } from "./infrastructure/host/Host.js";
 import { AppRunner } from "./presentation/cli/AppRunner.js";
 import { CliVersionReader } from "./infrastructure/cli-metadata/query/CliVersionReader.js";
+import { NodeWorkerDaemonProcessController } from "./infrastructure/daemons/NodeWorkerDaemonProcessController.js";
 import { IApplicationContainer } from "./application/host/IApplicationContainer.js";
 import { classifyCommand } from "./presentation/cli/commands/CommandClassifier.js";
 import { commands } from "./presentation/cli/commands/registry/generated-commands.js";
@@ -25,6 +26,8 @@ import { ProjectRootResolver } from "./infrastructure/context/project/ProjectRoo
 import { planCliBootstrap } from "./presentation/cli/CliBootstrapPlan.js";
 import type { InitFlowActionControllers } from "./presentation/tui/project-initialization/InitFlow.js";
 import type { TuiStateReaderControllers } from "./presentation/tui/state-reading/TuiStateReader.js";
+import type { TuiSubprocessManagerFactory } from "./presentation/tui/application-shell/TuiApplicationLauncher.js";
+import { TuiSubprocessManager } from "./presentation/tui/daemon-subprocesses/TuiSubprocessManager.js";
 import type { InitializeProjectRequest } from "./application/context/project/init/InitializeProjectRequest.js";
 import type { InitializeProjectResponse } from "./application/context/project/init/InitializeProjectResponse.js";
 import type { AddAudienceRequest } from "./application/context/audiences/add/AddAudienceRequest.js";
@@ -143,9 +146,13 @@ async function main(): Promise<void> {
     container,
     bareTuiActionControllers,
     bareTuiStateReaderControllerFactory,
+    createTuiSubprocessManager,
   );
   await appRunner.run();
 }
+
+const createTuiSubprocessManager: TuiSubprocessManagerFactory = (logger) =>
+  new TuiSubprocessManager(new NodeWorkerDaemonProcessController(), logger);
 
 function buildBareTuiActionControllers(cwd: string): InitFlowActionControllers {
   const jumboRoot = path.join(cwd, ".jumbo");

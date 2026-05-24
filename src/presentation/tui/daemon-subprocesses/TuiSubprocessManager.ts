@@ -1,11 +1,14 @@
-import { spawn, ChildProcess, execFile } from "node:child_process";
-import path from "path";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
 import type { ILogger } from "../../../application/logging/ILogger.js";
 import { ISubprocessManager, TuiDaemonConfig, TuiDaemonEventSnapshot, TuiDaemonName, TuiSubprocessSnapshot } from "./ISubprocessManager.js";
+import type {
+  IWorkerDaemonProcessController,
+  WorkerDaemonProcess,
+} from "../../../application/daemons/IWorkerDaemonProcessController.js";
+import {
+  DEFAULT_WORKER_DAEMON_CONFIG,
+  WORKER_DAEMON_NAMES,
+} from "../../../application/daemons/WorkerDaemonCatalog.js";
 
-const execFileAsync = promisify(execFile);
 const OUTPUT_RING_BUFFER_SIZE = 25;
 const EVENT_RING_BUFFER_SIZE = 50;
 const SUBPROCESS_EVENT_COPY = {
@@ -22,11 +25,6 @@ const SUBPROCESS_EVENT_COPY = {
     message: "process failed",
   },
 } as const;
-const DEFAULT_DAEMON_CONFIG: TuiDaemonConfig = {
-  agentId: "codex",
-  pollIntervalMs: 30_000,
-  maxRetries: 3,
-};
 const NOOP_LOGGER: ILogger = {
   error: () => {},
   warn: () => {},
@@ -34,26 +32,26 @@ const NOOP_LOGGER: ILogger = {
   debug: () => {},
 };
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 interface ManagedSubprocess {
   readonly name: TuiDaemonName;
-  readonly child: ChildProcess;
+  readonly child: WorkerDaemonProcess;
   readonly config: TuiDaemonConfig;
   readonly stdout: string[];
   readonly stderr: string[];
   readonly events: TuiDaemonEventSnapshot[];
   status: "running" | "failed" | "stopped";
   exitCode?: number | null;
-  exitSignal?: NodeJS.Signals | null;
+  exitSignal?: string | null;
   stopRequested: boolean;
 }
 
 export class TuiSubprocessManager implements ISubprocessManager {
   private readonly processes = new Map<TuiDaemonName, ManagedSubprocess>();
 
-  constructor(private readonly logger: ILogger = NOOP_LOGGER) {}
+  constructor(
+    private readonly processController: IWorkerDaemonProcessController,
+    private readonly logger: ILogger = NOOP_LOGGER,
+  ) {}
 
   async spawn(name: TuiDaemonName, config: Partial<TuiDaemonConfig> = {}): Promise<TuiSubprocessSnapshot> {
     const existing = this.processes.get(name);
@@ -62,25 +60,11 @@ export class TuiSubprocessManager implements ISubprocessManager {
     }
 
     const resolvedConfig = this.resolveConfig(config);
-    const daemonTarget = this.resolveDaemonTarget(name);
     this.logger.info("Daemon subprocess spawn requested", {
       daemon: name,
       config: resolvedConfig,
-      target: daemonTarget,
     });
-    const child = spawn(process.execPath, [
-      daemonTarget,
-      "--agent",
-      resolvedConfig.agentId,
-      "--poll-interval-ms",
-      String(resolvedConfig.pollIntervalMs),
-      "--max-retries",
-      String(resolvedConfig.maxRetries),
-    ], {
-      cwd: process.cwd(),
-      stdio: ["ignore", "pipe", "pipe"],
-      detached: process.platform !== "win32",
-    });
+    const child = this.processController.spawnDaemonProcess(name, resolvedConfig);
 
     const managed: ManagedSubprocess = {
       name,
@@ -98,7 +82,7 @@ export class TuiSubprocessManager implements ISubprocessManager {
       pid: child.pid,
     });
 
-    child.stdout?.on("data", (chunk: Buffer) => {
+    child.stdout?.on("data", (chunk) => {
       const text = chunk.toString();
       const lines = this.appendLines(managed.stdout, text);
       this.logger.info("Daemon subprocess stdout", { daemon: name, text });
@@ -107,7 +91,7 @@ export class TuiSubprocessManager implements ISubprocessManager {
         this.recordDaemonEvent(managed, event);
       }
     });
-    child.stderr?.on("data", (chunk: Buffer) => {
+    child.stderr?.on("data", (chunk) => {
       const text = chunk.toString();
       this.appendLines(managed.stderr, text);
       this.logger.warn("Daemon subprocess stderr", { daemon: name, text });
@@ -149,7 +133,7 @@ export class TuiSubprocessManager implements ISubprocessManager {
       managed.stopRequested = true;
       const strategy = managed.child.pid === undefined
         ? { kind: "no-pid" as const }
-        : getTerminationStrategy(process.platform, managed.child.pid);
+        : this.processController.getTerminationStrategy(managed.child);
       this.recordSubprocessLifecycleEvent(managed, {
         status: "stopping",
         ...SUBPROCESS_EVENT_COPY.stopping,
@@ -159,7 +143,7 @@ export class TuiSubprocessManager implements ISubprocessManager {
         pid: managed.child.pid,
         strategy,
       });
-      await this.terminateProcess(managed.child);
+      await this.processController.terminateDaemonProcess(managed.child);
       managed.status = "stopped";
       this.recordSubprocessLifecycleEvent(managed, {
         status: "stopped",
@@ -199,7 +183,7 @@ export class TuiSubprocessManager implements ISubprocessManager {
       return {
         name,
         status: "stopped",
-        config: DEFAULT_DAEMON_CONFIG,
+        config: DEFAULT_WORKER_DAEMON_CONFIG,
         stdout: [],
         stderr: [],
         events: [],
@@ -210,31 +194,14 @@ export class TuiSubprocessManager implements ISubprocessManager {
   }
 
   getAllStatuses(): readonly TuiSubprocessSnapshot[] {
-    return (["reviewer", "refiner", "codifier"] as const).map((name) => this.getStatus(name));
-  }
-
-  private resolveDaemonTarget(name: TuiDaemonName): string {
-    return path.resolve(__dirname, "..", "..", "work", `${name}.daemon.js`);
-  }
-
-  private async terminateProcess(child: ChildProcess): Promise<void> {
-    if (child.pid === undefined) {
-      return;
-    }
-
-    if (getTerminationStrategy(process.platform, child.pid).kind === "windows-tree") {
-      await execFileAsync("taskkill", ["/F", "/T", "/PID", String(child.pid)]);
-      return;
-    }
-
-    process.kill(-child.pid, "SIGTERM");
+    return WORKER_DAEMON_NAMES.map((name) => this.getStatus(name));
   }
 
   private resolveConfig(config: Partial<TuiDaemonConfig>): TuiDaemonConfig {
     return {
-      agentId: config.agentId ?? DEFAULT_DAEMON_CONFIG.agentId,
-      pollIntervalMs: config.pollIntervalMs ?? DEFAULT_DAEMON_CONFIG.pollIntervalMs,
-      maxRetries: config.maxRetries ?? DEFAULT_DAEMON_CONFIG.maxRetries,
+      agentId: config.agentId ?? DEFAULT_WORKER_DAEMON_CONFIG.agentId,
+      pollIntervalMs: config.pollIntervalMs ?? DEFAULT_WORKER_DAEMON_CONFIG.pollIntervalMs,
+      maxRetries: config.maxRetries ?? DEFAULT_WORKER_DAEMON_CONFIG.maxRetries,
     };
   }
 
@@ -348,15 +315,4 @@ function parseDaemonEvent(line: string): TuiDaemonEventSnapshot | null {
   } catch {
     return null;
   }
-}
-
-export function getTerminationStrategy(
-  platform: NodeJS.Platform,
-  pid: number,
-): { kind: "windows-tree"; command: "taskkill"; args: string[] } | { kind: "unix-process-group"; signal: "SIGTERM"; pid: number } {
-  if (platform === "win32") {
-    return { kind: "windows-tree", command: "taskkill", args: ["/F", "/T", "/PID", String(pid)] };
-  }
-
-  return { kind: "unix-process-group", signal: "SIGTERM", pid: -pid };
 }

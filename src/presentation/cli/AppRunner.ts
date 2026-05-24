@@ -26,6 +26,7 @@ import {
 } from "./banner/BannerOrchestrator.js";
 import { Renderer } from "./rendering/Renderer.js";
 import { TuiApplicationLauncher } from "../tui/application-shell/TuiApplicationLauncher.js";
+import type { TuiSubprocessManagerFactory } from "../tui/application-shell/TuiApplicationLauncher.js";
 import type { TuiStateReaderControllers } from "../tui/state-reading/TuiStateReader.js";
 import type { InitFlowActionControllers } from "../tui/project-initialization/InitFlow.js";
 import {
@@ -104,6 +105,7 @@ export class AppRunner {
   private readonly version: string;
   private readonly bareTuiActionControllers: InitFlowActionControllers;
   private readonly bareTuiStateReaderControllerFactory?: () => Promise<TuiStateReaderControllers>;
+  private readonly tuiSubprocessManagerFactory?: TuiSubprocessManagerFactory;
 
   /**
    * Creates a new AppRunner.
@@ -116,12 +118,14 @@ export class AppRunner {
     container: IApplicationContainer | null = null,
     bareTuiActionControllers: InitFlowActionControllers = {},
     bareTuiStateReaderControllerFactory?: () => Promise<TuiStateReaderControllers>,
+    tuiSubprocessManagerFactory?: TuiSubprocessManagerFactory,
   ) {
     this.version = version;
     this.container = container;
     this.bareTuiActionControllers = bareTuiActionControllers;
     this.bareTuiStateReaderControllerFactory =
       bareTuiStateReaderControllerFactory;
+    this.tuiSubprocessManagerFactory = tuiSubprocessManagerFactory;
   }
 
   /**
@@ -140,6 +144,7 @@ export class AppRunner {
         this.container,
         this.bareTuiActionControllers,
         this.bareTuiStateReaderControllerFactory,
+        this.tuiSubprocessManagerFactory,
       ).launch();
       return;
     }

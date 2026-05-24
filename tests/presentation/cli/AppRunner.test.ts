@@ -81,6 +81,7 @@ describe("AppRunner", () => {
       null,
       {},
       undefined,
+      undefined,
     );
     expect(createProgram).not.toHaveBeenCalled();
   });
@@ -99,6 +100,7 @@ describe("AppRunner", () => {
       null,
       actionControllers,
       undefined,
+      undefined,
     );
   });
 
@@ -114,6 +116,7 @@ describe("AppRunner", () => {
       null,
       {},
       factory,
+      undefined,
     );
   });
 

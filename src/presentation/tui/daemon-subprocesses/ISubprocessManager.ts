@@ -1,4 +1,14 @@
-export type TuiDaemonName = "reviewer" | "refiner" | "codifier";
+export type {
+  WorkerDaemonConfig as TuiDaemonConfig,
+  WorkerDaemonConfigs as TuiDaemonConfigs,
+  WorkerDaemonName as TuiDaemonName,
+} from "../../../application/daemons/WorkerDaemonCatalog.js";
+
+import type {
+  WorkerDaemonConfig as TuiDaemonConfig,
+  WorkerDaemonName as TuiDaemonName,
+} from "../../../application/daemons/WorkerDaemonCatalog.js";
+
 export type TuiSubprocessStatus = "stopped" | "running" | "failed";
 export type TuiDaemonEventStatus =
   | "starting"
@@ -11,14 +21,6 @@ export type TuiDaemonEventStatus =
   | "skipped"
   | "exhausted"
   | "codifying";
-
-export interface TuiDaemonConfig {
-  readonly agentId: string;
-  readonly pollIntervalMs: number;
-  readonly maxRetries: number;
-}
-
-export type TuiDaemonConfigs = Readonly<Record<TuiDaemonName, TuiDaemonConfig>>;
 
 export interface TuiDaemonEventSnapshot {
   readonly daemon: string;
@@ -43,7 +45,7 @@ export interface TuiSubprocessSnapshot {
   readonly stderr: readonly string[];
   readonly events: readonly TuiDaemonEventSnapshot[];
   readonly exitCode?: number | null;
-  readonly exitSignal?: NodeJS.Signals | null;
+  readonly exitSignal?: string | null;
   readonly stopRequested?: boolean;
 }
 
