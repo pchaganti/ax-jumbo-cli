@@ -1,4 +1,4 @@
-import { IProcessManager, ProcessManagerOptions, ProcessManagerResult } from "./IProcessManager.js";
+import { IProcessManager, ProcessManagerOptions } from "./IProcessManager.js";
 import { IShutdownSignal } from "./IShutdownSignal.js";
 import { ITicker } from "./ITicker.js";
 
@@ -18,15 +18,11 @@ export class PollingLoop {
     });
 
     while (!stopped) {
-      const result = await options.processManager.processNext(options.processOptions);
+      await options.processManager.processNext(options.processOptions);
 
-      if (this.shouldWait(result) && !stopped) {
+      if (!stopped) {
         await options.ticker.wait();
       }
     }
-  }
-
-  private shouldWait(result: ProcessManagerResult): boolean {
-    return result.status === "idle" || result.status === "exhausted" || result.status === "failed";
   }
 }

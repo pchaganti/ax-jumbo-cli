@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Worker daemon polling**: Refiner, reviewer, and codifier worker daemons now continue polling after completed, skipped, failed, or exhausted goal attempts, and codifier honors the shared poll interval behavior.
 - **TUI wizard input ownership**: Goal authoring text fields now keep daemon launchpad hotkeys disabled while the wizard is open, preventing typed characters such as `s` or tab from starting or switching daemons.
 - **Goal authoring criteria input**: Success criterion text no longer clears during Cockpit daemon polling or other parent re-renders.
 - **Bare TUI bootstrap side effects**: Running bare `jumbo` from a non-project directory or from a subdirectory beneath an ancestor Jumbo project no longer creates `.jumbo` storage just by opening the TUI; storage is created only after project initialization is confirmed.

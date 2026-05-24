@@ -1,3 +1,10 @@
+import type {
+  IProcessManager,
+  ProcessManagerEvent,
+  ProcessManagerOptions,
+  ProcessManagerResult,
+  ProcessManagerStatus,
+} from "../../../daemons/IProcessManager.js";
 import { IAgentGateway } from "../../../agents/IAgentGateway.js";
 import { ITelemetryClient } from "../../../telemetry/ITelemetryClient.js";
 import { IWorkerIdentityReader } from "../../../host/workers/IWorkerIdentityReader.js";
@@ -37,41 +44,17 @@ const CODIFIER_EVENT_COPY = {
 } as const;
 
 export type CodifierProcessStatus =
-  | "idle"
-  | "processing"
-  | "codifying"
-  | "completed"
-  | "skipped"
-  | "exhausted"
-  | "failed";
+  ProcessManagerStatus;
 
-export interface CodifierProcessEvent {
+export interface CodifierProcessEvent extends ProcessManagerEvent {
   readonly daemon: "codifier";
-  readonly status: CodifierProcessStatus;
-  readonly source?: string;
-  readonly category?: string;
-  readonly message?: string;
-  readonly goalId?: string;
-  readonly attempt?: number;
-  readonly maxRetries?: number;
-  readonly exitCode?: number;
-  readonly errorType?: string;
-  readonly errorMessage?: string;
 }
 
-export interface CodifierProcessOptions {
-  readonly agentId: string;
-  readonly maxRetries: number;
-  readonly emit?: (event: CodifierProcessEvent) => void;
-}
+export type CodifierProcessOptions = ProcessManagerOptions;
 
-export interface CodifierProcessResult {
-  readonly status: CodifierProcessStatus;
-  readonly goalId?: string;
-  readonly attempts: number;
-}
+export type CodifierProcessResult = ProcessManagerResult;
 
-export class CodifierProcessManager {
+export class CodifierProcessManager implements IProcessManager {
   constructor(
     private readonly goalStatusReader: IGoalStatusReader,
     private readonly goalReader: IGoalCodifyReader,

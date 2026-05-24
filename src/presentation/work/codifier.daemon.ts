@@ -1,17 +1,24 @@
 #!/usr/bin/env node
 
 import path from "path";
+import { PollingLoop } from "../../application/daemons/PollingLoop.js";
+import type { ProcessManagerEvent } from "../../application/daemons/IProcessManager.js";
 import { Host } from "../../infrastructure/host/Host.js";
 import { ProjectRootResolver } from "../../infrastructure/context/project/ProjectRootResolver.js";
 import { AgentCliGateway } from "../../infrastructure/agents/AgentCliGateway.js";
-import { CodifierProcessEvent, CodifierProcessManager } from "../../application/context/goals/codify/CodifierProcessManager.js";
+import { IntervalTicker } from "../../infrastructure/daemons/IntervalTicker.js";
+import { ProcessSignalSource } from "../../infrastructure/daemons/ProcessSignalSource.js";
+import { CodifierProcessManager } from "../../application/context/goals/codify/CodifierProcessManager.js";
 
+const DEFAULT_AGENT_ID = "codex";
 const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_POLL_INTERVAL_MS = 30_000;
 const FAILURE_EXIT_CODE = 1;
 
 interface CodifierDaemonOptions {
   readonly agentId: string;
   readonly maxRetries: number;
+  readonly pollIntervalMs: number;
 }
 
 export async function runCodifierDaemon(argv = process.argv): Promise<void> {
@@ -30,21 +37,23 @@ export async function runCodifierDaemon(argv = process.argv): Promise<void> {
     container.telemetryClient,
   );
 
-  const result = await manager.processNext({
-    agentId: options.agentId,
-    maxRetries: options.maxRetries,
-    emit: writeDaemonEvent,
+  await new PollingLoop().run({
+    processManager: manager,
+    processOptions: {
+      agentId: options.agentId,
+      maxRetries: options.maxRetries,
+      emit: writeDaemonEvent,
+    },
+    ticker: new IntervalTicker(options.pollIntervalMs),
+    shutdownSignal: new ProcessSignalSource(),
   });
-
-  if (result.status === "failed" || result.status === "exhausted") {
-    process.exitCode = FAILURE_EXIT_CODE;
-  }
 }
 
 function parseOptions(argv: string[]): CodifierDaemonOptions {
   return {
-    agentId: readOption(argv, "--agent") ?? "codex",
+    agentId: readOption(argv, "--agent") ?? DEFAULT_AGENT_ID,
     maxRetries: parsePositiveInt(readOption(argv, "--max-retries"), DEFAULT_MAX_RETRIES),
+    pollIntervalMs: parsePositiveInt(readOption(argv, "--poll-interval-ms"), DEFAULT_POLL_INTERVAL_MS),
   };
 }
 
@@ -80,7 +89,7 @@ function resolveProjectRoot(): string {
   return projectRoot;
 }
 
-function writeDaemonEvent(event: CodifierProcessEvent): void {
+function writeDaemonEvent(event: ProcessManagerEvent): void {
   process.stdout.write(`${JSON.stringify(event)}\n`);
 }
 
