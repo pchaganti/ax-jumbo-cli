@@ -87,6 +87,10 @@ class MockDependencyViewReader implements IDependencyViewReader {
     return this.dependencies.filter(d => ids.includes(d.dependencyId));
   }
 
+  async search(): Promise<DependencyView[]> {
+    return this.dependencies;
+  }
+
   setDependencies(dependencies: DependencyView[]): void {
     this.dependencies = dependencies;
   }

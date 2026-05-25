@@ -38,6 +38,7 @@ import { decisionUpdate, metadata as decisionUpdateMeta } from '../../commands/d
 import { dependencyAdd, metadata as dependencyAddMeta } from '../../commands/dependencies/add/dependency.add.js';
 import { dependenciesList, metadata as dependenciesListMeta } from '../../commands/dependencies/list/dependencies.list.js';
 import { dependencyRemove, metadata as dependencyRemoveMeta } from '../../commands/dependencies/remove/dependency.remove.js';
+import { dependenciesSearch, metadata as dependenciesSearchMeta } from '../../commands/dependencies/search/dependencies.search.js';
 import { dependencyUpdate, metadata as dependencyUpdateMeta } from '../../commands/dependencies/update/dependency.update.js';
 import { evolve, metadata as evolveMeta } from '../../commands/evolve/evolve.js';
 import { goalAdd, metadata as goalAddMeta } from '../../commands/goals/add/goal.add.js';
@@ -239,6 +240,11 @@ export const commands: RegisteredCommand[] = [
     path: 'dependency remove',
     metadata: dependencyRemoveMeta,
     handler: dependencyRemove
+  },
+  {
+    path: 'dependencies search',
+    metadata: dependenciesSearchMeta,
+    handler: dependenciesSearch
   },
   {
     path: 'dependency update',

@@ -16,7 +16,7 @@ Complete reference for all Jumbo CLI commands.
 | [Architecture Commands](architecture.md) | define, update, view |
 | [Component Commands](components.md) | add, show, update, rename, search, list, deprecate, undeprecate, remove |
 | [Decision Commands](decisions.md) | add, list, update, supersede, reverse, restore |
-| [Dependency Commands](dependencies.md) | add, list, update, remove |
+| [Dependency Commands](dependencies.md) | add, list, search, update, remove |
 | [Guideline Commands](guidelines.md) | add, list, search, update, remove |
 | [Invariant Commands](invariants.md) | add, list, update, remove |
 | [Audience Commands](audiences.md) | add, list, update, remove |
