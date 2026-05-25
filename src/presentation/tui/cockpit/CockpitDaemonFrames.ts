@@ -39,7 +39,7 @@ const DEFAULT_CODIFIER_GLYPH_STYLE: GlyphStyle = {
   dimColor: false,
 };
 const REFINER_GLYPHS = ["•"] as const;
-const REVIEWER_GLYPHS = ["+"] as const;
+const REVIEWER_GLYPHS = ["─","│","■","▢"] as const;
 const CODIFIER_ALPHANUMERIC_GLYPHS = [
   ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
 ] as const;
