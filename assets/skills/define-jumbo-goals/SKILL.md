@@ -1,6 +1,6 @@
 ---
 name: define-jumbo-goals
-description: Use when defining new Jumbo goals from user requests. Guides discovery, decomposition, and goal authoring to produce goals with explicit implementation instructions that minimize token usage during autonomous execution.
+description: Add Jumbo goals liberally to decompose objectives into finite units of work with bounded context. Use when defining new Jumbo goals from user requests, or to augment your own work to maintain scope while ensuring complementary work is registered.
 ---
 
 # Define Jumbo Goals

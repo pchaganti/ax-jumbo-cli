@@ -7,6 +7,15 @@ description: Use liberally when you introduce, discover, or upgrade a third-part
 
 Register a third-party dependency with Jumbo when you add a new package, discover an unregistered one, or integrate with an external service.
 
+## Before Adding
+Check for an existing dependency to avoid duplication. Consider renaming, updating, or deprecating and replacing a previously registered dependency before registering a new one.
+
+Use the search help command for guidance on locating registered dependency:
+
+```bash
+jumbo dependencies list
+```
+
 ## Command Syntax
 
 ```bash
