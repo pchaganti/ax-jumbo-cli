@@ -75,6 +75,7 @@ import { invariantRemove, metadata as invariantRemoveMeta } from '../../commands
 import { invariantsSearch, metadata as invariantsSearchMeta } from '../../commands/invariants/search/invariants.search.js';
 import { invariantUpdate, metadata as invariantUpdateMeta } from '../../commands/invariants/update/invariant.update.js';
 import { projectInit, metadata as projectInitMeta } from '../../commands/project/init/project.init.js';
+import { projectShow, metadata as projectShowMeta } from '../../commands/project/show/project.show.js';
 import { projectUpdate, metadata as projectUpdateMeta } from '../../commands/project/update/project.update.js';
 import { relationAdd, metadata as relationAddMeta } from '../../commands/relations/add/relation.add.js';
 import { relationsList, metadata as relationsListMeta } from '../../commands/relations/list/relations.list.js';
@@ -425,6 +426,11 @@ export const commands: RegisteredCommand[] = [
     path: 'project init',
     metadata: projectInitMeta,
     handler: projectInit
+  },
+  {
+    path: 'project show',
+    metadata: projectShowMeta,
+    handler: projectShow
   },
   {
     path: 'project update',

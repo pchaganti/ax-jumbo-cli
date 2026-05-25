@@ -2,7 +2,7 @@
  * Tests for SessionContextOutputBuilder
  *
  * Verifies output for session context orientation including:
- * - Project context rendering (name, purpose, audiences, pains)
+ * - Project context rendering (core project fields)
  * - Session summary (focus, status, paused goals, recent decisions)
  * - Brownfield onboarding @LLM prompt
  * - Paused goals resume @LLM prompt
@@ -69,10 +69,8 @@ describe("SessionContextOutputBuilder", () => {
     it("should include project context when available", () => {
       const context = createContext({
         projectContext: {
-          project: { name: "TestProject", purpose: "Testing purposes" },
-          audiences: [{ name: "Devs", description: "Software developers", priority: "primary" }],
-          audiencePains: [{ title: "Context loss", description: "LLMs lose context" }],
-          valuePropositions: [{ title: "Persistent memory", description: "Context survives sessions", benefit: "No re-explaining" }],
+          name: "TestProject",
+          purpose: "Testing purposes",
         } as any,
       });
 
@@ -81,10 +79,6 @@ describe("SessionContextOutputBuilder", () => {
 
       expect(text).toContain("name: TestProject");
       expect(text).toContain("purpose: Testing purposes");
-      expect(text).toContain("name: Devs");
-      expect(text).toContain("Context loss");
-      expect(text).toContain("Persistent memory");
-      expect(text).toContain("No re-explaining");
     });
 
     it("should omit project context section when null", () => {
@@ -197,96 +191,6 @@ describe("SessionContextOutputBuilder", () => {
 
       expect(text).toContain("your Jumbo workspace");
       expect(text).toContain("your persistent memory");
-    });
-  });
-
-  describe("primitive gaps nudge", () => {
-    it("should include @LLM instruction listing missing primitives when primitive-gaps-detected", () => {
-      const context = createContext(
-        {
-          projectContext: {
-            project: { name: "Test", purpose: "Testing" },
-            audiences: [],
-            audiencePains: [{ title: "Pain1", description: "A pain" }],
-            valuePropositions: [],
-          } as any,
-        },
-        defaultSession,
-        [SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED]
-      );
-
-      const text = builder.renderSessionSummary(context);
-
-      expect(text).toContain("@LLM:");
-      expect(text).toContain("Missing: audiences, value propositions");
-      expect(text).toContain("jumbo audience add --help");
-      expect(text).toContain("jumbo value add --help");
-      expect(text).not.toContain("audience pains");
-      expect(text).not.toContain("audience-pain add");
-    });
-
-    it("should list all three primitives when all are missing", () => {
-      const context = createContext(
-        {
-          projectContext: {
-            project: { name: "Test", purpose: "Testing" },
-            audiences: [],
-            audiencePains: [],
-            valuePropositions: [],
-          } as any,
-        },
-        defaultSession,
-        [SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED]
-      );
-
-      const text = builder.renderSessionSummary(context);
-
-      expect(text).toContain("Missing: audiences, audience pains, value propositions");
-      expect(text).toContain("jumbo audience add --help");
-      expect(text).toContain("jumbo audience-pain add --help");
-      expect(text).toContain("jumbo value add --help");
-    });
-
-    it("should not include primitive gaps instruction when signal is absent", () => {
-      const context = createContext(
-        {
-          projectContext: {
-            project: { name: "Test", purpose: "Testing" },
-            audiences: [],
-            audiencePains: [],
-            valuePropositions: [],
-          } as any,
-        },
-        defaultSession,
-        []
-      );
-
-      const text = builder.renderSessionSummary(context);
-
-      expect(text).not.toContain("gaps in its foundational context");
-    });
-
-    it("should combine primitive gaps and paused goals instructions", () => {
-      const context = createContext(
-        {
-          projectContext: {
-            project: { name: "Test", purpose: "Testing" },
-            audiences: [],
-            audiencePains: [],
-            valuePropositions: [],
-          } as any,
-          pausedGoals: [
-            { goalId: "g1", objective: "Paused", status: "paused", updatedAt: "2025-01-01T11:00:00Z" } as GoalView,
-          ],
-        },
-        defaultSession,
-        [SessionInstructionSignal.PRIMITIVE_GAPS_DETECTED]
-      );
-
-      const text = builder.renderSessionSummary(context);
-
-      expect(text).toContain("gaps in its foundational context");
-      expect(text).toContain("Goals were paused");
     });
   });
 

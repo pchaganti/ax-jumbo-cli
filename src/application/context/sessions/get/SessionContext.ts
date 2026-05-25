@@ -1,6 +1,6 @@
 import { GoalView } from "../../goals/GoalView.js";
 import { DecisionView } from "../../decisions/DecisionView.js";
-import { ContextualProjectView } from "../../project/get/ContextualProjectView.js";
+import { ProjectView } from "../../project/ProjectView.js";
 
 /**
  * SessionContext - Pure context container for session orientation.
@@ -16,10 +16,10 @@ import { ContextualProjectView } from "../../project/get/ContextualProjectView.j
  */
 export interface SessionContext {
   /**
-   * Project context with audiences and pains.
+   * Core project context.
    * Null if project hasn't been initialized.
    */
-  readonly projectContext: ContextualProjectView | null;
+  readonly projectContext: ProjectView | null;
 
   /**
    * Goals currently being actively worked on (status='doing'/'blocked'/'in-review'/'qualified').

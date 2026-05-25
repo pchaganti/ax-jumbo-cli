@@ -9,10 +9,20 @@ This project uses Jumbo CLI for agent orchestration and context management. Jumb
 Sincerely,
 Project Administrator
 
-### When you start a new Session Start
-Run `jumbo session start`
+### When you start a new Session
+Run `jumbo session start` unless the prompt already contains a specific Jumbo workflow directive.
 
-This orients you with the current state of the project: high-level project, recent events and a goal backlog to select work from.
+This returns a minimal workflow router. Ask the user whether they want to design/define a goal, refine a goal, execute a goal, review a goal, codify a goal, or do something different.
+
+If the prompt already contains a specific workflow directive, run only that workflow-specific command:
+
+```
+Design or define a goal: jumbo project show --northstar --format json
+Refine a goal: jumbo goal refine --id <goal-id>
+Execute a goal: jumbo goal start --id <goal-id>
+Review a goal: jumbo goal review --id <goal-id>
+Codify a goal: jumbo goal codify --id <goal-id>
+```
 
 ### Pre Compaction/Compression
 If a goal is actively being implemented.
@@ -100,4 +110,4 @@ Context you register now is served to future sessions — yours or another agent
 `jumbo invariant update --help `
 
 ### Next step:
-Run `jumbo session start` to retrieve project orientation.
+Run `jumbo session start` to choose the next workflow, unless the prompt already names a specific workflow command.

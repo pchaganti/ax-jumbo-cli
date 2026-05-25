@@ -152,6 +152,8 @@ import { FsProjectUpdatedEventStore } from "../context/project/update/FsProjectU
 import { UpdateProjectCommandHandler } from "../../application/context/project/update/UpdateProjectCommandHandler.js";
 import { LocalUpdateProjectGateway } from "../../application/context/project/update/LocalUpdateProjectGateway.js";
 import { UpdateProjectController } from "../../application/context/project/update/UpdateProjectController.js";
+import { LocalShowProjectGateway } from "../../application/context/project/show/LocalShowProjectGateway.js";
+import { ShowProjectController } from "../../application/context/project/show/ShowProjectController.js";
 // Audience Event Stores - decomposed by use case
 import { FsAudienceAddedEventStore } from "../context/audiences/add/FsAudienceAddedEventStore.js";
 import { FsAudienceUpdatedEventStore } from "../context/audiences/update/FsAudienceUpdatedEventStore.js";
@@ -976,26 +978,28 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
     const updateProjectController = new UpdateProjectController(
       updateProjectGateway
     );
+    const showProjectGateway = new LocalShowProjectGateway(
+      projectContextReader,
+      audienceContextReader,
+      audiencePainContextReader,
+      valuePropositionContextReader
+    );
+    const showProjectController = new ShowProjectController(showProjectGateway);
 
     // Session Controllers
     const sessionContextQueryHandler = new SessionContextQueryHandler(
       sessionViewReader,
       goalStatusReader,
       decisionViewReader,
-      projectContextReader,
-      audienceContextReader,
-      audiencePainContextReader,
-      valuePropositionContextReader
+      projectContextReader
     );
     const startSessionCommandHandler = new StartSessionCommandHandler(
       sessionStartedEventStore,
       eventBus
     );
     const startSessionGateway = new LocalStartSessionGateway(
-      sessionContextQueryHandler,
       startSessionCommandHandler,
       brownfieldStatusReader,
-      architectureDefinedProjector,
     );
     const sessionStartController = new SessionStartController(
       startSessionGateway
@@ -2245,6 +2249,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       projectInitializedProjector,
       projectUpdatedProjector,
       updateProjectController,
+      showProjectController,
       projectContextReader,
       // Audience Projection Stores - decomposed by use case
       audienceAddedProjector,

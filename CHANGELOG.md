@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Project north-star packet**: Added `jumbo project show --northstar` to return project alignment context for goal design and definition, including project metadata, audiences, audience pains, and value propositions.
 - **Decision search command**: Added `jumbo decisions search` with status filtering, title substring and wildcard matching, free-text search across decision fields, and `default` or `compact` output modes.
 - **Dependency search command**: Added `jumbo dependencies search` with identity-field filtering, status filtering, legacy consumer/provider filters, free-text search across dependency fields, wildcard support, and `default` or `compact` output modes.
 - **Guideline search command**: Added `jumbo guidelines search` with exact category filtering, title substring and wildcard matching, free-text search across title/description/rationale/examples, removed-guideline exclusion, and `default` or `compact` output modes.
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Session start router**: `jumbo session start` now returns a minimal workflow router instead of eager project, goal, and decision context; agents load workflow-specific context through the returned route commands.
 - **Cockpit daemon controls**: Refiner, Reviewer, and Codifier now keep independent agent, poll interval, and retry settings in the TUI. Pressing a daemon hotkey selects that panel, pressing the selected daemon hotkey again starts or stops it, and the selected daemon title is highlighted in blue.
 - **Cockpit daemon panel order**: Moved the launchpad daemon panels into Refiner, Reviewer, Codifier order so the visual flow matches the operator workflow.
 - **TUI notification footer priority**: Moved the placeholder notification notifier into the right footer status slot with an adjacent `n` key badge, replacing the previous daemon idle mockup.

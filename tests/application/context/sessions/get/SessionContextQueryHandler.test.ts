@@ -4,9 +4,6 @@ import { ISessionViewReader } from "../../../../../src/application/context/sessi
 import { IGoalStatusReader } from "../../../../../src/application/context/goals/IGoalStatusReader.js";
 import { IDecisionViewReader } from "../../../../../src/application/context/decisions/get/IDecisionViewReader.js";
 import { IProjectContextReader } from "../../../../../src/application/context/project/query/IProjectContextReader.js";
-import { IAudienceContextReader } from "../../../../../src/application/context/audiences/query/IAudienceContextReader.js";
-import { IAudiencePainContextReader } from "../../../../../src/application/context/audience-pains/query/IAudiencePainContextReader.js";
-import { IValuePropositionContextReader } from "../../../../../src/application/context/value-propositions/query/IValuePropositionContextReader.js";
 import { GoalStatus } from "../../../../../src/domain/goals/Constants.js";
 import { GoalView } from "../../../../../src/application/context/goals/GoalView.js";
 import { SessionView } from "../../../../../src/application/context/sessions/SessionView.js";
@@ -16,9 +13,6 @@ describe("SessionContextQueryHandler", () => {
   let goalStatusReader: jest.Mocked<IGoalStatusReader>;
   let decisionViewReader: jest.Mocked<IDecisionViewReader>;
   let projectContextReader: jest.Mocked<IProjectContextReader>;
-  let audienceContextReader: jest.Mocked<IAudienceContextReader>;
-  let audiencePainContextReader: jest.Mocked<IAudiencePainContextReader>;
-  let valuePropositionContextReader: jest.Mocked<IValuePropositionContextReader>;
 
   beforeEach(() => {
     sessionViewReader = {
@@ -40,17 +34,6 @@ describe("SessionContextQueryHandler", () => {
       getProject: jest.fn().mockResolvedValue(null),
     } as unknown as jest.Mocked<IProjectContextReader>;
 
-    audienceContextReader = {
-      findAllActive: jest.fn().mockResolvedValue([]),
-    } as unknown as jest.Mocked<IAudienceContextReader>;
-
-    audiencePainContextReader = {
-      findAllActive: jest.fn().mockResolvedValue([]),
-    } as unknown as jest.Mocked<IAudiencePainContextReader>;
-
-    valuePropositionContextReader = {
-      findAllActive: jest.fn().mockResolvedValue([]),
-    } as unknown as jest.Mocked<IValuePropositionContextReader>;
   });
 
   function createHandler(): SessionContextQueryHandler {
@@ -58,10 +41,7 @@ describe("SessionContextQueryHandler", () => {
       sessionViewReader,
       goalStatusReader,
       decisionViewReader,
-      projectContextReader,
-      audienceContextReader,
-      audiencePainContextReader,
-      valuePropositionContextReader
+      projectContextReader
     );
   }
 
@@ -103,26 +83,15 @@ describe("SessionContextQueryHandler", () => {
     expect(result.context.projectContext).toBeNull();
   });
 
-  it("should assemble projectContext with audiences, pains, and value propositions", async () => {
+  it("should assemble core projectContext without north-star data", async () => {
     const project = { name: "TestProject", purpose: "Testing" };
-    const audiences = [{ name: "Devs", description: "Developers", priority: "primary" }];
-    const pains = [{ title: "Pain1", description: "A pain point" }];
-    const valueProps = [{ title: "VP1", description: "A value proposition", benefit: "Saves time" }];
 
     projectContextReader.getProject.mockResolvedValue(project as any);
-    audienceContextReader.findAllActive.mockResolvedValue(audiences as any);
-    audiencePainContextReader.findAllActive.mockResolvedValue(pains as any);
-    valuePropositionContextReader.findAllActive.mockResolvedValue(valueProps as any);
 
     const handler = createHandler();
     const result = await handler.execute();
 
-    expect(result.context.projectContext).toEqual({
-      project,
-      audiences,
-      audiencePains: pains,
-      valuePropositions: valueProps,
-    });
+    expect(result.context.projectContext).toBe(project);
   });
 
   it("should separate doing, blocked, in-review, and qualified goals as activeGoals", async () => {
