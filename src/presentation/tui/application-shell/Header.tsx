@@ -38,7 +38,7 @@ export function Header({
           )}
         </Box>
         <Box flexShrink={0}>
-          <Text color={BaseColors.brandBlue}>{versionText}</Text>
+          <Text color={BaseColors.brandBlue}>Jumbo ● {versionText}</Text>
         </Box>
       </Box>
       {/* <Text color={SemanticColors.muted} dimColor>
