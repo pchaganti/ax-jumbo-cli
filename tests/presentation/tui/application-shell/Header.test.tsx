@@ -64,7 +64,7 @@ describe("Header", () => {
       "C:\\projects\\jumbo\\cli",
     ]);
     expect(versionGroup.props.flexShrink).toBe(0);
-    expect(versionText.props.children).toBe("v1.2.3");
+    expect(versionText.props.children).toBe("Jumbo ● v1.2.3");
   });
 
   it("truncates the directory path before it can consume the version column", () => {
@@ -79,7 +79,7 @@ describe("Header", () => {
     const [, directoryText] = childElements(leftGroup as ElementWithChildren);
     const [versionText] = childElements(versionGroup as ElementWithChildren);
 
-    expect(directoryText.props.children).toEqual([" ", "C:\\project..."]);
-    expect(versionText.props.children).toBe("v1.2.3");
+    expect(directoryText.props.children).toEqual([" ", "C:..."]);
+    expect(versionText.props.children).toBe("Jumbo ● v1.2.3");
   });
 });

@@ -16,11 +16,12 @@ export function Header({
   terminalWidth,
 }: HeaderProps): React.ReactElement {
   const versionText = `v${version}`;
+  const versionLabelText = `Jumbo ● ${versionText}`;
   const displayedDirectoryPath = fitDirectoryPath({
     directoryPath,
     projectName,
     terminalWidth,
-    versionText,
+    versionLabelText,
   });
 
   return (
@@ -38,7 +39,7 @@ export function Header({
           )}
         </Box>
         <Box flexShrink={0}>
-          <Text color={BaseColors.brandBlue}>Jumbo ● {versionText}</Text>
+          <Text color={BaseColors.brandBlue}>{versionLabelText}</Text>
         </Box>
       </Box>
       {/* <Text color={SemanticColors.muted} dimColor>
@@ -52,12 +53,12 @@ function fitDirectoryPath({
   directoryPath,
   projectName,
   terminalWidth,
-  versionText,
+  versionLabelText,
 }: {
   readonly directoryPath: string;
   readonly projectName: string;
   readonly terminalWidth: number;
-  readonly versionText: string;
+  readonly versionLabelText: string;
 }): string {
   const horizontalPadding = 2;
   const minimumGapBeforeVersion = 1;
@@ -68,7 +69,7 @@ function fitDirectoryPath({
     minimumGapBeforeVersion -
     projectName.length -
     projectPathSeparator -
-    versionText.length;
+    versionLabelText.length;
 
   if (availablePathWidth <= 0) {
     return "";

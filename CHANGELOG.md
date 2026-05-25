@@ -44,6 +44,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **TUI component memory isolation**: Component add, list, and detail views no longer collect or display component source paths as user-facing component metadata.
 - **TUI project initialization**: Running bare `jumbo` from an uninitialized directory now opens a controller-backed Init wizard that creates `.jumbo` state and project files, refreshes the TUI after success, and preserves existing `jumbo init` / `jumbo project init` CLI behavior.
 
+## [3.1.0] - 2026-05-11
+
+### Changed
+
+- **Slimmer session context**: `session start` (and composed flows like work resume) now emits only the project name and purpose in the project header. Audiences, audience pains, and value propositions are no longer included in the session context packet, reducing tokens consumed at session start. The `primitive-gaps-detected` session instruction signal and its prompt have been removed; register these primitives via their dedicated commands instead.
+
 ## [3.0.3] - 2026-05-02
 
 ### Changed
