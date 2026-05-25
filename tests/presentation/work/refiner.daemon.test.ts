@@ -1,4 +1,5 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import path from "path";
 
 const processNextMock = jest.fn();
 const pollingRunMock = jest.fn(async ({ processOptions }) => {
@@ -53,7 +54,7 @@ describe("refiner.daemon", () => {
   it("delegates to PollingLoop from a valid project root", async () => {
     await runRefinerDaemon(["node", "refiner.daemon.js", "--agent", "codex"]);
 
-    expect(hostMock).toHaveBeenCalledWith("C:\\project\\.jumbo");
+    expect(hostMock).toHaveBeenCalledWith(path.join("C:\\project", ".jumbo"));
     expect(pollingRunMock).toHaveBeenCalledWith(expect.objectContaining({
       processOptions: expect.objectContaining({ agentId: "codex" }),
     }));

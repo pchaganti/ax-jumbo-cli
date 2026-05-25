@@ -1,4 +1,5 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import path from "path";
 
 const processNextMock = jest.fn();
 const pollingRunMock = jest.fn(async ({ processOptions }) => {
@@ -109,7 +110,7 @@ describe("codifier.daemon", () => {
       "5000",
     ]);
 
-    expect(hostMock).toHaveBeenCalledWith("C:\\project\\.jumbo");
+    expect(hostMock).toHaveBeenCalledWith(path.join("C:\\project", ".jumbo"));
     expect(buildMock).toHaveBeenCalled();
     expect(pollingRunMock).toHaveBeenCalledWith(expect.objectContaining({
       processManager: expect.objectContaining({ processNext: processNextMock }),
