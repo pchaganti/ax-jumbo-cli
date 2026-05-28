@@ -85,6 +85,7 @@ Jumbo configures hooks for popular AI coding assistants:
 | Agent | Configuration |
 |-------|---------------|
 | **Claude Code** | `.claude/settings.json` with SessionStart hook |
+| **Codex** | `.codex/hooks.json` with text-mode lifecycle hooks |
 | **GitHub Copilot** | `.github/copilot-instructions.md` |
 | **Gemini CLI** | `GEMINI.md` and `.gemini/settings.json` |
 | **GitHub Hooks** | `.github/hooks/hooks.json` |

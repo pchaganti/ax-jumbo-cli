@@ -54,6 +54,7 @@ Jumbo creates or updates several files outside `.jumbo/` to integrate with AI co
 | File | Purpose |
 |---|---|
 | `.claude/settings.json` | Claude Code hooks for session start, compaction, and session end |
+| `.codex/hooks.json` | Codex hooks for session start and compaction using text-mode Jumbo output |
 | `.gemini/settings.json` | Gemini CLI hooks for session start, compression, and session end |
 | `.github/hooks/hooks.json` | GitHub Copilot hooks for session start |
 
