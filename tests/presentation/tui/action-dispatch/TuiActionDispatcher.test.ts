@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
-import { dispatchTuiAction } from "../../../../src/presentation/tui/action-dispatch/TuiActionDispatcher.js";
+import { TuiActionDispatcher } from "../../../../src/presentation/tui/action-dispatch/TuiActionDispatcher.js";
 
-describe("dispatchTuiAction", () => {
+describe("TuiActionDispatcher", () => {
   it("returns controller responses", async () => {
     const controller = {
       handle: async (request: { value: string }) => ({
@@ -10,24 +10,41 @@ describe("dispatchTuiAction", () => {
     };
 
     await expect(
-      dispatchTuiAction(controller, { value: "request" }),
+      TuiActionDispatcher.dispatch(controller, { value: "request" }),
     ).resolves.toEqual({
       ok: true,
       response: { echoed: "request" },
     });
   });
 
-  it("returns controller errors without throwing", async () => {
+  it("returns thrown Error values without throwing", async () => {
+    const expectedError = new Error("Request failed");
     const controller = {
       handle: async () => {
-        throw new Error("Request failed");
+        throw expectedError;
       },
     };
 
-    const result = await dispatchTuiAction(controller, {});
+    const result = await TuiActionDispatcher.dispatch(controller, {});
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
+      expect(result.error).toBe(expectedError);
+    }
+  });
+
+  it("normalizes thrown non-Error values", async () => {
+    const controller = {
+      handle: async () => {
+        throw "Request failed";
+      },
+    };
+
+    const result = await TuiActionDispatcher.dispatch(controller, {});
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(Error);
       expect(result.error.message).toBe("Request failed");
     }
   });

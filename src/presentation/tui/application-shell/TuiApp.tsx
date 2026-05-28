@@ -8,8 +8,8 @@ import type { InitFlowActionControllers } from "../project-initialization/InitFl
 import { GoalAuthoringFlow } from "../goals/GoalAuthoringFlow.js";
 import type { GoalAuthoringValues } from "../goals/GoalAuthoringFlow.js";
 import { DEFAULT_SCREEN_INDEX } from "../navigation/ScreenDefinitions.js";
-import { dispatchTuiAction } from "../action-dispatch/TuiActionDispatcher.js";
-import type { TuiRequestController } from "../action-dispatch/TuiActionDispatcher.js";
+import { TuiActionDispatcher } from "../action-dispatch/TuiActionDispatcher.js";
+import type { TuiRequestController } from "../action-dispatch/TuiRequestController.js";
 import {
   TuiStateReaderProvider,
   useProjectContext,
@@ -316,7 +316,7 @@ function TuiAppFrame({
 
       setGoalAuthoringWorking(true);
       setGoalAuthoringError(null);
-      const result = await dispatchTuiAction(
+      const result = await TuiActionDispatcher.dispatch(
         addGoalController,
         toAddGoalRequest(values),
       );
