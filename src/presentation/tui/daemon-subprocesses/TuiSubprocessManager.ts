@@ -9,12 +9,14 @@ import {
   WORKER_DAEMON_NAMES,
 } from "../../../application/daemons/WorkerDaemonCatalog.js";
 import {
-  TuiDaemonEventCategory,
   TuiDaemonEventStatus,
-  TuiSubprocessCopy,
+} from "./TuiDaemonEventStatus.js";
+import { TuiDaemonEventCategory } from "./TuiDaemonEventCategory.js";
+import {
   TuiSubprocessStatus,
   type TuiSubprocessStatusValue,
-} from "./Constants.js";
+} from "./TuiSubprocessStatus.js";
+import { TuiSubprocessCopy } from "./TuiSubprocessCopy.js";
 
 const OUTPUT_RING_BUFFER_SIZE = 25;
 const EVENT_RING_BUFFER_SIZE = 50;

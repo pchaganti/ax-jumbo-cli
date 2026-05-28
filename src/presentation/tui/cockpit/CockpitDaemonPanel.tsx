@@ -4,7 +4,7 @@ import { BaseColors } from "../../shared/DesignTokens.js";
 import { Panel } from "../ui-primitives/Panel.js";
 import { KeyBadge } from "../ui-primitives/KeyBadge.js";
 import type { TuiDaemonConfig, TuiSubprocessSnapshot } from "../daemon-subprocesses/ISubprocessManager.js";
-import { TuiSubprocessStatus } from "../daemon-subprocesses/Constants.js";
+import { TuiSubprocessStatus } from "../daemon-subprocesses/TuiSubprocessStatus.js";
 import { DAEMON_PANEL_CONTENT_WIDTH } from "./CockpitDaemonFrames.js";
 import { CockpitDaemonPanelCopy } from "./CockpitDaemonPanelCopy.js";
 import type { IDaemonConstants } from "./daemons/IDaemonConstants.js";

@@ -13,7 +13,7 @@ import type {
   TuiDaemonName,
   TuiSubprocessSnapshot,
 } from "../daemon-subprocesses/ISubprocessManager.js";
-import { TuiSubprocessStatus } from "../daemon-subprocesses/Constants.js";
+import { TuiSubprocessStatus } from "../daemon-subprocesses/TuiSubprocessStatus.js";
 import {
   appendDaemonEventRows,
   findDaemonStatus,

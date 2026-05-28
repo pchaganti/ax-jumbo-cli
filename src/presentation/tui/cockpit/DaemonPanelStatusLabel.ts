@@ -1,7 +1,9 @@
 import {
   TuiDaemonEventStatus,
+} from "../daemon-subprocesses/TuiDaemonEventStatus.js";
+import {
   TuiSubprocessStatus,
-} from "../daemon-subprocesses/Constants.js";
+} from "../daemon-subprocesses/TuiSubprocessStatus.js";
 import type { CockpitDaemonSnapshot } from "./CockpitDaemonSnapshot.js";
 import type { IDaemonConstants } from "./daemons/IDaemonConstants.js";
 

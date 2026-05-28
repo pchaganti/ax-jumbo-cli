@@ -1,5 +1,5 @@
 import { BaseColors } from "../../shared/DesignTokens.js";
-import { TuiSubprocessStatus } from "../daemon-subprocesses/Constants.js";
+import { TuiSubprocessStatus } from "../daemon-subprocesses/TuiSubprocessStatus.js";
 import type { CockpitDaemonSnapshot } from "./CockpitDaemonSnapshot.js";
 
 export interface GlyphStyle {

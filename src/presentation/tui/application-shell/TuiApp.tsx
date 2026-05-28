@@ -24,7 +24,7 @@ import type { AddGoalResponse } from "../../../application/context/goals/add/Add
 import type { ProjectLifecycleState } from "../../../application/context/project/ProjectLifecycleState.js";
 import type { ISettingsReader } from "../../../application/settings/ISettingsReader.js";
 import { ProjectLifecycle } from "../../../domain/project/Constants.js";
-import { TuiSubprocessStatus } from "../daemon-subprocesses/Constants.js";
+import { TuiSubprocessStatus } from "../daemon-subprocesses/TuiSubprocessStatus.js";
 import {
   TERMINAL_RESIZE_EVENT,
   TUI_FRAME_CHROME_ROWS,

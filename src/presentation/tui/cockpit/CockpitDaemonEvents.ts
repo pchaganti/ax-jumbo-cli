@@ -8,8 +8,8 @@ import type {
 import { DEFAULT_WORKER_DAEMON_CONFIG } from "../../../application/daemons/WorkerDaemonCatalog.js";
 import {
   TuiDaemonEventStatus as TuiDaemonEventStatusValues,
-  TuiSubprocessStatus,
-} from "../daemon-subprocesses/Constants.js";
+} from "../daemon-subprocesses/TuiDaemonEventStatus.js";
+import { TuiSubprocessStatus } from "../daemon-subprocesses/TuiSubprocessStatus.js";
 
 const RENDERED_DAEMON_EVENT_LIMIT = 10;
 const DAEMON_EVENT_SOURCE_WIDTH = 8;

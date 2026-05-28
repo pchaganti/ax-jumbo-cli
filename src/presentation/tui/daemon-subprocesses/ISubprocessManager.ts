@@ -10,8 +10,10 @@ import type {
 } from "../../../application/daemons/WorkerDaemonCatalog.js";
 import type {
   TuiDaemonEventStatusValue,
+} from "./TuiDaemonEventStatus.js";
+import type {
   TuiSubprocessStatusValue,
-} from "./Constants.js";
+} from "./TuiSubprocessStatus.js";
 
 export type TuiSubprocessStatus = TuiSubprocessStatusValue;
 export type TuiDaemonEventStatus = TuiDaemonEventStatusValue;
