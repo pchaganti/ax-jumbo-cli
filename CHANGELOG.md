@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-05-31
+
+### Added
+
+- **Codex lifecycle hooks**: `jumbo init` and `jumbo evolve` now configure OpenAI Codex with `.codex/hooks.json` containing session-start lifecycle hooks. Hook commands use text output to avoid conflicts with Codex's JSON stdout hook-control envelope parser.
+
 ### Fixed
 
 - **TUI worker daemon output bounds**: Agent subprocess stdout/stderr and daemon event/log payloads are now retained as bounded tails so oversized model output cannot grow worker daemon or TUI memory unboundedly.
