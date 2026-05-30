@@ -18,8 +18,7 @@ export type {
   TuiStateReaderOptions,
   TuiStateSnapshot,
 } from "./state-reading/TuiStateReader.js";
-export { dispatchTuiAction } from "./action-dispatch/TuiActionDispatcher.js";
-export type {
-  TuiActionResult,
-  TuiRequestController,
-} from "./action-dispatch/TuiActionDispatcher.js";
+export { TuiActionDispatcher } from "./action-dispatch/TuiActionDispatcher.js";
+export type { TuiActionResult } from "./action-dispatch/TuiActionResult.js";
+export { TuiActionErrorNormalizer } from "./action-dispatch/TuiActionErrorNormalizer.js";
+export type { TuiRequestController } from "./action-dispatch/TuiRequestController.js";

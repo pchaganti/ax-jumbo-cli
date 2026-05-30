@@ -8,30 +8,35 @@ import type { InitFlowActionControllers } from "../project-initialization/InitFl
 import { GoalAuthoringFlow } from "../goals/GoalAuthoringFlow.js";
 import type { GoalAuthoringValues } from "../goals/GoalAuthoringFlow.js";
 import { DEFAULT_SCREEN_INDEX } from "../navigation/ScreenDefinitions.js";
-import { dispatchTuiAction } from "../action-dispatch/TuiActionDispatcher.js";
-import type { TuiRequestController } from "../action-dispatch/TuiActionDispatcher.js";
+import { TuiActionDispatcher } from "../action-dispatch/TuiActionDispatcher.js";
+import type { TuiRequestController } from "../action-dispatch/TuiRequestController.js";
 import {
   TuiStateReaderProvider,
   useProjectContext,
   type TuiStateReaderControllers,
   type TuiStateReaderOptions,
 } from "../state-reading/TuiStateReader.js";
-import { SubprocessManagerProvider, useSubprocessManager } from "../daemon-subprocesses/SubprocessManagerContext.js";
+import { SubprocessManagerProvider } from "../daemon-subprocesses/SubprocessManagerProvider.js";
+import { useSubprocessManager } from "../daemon-subprocesses/useSubprocessManager.js";
 import type { ISubprocessManager, TuiSubprocessSnapshot } from "../daemon-subprocesses/ISubprocessManager.js";
 import type { NotificationDrawerNotification } from "./NotificationDrawer.js";
 import type { AddGoalRequest } from "../../../application/context/goals/add/AddGoalRequest.js";
 import type { AddGoalResponse } from "../../../application/context/goals/add/AddGoalResponse.js";
 import type { ProjectLifecycleState } from "../../../application/context/project/ProjectLifecycleState.js";
 import type { ISettingsReader } from "../../../application/settings/ISettingsReader.js";
+import { ProjectLifecycle } from "../../../domain/project/Constants.js";
+import { TuiSubprocessStatus } from "../daemon-subprocesses/TuiSubprocessStatus.js";
+import {
+  TERMINAL_RESIZE_EVENT,
+  TUI_FRAME_CHROME_ROWS,
+  TuiAppCopy,
+  TuiAppShortcut,
+} from "./TuiAppConstants.js";
 
-const PLACEHOLDER_PROJECT_NAME = "Jumbo";
-const GOAL_AUTHORING_UNAVAILABLE_ERROR =
-  "Goal registration is unavailable. Restart Jumbo and try again.";
 const COCKPIT_FOOTER_SHORTCUTS = [
-  { char: "tab", label: "toggle worker" },
-  { char: "g", label: "create goal" },
+  TuiAppShortcut.TOGGLE_WORKER,
+  TuiAppShortcut.CREATE_GOAL,
 ] as const;
-const TUI_FRAME_CHROME_ROWS = 2;
 
 function useTerminalDimensions(): { columns: number; rows: number } {
   const { stdout } = useStdout();
@@ -47,9 +52,9 @@ function useTerminalDimensions(): { columns: number; rows: number } {
         rows: stdout.rows ?? 24,
       });
     };
-    stdout.on("resize", onResize);
+    stdout.on(TERMINAL_RESIZE_EVENT, onResize);
     return () => {
-      stdout.off("resize", onResize);
+      stdout.off(TERMINAL_RESIZE_EVENT, onResize);
     };
   }, [stdout]);
 
@@ -175,28 +180,30 @@ function TuiAppFrame({
     subprocessManager.getAllStatuses(),
   );
   const projectLifecycleState =
-    projectContext.data?.lifecycleState ?? "uninitialized";
+    projectContext.data?.lifecycleState ?? ProjectLifecycle.UNINITIALIZED;
   const routedProjectLifecycleState =
     lifecycleRouteOverride ??
-    (projectLifecycleState === "unprimed" && unprimedSkipped
-      ? "primed-empty"
+    (projectLifecycleState === ProjectLifecycle.UNPRIMED && unprimedSkipped
+      ? ProjectLifecycle.PRIMED_EMPTY
       : projectLifecycleState);
   const initShortcutEnabled =
-    !projectContext.loading && projectLifecycleState === "uninitialized";
+    !projectContext.loading &&
+    projectLifecycleState === ProjectLifecycle.UNINITIALIZED;
   const frameShortcutsEnabled =
     !initFlowOpen && !goalAuthoringOpen;
   const cockpitLaunchpadVisible =
     !initFlowOpen &&
     !goalAuthoringOpen &&
     activeScreenIndex === DEFAULT_SCREEN_INDEX &&
-    routedProjectLifecycleState === "primed";
+    routedProjectLifecycleState === ProjectLifecycle.PRIMED;
   const goalAuthoringShortcutEnabled =
     !projectContext.loading &&
     activeScreenIndex === DEFAULT_SCREEN_INDEX &&
-    (routedProjectLifecycleState === "primed-empty" || cockpitLaunchpadVisible);
+    (routedProjectLifecycleState === ProjectLifecycle.PRIMED_EMPTY ||
+      cockpitLaunchpadVisible);
 
   useEffect(() => {
-    if (projectLifecycleState !== "unprimed") {
+    if (projectLifecycleState !== ProjectLifecycle.UNPRIMED) {
       setUnprimedSkipped(false);
     }
   }, [projectLifecycleState]);
@@ -252,7 +259,7 @@ function TuiAppFrame({
     }
     if (
       activeScreenIndex === DEFAULT_SCREEN_INDEX &&
-      projectLifecycleState === "unprimed" &&
+      projectLifecycleState === ProjectLifecycle.UNPRIMED &&
       (input === "s" || input === "S")
     ) {
       setUnprimedSkipped(true);
@@ -304,13 +311,13 @@ function TuiAppFrame({
     async (values: GoalAuthoringValues) => {
       const addGoalController = actionControllers?.addGoalController;
       if (addGoalController === undefined) {
-        setGoalAuthoringError(GOAL_AUTHORING_UNAVAILABLE_ERROR);
+        setGoalAuthoringError(TuiAppCopy.goalAuthoringUnavailable);
         return;
       }
 
       setGoalAuthoringWorking(true);
       setGoalAuthoringError(null);
-      const result = await dispatchTuiAction(
+      const result = await TuiActionDispatcher.dispatch(
         addGoalController,
         toAddGoalRequest(values),
       );
@@ -323,7 +330,7 @@ function TuiAppFrame({
 
       await completeStateChangingOverlay(
         () => setGoalAuthoringOpen(false),
-        { lifecycleRouteOverride: "primed" },
+        { lifecycleRouteOverride: ProjectLifecycle.PRIMED },
       );
     },
     [actionControllers, completeStateChangingOverlay],
@@ -346,7 +353,7 @@ function TuiAppFrame({
     <Box flexDirection="column" width={columns} height={rows}>
       <Box flexShrink={0}>
         <Header
-          projectName={projectContext.data?.name ?? PLACEHOLDER_PROJECT_NAME}
+          projectName={projectContext.data?.name ?? TuiAppCopy.placeholderProjectName}
           directoryPath={directoryPath}
           version={version}
           terminalWidth={columns}
@@ -443,11 +450,11 @@ function buildDaemonFailureNotifications(
   statuses: readonly TuiSubprocessSnapshot[],
 ): readonly NotificationDrawerNotification[] {
   return statuses
-    .filter((status) => status.status === "failed")
+    .filter((status) => status.status === TuiSubprocessStatus.FAILED)
     .map((status) => ({
       id: `daemon-${status.name}-failed`,
       title: `${status.name.toUpperCase()} daemon failed`,
-      body: status.stderr[status.stderr.length - 1] ?? "The daemon process exited with a failure status.",
+      body: status.stderr[status.stderr.length - 1] ?? TuiAppCopy.daemonFailureBody,
       unread: true,
     }));
 }

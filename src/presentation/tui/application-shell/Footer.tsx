@@ -4,20 +4,22 @@ import { BaseColors, TuiGlyphs } from "../../shared/DesignTokens.js";
 import { KeyBadge } from "../ui-primitives/KeyBadge.js";
 import { NotificationDrawer } from "./NotificationDrawer.js";
 import type { NotificationDrawerNotification } from "./NotificationDrawer.js";
+import {
+  FooterShortcut,
+  type FooterContextualShortcutDescriptor,
+} from "./FooterShortcutDescriptor.js";
+import { FooterUnreadNotificationCounter } from "./FooterUnreadNotificationCounter.js";
+import { useFooterNotificationDismissal } from "./useFooterNotificationDismissal.js";
+
+const FOOTER_NOTIFICATION_COUNTER_COLOR = BaseColors.brandYellow;
+const FOOTER_NOTIFICATION_COUNT_COPY = "notifications";
 
 interface FooterProps {
   terminalWidth: number;
   shortcutsEnabled?: boolean;
-  contextualShortcuts?: readonly FooterShortcut[];
+  contextualShortcuts?: readonly FooterContextualShortcutDescriptor[];
   notifications?: readonly NotificationDrawerNotification[];
 }
-
-interface FooterShortcut {
-  readonly char: string;
-  readonly label: string;
-}
-
-export const NOTIFICATION_NOTIFIER_COLOR = BaseColors.brandYellow;
 
 export function Footer({
   terminalWidth,
@@ -26,34 +28,32 @@ export function Footer({
   notifications = [],
 }: FooterProps): React.ReactElement {
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
-  const [dismissedNotificationIds, setDismissedNotificationIds] = useState<
-    readonly string[]
-  >([]);
+  const { dismissedNotificationIds, handleDismissNotification } =
+    useFooterNotificationDismissal();
 
   const visibleNotifications = useMemo(
     () =>
       notifications.filter(
         (notification) => !dismissedNotificationIds.includes(notification.id),
       ),
-    [dismissedNotificationIds, notifications],
+    [notifications, dismissedNotificationIds],
   );
-  const unreadNotificationCount = visibleNotifications.filter(
-    (notification) => notification.unread,
-  ).length;
+  const unreadNotificationCount = FooterUnreadNotificationCounter(
+    visibleNotifications,
+  );
 
   useInput((input) => {
     if (!shortcutsEnabled) {
       return;
     }
 
-    if (input === "n" || input === "N") {
+    if (
+      input === FooterShortcut.NOTIFICATIONS.char ||
+      input === FooterShortcut.NOTIFICATIONS.char.toUpperCase()
+    ) {
       setNotificationDrawerOpen((isOpen) => !isOpen);
     }
   });
-
-  const handleDismissNotification = (id: string) => {
-    setDismissedNotificationIds((previous) => [...previous, id]);
-  };
 
   return (
     <Box flexDirection="column" width={terminalWidth}>
@@ -67,7 +67,10 @@ export function Footer({
       )}
       <Box justifyContent="space-between" paddingX={1}>
         <Box gap={2}>
-          <KeyBadge char="q" label="quit" />
+          <KeyBadge
+            char={FooterShortcut.QUIT.char}
+            label={FooterShortcut.QUIT.label}
+          />
           {contextualShortcuts.map((shortcut) => (
             <KeyBadge
               key={`${shortcut.char}-${shortcut.label}`}
@@ -78,9 +81,10 @@ export function Footer({
         </Box>
         {unreadNotificationCount > 0 && (
           <Box alignItems="center" gap={1}>
-            <KeyBadge char="n" />
-            <Text color={NOTIFICATION_NOTIFIER_COLOR}>
-              {TuiGlyphs.filledCircle} notifications ({unreadNotificationCount})
+            <KeyBadge char={FooterShortcut.NOTIFICATIONS.char} />
+            <Text color={FOOTER_NOTIFICATION_COUNTER_COLOR}>
+              {TuiGlyphs.filledCircle} {FOOTER_NOTIFICATION_COUNT_COPY} (
+              {unreadNotificationCount})
             </Text>
           </Box>
         )}

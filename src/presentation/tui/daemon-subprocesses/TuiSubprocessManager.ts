@@ -8,21 +8,33 @@ import {
   DEFAULT_WORKER_DAEMON_CONFIG,
   WORKER_DAEMON_NAMES,
 } from "../../../application/daemons/WorkerDaemonCatalog.js";
+import {
+  TuiDaemonEventStatus,
+} from "./TuiDaemonEventStatus.js";
+import { TuiDaemonEventCategory } from "./TuiDaemonEventCategory.js";
+import {
+  TuiSubprocessStatus,
+  type TuiSubprocessStatusValue,
+} from "./TuiSubprocessStatus.js";
+import { TuiSubprocessCopy } from "./TuiSubprocessCopy.js";
 
 const OUTPUT_RING_BUFFER_SIZE = 25;
 const EVENT_RING_BUFFER_SIZE = 50;
+const OUTPUT_CHUNK_MAX_LENGTH = 16_384;
+const OUTPUT_LINE_MAX_LENGTH = 2_048;
+const EVENT_TEXT_FIELD_MAX_LENGTH = 2_048;
 const SUBPROCESS_EVENT_COPY = {
   stopping: {
-    category: "stopping",
-    message: "termination requested",
+    category: TuiDaemonEventCategory.STOPPING,
+    message: TuiSubprocessCopy.terminationRequested,
   },
   stopped: {
-    category: "stopped",
-    message: "process stopped",
+    category: TuiDaemonEventCategory.STOPPED,
+    message: TuiSubprocessCopy.processStopped,
   },
   failed: {
-    category: "failed",
-    message: "process failed",
+    category: TuiDaemonEventCategory.FAILED,
+    message: TuiSubprocessCopy.processFailed,
   },
 } as const;
 const NOOP_LOGGER: ILogger = {
@@ -39,7 +51,7 @@ interface ManagedSubprocess {
   readonly stdout: string[];
   readonly stderr: string[];
   readonly events: TuiDaemonEventSnapshot[];
-  status: "running" | "failed" | "stopped";
+  status: TuiSubprocessStatusValue;
   exitCode?: number | null;
   exitSignal?: string | null;
   stopRequested: boolean;
@@ -55,12 +67,12 @@ export class TuiSubprocessManager implements ISubprocessManager {
 
   async spawn(name: TuiDaemonName, config: Partial<TuiDaemonConfig> = {}): Promise<TuiSubprocessSnapshot> {
     const existing = this.processes.get(name);
-    if (existing?.status === "running") {
+    if (existing?.status === TuiSubprocessStatus.RUNNING) {
       return this.toSnapshot(existing);
     }
 
     const resolvedConfig = this.resolveConfig(config);
-    this.logger.info("Daemon subprocess spawn requested", {
+    this.logger.info(TuiSubprocessCopy.spawnRequestedLog, {
       daemon: name,
       config: resolvedConfig,
     });
@@ -73,35 +85,35 @@ export class TuiSubprocessManager implements ISubprocessManager {
       stdout: [],
       stderr: [],
       events: [],
-      status: "running",
+      status: TuiSubprocessStatus.RUNNING,
       stopRequested: false,
     };
     this.processes.set(name, managed);
-    this.logger.info("Daemon subprocess started", {
+    this.logger.info(TuiSubprocessCopy.startedLog, {
       daemon: name,
       pid: child.pid,
     });
 
     child.stdout?.on("data", (chunk) => {
-      const text = chunk.toString();
+      const text = limitTextTail(chunk.toString(), OUTPUT_CHUNK_MAX_LENGTH);
       const lines = this.appendLines(managed.stdout, text);
-      this.logger.info("Daemon subprocess stdout", { daemon: name, text });
+      this.logger.info(TuiSubprocessCopy.stdoutLog, { daemon: name, text });
       const events = lines.map((line) => parseDaemonOutputEvent(name, line));
       for (const event of events) {
         this.recordDaemonEvent(managed, event);
       }
     });
     child.stderr?.on("data", (chunk) => {
-      const text = chunk.toString();
+      const text = limitTextTail(chunk.toString(), OUTPUT_CHUNK_MAX_LENGTH);
       this.appendLines(managed.stderr, text);
-      this.logger.warn("Daemon subprocess stderr", { daemon: name, text });
+      this.logger.warn(TuiSubprocessCopy.stderrLog, { daemon: name, text });
     });
     child.on("close", (code, signal) => {
       managed.exitCode = code;
       managed.exitSignal = signal;
       managed.status = this.resolveClosedStatus(managed, code);
       this.recordSubprocessTerminalEvent(managed);
-      this.logger.info("Daemon subprocess closed", {
+      this.logger.info(TuiSubprocessCopy.closedLog, {
         daemon: name,
         exitCode: code,
         signal,
@@ -110,10 +122,13 @@ export class TuiSubprocessManager implements ISubprocessManager {
       });
     });
     child.on("error", (error) => {
-      managed.status = managed.stopRequested ? "stopped" : "failed";
-      this.appendLines(managed.stderr, error.message);
-      this.recordSubprocessTerminalEvent(managed, error.message);
-      this.logger.error("Daemon subprocess error", error, {
+      managed.status = managed.stopRequested
+        ? TuiSubprocessStatus.STOPPED
+        : TuiSubprocessStatus.FAILED;
+      const errorMessage = limitTextTail(error.message, EVENT_TEXT_FIELD_MAX_LENGTH);
+      this.appendLines(managed.stderr, errorMessage);
+      this.recordSubprocessTerminalEvent(managed, errorMessage);
+      this.logger.error(TuiSubprocessCopy.errorLog, boundedError(error), {
         daemon: name,
         stopRequested: managed.stopRequested,
         status: managed.status,
@@ -125,7 +140,7 @@ export class TuiSubprocessManager implements ISubprocessManager {
 
   async terminate(name: TuiDaemonName): Promise<TuiSubprocessSnapshot> {
     const managed = this.processes.get(name);
-    if (managed === undefined || managed.status !== "running") {
+    if (managed === undefined || managed.status !== TuiSubprocessStatus.RUNNING) {
       return this.getStatus(name);
     }
 
@@ -135,36 +150,36 @@ export class TuiSubprocessManager implements ISubprocessManager {
         ? { kind: "no-pid" as const }
         : this.processController.getTerminationStrategy(managed.child);
       this.recordSubprocessLifecycleEvent(managed, {
-        status: "stopping",
+        status: TuiDaemonEventStatus.STOPPING,
         ...SUBPROCESS_EVENT_COPY.stopping,
       });
-      this.logger.info("Daemon subprocess termination requested", {
+      this.logger.info(TuiSubprocessCopy.terminationRequestedLog, {
         daemon: name,
         pid: managed.child.pid,
         strategy,
       });
       await this.processController.terminateDaemonProcess(managed.child);
-      managed.status = "stopped";
+      managed.status = TuiSubprocessStatus.STOPPED;
       this.recordSubprocessLifecycleEvent(managed, {
-        status: "stopped",
+        status: TuiDaemonEventStatus.STOPPED,
         ...SUBPROCESS_EVENT_COPY.stopped,
       });
-      this.logger.info("Daemon subprocess termination completed", {
+      this.logger.info(TuiSubprocessCopy.terminationCompletedLog, {
         daemon: name,
         pid: managed.child.pid,
         stopRequested: managed.stopRequested,
       });
     } catch (error) {
       managed.stopRequested = false;
-      managed.status = "failed";
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      managed.status = TuiSubprocessStatus.FAILED;
+      const errorMessage = limitTextTail(error instanceof Error ? error.message : String(error), EVENT_TEXT_FIELD_MAX_LENGTH);
       this.appendLines(managed.stderr, errorMessage);
       this.recordSubprocessLifecycleEvent(managed, {
-        status: "failed",
+        status: TuiDaemonEventStatus.FAILED,
         errorMessage,
         ...SUBPROCESS_EVENT_COPY.failed,
       });
-      this.logger.error("Daemon subprocess termination failed", error, {
+      this.logger.error(TuiSubprocessCopy.terminationFailedLog, boundedError(error), {
         daemon: name,
         pid: managed.child.pid,
         stopRequested: managed.stopRequested,
@@ -182,7 +197,7 @@ export class TuiSubprocessManager implements ISubprocessManager {
     if (managed === undefined) {
       return {
         name,
-        status: "stopped",
+        status: TuiSubprocessStatus.STOPPED,
         config: DEFAULT_WORKER_DAEMON_CONFIG,
         stdout: [],
         stderr: [],
@@ -208,17 +223,19 @@ export class TuiSubprocessManager implements ISubprocessManager {
   private resolveClosedStatus(
     process: ManagedSubprocess,
     code: number | null,
-  ): "failed" | "stopped" {
+  ): TuiSubprocessStatusValue {
     if (process.stopRequested) {
-      return "stopped";
+      return TuiSubprocessStatus.STOPPED;
     }
 
-    return code === 0 ? "stopped" : "failed";
+    return code === 0 ? TuiSubprocessStatus.STOPPED : TuiSubprocessStatus.FAILED;
   }
 
   private appendLines(buffer: string[], value: string): string[] {
-    const lines = value.split(/\r?\n/).filter((line) => line.length > 0);
-    buffer.push(...lines);
+    const lines = value
+      .split(/\r?\n/)
+      .filter((line) => line.length > 0);
+    buffer.push(...lines.map((line) => limitTextTail(line, OUTPUT_LINE_MAX_LENGTH)));
     while (buffer.length > OUTPUT_RING_BUFFER_SIZE) {
       buffer.shift();
     }
@@ -244,12 +261,14 @@ export class TuiSubprocessManager implements ISubprocessManager {
     process: ManagedSubprocess,
     errorMessage = process.stderr[process.stderr.length - 1],
   ): void {
-    const status = process.status === "stopped" ? "stopped" : "failed";
+    const status = process.status === TuiSubprocessStatus.STOPPED
+      ? TuiDaemonEventStatus.STOPPED
+      : TuiDaemonEventStatus.FAILED;
     this.recordSubprocessLifecycleEvent(process, {
       status,
       exitCode: process.exitCode ?? undefined,
-      errorMessage: status === "failed" ? errorMessage : undefined,
-      ...(status === "stopped" ? SUBPROCESS_EVENT_COPY.stopped : SUBPROCESS_EVENT_COPY.failed),
+      errorMessage: status === TuiDaemonEventStatus.FAILED ? errorMessage : undefined,
+      ...(status === TuiDaemonEventStatus.STOPPED ? SUBPROCESS_EVENT_COPY.stopped : SUBPROCESS_EVENT_COPY.failed),
     });
   }
 
@@ -274,8 +293,9 @@ export class TuiSubprocessManager implements ISubprocessManager {
     process: ManagedSubprocess,
     event: TuiDaemonEventSnapshot,
   ): void {
-    this.logger.info("Daemon subprocess event", { daemon: process.name, event });
-    process.events.push(event);
+    const boundedEvent = boundDaemonEvent(event);
+    this.logger.info(TuiSubprocessCopy.eventLog, { daemon: process.name, event: boundedEvent });
+    process.events.push(boundedEvent);
     while (process.events.length > EVENT_RING_BUFFER_SIZE) {
       process.events.shift();
     }
@@ -294,10 +314,10 @@ function parseDaemonOutputEvent(
 
   return {
     daemon,
-    status: "processing",
+    status: TuiDaemonEventStatus.PROCESSING,
     source: daemon,
-    category: "model-output",
-    message: line,
+    category: TuiDaemonEventCategory.MODEL_OUTPUT,
+    message: limitTextTail(line, EVENT_TEXT_FIELD_MAX_LENGTH),
     timestampMs: Date.now(),
   };
 }
@@ -315,4 +335,36 @@ function parseDaemonEvent(line: string): TuiDaemonEventSnapshot | null {
   } catch {
     return null;
   }
+}
+
+function boundDaemonEvent(event: TuiDaemonEventSnapshot): TuiDaemonEventSnapshot {
+  return {
+    ...event,
+    daemon: limitTextTail(event.daemon, EVENT_TEXT_FIELD_MAX_LENGTH),
+    status: limitTextTail(event.status, EVENT_TEXT_FIELD_MAX_LENGTH),
+    source: boundOptionalText(event.source),
+    category: boundOptionalText(event.category),
+    message: boundOptionalText(event.message),
+    goalId: boundOptionalText(event.goalId),
+    errorMessage: boundOptionalText(event.errorMessage),
+  };
+}
+
+function boundOptionalText(value: string | undefined): string | undefined {
+  return value === undefined ? undefined : limitTextTail(value, EVENT_TEXT_FIELD_MAX_LENGTH);
+}
+
+function boundedError(error: unknown): unknown {
+  if (!(error instanceof Error)) {
+    return error;
+  }
+
+  const bounded = new Error(limitTextTail(error.message, EVENT_TEXT_FIELD_MAX_LENGTH));
+  bounded.name = error.name;
+  bounded.stack = boundOptionalText(error.stack);
+  return bounded;
+}
+
+function limitTextTail(value: string, maxLength: number): string {
+  return value.length > maxLength ? value.slice(-maxLength) : value;
 }

@@ -1,4 +1,8 @@
 import type { ScreenKey } from "./ScreenDefinitions.js";
+import { GoalStatus } from "../../../domain/goals/Constants.js";
+import { DecisionStatus } from "../../../domain/decisions/Constants.js";
+import { GuidelineCategory } from "../../../domain/guidelines/Constants.js";
+import { ComponentType } from "../../../domain/components/Constants.js";
 
 export interface MegaMenuItem {
   readonly key: string;
@@ -15,161 +19,203 @@ export interface MegaMenuSection {
   readonly children: readonly MegaMenuItem[];
 }
 
+const MEGA_MENU_PRESENTATION_KEYS = {
+  cockpit: "cockpit",
+  projectOverview: "project-overview",
+  name: "name",
+  purpose: "purpose",
+  audiences: "audiences",
+  goalSummary: "goal-summary",
+  recentEvents: "recent-events",
+  decisions: "decisions",
+  components: "components",
+  sessions: "sessions",
+  goals: "goals",
+  backlog: "backlog",
+  ready: "ready",
+  active: "active",
+  archive: "archive",
+  removed: "removed",
+  memory: "memory",
+  invariants: "invariants",
+  invariantArchitecture: "architecture",
+  invariantProcess: "process",
+  invariantTesting: "testing",
+  dependencies: "dependencies",
+  runtime: "runtime",
+  dev: "dev",
+  guidelines: "guidelines",
+  session: "session",
+  current: "current",
+  focus: "focus",
+  commands: "commands",
+  progress: "progress",
+  history: "history",
+  recent: "recent",
+  all: "all",
+  notifications: "notifications",
+  unread: "unread",
+  dismissed: "dismissed",
+} as const;
+
 export const MEGA_MENU_SECTIONS: readonly MegaMenuSection[] = [
   {
-    key: "cockpit",
+    key: MEGA_MENU_PRESENTATION_KEYS.cockpit,
     label: "Cockpit",
     screenKey: "cockpit",
     shortcut: "1",
     children: [
       {
-        key: "project-overview",
+        key: MEGA_MENU_PRESENTATION_KEYS.projectOverview,
         label: "Project Overview",
         children: [
-          { key: "name", label: "Name" },
-          { key: "purpose", label: "Purpose" },
-          { key: "audiences", label: "Audiences" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.name, label: "Name" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.purpose, label: "Purpose" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.audiences, label: "Audiences" },
         ],
       },
       {
-        key: "goal-summary",
+        key: MEGA_MENU_PRESENTATION_KEYS.goalSummary,
         label: "Goal Summary",
         children: [
-          { key: "in-progress", label: "In Progress" },
-          { key: "blocked", label: "Blocked" },
-          { key: "completed", label: "Completed" },
+          { key: GoalStatus.DOING, label: "In Progress" },
+          { key: GoalStatus.BLOCKED, label: "Blocked" },
+          { key: GoalStatus.DONE, label: "Completed" },
         ],
       },
       {
-        key: "recent-events",
+        key: MEGA_MENU_PRESENTATION_KEYS.recentEvents,
         label: "Recent Events",
         children: [
-          { key: "decisions", label: "Decisions" },
-          { key: "components", label: "Components" },
-          { key: "sessions", label: "Sessions" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.decisions, label: "Decisions" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.components, label: "Components" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.sessions, label: "Sessions" },
         ],
       },
     ],
   },
   {
-    key: "goals",
+    key: MEGA_MENU_PRESENTATION_KEYS.goals,
     label: "Goals",
     screenKey: "goals",
     shortcut: "2",
     children: [
       {
-        key: "backlog",
+        key: MEGA_MENU_PRESENTATION_KEYS.backlog,
         label: "Backlog",
         children: [
-          { key: "defined", label: "Defined" },
-          { key: "refined", label: "Refined" },
-          { key: "ready", label: "Ready" },
+          { key: GoalStatus.TODO, label: "Defined" },
+          { key: GoalStatus.REFINED, label: "Refined" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.ready, label: "Ready" },
         ],
       },
       {
-        key: "active",
+        key: MEGA_MENU_PRESENTATION_KEYS.active,
         label: "Active",
         children: [
-          { key: "in-progress", label: "In Progress" },
-          { key: "blocked", label: "Blocked" },
-          { key: "in-review", label: "In Review" },
+          { key: GoalStatus.DOING, label: "In Progress" },
+          { key: GoalStatus.BLOCKED, label: "Blocked" },
+          { key: GoalStatus.INREVIEW, label: "In Review" },
         ],
       },
       {
-        key: "archive",
+        key: MEGA_MENU_PRESENTATION_KEYS.archive,
         label: "Archive",
         children: [
-          { key: "completed", label: "Completed" },
-          { key: "removed", label: "Removed" },
+          { key: GoalStatus.DONE, label: "Completed" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.removed, label: "Removed" },
         ],
       },
     ],
   },
   {
-    key: "memory",
+    key: MEGA_MENU_PRESENTATION_KEYS.memory,
     label: "Memory",
     shortcut: "3",
     children: [
       {
-        key: "decisions",
+        key: MEGA_MENU_PRESENTATION_KEYS.decisions,
         label: "Decisions",
         screenKey: "decisions",
         children: [
-          { key: "active", label: "Active" },
-          { key: "superseded", label: "Superseded" },
-          { key: "reversed", label: "Reversed" },
+          { key: DecisionStatus.ACTIVE, label: "Active" },
+          { key: DecisionStatus.SUPERSEDED, label: "Superseded" },
+          { key: DecisionStatus.REVERSED, label: "Reversed" },
         ],
       },
       {
-        key: "invariants",
+        key: MEGA_MENU_PRESENTATION_KEYS.invariants,
         label: "Invariants",
         screenKey: "invariants",
         children: [
-          { key: "architecture", label: "Architecture" },
-          { key: "process", label: "Process" },
-          { key: "testing", label: "Testing" },
+          {
+            key: MEGA_MENU_PRESENTATION_KEYS.invariantArchitecture,
+            label: "Architecture",
+          },
+          { key: MEGA_MENU_PRESENTATION_KEYS.invariantProcess, label: "Process" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.invariantTesting, label: "Testing" },
         ],
       },
       {
-        key: "components",
+        key: MEGA_MENU_PRESENTATION_KEYS.components,
         label: "Components",
         screenKey: "components",
         children: [
-          { key: "services", label: "Services" },
-          { key: "ui", label: "UI" },
-          { key: "libraries", label: "Libraries" },
+          { key: ComponentType.SERVICE, label: "Services" },
+          { key: ComponentType.UI, label: "UI" },
+          { key: ComponentType.LIB, label: "Libraries" },
         ],
       },
       {
-        key: "dependencies",
+        key: MEGA_MENU_PRESENTATION_KEYS.dependencies,
         label: "Dependencies",
         screenKey: "dependencies",
         children: [
-          { key: "runtime", label: "Runtime" },
-          { key: "dev", label: "Dev" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.runtime, label: "Runtime" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.dev, label: "Dev" },
         ],
       },
       {
-        key: "guidelines",
+        key: MEGA_MENU_PRESENTATION_KEYS.guidelines,
         label: "Guidelines",
         screenKey: "guidelines",
         children: [
-          { key: "coding-style", label: "Coding Style" },
-          { key: "testing", label: "Testing" },
-          { key: "process", label: "Process" },
+          { key: GuidelineCategory.CODING_STYLE, label: "Coding Style" },
+          { key: GuidelineCategory.TESTING, label: "Testing" },
+          { key: GuidelineCategory.PROCESS, label: "Process" },
         ],
       },
     ],
   },
   {
-    key: "session",
+    key: MEGA_MENU_PRESENTATION_KEYS.session,
     label: "Session",
     screenKey: "session",
     shortcut: "4",
     children: [
       {
-        key: "current",
+        key: MEGA_MENU_PRESENTATION_KEYS.current,
         label: "Current",
         children: [
-          { key: "focus", label: "Focus" },
-          { key: "commands", label: "Commands" },
-          { key: "progress", label: "Progress" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.focus, label: "Focus" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.commands, label: "Commands" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.progress, label: "Progress" },
         ],
       },
       {
-        key: "history",
+        key: MEGA_MENU_PRESENTATION_KEYS.history,
         label: "History",
         children: [
-          { key: "recent", label: "Recent" },
-          { key: "all", label: "All" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.recent, label: "Recent" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.all, label: "All" },
         ],
       },
       {
-        key: "notifications",
+        key: MEGA_MENU_PRESENTATION_KEYS.notifications,
         label: "Notifications",
         children: [
-          { key: "unread", label: "Unread" },
-          { key: "dismissed", label: "Dismissed" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.unread, label: "Unread" },
+          { key: MEGA_MENU_PRESENTATION_KEYS.dismissed, label: "Dismissed" },
         ],
       },
     ],
