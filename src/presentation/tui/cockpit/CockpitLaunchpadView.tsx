@@ -36,7 +36,8 @@ import {
   type GlyphColorMap,
   type GlyphPalette,
 } from "./CockpitDaemonFrames.js";
-import { CockpitDaemonPanel, DaemonInfoOverlay } from "./CockpitDaemonPanel.js";
+import { CockpitDaemonPanel } from "./CockpitDaemonPanel.js";
+import { DaemonInfoOverlay } from "./DaemonInfoOverlay.js";
 import { CockpitLaunchpadCopy } from "./CockpitLaunchpadCopy.js";
 import { CockpitLaunchpadWelcome } from "./CockpitLaunchpadWelcome.js";
 import { getDaemonPanelStatusLabel } from "./DaemonPanelStatusLabel.js";

@@ -1,10 +1,8 @@
 import React from "react";
 import { describe, expect, it } from "@jest/globals";
-import { Text } from "ink";
 import { render } from "ink-testing-library";
-import { CockpitDaemonPanel } from "../../../../src/presentation/tui/cockpit/CockpitDaemonPanel.js";
 import { CockpitDaemonPanelCopy } from "../../../../src/presentation/tui/cockpit/CockpitDaemonPanelCopy.js";
-import { RefinerDaemonConstants } from "../../../../src/presentation/tui/cockpit/daemons/RefinerDaemonConstants.js";
+import { DaemonActionLine } from "../../../../src/presentation/tui/cockpit/DaemonActionLine.js";
 import type {
   TuiDaemonConfig,
   TuiSubprocessSnapshot,
@@ -29,45 +27,34 @@ function createSnapshot(
   };
 }
 
-describe("CockpitDaemonPanel", () => {
-  it("renders supplied daemon frame content and stopped action controls", () => {
+describe("DaemonActionLine", () => {
+  it("renders start and info controls for stopped daemons", () => {
     const { lastFrame, unmount } = render(
-      <CockpitDaemonPanel
-        daemonConstants={RefinerDaemonConstants}
+      <DaemonActionLine
         snapshot={createSnapshot("stopped")}
-        pendingConfig={daemonConfig}
         selected={true}
-        configuring={false}
         infoVisible={false}
-      >
-        <Text>daemon frame</Text>
-      </CockpitDaemonPanel>,
+      />,
     );
 
-    expect(lastFrame()).toContain("daemon frame");
     expect(lastFrame()).toContain(CockpitDaemonPanelCopy.action.start);
     expect(lastFrame()).toContain(CockpitDaemonPanelCopy.action.config);
     expect(lastFrame()).toContain(CockpitDaemonPanelCopy.action.info);
     unmount();
   });
 
-  it("renders running and configuration panel labels through cockpit constants", () => {
+  it("renders stop and info-close controls for running daemons", () => {
     const { lastFrame, unmount } = render(
-      <CockpitDaemonPanel
-        daemonConstants={RefinerDaemonConstants}
-        snapshot={{ ...createSnapshot("running"), pid: 1234 }}
-        pendingConfig={daemonConfig}
-        selected={true}
-        configuring={true}
+      <DaemonActionLine
+        snapshot={createSnapshot("running")}
+        selected={false}
         infoVisible={true}
-      >
-        <Text>daemon frame</Text>
-      </CockpitDaemonPanel>,
+      />,
     );
 
     expect(lastFrame()).toContain(CockpitDaemonPanelCopy.action.stop);
+    expect(lastFrame()).toContain(CockpitDaemonPanelCopy.action.config);
     expect(lastFrame()).toContain(CockpitDaemonPanelCopy.action.infoOpen);
-    expect(lastFrame()).toContain(CockpitDaemonPanelCopy.pidLabel);
     unmount();
   });
 });
