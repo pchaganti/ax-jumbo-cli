@@ -1,6 +1,7 @@
 import React from "react";
 import { describe, expect, it } from "@jest/globals";
 import { render } from "ink-testing-library";
+import stripAnsi from "strip-ansi";
 import { GlyphCellDaemonFrame } from "../../../../src/presentation/tui/cockpit/GlyphCellDaemonFrame.js";
 import { TuiSubprocessStatus } from "../../../../src/presentation/tui/daemon-subprocesses/TuiSubprocessStatus.js";
 
@@ -31,7 +32,7 @@ describe("GlyphCellDaemonFrame", () => {
       />,
     );
 
-    const renderedLines = lastFrame()?.split("\n") ?? [];
+    const renderedLines = stripAnsi(lastFrame() ?? "").split("\n");
 
     expect(renderedLines).toHaveLength(5);
     expect(renderedLines[0]).toContain("abcde");

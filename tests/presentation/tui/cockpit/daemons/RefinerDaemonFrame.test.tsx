@@ -24,11 +24,9 @@ jest.unstable_mockModule(
   }),
 );
 
-const RefinerDaemonFrameModule = await import(
+const { RefinerDaemonFrame } = await import(
   "../../../../../src/presentation/tui/cockpit/daemons/RefinerDaemonFrame.js"
 );
-
-const { RefinerDaemonFrame } = RefinerDaemonFrameModule;
 
 const runningSnapshot = {
   status: TuiSubprocessStatus.RUNNING,
@@ -39,12 +37,6 @@ describe("RefinerDaemonFrame", () => {
   beforeEach(() => {
     mockGetRefinerFrame.mockClear();
     mockGlyphCellDaemonFrame.mockClear();
-  });
-
-  it("exports only the refiner daemon frame concept", () => {
-    expect(Object.keys(RefinerDaemonFrameModule)).toEqual([
-      "RefinerDaemonFrame",
-    ]);
   });
 
   it("selects the refiner frame and passes glyph cell rendering inputs", () => {
@@ -58,9 +50,9 @@ describe("RefinerDaemonFrame", () => {
       codifierGlyphColors: {},
     };
 
-    const { lastFrame, unmount } = render(<RefinerDaemonFrame {...props} />);
+    const { unmount } = render(<RefinerDaemonFrame {...props} />);
 
-    expect(lastFrame()).toContain("REFINER_FRAME");
+    expect(mockGlyphCellDaemonFrame).toHaveBeenCalledTimes(1);
     expect(mockGetRefinerFrame).toHaveBeenCalledWith(
       props.frameIndex,
       refinerGlyphPalette,

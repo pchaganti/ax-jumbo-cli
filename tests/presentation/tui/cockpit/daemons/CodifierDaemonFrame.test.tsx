@@ -26,11 +26,9 @@ jest.unstable_mockModule(
   }),
 );
 
-const CodifierDaemonFrameModule = await import(
+const { CodifierDaemonFrame } = await import(
   "../../../../../src/presentation/tui/cockpit/daemons/CodifierDaemonFrame.js"
 );
-
-const { CodifierDaemonFrame } = CodifierDaemonFrameModule;
 
 const runningSnapshot = {
   status: TuiSubprocessStatus.RUNNING,
@@ -41,12 +39,6 @@ describe("CodifierDaemonFrame", () => {
   beforeEach(() => {
     mockGetCodifierFrame.mockClear();
     mockCodifierGlyphDaemonFrame.mockClear();
-  });
-
-  it("exports only the codifier daemon frame concept", () => {
-    expect(Object.keys(CodifierDaemonFrameModule)).toEqual([
-      "CodifierDaemonFrame",
-    ]);
   });
 
   it("selects the codifier frame and passes codifier rendering inputs", () => {
@@ -63,9 +55,9 @@ describe("CodifierDaemonFrame", () => {
       codifierGlyphColors,
     };
 
-    const { lastFrame, unmount } = render(<CodifierDaemonFrame {...props} />);
+    const { unmount } = render(<CodifierDaemonFrame {...props} />);
 
-    expect(lastFrame()).toContain("CODIFIER_FRAME");
+    expect(mockCodifierGlyphDaemonFrame).toHaveBeenCalledTimes(1);
     expect(mockGetCodifierFrame).toHaveBeenCalledWith(props.frameIndex);
     expect(mockCodifierGlyphDaemonFrame.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({

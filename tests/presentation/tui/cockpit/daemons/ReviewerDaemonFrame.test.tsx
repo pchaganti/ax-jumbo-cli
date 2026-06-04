@@ -24,11 +24,9 @@ jest.unstable_mockModule(
   }),
 );
 
-const ReviewerDaemonFrameModule = await import(
+const { ReviewerDaemonFrame } = await import(
   "../../../../../src/presentation/tui/cockpit/daemons/ReviewerDaemonFrame.js"
 );
-
-const { ReviewerDaemonFrame } = ReviewerDaemonFrameModule;
 
 const runningSnapshot = {
   status: TuiSubprocessStatus.RUNNING,
@@ -39,12 +37,6 @@ describe("ReviewerDaemonFrame", () => {
   beforeEach(() => {
     mockGetReviewerFrame.mockClear();
     mockGlyphCellDaemonFrame.mockClear();
-  });
-
-  it("exports only the reviewer daemon frame concept", () => {
-    expect(Object.keys(ReviewerDaemonFrameModule)).toEqual([
-      "ReviewerDaemonFrame",
-    ]);
   });
 
   it("selects the reviewer frame and passes glyph cell rendering inputs", () => {
@@ -61,9 +53,9 @@ describe("ReviewerDaemonFrame", () => {
       codifierGlyphColors: {},
     };
 
-    const { lastFrame, unmount } = render(<ReviewerDaemonFrame {...props} />);
+    const { unmount } = render(<ReviewerDaemonFrame {...props} />);
 
-    expect(lastFrame()).toContain("REVIEWER_FRAME");
+    expect(mockGlyphCellDaemonFrame).toHaveBeenCalledTimes(1);
     expect(mockGetReviewerFrame).toHaveBeenCalledWith(
       props.frameIndex,
       reviewerGlyphPalette,

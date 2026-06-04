@@ -1,6 +1,7 @@
 import React from "react";
 import { describe, expect, it } from "@jest/globals";
 import { render } from "ink-testing-library";
+import stripAnsi from "strip-ansi";
 import { BaseColors } from "../../../../src/presentation/shared/DesignTokens.js";
 import { CodifierGlyphDaemonFrame } from "../../../../src/presentation/tui/cockpit/CodifierGlyphDaemonFrame.js";
 import { TuiSubprocessStatus } from "../../../../src/presentation/tui/daemon-subprocesses/TuiSubprocessStatus.js";
@@ -25,7 +26,7 @@ describe("CodifierGlyphDaemonFrame", () => {
       />,
     );
 
-    const renderedLines = lastFrame()?.split("\n") ?? [];
+    const renderedLines = stripAnsi(lastFrame() ?? "").split("\n");
 
     expect(renderedLines).toHaveLength(5);
     expect(renderedLines[0]).toContain("abcde");
