@@ -1,6 +1,6 @@
 import React from "react";
 import { MemoryEntityScreen } from "../entity-browser/MemoryEntityScreen.js";
-import { useGuidelinesList } from "../../state-reading/TuiStateReader.js";
+import { useGuidelinesList } from "../../state-reading/useGuidelinesList.js";
 import type { GuidelineView } from "../../../../application/context/guidelines/GuidelineView.js";
 
 const GUIDELINES_SCREEN_COPY = {

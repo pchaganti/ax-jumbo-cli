@@ -30,6 +30,7 @@ import { CockpitLaunchpadDaemonDefinitions } from "./CockpitLaunchpadDaemonDefin
 import { CockpitLaunchpadDaemonPanels } from "./CockpitLaunchpadDaemonPanels.js";
 import { CockpitLaunchpadEventLog } from "./CockpitLaunchpadEventLog.js";
 import { CockpitLaunchpadWelcome } from "./CockpitLaunchpadWelcome.js";
+import { CockpitProjectStatsPanel } from "./CockpitProjectStatsPanel.js";
 import { DaemonInfoOverlay } from "./DaemonInfoOverlay.js";
 import { toggleCockpitDaemon } from "./toggleCockpitDaemon.js";
 import { useCockpitLaunchpadWelcomeVisibility } from "./useCockpitLaunchpadWelcomeVisibility.js";
@@ -243,6 +244,7 @@ export function CockpitLaunchpadView({
   return (
     <Box flexDirection="column" width="100%" height="100%" paddingX={1}>
       {welcomeVisible === true && <CockpitLaunchpadWelcome />}
+      <CockpitProjectStatsPanel />
       <CockpitLaunchpadDaemonPanels
         selectedDaemon={selectedDaemon}
         configuredDaemon={configuredDaemon}

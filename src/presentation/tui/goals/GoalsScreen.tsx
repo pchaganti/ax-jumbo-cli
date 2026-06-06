@@ -13,7 +13,7 @@ import { Panel } from "../ui-primitives/Panel.js";
 import { Tumbler } from "../ui-primitives/Tumbler.js";
 import { GoalAuthoringFlow } from "./GoalAuthoringFlow.js";
 import type { GoalAuthoringValues } from "./GoalAuthoringFlow.js";
-import { useGoalsList } from "../state-reading/TuiStateReader.js";
+import { useGoalsList } from "../state-reading/useGoalsList.js";
 import {
   GOAL_DETAIL_JOIN_SEPARATOR,
   GOAL_STATUS_FILTER_ALL,

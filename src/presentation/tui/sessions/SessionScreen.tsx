@@ -4,7 +4,7 @@ import { SemanticColors, TuiLayout } from "../../shared/DesignTokens.js";
 import { DetailPane } from "../ui-primitives/DetailPane.js";
 import { EntityColumn } from "../memory/entity-browser/EntityColumn.js";
 import { Panel } from "../ui-primitives/Panel.js";
-import { useSessionsList } from "../state-reading/TuiStateReader.js";
+import { useSessionsList } from "../state-reading/useSessionsList.js";
 import type { SessionView } from "../../../application/context/sessions/SessionView.js";
 
 const SESSION_LIST_WIDTH = 46;

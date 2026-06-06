@@ -27,7 +27,7 @@ import {
 import { Renderer } from "./rendering/Renderer.js";
 import { TuiApplicationLauncher } from "../tui/application-shell/TuiApplicationLauncher.js";
 import type { TuiSubprocessManagerFactory } from "../tui/application-shell/TuiApplicationLauncher.js";
-import type { TuiStateReaderControllers } from "../tui/state-reading/TuiStateReader.js";
+import type { TuiStateReaderControllers } from "../tui/state-reading/TuiStateReaderControllers.js";
 import type { InitFlowActionControllers } from "../tui/project-initialization/InitFlow.js";
 import {
   CLI_FLAGS,

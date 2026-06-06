@@ -231,6 +231,7 @@ import { IProjectInitializedProjector } from "../context/project/init/IProjectIn
 import { IProjectUpdatedProjector } from "../context/project/update/IProjectUpdatedProjector.js";
 import { IProjectInitReader } from "../context/project/init/IProjectInitReader.js";
 import { IProjectUpdateReader } from "../context/project/update/IProjectUpdateReader.js";
+import { ProjectStatsController } from "../context/project/stats/ProjectStatsController.js";
 import { IProjectContextReader } from "../context/project/query/IProjectContextReader.js";
 import { IProjectInitializedEventWriter } from "../context/project/init/IProjectInitializedEventWriter.js";
 import { IProjectUpdatedEventWriter } from "../context/project/update/IProjectUpdatedEventWriter.js";
@@ -609,6 +610,7 @@ export interface IApplicationContainer {
   projectUpdatedProjector: IProjectUpdatedProjector & IProjectUpdateReader;
   updateProjectController: UpdateProjectController;
   showProjectController: ShowProjectController;
+  projectStatsController: ProjectStatsController;
   projectContextReader: IProjectContextReader;
   // Audience Projection Stores - decomposed by use case
   audienceAddedProjector: IAudienceAddedProjector;

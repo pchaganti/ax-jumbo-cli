@@ -137,6 +137,7 @@ describe("TuiApplicationLauncher", () => {
       getDependenciesController: { handle: jest.fn() },
       getGuidelinesController: { handle: jest.fn() },
       getInvariantsController: { getAllInvariants: jest.fn() },
+      projectStatsController: { handle: jest.fn() },
       planProjectInitController: { handle: jest.fn() },
       initializeProjectController: { handle: jest.fn() },
       addAudienceController: { handle: jest.fn() },
@@ -155,6 +156,7 @@ describe("TuiApplicationLauncher", () => {
         getProjectSummaryQueryHandler: object;
         getGoalsController: object;
         getSessionsController: object;
+        projectStatsController: object;
       };
       actionControllers: {
         planProjectInitController: object;
@@ -171,6 +173,9 @@ describe("TuiApplicationLauncher", () => {
     );
     expect(element.props.stateReaderControllers.getSessionsController).toBe(
       container.getSessionsController,
+    );
+    expect(element.props.stateReaderControllers.projectStatsController).toBe(
+      container.projectStatsController,
     );
     expect(element.props.actionControllers.planProjectInitController).toBe(
       container.planProjectInitController,

@@ -1,6 +1,6 @@
 import React from "react";
 import { MemoryEntityScreen } from "../entity-browser/MemoryEntityScreen.js";
-import { useDecisionsList } from "../../state-reading/TuiStateReader.js";
+import { useDecisionsList } from "../../state-reading/useDecisionsList.js";
 import type { DecisionView } from "../../../../application/context/decisions/DecisionView.js";
 
 const DECISIONS_SCREEN_COPY = {
