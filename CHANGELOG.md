@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-06-08
+
+### Added
+
+- **Project stats command**: Added `jumbo project stats` to display a snapshot of project health across four dimensions: project context (audiences, audience pains, value propositions), work (goals by lifecycle status, sessions), memory (decisions, components, dependencies, invariants, guidelines), and graph (relations). Supports `--format json` for structured output.
+- **Cockpit stats panel**: The TUI Cockpit now shows a live project stats panel derived from the same stats query, giving operators at-a-glance context coverage and goal flow counts without leaving the TUI.
+
+### Changed
+
+- **Internal**: Decomposed `TuiStateReader` into focused per-entity React hooks (`useGoalsList`, `useProjectStats`, `useComponentsList`, `useDecisionsList`, `useDependenciesList`, `useGuidelinesList`, `useInvariantsList`, `useProjectContext`, `useSessionsList`, `useTickingReadModel`) for improved testability and separation of concerns.
+- **Internal**: Added `HorizontalRule` TUI primitive for consistent section dividers across Cockpit panels.
+
 ## [3.6.1] - 2026-06-06
 
 ### Changed
