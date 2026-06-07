@@ -1,6 +1,6 @@
 import React from "react";
 import { MemoryEntityScreen } from "../entity-browser/MemoryEntityScreen.js";
-import { useComponentsList } from "../../state-reading/TuiStateReader.js";
+import { useComponentsList } from "../../state-reading/useComponentsList.js";
 import type { ComponentView } from "../../../../application/context/components/ComponentView.js";
 
 const COMPONENTS_SCREEN_COPY = {

@@ -4,9 +4,10 @@ import { Text, useInput } from "ink";
 import { render } from "ink-testing-library";
 import {
   TuiStateReaderProvider,
-  useGoalsList,
-  useProjectContext,
 } from "../../../../src/presentation/tui/state-reading/TuiStateReader.js";
+import { useGoalsList } from "../../../../src/presentation/tui/state-reading/useGoalsList.js";
+import { useProjectContext } from "../../../../src/presentation/tui/state-reading/useProjectContext.js";
+import { useProjectStats } from "../../../../src/presentation/tui/state-reading/useProjectStats.js";
 import type { GoalView } from "../../../../src/application/context/goals/GoalView.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 50));
@@ -58,6 +59,15 @@ function GoalsListProbe(): React.ReactElement {
   return <Text>{goalsList.data?.goals.length ?? 0}</Text>;
 }
 
+function ProjectStatsProbe(): React.ReactElement {
+  const projectStats = useProjectStats();
+  return (
+    <Text>
+      {projectStats.data?.snapshot.work.goals.refinedGoalsCount ?? "loading"}
+    </Text>
+  );
+}
+
 describe("TuiStateReader", () => {
   it("reads project context through the injected query handler", async () => {
     const getProjectSummaryQueryHandler = {
@@ -105,6 +115,75 @@ describe("TuiStateReader", () => {
 
     expect(lastFrame()).toContain("1");
     expect(handledRequests).toEqual([{ statuses: ["refined"] }]);
+    unmount();
+  });
+
+  it("reads project stats through the injected controller", async () => {
+    const projectStatsController = {
+      handle: async (request: unknown) => ({
+        request,
+        snapshot: {
+          project: {
+            audiences: {
+              totalAudiences: 0,
+              primaryAudiences: 0,
+              secondaryAudiences: 0,
+            },
+            audiencePains: {
+              audiencePainsCount: 0,
+            },
+            valuePropositions: {
+              valuePropositionsCount: 0,
+            },
+          },
+          work: {
+            goals: {
+              definedGoalsCount: 0,
+              refinedGoalsCount: 1,
+              inProgressGoalsCount: 0,
+              submittedGoalsCount: 0,
+              closedGoalsCount: 0,
+            },
+            sessions: {
+              sessionsCount: 0,
+            },
+          },
+          memory: {
+            decisions: {
+              decisionsCount: 0,
+            },
+            components: {
+              componentsCount: 0,
+            },
+            dependencies: {
+              dependenciesCount: 0,
+            },
+            invariants: {
+              invariantsCount: 0,
+            },
+            guidelines: {
+              guidelinesCount: 0,
+            },
+          },
+          graph: {
+            relationCount: 0,
+          },
+        },
+      }),
+    };
+
+    const { lastFrame, unmount } = render(
+      <TuiStateReaderProvider
+        controllers={{ projectStatsController }}
+        options={{ tickMs: 0 }}
+      >
+        <ProjectStatsProbe />
+      </TuiStateReaderProvider>,
+    );
+
+    const frame = await waitForFrame(lastFrame, "1");
+
+    expect(frame).toContain("1");
     unmount();
   });
 

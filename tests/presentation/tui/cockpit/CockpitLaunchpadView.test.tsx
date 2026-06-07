@@ -3,6 +3,9 @@ import { describe, expect, it, jest } from "@jest/globals";
 import { Text } from "ink";
 import { render } from "ink-testing-library";
 import { CockpitLaunchpadView } from "../../../../src/presentation/tui/cockpit/CockpitLaunchpadView.js";
+import { TuiStateReaderProvider } from "../../../../src/presentation/tui/state-reading/TuiStateReader.js";
+
+const tick = () => new Promise((resolve) => setTimeout(resolve, 50));
 
 describe("CockpitLaunchpadView", () => {
   it("renders the launch animation until the injected renderer reports completion", () => {
@@ -36,6 +39,80 @@ describe("CockpitLaunchpadView", () => {
 
     expect(onLaunchAnimationDone).toHaveBeenCalledTimes(1);
     expect(lastFrame()).not.toContain("launching cockpit");
+    unmount();
+  });
+
+  it("renders project stats above daemon panels", async () => {
+    const projectStatsController = {
+      handle: async () => ({
+        snapshot: {
+          project: {
+            audiences: {
+              totalAudiences: 3,
+              primaryAudiences: 1,
+              secondaryAudiences: 2,
+            },
+            audiencePains: {
+              audiencePainsCount: 4,
+            },
+            valuePropositions: {
+              valuePropositionsCount: 2,
+            },
+          },
+          work: {
+            goals: {
+              definedGoalsCount: 1,
+              refinedGoalsCount: 2,
+              inProgressGoalsCount: 1,
+              submittedGoalsCount: 1,
+              closedGoalsCount: 0,
+            },
+            sessions: {
+              sessionsCount: 2,
+            },
+          },
+          memory: {
+            decisions: {
+              decisionsCount: 4,
+            },
+            components: {
+              componentsCount: 2,
+            },
+            dependencies: {
+              dependenciesCount: 1,
+            },
+            invariants: {
+              invariantsCount: 1,
+            },
+            guidelines: {
+              guidelinesCount: 1,
+            },
+          },
+          graph: {
+            relationCount: 6,
+          },
+        },
+      }),
+    };
+
+    const { lastFrame, unmount } = render(
+      <TuiStateReaderProvider
+        controllers={{ projectStatsController }}
+        options={{ tickMs: 0 }}
+      >
+        <CockpitLaunchpadView
+          reviewerFrameDurationMs={0}
+          refinerFrameDurationMs={0}
+          codifierFrameDurationMs={0}
+        />
+      </TuiStateReaderProvider>,
+    );
+
+    await tick();
+    const frame = lastFrame() ?? "";
+
+    expect(frame.indexOf("STATS//")).toBeGreaterThanOrEqual(0);
+    expect(frame.indexOf("STATS//")).toBeLessThan(frame.indexOf("REFINER"));
     unmount();
   });
 });

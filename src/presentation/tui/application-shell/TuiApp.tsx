@@ -10,12 +10,10 @@ import type { GoalAuthoringValues } from "../goals/GoalAuthoringFlow.js";
 import { DEFAULT_SCREEN_INDEX } from "../navigation/ScreenDefinitions.js";
 import { TuiActionDispatcher } from "../action-dispatch/TuiActionDispatcher.js";
 import type { TuiRequestController } from "../action-dispatch/TuiRequestController.js";
-import {
-  TuiStateReaderProvider,
-  useProjectContext,
-  type TuiStateReaderControllers,
-  type TuiStateReaderOptions,
-} from "../state-reading/TuiStateReader.js";
+import { TuiStateReaderProvider } from "../state-reading/TuiStateReader.js";
+import type { TuiStateReaderControllers } from "../state-reading/TuiStateReaderControllers.js";
+import type { TuiStateReaderOptions } from "../state-reading/TuiStateReaderOptions.js";
+import { useProjectContext } from "../state-reading/useProjectContext.js";
 import { SubprocessManagerProvider } from "../daemon-subprocesses/SubprocessManagerProvider.js";
 import { useSubprocessManager } from "../daemon-subprocesses/useSubprocessManager.js";
 import type { ISubprocessManager, TuiSubprocessSnapshot } from "../daemon-subprocesses/ISubprocessManager.js";

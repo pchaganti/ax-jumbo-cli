@@ -1,6 +1,6 @@
 import React from "react";
 import { MemoryEntityScreen } from "../entity-browser/MemoryEntityScreen.js";
-import { useInvariantsList } from "../../state-reading/TuiStateReader.js";
+import { useInvariantsList } from "../../state-reading/useInvariantsList.js";
 import type { InvariantView } from "../../../../application/context/invariants/InvariantView.js";
 
 const INVARIANTS_SCREEN_COPY = {

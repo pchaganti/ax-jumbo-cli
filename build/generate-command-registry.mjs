@@ -94,7 +94,7 @@ function parseCommandPath(filePath) {
  * @param filePath - Relative path to the command file
  * @param importPrefix - The import path prefix (e.g., '../commands' or '../work')
  */
-function generateImport(filePath, importPrefix) {
+function generateImport(filePath, importPrefix, baseDir) {
   // Convert file path to import path (remove .ts, use forward slashes)
   const importPath = filePath.replace(/\.ts$/, '.js').replace(/\\/g, '/');
 
@@ -108,11 +108,23 @@ function generateImport(filePath, importPrefix) {
     .map((part, index) => toHandlerCasePart(part, index))
     .join('');
   const metaName = `${handlerName}Meta`;
+  const commandObjectName = `${handlerName}Command`;
+
+  if (hasCommandObjectExport(filePath, baseDir, commandObjectName)) {
+    return {
+      statement: `import { ${commandObjectName} } from '${importPrefix}/${importPath}';`,
+      handlerExpression: `${commandObjectName}.handler`,
+      metadataExpression: `${commandObjectName}.metadata`,
+      parent,
+      subcommand,
+      fullCommand
+    };
+  }
 
   return {
     statement: `import { ${handlerName}, metadata as ${metaName} } from '${importPrefix}/${importPath}';`,
-    handlerName,
-    metaName,
+    handlerExpression: handlerName,
+    metadataExpression: metaName,
     parent,
     subcommand,
     fullCommand
@@ -124,8 +136,8 @@ function generateImport(filePath, importPrefix) {
  * @param commandFilesWithPrefix - Array of { filePath, importPrefix, baseDir }
  */
 function generateRegistry(commandFilesWithPrefix) {
-  const imports = commandFilesWithPrefix.map(({ filePath, importPrefix }) =>
-    generateImport(filePath, importPrefix)
+  const imports = commandFilesWithPrefix.map(({ filePath, importPrefix, baseDir }) =>
+    generateImport(filePath, importPrefix, baseDir)
   );
 
   const importStatements = imports.map(imp => imp.statement).join('\n');
@@ -133,8 +145,8 @@ function generateRegistry(commandFilesWithPrefix) {
   const commandEntries = imports.map(imp => {
     return `  {
     path: '${imp.fullCommand}',
-    metadata: ${imp.metaName},
-    handler: ${imp.handlerName}
+    metadata: ${imp.metadataExpression},
+    handler: ${imp.handlerExpression}
   }`;
   }).join(',\n');
 
@@ -190,9 +202,21 @@ function hasMetadataExport(filePath, baseDir) {
     // - export const metadata = ...
     // - export { metadata }
     const metadataPattern = /export\s+(const\s+metadata|{\s*metadata\s*})/;
-    return metadataPattern.test(content);
+    const commandObjectPattern = /export\s+const\s+\w+Command\b/;
+    return metadataPattern.test(content) || commandObjectPattern.test(content);
   } catch (error) {
     console.warn(`   Warning: Could not read ${filePath}: ${error.message}`);
+    return false;
+  }
+}
+
+function hasCommandObjectExport(filePath, baseDir, commandObjectName) {
+  try {
+    const fullPath = path.join(baseDir, filePath);
+    const content = fs.readFileSync(fullPath, 'utf-8');
+    const escapedName = commandObjectName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`export\\s+const\\s+${escapedName}\\b`).test(content);
+  } catch (_error) {
     return false;
   }
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { MemoryEntityScreen } from "../entity-browser/MemoryEntityScreen.js";
-import { useDependenciesList } from "../../state-reading/TuiStateReader.js";
+import { useDependenciesList } from "../../state-reading/useDependenciesList.js";
 import type { DependencyView } from "../../../../application/context/dependencies/DependencyView.js";
 
 const DEPENDENCIES_SCREEN_COPY = {

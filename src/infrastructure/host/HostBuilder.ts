@@ -160,6 +160,10 @@ import { LocalUpdateProjectGateway } from "../../application/context/project/upd
 import { UpdateProjectController } from "../../application/context/project/update/UpdateProjectController.js";
 import { LocalShowProjectGateway } from "../../application/context/project/show/LocalShowProjectGateway.js";
 import { ShowProjectController } from "../../application/context/project/show/ShowProjectController.js";
+import { GetProjectStatsQueryHandler } from "../../application/context/project/stats/GetProjectStatsQueryHandler.js";
+import { LocalProjectStatsGateway } from "../../application/context/project/stats/LocalProjectStatsGateway.js";
+import { ProjectStatsController } from "../../application/context/project/stats/ProjectStatsController.js";
+import { SqliteProjectStatsQuery } from "../context/project/stats/SqliteProjectStatsQuery.js";
 // Audience Event Stores - decomposed by use case
 import { FsAudienceAddedEventStore } from "../context/audiences/add/FsAudienceAddedEventStore.js";
 import { FsAudienceUpdatedEventStore } from "../context/audiences/update/FsAudienceUpdatedEventStore.js";
@@ -937,6 +941,7 @@ export class HostBuilder {
     const projectInitializedProjector = new SqliteProjectInitializedProjector(this.db);
     const projectUpdatedProjector = new SqliteProjectUpdatedProjector(this.db);
     const projectContextReader = new SqliteProjectContextReader(this.db);
+    const projectStatsQuery = new SqliteProjectStatsQuery(this.db);
     // Audience Projection Stores - decomposed by use case
     const audienceAddedProjector = new SqliteAudienceAddedProjector(this.db);
     const audienceUpdatedProjector = new SqliteAudienceUpdatedProjector(this.db);
@@ -999,6 +1004,15 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       valuePropositionContextReader
     );
     const showProjectController = new ShowProjectController(showProjectGateway);
+    const projectStatsQueryHandler = new GetProjectStatsQueryHandler(
+      projectStatsQuery
+    );
+    const projectStatsGateway = new LocalProjectStatsGateway(
+      projectStatsQueryHandler
+    );
+    const projectStatsController = new ProjectStatsController(
+      projectStatsGateway
+    );
 
     // Session Controllers
     const sessionContextQueryHandler = new SessionContextQueryHandler(
@@ -2281,6 +2295,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
       projectUpdatedProjector,
       updateProjectController,
       showProjectController,
+      projectStatsController,
       projectContextReader,
       // Audience Projection Stores - decomposed by use case
       audienceAddedProjector,
