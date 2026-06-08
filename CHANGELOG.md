@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.7.2] - 2026-06-08
+
+### Fixed
+
+- **TUI worker daemons**: Daemon stop controls now wait for real child-process close, prevent duplicate starts while stopping, and escalate process-tree termination after a bounded timeout.
+- **Test stability**: Removed a brittle daemon panel copy-count assertion that blocked copy and lifecycle label changes.
+
+## [3.7.1] - 2026-06-08
+
+### Fixed
+
+- **Test stability**: Removed brittle copy/label assertions and oversized snapshot tests for Cockpit stats panel, welcome copy, and HorizontalRule primitive. Refactored `project stats` command handler to eliminate a redundant handler class.
+
+## [3.7.0] - 2026-06-08
+
+### Added
+
+- **Project stats command**: Added `jumbo project stats` to display a snapshot of project health across four dimensions: project context (audiences, audience pains, value propositions), work (goals by lifecycle status, sessions), memory (decisions, components, dependencies, invariants, guidelines), and graph (relations). Supports `--format json` for structured output.
+- **Cockpit stats panel**: The TUI Cockpit now shows a live project stats panel derived from the same stats query, giving operators at-a-glance context coverage and goal flow counts without leaving the TUI.
+
+### Changed
+
+- **Internal**: Decomposed `TuiStateReader` into focused per-entity React hooks (`useGoalsList`, `useProjectStats`, `useComponentsList`, `useDecisionsList`, `useDependenciesList`, `useGuidelinesList`, `useInvariantsList`, `useProjectContext`, `useSessionsList`, `useTickingReadModel`) for improved testability and separation of concerns.
+- **Internal**: Added `HorizontalRule` TUI primitive for consistent section dividers across Cockpit panels.
+
+## [3.6.1] - 2026-06-06
+
+### Changed
+
+- **Internal**: Decomposed Cockpit screen into focused collaborators (`AnimatedBannerColorGradient`, `AnimatedBannerLineColorSegments`, `AnimatedBannerTiming`, `CockpitDaemonAgentConfigCycler`, `CockpitDaemonConfigsUpdater`, `CockpitDaemonEventSnapshot`) for improved testability and separation of concerns.
+- **Internal**: Replaced 62 `as-any` casts in `ProjectionBusFactory` with type-safe event dispatch, eliminating unsafe type coercions across the projection bus.
+
+### Fixed
+
+- **CI gate**: Added PR gate workflow for lint, type-check, and build validation on pull requests.
+- **Lint errors**: Resolved all ESLint errors introduced during TUI decomposition.
+- **Test stability**: Fixed flaky tests and added missing test coverage for daemon panel status labels, codifier daemon constants, and `CenteredPrompt`.
+
 ## [3.6.0] - 2026-06-02
 
 ### Changed

@@ -25,7 +25,7 @@ import { ARGV, FAILURE_EXIT_CODE } from "./presentation/cli/Constants.js";
 import { ProjectRootResolver } from "./infrastructure/context/project/ProjectRootResolver.js";
 import { planCliBootstrap } from "./presentation/cli/CliBootstrapPlan.js";
 import type { InitFlowActionControllers } from "./presentation/tui/project-initialization/InitFlow.js";
-import type { TuiStateReaderControllers } from "./presentation/tui/state-reading/TuiStateReader.js";
+import type { TuiStateReaderControllers } from "./presentation/tui/state-reading/TuiStateReaderControllers.js";
 import type { TuiSubprocessManagerFactory } from "./presentation/tui/application-shell/TuiApplicationLauncher.js";
 import { TuiSubprocessManager } from "./presentation/tui/daemon-subprocesses/TuiSubprocessManager.js";
 import type { InitializeProjectRequest } from "./application/context/project/init/InitializeProjectRequest.js";

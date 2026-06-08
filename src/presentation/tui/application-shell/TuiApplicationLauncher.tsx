@@ -5,7 +5,7 @@ import type { ILogger } from "../../../application/logging/ILogger.js";
 import { GetProjectSummaryQueryHandler } from "../../../application/context/project/query/GetProjectSummaryQueryHandler.js";
 import { TuiApp } from "./TuiApp.js";
 import type { TuiAppActionControllers } from "./TuiApp.js";
-import type { TuiStateReaderControllers } from "../state-reading/TuiStateReader.js";
+import type { TuiStateReaderControllers } from "../state-reading/TuiStateReaderControllers.js";
 import type { ISubprocessManager } from "../daemon-subprocesses/ISubprocessManager.js";
 
 export type TuiSubprocessManagerFactory = (logger?: ILogger) => ISubprocessManager;
@@ -54,6 +54,7 @@ export class TuiApplicationLauncher {
       getDependenciesController: container.getDependenciesController,
       getGuidelinesController: container.getGuidelinesController,
       getInvariantsController: container.getInvariantsController,
+      projectStatsController: container.projectStatsController,
     };
   }
 

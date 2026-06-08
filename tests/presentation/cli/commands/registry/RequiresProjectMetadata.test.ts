@@ -34,4 +34,11 @@ describe("requiresProject metadata", () => {
     expect(command).toBeDefined();
     expect(command?.metadata.requiresProject).toBe(true);
   });
+
+  it("includes project stats as an explicitly project-scoped generated command", () => {
+    const command = commands.find((c) => c.path === "project stats");
+
+    expect(command).toBeDefined();
+    expect(command?.metadata.requiresProject).toBe(true);
+  });
 });
