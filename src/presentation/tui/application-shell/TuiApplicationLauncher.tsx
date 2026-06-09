@@ -3,6 +3,7 @@ import { render } from "ink";
 import type { IApplicationContainer } from "../../../application/host/IApplicationContainer.js";
 import type { ILogger } from "../../../application/logging/ILogger.js";
 import { GetProjectSummaryQueryHandler } from "../../../application/context/project/query/GetProjectSummaryQueryHandler.js";
+import type { CliUpdateController } from "../../../application/cli-metadata/update/CliUpdateController.js";
 import { TuiApp } from "./TuiApp.js";
 import type { TuiAppActionControllers } from "./TuiApp.js";
 import type { TuiStateReaderControllers } from "../state-reading/TuiStateReaderControllers.js";
@@ -18,6 +19,7 @@ export class TuiApplicationLauncher {
     private readonly fallbackStateReaderControllerFactory?: () => Promise<TuiStateReaderControllers>,
     private readonly subprocessManagerFactory?: TuiSubprocessManagerFactory,
     private readonly directoryPath: string = process.cwd(),
+    private readonly cliUpdateController?: Pick<CliUpdateController, "check" | "upgrade">,
   ) {}
 
   async launch(): Promise<void> {
@@ -30,6 +32,9 @@ export class TuiApplicationLauncher {
         onProjectInitialized={this.fallbackStateReaderControllerFactory}
         subprocessManager={this.subprocessManagerFactory?.(this.container?.logger)}
         settingsReader={this.container?.settingsReader}
+        cliUpdateController={
+          this.cliUpdateController ?? this.container?.cliUpdateController
+        }
       />,
     );
 

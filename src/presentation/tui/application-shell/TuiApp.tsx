@@ -18,6 +18,9 @@ import { SubprocessManagerProvider } from "../daemon-subprocesses/SubprocessMana
 import { useSubprocessManager } from "../daemon-subprocesses/useSubprocessManager.js";
 import type { ISubprocessManager, TuiSubprocessSnapshot } from "../daemon-subprocesses/ISubprocessManager.js";
 import type { NotificationDrawerNotification } from "./NotificationDrawer.js";
+import type { CliUpdateController } from "../../../application/cli-metadata/update/CliUpdateController.js";
+import type { CliUpdateCheckResult } from "../../../application/cli-metadata/update/CliUpdateCheckResult.js";
+import type { CliUpgradeResult } from "../../../application/cli-metadata/update/CliUpgradeResult.js";
 import type { AddGoalRequest } from "../../../application/context/goals/add/AddGoalRequest.js";
 import type { AddGoalResponse } from "../../../application/context/goals/add/AddGoalResponse.js";
 import type { ProjectLifecycleState } from "../../../application/context/project/ProjectLifecycleState.js";
@@ -35,6 +38,8 @@ const COCKPIT_FOOTER_SHORTCUTS = [
   TuiAppShortcut.TOGGLE_WORKER,
   TuiAppShortcut.CREATE_GOAL,
 ] as const;
+const CLI_UPDATE_NOTIFICATION_ID = "cli-update-available";
+const CLI_UPDATE_ACTION_CHAR = "u";
 
 function useTerminalDimensions(): { columns: number; rows: number } {
   const { stdout } = useStdout();
@@ -68,6 +73,7 @@ interface TuiAppProps {
   readonly onProjectInitialized?: () => Promise<TuiStateReaderControllers>;
   readonly subprocessManager?: ISubprocessManager;
   readonly settingsReader?: Pick<ISettingsReader, "read" | "write">;
+  readonly cliUpdateController?: Pick<CliUpdateController, "check" | "upgrade">;
   readonly launchAnimationEnabled?: boolean;
 }
 
@@ -87,6 +93,7 @@ export function TuiApp({
   onProjectInitialized,
   subprocessManager,
   settingsReader,
+  cliUpdateController,
   launchAnimationEnabled = true,
 }: TuiAppProps = {}): React.ReactElement {
   const [activeStateReaderControllers, setActiveStateReaderControllers] =
@@ -116,6 +123,7 @@ export function TuiApp({
           onProjectInitialized={handleProjectInitialized}
           subprocessManagerEnabled={false}
           settingsReader={settingsReader}
+          cliUpdateController={cliUpdateController}
           launchAnimationEnabled={launchAnimationEnabled}
         />
       ) : (
@@ -127,6 +135,7 @@ export function TuiApp({
             onProjectInitialized={handleProjectInitialized}
             subprocessManagerEnabled={true}
             settingsReader={settingsReader}
+            cliUpdateController={cliUpdateController}
             launchAnimationEnabled={launchAnimationEnabled}
           />
         </SubprocessManagerProvider>
@@ -142,6 +151,7 @@ interface TuiAppFrameProps {
   readonly onProjectInitialized: () => Promise<boolean>;
   readonly subprocessManagerEnabled: boolean;
   readonly settingsReader?: Pick<ISettingsReader, "read" | "write">;
+  readonly cliUpdateController?: Pick<CliUpdateController, "check" | "upgrade">;
   readonly launchAnimationEnabled: boolean;
 }
 
@@ -152,6 +162,7 @@ function TuiAppFrame({
   onProjectInitialized,
   subprocessManagerEnabled,
   settingsReader,
+  cliUpdateController,
   launchAnimationEnabled,
 }: TuiAppFrameProps): React.ReactElement {
   const { exit } = useApp();
@@ -177,6 +188,11 @@ function TuiAppFrame({
   const [daemonStatuses, setDaemonStatuses] = useState<readonly TuiSubprocessSnapshot[]>(
     subprocessManager.getAllStatuses(),
   );
+  const [cliUpdateCheck, setCliUpdateCheck] =
+    useState<CliUpdateCheckResult | null>(null);
+  const [cliUpgradeResult, setCliUpgradeResult] =
+    useState<CliUpgradeResult | null>(null);
+  const [cliUpgradeWorking, setCliUpgradeWorking] = useState(false);
   const projectLifecycleState =
     projectContext.data?.lifecycleState ?? ProjectLifecycle.UNINITIALIZED;
   const routedProjectLifecycleState =
@@ -236,6 +252,27 @@ function TuiAppFrame({
       void subprocessManager.terminateAll();
     };
   }, [subprocessManager, subprocessManagerEnabled]);
+
+  useEffect(() => {
+    if (cliUpdateController === undefined || version.trim().length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    void cliUpdateController
+      .check(version)
+      .then((result) => {
+        if (!cancelled) {
+          setCliUpdateCheck(result);
+          setCliUpgradeResult(null);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cliUpdateController, version]);
 
   useInput((input) => {
     if (initFlowOpen || goalAuthoringOpen) {
@@ -339,6 +376,32 @@ function TuiAppFrame({
     setGoalAuthoringOpen(false);
   }, []);
 
+  const handleNotificationAction = useCallback(
+    async (id: string) => {
+      if (
+        id !== CLI_UPDATE_NOTIFICATION_ID ||
+        cliUpdateController === undefined ||
+        cliUpdateCheck?.status !== "update-available" ||
+        !cliUpdateCheck.feasibility.feasible ||
+        cliUpgradeWorking
+      ) {
+        return;
+      }
+
+      setCliUpgradeWorking(true);
+      const result = await cliUpdateController.upgrade(
+        cliUpdateCheck.latestVersion,
+      );
+      setCliUpgradeResult(result);
+      setCliUpgradeWorking(false);
+    },
+    [
+      cliUpdateCheck,
+      cliUpdateController,
+      cliUpgradeWorking,
+    ],
+  );
+
   const handleBannerAnimationComplete = useCallback(() => {
     setBannerAnimationComplete(true);
   }, []);
@@ -408,7 +471,13 @@ function TuiAppFrame({
           terminalWidth={columns}
           shortcutsEnabled={frameShortcutsEnabled}
           contextualShortcuts={cockpitLaunchpadVisible ? COCKPIT_FOOTER_SHORTCUTS : []}
-          notifications={buildDaemonFailureNotifications(daemonStatuses)}
+          notifications={buildNotifications(
+            daemonStatuses,
+            cliUpdateCheck,
+            cliUpgradeResult,
+            cliUpgradeWorking,
+          )}
+          onNotificationAction={handleNotificationAction}
         />
       </Box>
     </Box>
@@ -455,4 +524,76 @@ function buildDaemonFailureNotifications(
       body: status.stderr[status.stderr.length - 1] ?? TuiAppCopy.daemonFailureBody,
       unread: true,
     }));
+}
+
+function buildNotifications(
+  daemonStatuses: readonly TuiSubprocessSnapshot[],
+  cliUpdateCheck: CliUpdateCheckResult | null,
+  cliUpgradeResult: CliUpgradeResult | null,
+  cliUpgradeWorking: boolean,
+): readonly NotificationDrawerNotification[] {
+  const cliUpdateNotification = buildCliUpdateNotification(
+    cliUpdateCheck,
+    cliUpgradeResult,
+    cliUpgradeWorking,
+  );
+
+  return [
+    ...(cliUpdateNotification === null ? [] : [cliUpdateNotification]),
+    ...buildDaemonFailureNotifications(daemonStatuses),
+  ];
+}
+
+function buildCliUpdateNotification(
+  cliUpdateCheck: CliUpdateCheckResult | null,
+  cliUpgradeResult: CliUpgradeResult | null,
+  cliUpgradeWorking: boolean,
+): NotificationDrawerNotification | null {
+  if (cliUpdateCheck?.status !== "update-available") {
+    return null;
+  }
+
+  const versionSummary = `Local ${cliUpdateCheck.localVersion}, latest ${cliUpdateCheck.latestVersion}.`;
+
+  if (cliUpgradeWorking) {
+    return {
+      id: CLI_UPDATE_NOTIFICATION_ID,
+      title: "Jumbo update in progress",
+      body: `${versionSummary} Running npm upgrade.`,
+      unread: true,
+    };
+  }
+
+  if (cliUpgradeResult !== null) {
+    return {
+      id: CLI_UPDATE_NOTIFICATION_ID,
+      title: cliUpgradeResult.ok
+        ? "Jumbo update completed"
+        : "Jumbo update needs manual action",
+      body: cliUpgradeResult.ok
+        ? `${versionSummary} ${cliUpgradeResult.message}`
+        : `${versionSummary} ${cliUpgradeResult.guidance}`,
+      unread: !cliUpgradeResult.ok,
+    };
+  }
+
+  if (cliUpdateCheck.feasibility.feasible) {
+    return {
+      id: CLI_UPDATE_NOTIFICATION_ID,
+      title: "Jumbo update available",
+      body: `${versionSummary} Upgrade from this TUI or dismiss the notification.`,
+      unread: true,
+      action: {
+        char: CLI_UPDATE_ACTION_CHAR,
+        label: "upgrade",
+      },
+    };
+  }
+
+  return {
+    id: CLI_UPDATE_NOTIFICATION_ID,
+    title: "Jumbo update available",
+    body: `${versionSummary} ${cliUpdateCheck.feasibility.guidance}`,
+    unread: true,
+  };
 }

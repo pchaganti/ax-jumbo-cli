@@ -7,11 +7,18 @@ export interface NotificationDrawerNotification {
   title: string;
   body: string;
   unread: boolean;
+  action?: NotificationDrawerNotificationAction;
+}
+
+export interface NotificationDrawerNotificationAction {
+  char: string;
+  label: string;
 }
 
 interface NotificationDrawerProps {
   notifications: readonly NotificationDrawerNotification[];
   onDismiss: (id: string) => void;
+  onAction?: (id: string) => void;
   onClose: () => void;
   terminalWidth: number;
 }
@@ -19,6 +26,7 @@ interface NotificationDrawerProps {
 export function NotificationDrawer({
   notifications,
   onDismiss,
+  onAction,
   onClose,
   terminalWidth,
 }: NotificationDrawerProps): React.ReactElement {
@@ -50,6 +58,14 @@ export function NotificationDrawer({
 
     if ((input === "d" || input === "D") && notifications[highlightedIndex]) {
       onDismiss(notifications[highlightedIndex].id);
+    }
+
+    const highlightedNotification = notifications[highlightedIndex];
+    if (
+      highlightedNotification?.action !== undefined &&
+      input.toLowerCase() === highlightedNotification.action.char.toLowerCase()
+    ) {
+      onAction?.(highlightedNotification.id);
     }
   });
 
@@ -100,6 +116,9 @@ export function NotificationDrawer({
       <Box marginTop={1}>
         <Text color={SemanticColors.muted}>
           ↑↓ select {TuiGlyphs.dot} d dismiss {TuiGlyphs.dot} esc close
+          {notifications[highlightedIndex]?.action !== undefined
+            ? ` ${TuiGlyphs.dot} ${notifications[highlightedIndex].action.char} ${notifications[highlightedIndex].action.label}`
+            : ""}
         </Text>
       </Box>
     </Box>

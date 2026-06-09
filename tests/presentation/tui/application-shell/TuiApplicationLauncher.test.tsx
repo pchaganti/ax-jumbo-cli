@@ -120,6 +120,10 @@ describe("TuiApplicationLauncher", () => {
   });
 
   it("maps container controllers into TUI state reader controllers", async () => {
+    const cliUpdateController = {
+      check: jest.fn(),
+      upgrade: jest.fn(),
+    };
     const container: Partial<IApplicationContainer> = {
       settingsReader: {
         read: jest.fn(),
@@ -142,6 +146,7 @@ describe("TuiApplicationLauncher", () => {
       initializeProjectController: { handle: jest.fn() },
       addAudienceController: { handle: jest.fn() },
       addValuePropositionController: { handle: jest.fn() },
+      cliUpdateController: cliUpdateController as never,
     };
 
     const launcher = new TuiApplicationLauncher(
@@ -165,6 +170,7 @@ describe("TuiApplicationLauncher", () => {
         addValuePropositionController: object;
       };
       settingsReader: object;
+      cliUpdateController: object;
     }>;
     expect(element.props.stateReaderControllers.getProjectSummaryQueryHandler)
       .toBeDefined();
@@ -190,5 +196,29 @@ describe("TuiApplicationLauncher", () => {
       container.addValuePropositionController,
     );
     expect(element.props.settingsReader).toBe(container.settingsReader);
+    expect(element.props.cliUpdateController).toBe(cliUpdateController);
+  });
+
+  it("passes an explicit update controller into TuiApp", async () => {
+    const cliUpdateController = {
+      check: jest.fn(),
+      upgrade: jest.fn(),
+    };
+    const launcher = new TuiApplicationLauncher(
+      "1.2.3",
+      null,
+      {},
+      undefined,
+      undefined,
+      "C:\\projects\\jumbo\\cli",
+      cliUpdateController,
+    );
+
+    await launcher.launch();
+
+    const element = mockRender.mock.calls[0][0] as React.ReactElement<{
+      cliUpdateController: object;
+    }>;
+    expect(element.props.cliUpdateController).toBe(cliUpdateController);
   });
 });

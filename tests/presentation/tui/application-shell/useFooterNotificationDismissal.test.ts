@@ -13,7 +13,7 @@ describe("useFooterNotificationDismissal", () => {
       latest: FooterNotificationDismissalResult | null;
     } = { latest: null };
 
-    const dismissProbe = () => {
+    const DismissProbe = () => {
       const dismissal = useFooterNotificationDismissal();
       recordedState.latest = dismissal;
 
@@ -24,7 +24,7 @@ describe("useFooterNotificationDismissal", () => {
       );
     };
 
-    render(React.createElement(dismissProbe));
+    render(React.createElement(DismissProbe));
 
     expect(recordedState.latest?.dismissedNotificationIds).toEqual([]);
 

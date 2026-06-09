@@ -30,6 +30,7 @@ import { ITelemetryClient } from "../telemetry/ITelemetryClient.js";
 
 // CLI Version
 import { ICliVersionReader } from "../cli-metadata/query/ICliMetadataReader.js";
+import { CliUpdateController } from "../cli-metadata/update/CliUpdateController.js";
 
 // Port interfaces for session projection stores - decomposed by use case
 import { ISessionStartedProjector } from "../context/sessions/start/ISessionStartedProjector.js";
@@ -374,6 +375,7 @@ export interface IApplicationContainer {
 
   // CLI Version
   cliVersionReader: ICliVersionReader;
+  cliUpdateController: CliUpdateController;
 
   // Work Category - Session Event Stores - decomposed by use case
   sessionStartedEventStore: ISessionStartedEventWriter;

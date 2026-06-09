@@ -287,6 +287,9 @@ import { SqliteAudiencePainContextReader } from "../context/audience-pains/query
 import { SqliteValuePropositionContextReader } from "../context/value-propositions/query/SqliteValuePropositionContextReader.js";
 // CLI Version Reader
 import { CliVersionReader } from "../cli-metadata/query/CliVersionReader.js";
+import { CliUpdateController } from "../../application/cli-metadata/update/CliUpdateController.js";
+import { NpmPackageUpgradeGateway } from "../cli-metadata/update/NpmPackageUpgradeGateway.js";
+import { NpmPackageVersionGateway } from "../cli-metadata/update/NpmPackageVersionGateway.js";
 // Brownfield Status Reader
 import { SqliteBrownfieldStatusReader } from "../context/sessions/start/SqliteBrownfieldStatusReader.js";
 // Settings Infrastructure
@@ -651,6 +654,12 @@ export class HostBuilder {
         ? new PostHogTelemetryClient(telemetryStatus.anonymousId)
         : new NoOpTelemetryClient();
     this.registerTelemetryClient?.(telemetryClient);
+    const cliUpdateController = new CliUpdateController(
+      new NpmPackageVersionGateway(telemetryClient, logger),
+      new NpmPackageUpgradeGateway(process.argv[1] ?? "", telemetryClient, logger),
+      telemetryClient,
+      logger,
+    );
 
     // Create worker identity components
     const hostSessionKeyResolver = new HostSessionKeyResolver();
@@ -2066,6 +2075,7 @@ const audiencePainContextReader = new SqliteAudiencePainContextReader(this.db);
 
       // CLI Version
       cliVersionReader,
+      cliUpdateController,
 
       // Work Category - Session Event Stores - decomposed by use case
       sessionStartedEventStore,
