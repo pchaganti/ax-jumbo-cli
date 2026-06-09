@@ -148,6 +148,8 @@ export class AppRunner {
         this.bareTuiActionControllers,
         this.bareTuiStateReaderControllerFactory,
         this.tuiSubprocessManagerFactory,
+        undefined,
+        this.container?.cliUpdateController,
       ).launch();
       return;
     }

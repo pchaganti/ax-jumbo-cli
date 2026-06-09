@@ -19,6 +19,7 @@ interface FooterProps {
   shortcutsEnabled?: boolean;
   contextualShortcuts?: readonly FooterContextualShortcutDescriptor[];
   notifications?: readonly NotificationDrawerNotification[];
+  onNotificationAction?: (id: string) => void;
 }
 
 export function Footer({
@@ -26,6 +27,7 @@ export function Footer({
   shortcutsEnabled = true,
   contextualShortcuts = [],
   notifications = [],
+  onNotificationAction,
 }: FooterProps): React.ReactElement {
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
   const { dismissedNotificationIds, handleDismissNotification } =
@@ -61,6 +63,7 @@ export function Footer({
         <NotificationDrawer
           notifications={visibleNotifications}
           onDismiss={handleDismissNotification}
+          onAction={onNotificationAction}
           onClose={() => setNotificationDrawerOpen(false)}
           terminalWidth={terminalWidth}
         />

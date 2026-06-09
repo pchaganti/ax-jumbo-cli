@@ -89,6 +89,8 @@ describe("AppRunner", () => {
       {},
       undefined,
       undefined,
+      undefined,
+      undefined,
     );
     expect(createProgram).not.toHaveBeenCalled();
   });
@@ -128,6 +130,8 @@ describe("AppRunner", () => {
       actionControllers,
       undefined,
       undefined,
+      undefined,
+      undefined,
     );
   });
 
@@ -144,6 +148,32 @@ describe("AppRunner", () => {
       {},
       factory,
       undefined,
+      undefined,
+      undefined,
+    );
+  });
+
+  it("passes the update controller to bare TUI launches when infrastructure exists", async () => {
+    process.argv = ["node", "jumbo"];
+    const cliUpdateController = {
+      check: jest.fn(),
+      upgrade: jest.fn(),
+    };
+    const container: Partial<IApplicationContainer> = {
+      cliUpdateController: cliUpdateController as never,
+    };
+
+    const runner = new AppRunner("1.2.3", container as IApplicationContainer);
+    await runner.run();
+
+    expect(TuiApplicationLauncher).toHaveBeenCalledWith(
+      "1.2.3",
+      container,
+      {},
+      undefined,
+      undefined,
+      undefined,
+      cliUpdateController,
     );
   });
 

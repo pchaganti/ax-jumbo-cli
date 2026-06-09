@@ -1,5 +1,5 @@
 import React from "react";
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, jest } from "@jest/globals";
 import { render } from "ink-testing-library";
 import { Footer } from "../../../../src/presentation/tui/application-shell/Footer.js";
 
@@ -61,5 +61,34 @@ describe("Footer", () => {
     await tick();
 
     expect(lastFrame()).not.toContain("Notifications");
+  });
+
+  it("forwards notification actions from the drawer", async () => {
+    const onNotificationAction = jest.fn();
+    const { stdin } = render(
+      <Footer
+        terminalWidth={80}
+        notifications={[
+          {
+            id: "cli-update",
+            title: "Jumbo update available",
+            body: "Local 1.0.0, latest 1.1.0.",
+            unread: true,
+            action: {
+              char: "u",
+              label: "upgrade",
+            },
+          },
+        ]}
+        onNotificationAction={onNotificationAction}
+      />,
+    );
+
+    stdin.write("n");
+    await tick();
+    stdin.write("u");
+    await tick();
+
+    expect(onNotificationAction).toHaveBeenCalledWith("cli-update");
   });
 });

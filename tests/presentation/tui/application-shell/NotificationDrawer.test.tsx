@@ -64,6 +64,33 @@ describe("NotificationDrawer", () => {
     expect(onDismiss).toHaveBeenCalledWith("daemon-health");
   });
 
+  it("runs the selected notification action", async () => {
+    const onAction = jest.fn();
+    const { stdin } = render(
+      <NotificationDrawer
+        {...defaultProps}
+        notifications={[
+          {
+            id: "version-check",
+            title: "New CLI version available",
+            body: "Update from the drawer.",
+            unread: true,
+            action: {
+              char: "u",
+              label: "upgrade",
+            },
+          },
+        ]}
+        onAction={onAction}
+      />,
+    );
+
+    stdin.write("u");
+    await tick();
+
+    expect(onAction).toHaveBeenCalledWith("version-check");
+  });
+
   it("closes on escape", async () => {
     const onClose = jest.fn();
     const { stdin } = render(

@@ -399,6 +399,97 @@ describe("TuiApp", () => {
     unmount();
   }, 10000);
 
+  it("shows an actionable CLI update notification and runs the upgrade branch", async () => {
+    let completeUpgrade: (() => void) | undefined;
+    const upgradeReleased = new Promise<void>((resolve) => {
+      completeUpgrade = resolve;
+    });
+    const upgrade = jest.fn(async () => {
+      await upgradeReleased;
+      return {
+        ok: true,
+        message: "Upgrade completed. Restart Jumbo to use the new version.",
+      };
+    });
+    const { stdin, lastFrame, unmount } = render(
+      <TuiApp
+        version="1.0.0"
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
+        cliUpdateController={{
+          check: jest.fn(async () => ({
+            status: "update-available",
+            localVersion: "1.0.0",
+            latestVersion: "1.1.0",
+            feasibility: {
+              feasible: true,
+              command: "npm",
+              args: ["install", "-g", "jumbo-cli@latest"],
+            },
+          })),
+          upgrade,
+        }}
+      />,
+    );
+
+    await waitForFrame(lastFrame, (frame) =>
+      frame.includes("notifications (1)"),
+    );
+    stdin.write("n");
+    await waitForFrame(lastFrame, (frame) =>
+      frame.includes("New version of Jumbo available"),
+    );
+    expect(lastFrame()).toContain("Upgrade to 1.1.0 or dismiss");
+    expect(lastFrame()).toContain("u upgrade");
+
+    stdin.write("u");
+    await waitForFrame(lastFrame, (frame) =>
+      /Jumbo update in progress [⠥⠏⠙⠁⠞⠊⠝⠛]/u.test(frame),
+    );
+    expect(lastFrame()).toContain("Local 1.0.0, latest 1.1.0.");
+    expect(lastFrame()).toContain("Running npm upgrade.");
+
+    completeUpgrade?.();
+    await waitForFrame(lastFrame, (frame) =>
+      frame.includes("Jumbo update completed"),
+    );
+
+    expect(upgrade).toHaveBeenCalledWith("1.1.0");
+    unmount();
+  }, 10000);
+
+  it("shows manual update guidance when self-upgrade is unavailable", async () => {
+    const { stdin, lastFrame, unmount } = render(
+      <TuiApp
+        version="1.0.0"
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
+        cliUpdateController={{
+          check: jest.fn(async () => ({
+            status: "update-available",
+            localVersion: "1.0.0",
+            latestVersion: "1.1.0",
+            feasibility: {
+              feasible: false,
+              reason: "self-upgrade-unavailable",
+              guidance: "Run npm install -g jumbo-cli@latest",
+            },
+          })),
+          upgrade: jest.fn(),
+        }}
+      />,
+    );
+
+    await waitForFrame(lastFrame, (frame) =>
+      frame.includes("notifications (1)"),
+    );
+    stdin.write("n");
+    await waitForFrame(lastFrame, (frame) =>
+      frame.includes("Run npm install -g jumbo-cli@latest"),
+    );
+
+    expect(lastFrame()).not.toContain("u upgrade");
+    unmount();
+  }, 10000);
+
   it("does not pass daemon hotkeys to the cockpit while goal authoring is open", async () => {
     const stoppedDaemonSnapshot = {
       name: "refiner" as const,
