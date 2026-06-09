@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.8.0] - 2026-06-09
+
 ### Added
 
 - **TUI package update notification**: Bare `jumbo` launches now check the published npm package version in the background and show an update notification in the TUI drawer when a newer version is available, including safe npm self-upgrade handling and manual update guidance when needed.
