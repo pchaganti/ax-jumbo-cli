@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **TUI package update notification**: Bare `jumbo` launches now check the published npm package version in the background and show an update notification in the TUI drawer when a newer version is available, including safe npm self-upgrade handling and manual update guidance when needed.
+- **TUI update preview controls**: Developers can locally preview CLI update availability, in-progress, success, and manual-action states with `JUMBO_CLI_UPDATE_TEST_MODE`, `JUMBO_CLI_UPDATE_TEST_VERSION`, `JUMBO_CLI_UPDATE_TEST_UPGRADE_DELAY_MS`, and `JUMBO_CLI_UPDATE_TEST_UPGRADE_RESULT`.
+
+### Changed
+
+- **TUI package update notification**: The update-in-progress notification now includes a rotating Braille glyph that cycles through the letters in `updating`.
+
+### Fixed
+
+- **CLI update diagnostics**: npm self-upgrade feasibility failures now log operation, invocation mode, error message, error code, and bounded npm stdio tails instead of only the error type.
 
 ## [3.7.3] - 2026-06-08
 

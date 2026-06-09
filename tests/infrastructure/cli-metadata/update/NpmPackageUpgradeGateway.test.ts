@@ -18,9 +18,12 @@ const { CliUpdateFailureReason } = await import(
 
 describe("NpmPackageUpgradeGateway", () => {
   let tmpDir: string;
+  let npmCliPath: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "jumbo-upgrade-"));
+    npmCliPath = path.join(tmpDir, "npm-cli.js");
+    fs.writeFileSync(npmCliPath, "");
     execFileMock.mockReset();
   });
 
@@ -41,12 +44,23 @@ describe("NpmPackageUpgradeGateway", () => {
       callback(null, path.join(tmpDir, "node_modules"), "");
     });
 
-    const gateway = new NpmPackageUpgradeGateway(entryPointPath);
+    const gateway = new NpmPackageUpgradeGateway(
+      entryPointPath,
+      undefined,
+      undefined,
+      npmCliPath,
+    );
 
     await expect(gateway.evaluate()).resolves.toMatchObject({
       feasible: true,
       args: ["install", "-g", "jumbo-cli@latest"],
     });
+    expect(execFileMock).toHaveBeenCalledWith(
+      process.execPath,
+      [npmCliPath, "root", "-g"],
+      expect.objectContaining({ timeout: expect.any(Number) }),
+      expect.any(Function),
+    );
   });
 
   it("reports self-upgrade feasible when the entry point is reached through a symlinked package directory", async () => {
@@ -65,7 +79,12 @@ describe("NpmPackageUpgradeGateway", () => {
       callback(null, path.join(tmpDir, "node_modules"), "");
     });
 
-    const gateway = new NpmPackageUpgradeGateway(entryPointPath);
+    const gateway = new NpmPackageUpgradeGateway(
+      entryPointPath,
+      undefined,
+      undefined,
+      npmCliPath,
+    );
 
     await expect(gateway.evaluate()).resolves.toMatchObject({
       feasible: true,
@@ -90,7 +109,12 @@ describe("NpmPackageUpgradeGateway", () => {
       callback(null, path.join(tmpDir, "node_modules"), "");
     });
 
-    const gateway = new NpmPackageUpgradeGateway(shimPath);
+    const gateway = new NpmPackageUpgradeGateway(
+      shimPath,
+      undefined,
+      undefined,
+      npmCliPath,
+    );
 
     await expect(gateway.evaluate()).resolves.toMatchObject({
       feasible: true,
@@ -120,7 +144,12 @@ describe("NpmPackageUpgradeGateway", () => {
       callback(null, path.join(tmpDir, "node_modules"), "");
     });
 
-    const gateway = new NpmPackageUpgradeGateway(shimLinkPath);
+    const gateway = new NpmPackageUpgradeGateway(
+      shimLinkPath,
+      undefined,
+      undefined,
+      npmCliPath,
+    );
 
     await expect(gateway.evaluate()).resolves.toMatchObject({
       feasible: true,
@@ -141,7 +170,12 @@ describe("NpmPackageUpgradeGateway", () => {
       callback(null, path.join(tmpDir, "node_modules"), "");
     });
 
-    const gateway = new NpmPackageUpgradeGateway(entryPointPath);
+    const gateway = new NpmPackageUpgradeGateway(
+      entryPointPath,
+      undefined,
+      undefined,
+      npmCliPath,
+    );
 
     await expect(gateway.evaluate()).resolves.toMatchObject({
       feasible: false,
@@ -150,18 +184,53 @@ describe("NpmPackageUpgradeGateway", () => {
     });
   });
 
+  it("reports self-upgrade feasible in test mode even for a source checkout", async () => {
+    const packageRoot = path.join(tmpDir, "checkout");
+    const entryPointPath = path.join(packageRoot, "dist", "cli.js");
+    const logger = { warn: jest.fn(), info: jest.fn() };
+    fs.mkdirSync(path.join(packageRoot, "dist"), { recursive: true });
+    fs.mkdirSync(path.join(packageRoot, ".git"), { recursive: true });
+    fs.writeFileSync(
+      path.join(packageRoot, "package.json"),
+      JSON.stringify({ name: "jumbo-cli" }),
+    );
+    fs.writeFileSync(entryPointPath, "");
+    const gateway = new NpmPackageUpgradeGateway(
+      entryPointPath,
+      undefined,
+      logger,
+      npmCliPath,
+      true,
+    );
+
+    await expect(gateway.evaluate()).resolves.toMatchObject({
+      feasible: true,
+      args: ["install", "-g", "jumbo-cli@latest"],
+    });
+    expect(execFileMock).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      "npm upgrade feasibility test mode enabled",
+      expect.objectContaining({ env: "JUMBO_CLI_UPDATE_TEST_MODE" }),
+    );
+  });
+
   it("runs npm install for upgrade attempts", async () => {
     execFileMock.mockImplementation((_command, _args, _options, callback) => {
       callback(null, "", "");
     });
-    const gateway = new NpmPackageUpgradeGateway("");
+    const gateway = new NpmPackageUpgradeGateway(
+      "",
+      undefined,
+      undefined,
+      npmCliPath,
+    );
 
     await expect(gateway.upgrade("1.3.0")).resolves.toMatchObject({
       ok: true,
     });
     expect(execFileMock).toHaveBeenCalledWith(
-      expect.stringMatching(/^npm/),
-      ["install", "-g", "jumbo-cli@1.3.0"],
+      process.execPath,
+      [npmCliPath, "install", "-g", "jumbo-cli@1.3.0"],
       expect.objectContaining({ timeout: expect.any(Number) }),
       expect.any(Function),
     );
@@ -171,12 +240,117 @@ describe("NpmPackageUpgradeGateway", () => {
     execFileMock.mockImplementation((_command, _args, _options, callback) => {
       callback(new Error("denied"), "", "");
     });
-    const gateway = new NpmPackageUpgradeGateway("");
+    const gateway = new NpmPackageUpgradeGateway(
+      "",
+      undefined,
+      undefined,
+      npmCliPath,
+    );
 
     await expect(gateway.upgrade("1.3.0")).resolves.toMatchObject({
       ok: false,
       reason: CliUpdateFailureReason.UpgradeFailed,
       guidance: "Run npm install -g jumbo-cli@latest",
     });
+  });
+
+  it("simulates upgrade completion in test mode without running npm install", async () => {
+    const logger = { warn: jest.fn(), info: jest.fn() };
+    const gateway = new NpmPackageUpgradeGateway(
+      "",
+      undefined,
+      logger,
+      npmCliPath,
+      true,
+    );
+
+    await expect(gateway.upgrade("1.3.0")).resolves.toMatchObject({
+      ok: true,
+      message: "Upgrade test mode completed. Restart Jumbo to continue testing.",
+    });
+    expect(execFileMock).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      "npm package upgrade test mode completed",
+      expect.objectContaining({
+        env: "JUMBO_CLI_UPDATE_TEST_MODE",
+        targetVersion: "1.3.0",
+      }),
+    );
+  });
+
+  it("simulates upgrade failure in test mode without running npm install", async () => {
+    const logger = { warn: jest.fn(), info: jest.fn() };
+    const gateway = new NpmPackageUpgradeGateway(
+      "",
+      undefined,
+      logger,
+      npmCliPath,
+      true,
+      "failure",
+    );
+
+    await expect(gateway.upgrade("1.3.0")).resolves.toMatchObject({
+      ok: false,
+      reason: CliUpdateFailureReason.UpgradeFailed,
+      guidance: "Run npm install -g jumbo-cli@latest",
+      errorType: "TestModeUpgradeFailure",
+      message: "Upgrade test mode simulated failure.",
+    });
+    expect(execFileMock).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      "npm package upgrade test mode failed",
+      expect.objectContaining({
+        env: "JUMBO_CLI_UPDATE_TEST_UPGRADE_RESULT",
+        targetVersion: "1.3.0",
+      }),
+    );
+  });
+
+  it("logs diagnostic context when npm root lookup fails", async () => {
+    const packageRoot = path.join(tmpDir, "node_modules", "jumbo-cli");
+    const entryPointPath = path.join(packageRoot, "dist", "cli.js");
+    const logger = { warn: jest.fn(), info: jest.fn() };
+    fs.mkdirSync(path.dirname(entryPointPath), { recursive: true });
+    fs.writeFileSync(
+      path.join(packageRoot, "package.json"),
+      JSON.stringify({ name: "jumbo-cli" }),
+    );
+    fs.writeFileSync(entryPointPath, "");
+    execFileMock.mockImplementation((_command, _args, _options, callback) => {
+      const error = new Error("spawn npm.cmd EINVAL") as Error & {
+        code: string;
+        stderr: string;
+      };
+      error.code = "EINVAL";
+      error.stderr = "npm root failed";
+      callback(error, "", "npm root failed");
+    });
+
+    const gateway = new NpmPackageUpgradeGateway(
+      entryPointPath,
+      undefined,
+      logger,
+      npmCliPath,
+    );
+
+    await expect(gateway.evaluate()).resolves.toMatchObject({
+      feasible: false,
+      reason: CliUpdateFailureReason.SelfUpgradeUnavailable,
+    });
+    expect(logger.warn).toHaveBeenCalledWith(
+      "npm upgrade feasibility lookup failed",
+      expect.objectContaining({
+        entryPointState: "file",
+        candidatePathCount: expect.any(Number),
+        packageRootCount: expect.any(Number),
+        npmInvocationMode: "node-npm-cli",
+        operation: "npm-root-global",
+        npmCommand: path.basename(process.execPath),
+        errorType: "Error",
+        errorMessage: "spawn npm.cmd EINVAL",
+        errorCode: "EINVAL",
+        stderrTail: "npm root failed",
+      }),
+    );
   });
 });

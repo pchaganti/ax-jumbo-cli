@@ -3,6 +3,9 @@ import type { ITelemetryClient } from "../../../application/telemetry/ITelemetry
 import type { CliPackageVersionLookupResult } from "../../../application/cli-metadata/update/CliPackageVersionLookupResult.js";
 import { CliUpdateFailureReason } from "../../../application/cli-metadata/update/CliUpdateFailureReason.js";
 import type { ICliPackageVersionGateway } from "../../../application/cli-metadata/update/ICliPackageVersionGateway.js";
+import {
+  CLI_UPDATE_TEST_VERSION_ENV,
+} from "./CliUpdateTestMode.js";
 
 const NPM_REGISTRY_BASE_URL = "https://registry.npmjs.org";
 const NPM_REGISTRY_TIMEOUT_MS = 3_000;
@@ -12,14 +15,31 @@ const NPM_LATEST_VERSION_LOOKUP_COMPLETED_EVENT =
 export class NpmPackageVersionGateway implements ICliPackageVersionGateway {
   constructor(
     private readonly telemetryClient?: Pick<ITelemetryClient, "track">,
-    private readonly logger?: Pick<ILogger, "warn">,
+    private readonly logger?: Pick<ILogger, "warn" | "info">,
     private readonly fetchImplementation: typeof fetch = fetch,
+    private readonly testLatestVersion: string | null =
+      process.env[CLI_UPDATE_TEST_VERSION_ENV] ?? null,
   ) {}
 
   async getLatestVersion(
     packageName: string,
   ): Promise<CliPackageVersionLookupResult> {
     const startedAt = Date.now();
+
+    if (this.testLatestVersion !== null) {
+      const result: CliPackageVersionLookupResult = {
+        ok: true,
+        version: this.testLatestVersion,
+      };
+      this.track(packageName, startedAt, true);
+      this.logger?.info("npm latest version override enabled", {
+        packageName,
+        env: CLI_UPDATE_TEST_VERSION_ENV,
+        version: this.testLatestVersion,
+      });
+      return result;
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       controller.abort();

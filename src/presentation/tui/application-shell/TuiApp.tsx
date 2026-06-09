@@ -40,6 +40,17 @@ const COCKPIT_FOOTER_SHORTCUTS = [
 ] as const;
 const CLI_UPDATE_NOTIFICATION_ID = "cli-update-available";
 const CLI_UPDATE_ACTION_CHAR = "u";
+const CLI_UPDATE_PROGRESS_INTERVAL_MS = 160;
+const CLI_UPDATE_PROGRESS_FRAMES = [
+  "⠥",
+  "⠏",
+  "⠙",
+  "⠁",
+  "⠞",
+  "⠊",
+  "⠝",
+  "⠛",
+] as const;
 
 function useTerminalDimensions(): { columns: number; rows: number } {
   const { stdout } = useStdout();
@@ -193,6 +204,7 @@ function TuiAppFrame({
   const [cliUpgradeResult, setCliUpgradeResult] =
     useState<CliUpgradeResult | null>(null);
   const [cliUpgradeWorking, setCliUpgradeWorking] = useState(false);
+  const [cliUpgradeProgressFrame, setCliUpgradeProgressFrame] = useState(0);
   const projectLifecycleState =
     projectContext.data?.lifecycleState ?? ProjectLifecycle.UNINITIALIZED;
   const routedProjectLifecycleState =
@@ -273,6 +285,23 @@ function TuiAppFrame({
       cancelled = true;
     };
   }, [cliUpdateController, version]);
+
+  useEffect(() => {
+    if (!cliUpgradeWorking) {
+      setCliUpgradeProgressFrame(0);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setCliUpgradeProgressFrame(
+        (previous) => (previous + 1) % CLI_UPDATE_PROGRESS_FRAMES.length,
+      );
+    }, CLI_UPDATE_PROGRESS_INTERVAL_MS);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [cliUpgradeWorking]);
 
   useInput((input) => {
     if (initFlowOpen || goalAuthoringOpen) {
@@ -476,6 +505,7 @@ function TuiAppFrame({
             cliUpdateCheck,
             cliUpgradeResult,
             cliUpgradeWorking,
+            cliUpgradeProgressFrame,
           )}
           onNotificationAction={handleNotificationAction}
         />
@@ -531,11 +561,13 @@ function buildNotifications(
   cliUpdateCheck: CliUpdateCheckResult | null,
   cliUpgradeResult: CliUpgradeResult | null,
   cliUpgradeWorking: boolean,
+  cliUpgradeProgressFrame: number,
 ): readonly NotificationDrawerNotification[] {
   const cliUpdateNotification = buildCliUpdateNotification(
     cliUpdateCheck,
     cliUpgradeResult,
     cliUpgradeWorking,
+    cliUpgradeProgressFrame,
   );
 
   return [
@@ -548,6 +580,7 @@ function buildCliUpdateNotification(
   cliUpdateCheck: CliUpdateCheckResult | null,
   cliUpgradeResult: CliUpgradeResult | null,
   cliUpgradeWorking: boolean,
+  cliUpgradeProgressFrame: number,
 ): NotificationDrawerNotification | null {
   if (cliUpdateCheck?.status !== "update-available") {
     return null;
@@ -556,9 +589,13 @@ function buildCliUpdateNotification(
   const versionSummary = `Local ${cliUpdateCheck.localVersion}, latest ${cliUpdateCheck.latestVersion}.`;
 
   if (cliUpgradeWorking) {
+    const progressGlyph =
+      CLI_UPDATE_PROGRESS_FRAMES[
+        cliUpgradeProgressFrame % CLI_UPDATE_PROGRESS_FRAMES.length
+      ];
     return {
       id: CLI_UPDATE_NOTIFICATION_ID,
-      title: "Jumbo update in progress",
+      title: `Jumbo update in progress ${progressGlyph}`,
       body: `${versionSummary} Running npm upgrade.`,
       unread: true,
     };
@@ -580,8 +617,8 @@ function buildCliUpdateNotification(
   if (cliUpdateCheck.feasibility.feasible) {
     return {
       id: CLI_UPDATE_NOTIFICATION_ID,
-      title: "Jumbo update available",
-      body: `${versionSummary} Upgrade from this TUI or dismiss the notification.`,
+      title: "New version of Jumbo available",
+      body: `Upgrade to ${cliUpdateCheck.latestVersion} or dismiss the notification.`,
       unread: true,
       action: {
         char: CLI_UPDATE_ACTION_CHAR,
@@ -592,8 +629,8 @@ function buildCliUpdateNotification(
 
   return {
     id: CLI_UPDATE_NOTIFICATION_ID,
-    title: "Jumbo update available",
-    body: `${versionSummary} ${cliUpdateCheck.feasibility.guidance}`,
+    title: "New version of Jumbo available.",
+    body: `Upgrade to ${cliUpdateCheck.latestVersion}: ${cliUpdateCheck.feasibility.guidance}`,
     unread: true,
   };
 }

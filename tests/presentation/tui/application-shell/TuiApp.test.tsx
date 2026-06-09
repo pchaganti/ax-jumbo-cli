@@ -400,10 +400,17 @@ describe("TuiApp", () => {
   }, 10000);
 
   it("shows an actionable CLI update notification and runs the upgrade branch", async () => {
-    const upgrade = jest.fn(async () => ({
-      ok: true,
-      message: "Upgrade completed. Restart Jumbo to use the new version.",
-    }));
+    let completeUpgrade: (() => void) | undefined;
+    const upgradeReleased = new Promise<void>((resolve) => {
+      completeUpgrade = resolve;
+    });
+    const upgrade = jest.fn(async () => {
+      await upgradeReleased;
+      return {
+        ok: true,
+        message: "Upgrade completed. Restart Jumbo to use the new version.",
+      };
+    });
     const { stdin, lastFrame, unmount } = render(
       <TuiApp
         version="1.0.0"
@@ -429,12 +436,19 @@ describe("TuiApp", () => {
     );
     stdin.write("n");
     await waitForFrame(lastFrame, (frame) =>
-      frame.includes("Jumbo update available"),
+      frame.includes("New version of Jumbo available"),
     );
-    expect(lastFrame()).toContain("Local 1.0.0, latest 1.1.0.");
+    expect(lastFrame()).toContain("Upgrade to 1.1.0 or dismiss");
     expect(lastFrame()).toContain("u upgrade");
 
     stdin.write("u");
+    await waitForFrame(lastFrame, (frame) =>
+      /Jumbo update in progress [⠥⠏⠙⠁⠞⠊⠝⠛]/u.test(frame),
+    );
+    expect(lastFrame()).toContain("Local 1.0.0, latest 1.1.0.");
+    expect(lastFrame()).toContain("Running npm upgrade.");
+
+    completeUpgrade?.();
     await waitForFrame(lastFrame, (frame) =>
       frame.includes("Jumbo update completed"),
     );

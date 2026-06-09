@@ -25,6 +25,36 @@ describe("NpmPackageVersionGateway", () => {
     );
   });
 
+  it("returns an explicit test version without calling the npm registry", async () => {
+    const fetchImplementation = jest.fn() as unknown as typeof fetch;
+    const telemetry = { track: jest.fn() };
+    const logger = { warn: jest.fn(), info: jest.fn() };
+    const gateway = new NpmPackageVersionGateway(
+      telemetry,
+      logger,
+      fetchImplementation,
+      "9999.0.0",
+    );
+
+    await expect(gateway.getLatestVersion("jumbo-cli")).resolves.toEqual({
+      ok: true,
+      version: "9999.0.0",
+    });
+    expect(fetchImplementation).not.toHaveBeenCalled();
+    expect(telemetry.track).toHaveBeenCalledWith(
+      "npm_latest_version_lookup_completed",
+      expect.objectContaining({ packageName: "jumbo-cli", success: true }),
+    );
+    expect(logger.info).toHaveBeenCalledWith(
+      "npm latest version override enabled",
+      expect.objectContaining({
+        packageName: "jumbo-cli",
+        env: "JUMBO_CLI_UPDATE_TEST_VERSION",
+        version: "9999.0.0",
+      }),
+    );
+  });
+
   it("maps non-2xx responses to registry errors", async () => {
     const fetchImplementation = jest.fn(async () => ({
       ok: false,
