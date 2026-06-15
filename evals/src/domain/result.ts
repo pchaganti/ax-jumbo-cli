@@ -1,7 +1,8 @@
 /**
- * Scoring outputs: per-dimension scores, a single-arm test result, and the
- * side-by-side comparison of the Jumbo and baseline arms. Tampered records are
- * folded into the result's tamper provenance.
+ * Scoring output shapes: per-dimension scores, a single-arm test result, and
+ * the side-by-side comparison of the Jumbo and baseline arms. Shape only — the
+ * behavior that builds these (clock, tamper-provenance, validation) lives in
+ * `result-factories.ts` and the small helpers it composes.
  */
 
 import type { SessionRecord } from './session.js';
@@ -43,64 +44,4 @@ export interface ComparisonResult {
   readonly createdAt: string;
   readonly tampered: boolean;
   readonly tamperLog: readonly TamperEvent[];
-}
-
-export function createComparisonResult(params: {
-  id: string;
-  scenarioId: string;
-  harness: string;
-  jumboResult: TestResult;
-  baselineResult: TestResult;
-  jumboScores: readonly DimensionScore[];
-  baselineScores: readonly DimensionScore[];
-  deltas: readonly DimensionScore[];
-  jumboTimeline?: readonly PerSessionScore[];
-  baselineTimeline?: readonly PerSessionScore[];
-  tampered?: boolean;
-  tamperLog?: readonly TamperEvent[];
-}): ComparisonResult {
-  if (!params.id) throw new Error('ComparisonResult requires an id');
-  if (!params.jumboResult) throw new Error('ComparisonResult requires a jumboResult');
-  if (!params.baselineResult) throw new Error('ComparisonResult requires a baselineResult');
-
-  const inputTampered = params.tampered ?? false;
-  const inputLog = params.tamperLog ?? [];
-  const tampered = inputTampered || params.jumboResult.tampered || params.baselineResult.tampered;
-  const tamperLog: readonly TamperEvent[] = [
-    ...inputLog,
-    ...params.jumboResult.tamperLog,
-    ...params.baselineResult.tamperLog,
-  ];
-
-  return {
-    ...params,
-    createdAt: new Date().toISOString(),
-    tampered,
-    tamperLog,
-  };
-}
-
-export function createTestResult(params: {
-  id: string;
-  scenarioId: string;
-  harness: string;
-  sessionRecords: readonly SessionRecord[];
-  tampered?: boolean;
-  tamperLog?: readonly TamperEvent[];
-}): TestResult {
-  if (!params.id) throw new Error('TestResult requires an id');
-  if (!params.scenarioId) throw new Error('TestResult requires a scenarioId');
-  if (!params.harness) throw new Error('TestResult requires a harness');
-
-  const inputTampered = params.tampered ?? false;
-  const inputLog = params.tamperLog ?? [];
-  const sessionTampered = params.sessionRecords.some((r) => r.tampered);
-  const sessionLog = params.sessionRecords.flatMap((r) => r.tamperLog);
-
-  return {
-    ...params,
-    createdAt: new Date().toISOString(),
-    tampered: inputTampered || sessionTampered,
-    tamperLog: [...inputLog, ...sessionLog],
-  };
 }

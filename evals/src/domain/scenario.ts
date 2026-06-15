@@ -7,7 +7,16 @@
 import type { ExpectedJumboMemoryCapture } from './jumbo-memory.js';
 import type { JumboPlan } from './jumbo-plan.js';
 
-export type DisruptionType = 'correction' | 'scope-change' | 'new-constraint';
+/**
+ * Kinds of mid-project disruption a scenario can inject.
+ * - `correction`: a prior implementation was wrong and must be fixed.
+ * - `scope-change`: the task's boundaries move (features added/removed).
+ * - `new-constraint`: a fresh rule the existing work must now satisfy.
+ * - `design-change`: a design decision reverses or supersedes an earlier one
+ *   (e.g. "switch from REST to events") — the agent must retrofit prior work to
+ *   the new decision, testing whether that decision is retained across sessions.
+ */
+export type DisruptionType = 'correction' | 'scope-change' | 'new-constraint' | 'design-change';
 
 export interface Disruption {
   readonly type: DisruptionType;
