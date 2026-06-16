@@ -29,7 +29,7 @@ export class RemoveDependencyCommandHandler {
 
     // 2. Load aggregate from event history
     const history = await this.eventReader.readStream(command.dependencyId);
-    const dependency = Dependency.rehydrate(command.dependencyId, history as any);
+    const dependency = Dependency.rehydrate(command.dependencyId, history);
 
     // 3. Domain logic produces event
     const event = dependency.remove(command.reason);

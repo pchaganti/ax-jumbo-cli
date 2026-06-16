@@ -8,6 +8,7 @@ import {
 } from "../../../../../src/domain/dependencies/rules/StatusRules";
 import { ValidationRuleSet } from "../../../../../src/domain/validation/ValidationRule";
 import { DependencyStatus } from "../../../../../src/domain/dependencies/Constants";
+import type { DependencyStatusType } from "../../../../../src/domain/dependencies/Constants";
 
 describe("StatusRules", () => {
   describe("StatusValueRule", () => {
@@ -34,7 +35,7 @@ describe("StatusRules", () => {
 
     it("should fail for invalid status", () => {
       const rule = new StatusValueRule();
-      const result = rule.validate("invalid" as any);
+      const result = rule.validate("invalid" as unknown as DependencyStatusType);
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain("Status must be one of: active, deprecated, removed");
     });
@@ -48,7 +49,7 @@ describe("StatusRules", () => {
     });
 
     it("should throw for invalid status", () => {
-      expect(() => ValidationRuleSet.ensure("invalid" as any, STATUS_RULES)).toThrow(
+      expect(() => ValidationRuleSet.ensure("invalid" as unknown as DependencyStatusType, STATUS_RULES)).toThrow(
         "Status must be one of: active, deprecated, removed"
       );
     });

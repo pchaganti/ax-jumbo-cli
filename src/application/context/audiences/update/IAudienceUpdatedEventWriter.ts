@@ -6,6 +6,6 @@ import { AppendResult } from "../../../persistence/IEventStore.js";
  * Used by UpdateAudienceCommandHandler to persist domain events.
  */
 export interface IAudienceUpdatedEventWriter {
-  append(event: BaseEvent & Record<string, any>): Promise<AppendResult>;
+  append(event: BaseEvent): Promise<AppendResult>;
   readStream(aggregateId: string): Promise<BaseEvent[]>;
 }

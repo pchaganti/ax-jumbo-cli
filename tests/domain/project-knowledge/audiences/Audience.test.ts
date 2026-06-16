@@ -4,6 +4,7 @@
 
 import { Audience } from "../../../../src/domain/audiences/Audience";
 import { AudienceEventType } from "../../../../src/domain/audiences/Constants";
+import type { AudiencePriorityType } from "../../../../src/domain/audiences/Constants";
 import {
   AudienceAddedEvent,
   AudienceUpdatedEvent,
@@ -117,7 +118,7 @@ describe("Audience Aggregate", () => {
 
       // Act & Assert
       expect(() =>
-        audience.add("Valid Name", "Valid description", "invalid" as any)
+        audience.add("Valid Name", "Valid description", "invalid" as unknown as AudiencePriorityType)
       ).toThrow("Priority must be one of: primary, secondary, tertiary");
     });
   });
@@ -212,7 +213,7 @@ describe("Audience Aggregate", () => {
 
       // Act & Assert
       expect(() =>
-        audience.update(undefined, undefined, "invalid" as any)
+        audience.update(undefined, undefined, "invalid" as unknown as AudiencePriorityType)
       ).toThrow("Priority must be one of: primary, secondary, tertiary");
     });
 

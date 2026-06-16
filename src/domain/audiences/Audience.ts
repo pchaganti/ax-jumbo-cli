@@ -9,7 +9,7 @@ import {
   BaseAggregate,
   AggregateState,
 } from "../BaseAggregate.js";
-import { UUID } from "../BaseEvent.js";
+import { UUID, BaseEvent } from "../BaseEvent.js";
 import { ValidationRuleSet } from "../validation/ValidationRule.js";
 import {
   AudienceEvent,

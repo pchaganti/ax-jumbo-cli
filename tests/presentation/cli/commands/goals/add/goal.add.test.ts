@@ -18,13 +18,13 @@ describe("goal.add command", () => {
     Renderer.configure({ format: "text", verbosity: "normal" });
 
     mockAddGoalController = {
-      handle: jest.fn<() => Promise<any>>().mockResolvedValue({
+      handle: jest.fn<() => Promise<unknown>>().mockResolvedValue({
         goalId: "goal_abc123",
       }),
     };
 
     mockContainer = {
-      addGoalController: mockAddGoalController as any,
+      addGoalController: mockAddGoalController as unknown as IApplicationContainer["addGoalController"],
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

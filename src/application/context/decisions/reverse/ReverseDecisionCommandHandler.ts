@@ -27,7 +27,7 @@ export class ReverseDecisionCommandHandler {
 
     // 2. Rehydrate aggregate from event history (event sourcing)
     const history = await this.eventWriter.readStream(command.decisionId);
-    const decision = Decision.rehydrate(command.decisionId, history as any);
+    const decision = Decision.rehydrate(command.decisionId, history);
 
     // 3. Domain logic produces event (validates state)
     const event = decision.reverse(command.reason);

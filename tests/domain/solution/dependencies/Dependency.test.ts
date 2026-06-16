@@ -1,5 +1,6 @@
 import { Dependency } from "../../../../src/domain/dependencies/Dependency";
 import { DependencyEventType, DependencyStatus } from "../../../../src/domain/dependencies/Constants";
+import type { DependencyStatusType } from "../../../../src/domain/dependencies/Constants";
 import { DependencyAddedEvent } from "../../../../src/domain/dependencies/add/DependencyAddedEvent";
 
 describe("Dependency Aggregate", () => {
@@ -70,7 +71,7 @@ describe("Dependency Aggregate", () => {
       const dependency = Dependency.create("dep_123");
       dependency.add("Express", "npm", "express");
 
-      expect(() => dependency.update(undefined, undefined, "invalid" as any)).toThrow(
+      expect(() => dependency.update(undefined, undefined, "invalid" as unknown as DependencyStatusType)).toThrow(
         "Status must be one of: active, deprecated, removed"
       );
     });

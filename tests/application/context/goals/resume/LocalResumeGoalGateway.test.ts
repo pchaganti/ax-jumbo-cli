@@ -17,7 +17,7 @@ describe("LocalResumeGoalGateway", () => {
       execute: jest.fn<ResumeGoalCommandHandler["execute"]>(),
     };
     gateway = new LocalResumeGoalGateway(
-      mockCommandHandler as any
+      mockCommandHandler as unknown as ResumeGoalCommandHandler
     );
   });
 

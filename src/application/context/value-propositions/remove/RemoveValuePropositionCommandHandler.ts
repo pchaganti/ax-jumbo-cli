@@ -40,7 +40,7 @@ export class RemoveValuePropositionCommandHandler {
     );
     const valueProposition = ValueProposition.rehydrate(
       command.valuePropositionId,
-      history as any
+      history
     );
 
     // 3. Domain logic produces event

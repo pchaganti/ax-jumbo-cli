@@ -22,7 +22,7 @@ export class EntityTypeValidRule implements ValidationRule<string> {
 
   validate(entityType: string): ValidationResult {
     const validTypes = Object.values(EntityType);
-    const isValid = validTypes.includes(entityType as any);
+    const isValid = (validTypes as readonly string[]).includes(entityType);
     const message = this.prefix === 'from'
       ? RelationErrorMessages.FROM_ENTITY_TYPE_INVALID
       : RelationErrorMessages.TO_ENTITY_TYPE_INVALID;

@@ -20,7 +20,7 @@ export class YamlFormatter {
    * @param options - Formatting options (currently supports indent)
    * @returns YAML string representation
    */
-  toYaml(data: any, options?: { indent?: number }): string {
+  toYaml(data: unknown, options?: { indent?: number }): string {
     const indent = options?.indent ?? 2;
 
     return yaml.stringify(data, {

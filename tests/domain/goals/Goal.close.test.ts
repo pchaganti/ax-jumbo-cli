@@ -1,11 +1,12 @@
 import { Goal } from "../../../src/domain/goals/Goal";
 import { GoalEventType, GoalStatus } from "../../../src/domain/goals/Constants";
 import { createWorkerId } from "../../../src/application/host/workers/WorkerId";
+import type { GoalEvent } from "../../../src/domain/goals/EventIndex";
 
 describe("Goal.close", () => {
   const testWorkerId = createWorkerId("test-worker-id");
 
-  const buildCodifyingHistory = (goalId: string) => [
+  const buildCodifyingHistory = (goalId: string): GoalEvent[] => [
     {
       type: GoalEventType.ADDED,
       aggregateId: goalId,
@@ -105,7 +106,7 @@ describe("Goal.close", () => {
 
   it("should produce GoalClosedEvent from CODIFYING status", () => {
     const goalId = "goal_123";
-    const goal = Goal.rehydrate(goalId, buildCodifyingHistory(goalId) as any);
+    const goal = Goal.rehydrate(goalId, buildCodifyingHistory(goalId));
 
     const event = goal.close();
 
@@ -118,7 +119,7 @@ describe("Goal.close", () => {
 
   it("should throw when closing from non-CODIFYING status (TODO)", () => {
     const goalId = "goal_456";
-    const history = [
+    const history: GoalEvent[] = [
       {
         type: GoalEventType.ADDED,
         aggregateId: goalId,
@@ -135,7 +136,7 @@ describe("Goal.close", () => {
       },
     ];
 
-    const goal = Goal.rehydrate(goalId, history as any);
+    const goal = Goal.rehydrate(goalId, history);
 
     expect(() => goal.close()).toThrow("Cannot close goal in defined status");
   });

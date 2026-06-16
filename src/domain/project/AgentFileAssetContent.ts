@@ -19,7 +19,7 @@ export class AgentFileAssetContent {
     );
   }
 
-  static readJson<T = any>(fileName: string): T {
+  static readJson<T = unknown>(fileName: string): T {
     const content = readFileSync(path.join(assetRoot, "json", fileName), "utf-8");
     return JSON.parse(content) as T;
   }

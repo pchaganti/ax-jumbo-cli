@@ -4,6 +4,8 @@
 
 import { Component } from "../../../../src/domain/components/Component";
 import { ComponentEventType, ComponentStatus } from "../../../../src/domain/components/Constants";
+import type { ComponentState } from "../../../../src/domain/components/Component";
+import type { ComponentTypeValue } from "../../../../src/domain/components/Constants";
 
 describe("Component Aggregate", () => {
   describe("add()", () => {
@@ -59,7 +61,7 @@ describe("Component Aggregate", () => {
       const component = Component.create("comp_123");
 
       // Act & Assert
-      expect(() => component.add("Name", "invalid" as any, "Desc", "Resp", "path")).toThrow(
+      expect(() => component.add("Name", "invalid" as unknown as ComponentTypeValue, "Desc", "Resp", "path")).toThrow(
         "Component type must be one of: service, db, queue, ui, lib, api, worker, cache, storage"
       );
     });
@@ -488,7 +490,7 @@ describe("Component Aggregate", () => {
       component.deprecate("Deprecated");
       component.undeprecate("Still required");
 
-      const state = (component as any).state;
+      const state = (component as unknown as { state: ComponentState }).state;
       expect(state.status).toBe(ComponentStatus.ACTIVE);
       expect(state.deprecationReason).toBeNull();
     });

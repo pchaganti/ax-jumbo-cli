@@ -27,6 +27,14 @@ const { projectInit } =
   await import("../../../../../../src/presentation/cli/commands/project/init/project.init.js");
 import type { IApplicationContainer } from "../../../../../../src/application/host/IApplicationContainer.js";
 import { Renderer } from "../../../../../../src/presentation/cli/rendering/Renderer.js";
+import type { ICliVersionReader } from "../../../../../../src/application/cli-metadata/query/ICliMetadataReader.js";
+import type { GetTelemetryStatusController } from "../../../../../../src/application/context/telemetry/get/GetTelemetryStatusController.js";
+import type { UpdateTelemetryConsentController } from "../../../../../../src/application/context/telemetry/update/UpdateTelemetryConsentController.js";
+import type { PlanProjectInitController } from "../../../../../../src/application/context/project/init/PlanProjectInitController.js";
+import type { InitializeProjectController } from "../../../../../../src/application/context/project/init/InitializeProjectController.js";
+import type { AddAudienceController } from "../../../../../../src/application/context/audiences/add/AddAudienceController.js";
+import type { AddAudiencePainController } from "../../../../../../src/application/context/audience-pains/add/AddAudiencePainController.js";
+import type { AddValuePropositionController } from "../../../../../../src/application/context/value-propositions/add/AddValuePropositionController.js";
 
 describe("project.init command", () => {
   const availableAgents = [
@@ -45,7 +53,7 @@ describe("project.init command", () => {
     return {
       cliVersionReader: {
         getVersion: jest.fn().mockReturnValue({ version: "1.0.1" }),
-      } as any,
+      } as unknown as ICliVersionReader,
       getTelemetryStatusController: {
         handle: jest.fn().mockResolvedValue({
           configured: false,
@@ -56,7 +64,7 @@ describe("project.init command", () => {
           disabledByEnvironment: false,
           ...telemetryStatusOverrides,
         }),
-      } as any,
+      } as unknown as GetTelemetryStatusController,
       updateTelemetryConsentController: {
         handle: jest.fn().mockResolvedValue({
           enabled: true,
@@ -66,19 +74,19 @@ describe("project.init command", () => {
           disabledByEnvironment: false,
           generatedAnonymousId: true,
         }),
-      } as any,
+      } as unknown as UpdateTelemetryConsentController,
       planProjectInitController: {
         handle: jest.fn().mockResolvedValue({
           availableAgents,
           plannedChanges: [],
         }),
-      } as any,
+      } as unknown as PlanProjectInitController,
       initializeProjectController: {
         handle: jest.fn().mockResolvedValue({
           projectId: "project_123",
           changes: [],
         }),
-      } as any,
+      } as unknown as InitializeProjectController,
       addAudienceController: {
         handle: jest.fn().mockResolvedValue({
           audienceId: "aud_123",
@@ -86,7 +94,7 @@ describe("project.init command", () => {
           description: "Software developers",
           priority: "primary",
         }),
-      } as any,
+      } as unknown as AddAudienceController,
       addAudiencePainController: {
         handle: jest.fn().mockResolvedValue({
           painId: "pain_123",
@@ -94,14 +102,14 @@ describe("project.init command", () => {
           description: "LLMs lose context",
           version: 1,
         }),
-      } as any,
+      } as unknown as AddAudiencePainController,
       addValuePropositionController: {
         handle: jest.fn().mockResolvedValue({
           valuePropositionId: "vp_123",
           title: "Persistent context",
           measurableOutcome: undefined,
         }),
-      } as any,
+      } as unknown as AddValuePropositionController,
     };
   }
 

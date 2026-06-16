@@ -69,7 +69,7 @@ describe("SqliteDecisionRestoredProjector", () => {
 
     await projector.applyDecisionRestored(event);
 
-    const row = db.prepare("SELECT status, supersededBy, reversalReason, reversedAt, version FROM decision_views WHERE decisionId = ?").get("dec_123") as any;
+    const row = db.prepare("SELECT status, supersededBy, reversalReason, reversedAt, version FROM decision_views WHERE decisionId = ?").get("dec_123") as { status: string; supersededBy: string | null; reversalReason: string | null; reversedAt: string | null; version: number };
     expect(row.status).toBe("active");
     expect(row.supersededBy).toBeNull();
     expect(row.reversalReason).toBeNull();

@@ -62,7 +62,7 @@ describe("Relation Aggregate", () => {
       // Act & Assert
       expect(() =>
         relation.add(
-          "invalid-type" as any,
+          "invalid-type" as unknown as EntityType,
           "id-1",
           EntityType.COMPONENT,
           "id-2",
@@ -98,7 +98,7 @@ describe("Relation Aggregate", () => {
         relation.add(
           EntityType.GOAL,
           "id-1",
-          "invalid-type" as any,
+          "invalid-type" as unknown as EntityType,
           "id-2",
           "involves",
           "Test description"

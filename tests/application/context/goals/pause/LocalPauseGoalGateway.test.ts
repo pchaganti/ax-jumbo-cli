@@ -7,6 +7,7 @@ import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import { LocalPauseGoalGateway } from "../../../../../src/application/context/goals/pause/LocalPauseGoalGateway";
 import { PauseGoalCommandHandler } from "../../../../../src/application/context/goals/pause/PauseGoalCommandHandler";
 import { IGoalPauseReader } from "../../../../../src/application/context/goals/pause/IGoalPauseReader";
+import { GoalPausedReasonsType } from "../../../../../src/domain/goals/GoalPausedReasons";
 
 describe("LocalPauseGoalGateway", () => {
   let gateway: LocalPauseGoalGateway;
@@ -21,7 +22,7 @@ describe("LocalPauseGoalGateway", () => {
       findById: jest.fn<IGoalPauseReader["findById"]>(),
     };
     gateway = new LocalPauseGoalGateway(
-      mockCommandHandler as any,
+      mockCommandHandler as unknown as PauseGoalCommandHandler,
       mockGoalReader
     );
   });
@@ -92,7 +93,7 @@ describe("LocalPauseGoalGateway", () => {
     await expect(
       gateway.pauseGoal({
         goalId: "goal_123",
-        reason: "InvalidReason" as any,
+        reason: "InvalidReason" as unknown as GoalPausedReasonsType,
       })
     ).rejects.toThrow("Invalid reason: InvalidReason");
   });

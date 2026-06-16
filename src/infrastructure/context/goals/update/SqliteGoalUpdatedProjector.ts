@@ -23,7 +23,7 @@ export class SqliteGoalUpdatedProjector
   async applyGoalUpdated(event: GoalUpdatedEvent): Promise<void> {
     // Build dynamic UPDATE statement based on provided fields
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: (string | number)[] = [];
 
     if (event.payload.title !== undefined) {
       updates.push("title = ?");

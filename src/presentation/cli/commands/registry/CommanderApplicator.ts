@@ -117,7 +117,7 @@ export class CommanderApplicator {
     cmd.action(async options => {
       try {
         // Inject container as second parameter if available
-        await registeredCommand.handler(options, this.container);
+        await registeredCommand.handler(options as never, this.container!);
       } catch (error) {
         const renderer = Renderer.getInstance();
         renderer.error("Command failed", error instanceof Error ? error : String(error));
@@ -183,7 +183,7 @@ export class CommanderApplicator {
       // Same action handler
       cmd.action(async options => {
         try {
-          await registeredCommand.handler(options, this.container);
+          await registeredCommand.handler(options as never, this.container!);
         } catch (error) {
           const renderer = Renderer.getInstance();
           renderer.error("Command failed", error instanceof Error ? error : String(error));

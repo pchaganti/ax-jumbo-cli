@@ -1,6 +1,7 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
 import { runDaemonLoop } from "../../../../../../src/presentation/cli/commands/work/shared/DaemonLoop.js";
 import type { DaemonConfig, DaemonCallbacks, GoalEntry } from "../../../../../../src/presentation/cli/commands/work/shared/DaemonLoop.js";
+import type { DaemonDisplay } from "../../../../../../src/presentation/cli/commands/work/shared/DaemonDisplay.js";
 
 describe("DaemonLoop", () => {
   const mockStop = jest.fn();
@@ -22,7 +23,7 @@ describe("DaemonLoop", () => {
   };
 
   let originalStdinIsTTY: boolean | undefined;
-  let signalHandlers: Record<string, ((...args: any[]) => void)[]>;
+  let signalHandlers: Record<string, ((...args: unknown[]) => void)[]>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -32,7 +33,7 @@ describe("DaemonLoop", () => {
     Object.defineProperty(process.stdin, "isTTY", { value: false, configurable: true });
 
     signalHandlers = {};
-    jest.spyOn(process, "on").mockImplementation((event: string, handler: (...args: any[]) => void) => {
+    jest.spyOn(process, "on").mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
       if (!signalHandlers[event]) signalHandlers[event] = [];
       signalHandlers[event].push(handler);
       return process;
@@ -56,12 +57,12 @@ describe("DaemonLoop", () => {
         return [];
       },
       spawnAgent: jest.fn<(id: string) => Promise<number>>().mockResolvedValue(0),
-      isGoalComplete: jest.fn().mockReturnValue(false) as any,
+      isGoalComplete: jest.fn<(goalId: string) => boolean>().mockReturnValue(false),
       onGoalComplete: jest.fn(),
       onGoalSkipped: jest.fn(),
     };
 
-    await runDaemonLoop(baseConfig, mockDisplay as any, callbacks);
+    await runDaemonLoop(baseConfig, mockDisplay as unknown as DaemonDisplay, callbacks);
     expect(mockDisplay.renderHeader).toHaveBeenCalledTimes(1);
   });
 
@@ -79,12 +80,12 @@ describe("DaemonLoop", () => {
         return [];
       },
       spawnAgent: jest.fn<(id: string) => Promise<number>>().mockResolvedValue(0),
-      isGoalComplete: jest.fn().mockReturnValue(true) as any,
+      isGoalComplete: jest.fn<(goalId: string) => boolean>().mockReturnValue(true),
       onGoalComplete: jest.fn(),
       onGoalSkipped: jest.fn(),
     };
 
-    await runDaemonLoop(baseConfig, mockDisplay as any, callbacks);
+    await runDaemonLoop(baseConfig, mockDisplay as unknown as DaemonDisplay, callbacks);
 
     expect(mockDisplay.renderGoalStart).toHaveBeenCalledWith("test-goal-id", "Test objective", 1, 3);
     expect(mockDisplay.startProcessing).toHaveBeenCalled();
@@ -106,12 +107,12 @@ describe("DaemonLoop", () => {
         return [];
       },
       spawnAgent: jest.fn<(id: string) => Promise<number>>().mockResolvedValue(1),
-      isGoalComplete: jest.fn().mockReturnValue(false) as any,
+      isGoalComplete: jest.fn<(goalId: string) => boolean>().mockReturnValue(false),
       onGoalComplete: jest.fn(),
       onGoalSkipped: jest.fn(),
     };
 
-    await runDaemonLoop({ ...baseConfig, maxRetries: 2 }, mockDisplay as any, callbacks);
+    await runDaemonLoop({ ...baseConfig, maxRetries: 2 }, mockDisplay as unknown as DaemonDisplay, callbacks);
 
     expect(callbacks.spawnAgent).toHaveBeenCalledTimes(2);
     expect(callbacks.onGoalSkipped).toHaveBeenCalledWith("retry-goal", "not-complete", 2);
@@ -130,12 +131,12 @@ describe("DaemonLoop", () => {
         return [];
       },
       spawnAgent: jest.fn<(id: string) => Promise<number>>().mockResolvedValue(1),
-      isGoalComplete: jest.fn().mockReturnValue(false) as any,
+      isGoalComplete: jest.fn<(goalId: string) => boolean>().mockReturnValue(false),
       onGoalComplete: jest.fn(),
       onGoalSkipped: jest.fn(),
     };
 
-    await runDaemonLoop({ ...baseConfig, maxRetries: 1 }, mockDisplay as any, callbacks);
+    await runDaemonLoop({ ...baseConfig, maxRetries: 1 }, mockDisplay as unknown as DaemonDisplay, callbacks);
 
     // Goal spawned once (1 max retry), second poll filters it out
     expect(callbacks.spawnAgent).toHaveBeenCalledTimes(1);
@@ -151,12 +152,12 @@ describe("DaemonLoop", () => {
         return [];
       },
       spawnAgent: jest.fn<(id: string) => Promise<number>>().mockResolvedValue(0),
-      isGoalComplete: jest.fn().mockReturnValue(false) as any,
+      isGoalComplete: jest.fn<(goalId: string) => boolean>().mockReturnValue(false),
       onGoalComplete: jest.fn(),
       onGoalSkipped: jest.fn(),
     };
 
-    await runDaemonLoop(baseConfig, mockDisplay as any, callbacks);
+    await runDaemonLoop(baseConfig, mockDisplay as unknown as DaemonDisplay, callbacks);
 
     expect(mockDisplay.startWaiting).toHaveBeenCalled();
     expect(mockStop).toHaveBeenCalled();
@@ -169,12 +170,12 @@ describe("DaemonLoop", () => {
         return [];
       },
       spawnAgent: jest.fn<(id: string) => Promise<number>>().mockResolvedValue(0),
-      isGoalComplete: jest.fn().mockReturnValue(false) as any,
+      isGoalComplete: jest.fn<(goalId: string) => boolean>().mockReturnValue(false),
       onGoalComplete: jest.fn(),
       onGoalSkipped: jest.fn(),
     };
 
-    await runDaemonLoop(baseConfig, mockDisplay as any, callbacks);
+    await runDaemonLoop(baseConfig, mockDisplay as unknown as DaemonDisplay, callbacks);
 
     expect(mockDisplay.renderShutdown).toHaveBeenCalledTimes(1);
   });
@@ -186,12 +187,12 @@ describe("DaemonLoop", () => {
         return [];
       },
       spawnAgent: jest.fn<(id: string) => Promise<number>>().mockResolvedValue(0),
-      isGoalComplete: jest.fn().mockReturnValue(false) as any,
+      isGoalComplete: jest.fn<(goalId: string) => boolean>().mockReturnValue(false),
       onGoalComplete: jest.fn(),
       onGoalSkipped: jest.fn(),
     };
 
-    await runDaemonLoop(baseConfig, mockDisplay as any, callbacks);
+    await runDaemonLoop(baseConfig, mockDisplay as unknown as DaemonDisplay, callbacks);
 
     expect(signalHandlers["SIGINT"]).toBeDefined();
     expect(signalHandlers["SIGTERM"]).toBeDefined();

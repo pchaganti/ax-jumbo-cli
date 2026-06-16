@@ -36,7 +36,7 @@ export class UpdateValuePropositionCommandHandler {
     const history = await this.eventWriter.readStream(command.id);
     const valueProposition = ValueProposition.rehydrate(
       command.id,
-      history as any
+      history
     );
 
     // 3. Domain logic produces event

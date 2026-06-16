@@ -239,8 +239,8 @@ describe("Pause-Resume Lifecycle Integration", () => {
     const events = await container.eventStore.readStream(goalId);
     const pausedEvent = events.find((e: { type: string }) => e.type === GoalEventType.PAUSED);
     expect(pausedEvent).toBeDefined();
-    expect((pausedEvent as any).payload.reason).toBe("Other");
-    expect((pausedEvent as any).payload.note).toBe("Need to switch priorities");
+    expect((pausedEvent as unknown as { payload: { reason: string } }).payload.reason).toBe("Other");
+    expect((pausedEvent as unknown as { payload: { note: string } }).payload.note).toBe("Need to switch priorities");
   });
 
   it("can pause and resume multiple times", async () => {

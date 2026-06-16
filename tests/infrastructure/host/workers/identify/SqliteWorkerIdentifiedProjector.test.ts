@@ -53,7 +53,7 @@ describe("SqliteWorkerIdentifiedProjector", () => {
 
       const row = db
         .prepare("SELECT workerId, hostSessionKey, mode, createdAt, lastSeenAt FROM workers WHERE hostSessionKey = ?")
-        .get("session-key-abc") as any;
+        .get("session-key-abc") as { workerId: string; hostSessionKey: string; mode: string | null; createdAt: string; lastSeenAt: string };
 
       expect(row).toBeDefined();
       expect(row.workerId).toBe("worker_new-1");
@@ -79,7 +79,7 @@ describe("SqliteWorkerIdentifiedProjector", () => {
 
       const row = db
         .prepare("SELECT mode FROM workers WHERE hostSessionKey = ?")
-        .get("session-key-mode") as any;
+        .get("session-key-mode") as { mode: string | null };
 
       expect(row.mode).toBe("implement");
     });
@@ -105,7 +105,7 @@ describe("SqliteWorkerIdentifiedProjector", () => {
 
       const row = db
         .prepare("SELECT createdAt, lastSeenAt FROM workers WHERE hostSessionKey = ?")
-        .get("session-key-existing") as any;
+        .get("session-key-existing") as { createdAt: string; lastSeenAt: string };
 
       expect(row.createdAt).toBe("2026-03-01T08:00:00.000Z");
       expect(row.lastSeenAt).toBe("2026-03-01T12:00:00.000Z");
@@ -131,7 +131,7 @@ describe("SqliteWorkerIdentifiedProjector", () => {
 
       const row = db
         .prepare("SELECT workerId FROM workers WHERE hostSessionKey = ?")
-        .get("session-key-stable") as any;
+        .get("session-key-stable") as { workerId: string };
 
       expect(row.workerId).toBe("worker_original");
     });

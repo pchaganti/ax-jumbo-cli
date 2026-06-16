@@ -12,7 +12,7 @@ import path from "path";
 import fs from "fs-extra";
 import { AgentFileReferenceContent } from "../../../../domain/project/AgentFileReferenceContent.js";
 import { AgentFileAssetContent } from "../../../../domain/project/AgentFileAssetContent.js";
-import { SafeGeminiSettingsMerger } from "./SafeGeminiSettingsMerger.js";
+import { SafeGeminiSettingsMerger, GeminiSettings } from "./SafeGeminiSettingsMerger.js";
 import { IConfigurer } from "./IConfigurer.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 
@@ -71,7 +71,7 @@ export class GeminiConfigurer implements IConfigurer {
    */
   private async ensureGeminiSettings(projectRoot: string): Promise<void> {
     try {
-      const jumboSettings = AgentFileAssetContent.readJson("gemini-settings.fragment.json");
+      const jumboSettings = AgentFileAssetContent.readJson<GeminiSettings>("gemini-settings.fragment.json");
 
       await SafeGeminiSettingsMerger.mergeSettings(projectRoot, jumboSettings);
     } catch (error) {

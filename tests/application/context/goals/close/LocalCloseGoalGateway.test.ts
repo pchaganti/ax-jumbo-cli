@@ -1,5 +1,6 @@
 import { LocalCloseGoalGateway } from "../../../../../src/application/context/goals/close/LocalCloseGoalGateway";
 import { CloseGoalCommandHandler } from "../../../../../src/application/context/goals/close/CloseGoalCommandHandler";
+import { ContextualGoalView } from "../../../../../src/application/context/goals/get/ContextualGoalView";
 import { IGoalCloseReader } from "../../../../../src/application/context/goals/close/IGoalCloseReader";
 import { GoalClaimPolicy } from "../../../../../src/application/context/goals/claims/GoalClaimPolicy";
 import { IWorkerIdentityReader } from "../../../../../src/application/host/workers/IWorkerIdentityReader";
@@ -56,7 +57,7 @@ describe("LocalCloseGoalGateway", () => {
       progress: [],
     };
 
-    mockCommandHandler.execute.mockResolvedValue({} as any);
+    mockCommandHandler.execute.mockResolvedValue({} as unknown as ContextualGoalView);
     mockGoalReader.findById.mockResolvedValue(mockView);
 
     const response = await gateway.closeGoal({ goalId: "goal_456" });
@@ -95,7 +96,7 @@ describe("LocalCloseGoalGateway", () => {
       progress: [],
     };
 
-    mockCommandHandler.execute.mockResolvedValue({} as any);
+    mockCommandHandler.execute.mockResolvedValue({} as unknown as ContextualGoalView);
     mockGoalReader.findById
       .mockResolvedValueOnce(mockView)
       .mockResolvedValueOnce(nextGoalView);

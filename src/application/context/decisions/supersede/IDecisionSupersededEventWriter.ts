@@ -4,7 +4,7 @@
  */
 
 import { DecisionSupersededEvent } from "../../../../domain/decisions/supersede/DecisionSupersededEvent.js";
-import { BaseEvent } from "../../../../domain/BaseEvent.js";
+import { DecisionEvent } from "../../../../domain/decisions/EventIndex.js";
 import { AppendResult } from "../../../persistence/IEventStore.js";
 
 export interface IDecisionSupersededEventWriter {
@@ -16,5 +16,5 @@ export interface IDecisionSupersededEventWriter {
   /**
    * Reads all events for a decision aggregate.
    */
-  readStream(aggregateId: string): Promise<BaseEvent[]>;
+  readStream(aggregateId: string): Promise<DecisionEvent[]>;
 }

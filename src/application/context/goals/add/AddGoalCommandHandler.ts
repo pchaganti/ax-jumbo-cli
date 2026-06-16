@@ -80,7 +80,7 @@ export class AddGoalCommandHandler {
 
     // Rehydrate the previous goal aggregate from event history
     const history = await this.updateEventReader.readStream(previousGoalId);
-    const previousGoal = Goal.rehydrate(previousGoalId, history as any);
+    const previousGoal = Goal.rehydrate(previousGoalId, history);
 
     // Update the previous goal's nextGoalId
     const updateEvent = previousGoal.update(
