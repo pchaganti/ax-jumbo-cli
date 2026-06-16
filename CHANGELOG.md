@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Internal type safety**: Eliminated explicit TypeScript `any` usage across the codebase and now enforce `@typescript-eslint/no-explicit-any` as an ESLint error.
+
 ## [3.9.1] - 2026-06-14
 
 ### Fixed

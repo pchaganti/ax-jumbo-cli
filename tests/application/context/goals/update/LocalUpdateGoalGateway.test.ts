@@ -16,7 +16,7 @@ describe("LocalUpdateGoalGateway", () => {
       execute: jest.fn<UpdateGoalCommandHandler["execute"]>(),
     };
     gateway = new LocalUpdateGoalGateway(
-      mockCommandHandler as any
+      mockCommandHandler as unknown as UpdateGoalCommandHandler
     );
   });
 

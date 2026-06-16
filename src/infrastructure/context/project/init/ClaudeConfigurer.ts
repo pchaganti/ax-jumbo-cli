@@ -15,7 +15,7 @@ import path from "path";
 import fs from "fs-extra";
 import { AgentFileReferenceContent } from "../../../../domain/project/AgentFileReferenceContent.js";
 import { AgentFileAssetContent } from "../../../../domain/project/AgentFileAssetContent.js";
-import { SafeClaudeSettingsMerger } from "./SafeClaudeSettingsMerger.js";
+import { SafeClaudeSettingsMerger, ClaudeSettings } from "./SafeClaudeSettingsMerger.js";
 import { IConfigurer } from "./IConfigurer.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 
@@ -74,7 +74,7 @@ export class ClaudeConfigurer implements IConfigurer {
    */
   private async ensureClaudeSettings(projectRoot: string): Promise<void> {
     try {
-      const jumboSettings = AgentFileAssetContent.readJson("claude-settings.fragment.json");
+      const jumboSettings = AgentFileAssetContent.readJson<ClaudeSettings>("claude-settings.fragment.json");
 
       await SafeClaudeSettingsMerger.mergeSettings(projectRoot, jumboSettings);
     } catch (error) {

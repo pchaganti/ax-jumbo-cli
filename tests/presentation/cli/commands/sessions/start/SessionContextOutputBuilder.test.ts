@@ -17,6 +17,7 @@ import { GoalView } from "../../../../../../src/application/context/goals/GoalVi
 import { DecisionView } from "../../../../../../src/application/context/decisions/DecisionView.js";
 import { SessionView } from "../../../../../../src/application/context/sessions/SessionView.js";
 import { SessionInstructionSignal } from "../../../../../../src/application/context/sessions/SessionInstructionSignal.js";
+import { ProjectView } from "../../../../../../src/application/context/project/ProjectView.js";
 
 describe("SessionContextOutputBuilder", () => {
   let builder: SessionContextOutputBuilder;
@@ -71,7 +72,7 @@ describe("SessionContextOutputBuilder", () => {
         projectContext: {
           name: "TestProject",
           purpose: "Testing purposes",
-        } as any,
+        } as unknown as ProjectView,
       });
 
       const output = builder.buildSessionContext(context);

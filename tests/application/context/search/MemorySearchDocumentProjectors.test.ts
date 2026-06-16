@@ -8,6 +8,7 @@ import { DecisionEventType } from "../../../../src/domain/decisions/Constants.js
 import { DependencyEventType } from "../../../../src/domain/dependencies/Constants.js";
 import { GuidelineEventType } from "../../../../src/domain/guidelines/Constants.js";
 import { InvariantEventType } from "../../../../src/domain/invariants/Constants.js";
+import type { BaseEvent } from "../../../../src/domain/BaseEvent.js";
 
 describe("MemorySearchDocumentProjectors", () => {
   it("maps dependency, decision, guideline, and invariant add events into generic search documents", () => {
@@ -86,7 +87,7 @@ describe("MemorySearchDocumentProjectors", () => {
     ];
 
     for (const testCase of cases) {
-      const change = testCase.projector.project(testCase.event as any, null);
+      const change = testCase.projector.project(testCase.event as BaseEvent, null);
 
       expect(change?.operation).toBe("upsert");
       if (change?.operation !== "upsert") throw new Error("Expected upsert");

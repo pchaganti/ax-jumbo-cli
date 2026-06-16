@@ -30,17 +30,17 @@ describe("RenameComponentCommandHandler", () => {
 
   beforeEach(() => {
     mockEventWriter = {
-      append: jest.fn<any>().mockResolvedValue({ success: true }),
-      readStream: jest.fn<any>().mockResolvedValue([addedEvent]),
+      append: jest.fn<IComponentRenamedEventWriter["append"]>().mockResolvedValue({ nextSeq: 1 }),
+      readStream: jest.fn<IComponentRenamedEventWriter["readStream"]>().mockResolvedValue([addedEvent]),
     } as jest.Mocked<IComponentRenamedEventWriter>;
 
     mockEventBus = {
-      publish: jest.fn<any>().mockResolvedValue(undefined),
+      publish: jest.fn<IEventBus["publish"]>().mockResolvedValue(undefined),
       subscribe: jest.fn(),
     } as jest.Mocked<IEventBus>;
 
     mockReader = {
-      findById: jest.fn<any>().mockResolvedValue({
+      findById: jest.fn<IComponentRenameReader["findById"]>().mockResolvedValue({
         componentId,
         name: "OldName",
         type: "service",
@@ -101,7 +101,7 @@ describe("RenameComponentCommandHandler", () => {
     const callOrder: string[] = [];
     mockEventWriter.append.mockImplementation(async () => {
       callOrder.push("append");
-      return { success: true };
+      return { nextSeq: 1 };
     });
     mockEventBus.publish.mockImplementation(async () => {
       callOrder.push("publish");

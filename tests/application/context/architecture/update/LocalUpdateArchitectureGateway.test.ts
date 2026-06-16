@@ -71,7 +71,9 @@ describe("LocalUpdateArchitectureGateway", () => {
       dataStores: ["postgres:relational:main-db"],
     });
 
-    const appendedEvent = mockEventWriter.append.mock.calls[0][0] as any;
+    const appendedEvent = mockEventWriter.append.mock.calls[0][0] as unknown as {
+      payload: { dataStores: Array<{ name: string; type: string; purpose: string }> };
+    };
     expect(appendedEvent.payload.dataStores).toEqual([
       { name: "postgres", type: "relational", purpose: "main-db" },
     ]);

@@ -4,6 +4,8 @@ import { ILegacyDependencyReader } from "../../../../src/application/maintenance
 import { LegacyDependencyCandidate } from "../../../../src/application/maintenance/migrate-dependencies/LegacyDependencyCandidate.js";
 import { AddRelationCommandHandler } from "../../../../src/application/context/relations/add/AddRelationCommandHandler.js";
 import { RemoveDependencyCommandHandler } from "../../../../src/application/context/dependencies/remove/RemoveDependencyCommandHandler.js";
+import { AddRelationCommand } from "../../../../src/application/context/relations/add/AddRelationCommand.js";
+import { RemoveDependencyCommand } from "../../../../src/application/context/dependencies/remove/RemoveDependencyCommand.js";
 
 function createMockLegacyReader(candidates: LegacyDependencyCandidate[]): ILegacyDependencyReader {
   return {
@@ -13,7 +15,7 @@ function createMockLegacyReader(candidates: LegacyDependencyCandidate[]): ILegac
 
 function createMockAddRelationHandler() {
   return {
-    execute: jest.fn<(cmd: any) => Promise<{ relationId: string }>>().mockImplementation(async (cmd) => ({
+    execute: jest.fn<(cmd: AddRelationCommand) => Promise<{ relationId: string }>>().mockImplementation(async (cmd) => ({
       relationId: `relation_mock_${cmd.fromEntityId}_${cmd.toEntityId}`,
     })),
   } as unknown as AddRelationCommandHandler;
@@ -21,7 +23,7 @@ function createMockAddRelationHandler() {
 
 function createMockRemoveDependencyHandler() {
   return {
-    execute: jest.fn<(cmd: any) => Promise<{ dependencyId: string }>>().mockImplementation(async (cmd) => ({
+    execute: jest.fn<(cmd: RemoveDependencyCommand) => Promise<{ dependencyId: string }>>().mockImplementation(async (cmd) => ({
       dependencyId: cmd.dependencyId,
     })),
   } as unknown as RemoveDependencyCommandHandler;

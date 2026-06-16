@@ -15,8 +15,8 @@ describe("UndeprecateComponentCommandHandler", () => {
 
   beforeEach(() => {
     mockEventWriter = {
-      append: jest.fn<any>().mockResolvedValue({ success: true }),
-      readStream: jest.fn<any>().mockResolvedValue([
+      append: jest.fn<IComponentUndeprecatedEventWriter["append"]>().mockResolvedValue({ nextSeq: 1 }),
+      readStream: jest.fn<IComponentUndeprecatedEventWriter["readStream"]>().mockResolvedValue([
         {
           type: ComponentEventType.ADDED,
           aggregateId: componentId,
@@ -45,12 +45,12 @@ describe("UndeprecateComponentCommandHandler", () => {
     } as jest.Mocked<IComponentUndeprecatedEventWriter>;
 
     mockEventBus = {
-      publish: jest.fn<any>().mockResolvedValue(undefined),
+      publish: jest.fn<IEventBus["publish"]>().mockResolvedValue(undefined),
       subscribe: jest.fn(),
     } as jest.Mocked<IEventBus>;
 
     mockReader = {
-      findById: jest.fn<any>().mockResolvedValue({
+      findById: jest.fn<IComponentUndeprecateReader["findById"]>().mockResolvedValue({
         componentId,
         name: "LegacyService",
         type: "service",

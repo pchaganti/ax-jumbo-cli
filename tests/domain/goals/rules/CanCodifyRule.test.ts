@@ -12,7 +12,7 @@ describe("CanCodifyRule", () => {
     successCriteria: ["Criterion"],
     scopeIn: [],
     scopeOut: [],
-    status: status as any,
+    status: status as unknown as GoalState["status"],
     version: 2,
     progress: [],
   });

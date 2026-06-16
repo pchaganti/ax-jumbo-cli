@@ -18,6 +18,25 @@ import { IConfigurer } from "./IConfigurer.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 import { AgentFileAssetContent } from "../../../../domain/project/AgentFileAssetContent.js";
 
+/**
+ * Minimal shapes for the Codex hooks document. Jumbo's own fragment matches
+ * these exactly; external (user-authored) hook files are validated with runtime
+ * guards and narrowed to these shapes once, at the parse boundary.
+ */
+interface CodexHookCommand {
+  type?: string;
+  command?: string;
+}
+
+interface CodexMatcherGroup {
+  matcher?: string;
+  hooks?: CodexHookCommand[];
+}
+
+interface CodexHooksDocument {
+  hooks?: Record<string, CodexMatcherGroup[]>;
+}
+
 export class CodexConfigurer implements IConfigurer {
   readonly agent = {
     id: "codex",
@@ -77,35 +96,37 @@ export class CodexConfigurer implements IConfigurer {
     }
   }
 
-  private getJumboHooks(): any {
-    return AgentFileAssetContent.readJson("codex-hooks.fragment.json");
+  private getJumboHooks(): CodexHooksDocument {
+    return AgentFileAssetContent.readJson<CodexHooksDocument>("codex-hooks.fragment.json");
   }
 
-  private mergeHooks(existing: any, jumbo: any): any {
-    const result = { ...existing };
-    result.hooks = result.hooks ?? {};
+  private mergeHooks(existing: CodexHooksDocument, jumbo: CodexHooksDocument): CodexHooksDocument {
+    const result: CodexHooksDocument = { ...existing };
+    const mergedHooks: Record<string, CodexMatcherGroup[]> = { ...(result.hooks ?? {}) };
 
     for (const [eventName, matcherGroups] of Object.entries(jumbo.hooks ?? {})) {
-      const existingGroups = Array.isArray(result.hooks[eventName]) ? result.hooks[eventName] : [];
-      result.hooks[eventName] = this.mergeMatcherGroups(existingGroups, matcherGroups as any[]);
+      const existingGroups = mergedHooks[eventName] ?? [];
+      mergedHooks[eventName] = this.mergeMatcherGroups(existingGroups, matcherGroups);
     }
 
+    result.hooks = mergedHooks;
     return result;
   }
 
-  private mergeMatcherGroups(existing: any[], additions: any[]): any[] {
+  private mergeMatcherGroups(
+    existing: CodexMatcherGroup[],
+    additions: CodexMatcherGroup[]
+  ): CodexMatcherGroup[] {
     const merged = [...existing];
 
     for (const addition of additions) {
       const existingIndex = merged.findIndex((entry) => entry?.matcher === addition.matcher);
 
       if (existingIndex >= 0) {
+        const current = merged[existingIndex];
         merged[existingIndex] = {
-          ...merged[existingIndex],
-          hooks: this.mergeHookArray(
-            Array.isArray(merged[existingIndex].hooks) ? merged[existingIndex].hooks : [],
-            addition.hooks
-          ),
+          ...current,
+          hooks: this.mergeHookArray(current.hooks ?? [], addition.hooks ?? []),
         };
       } else {
         merged.push(addition);
@@ -115,7 +136,10 @@ export class CodexConfigurer implements IConfigurer {
     return merged;
   }
 
-  private mergeHookArray(existing: any[], additions: any[]): any[] {
+  private mergeHookArray(
+    existing: CodexHookCommand[],
+    additions: CodexHookCommand[]
+  ): CodexHookCommand[] {
     const merged = [...existing];
     const existingKeys = new Set(existing.map((hook) => JSON.stringify(hook)));
 
@@ -130,18 +154,19 @@ export class CodexConfigurer implements IConfigurer {
     return merged;
   }
 
-  private removeStaleJumboHooks(existing: any): any {
+  private removeStaleJumboHooks(existing: unknown): CodexHooksDocument {
     if (!existing || typeof existing !== "object") {
       return {};
     }
 
-    const result = { ...existing };
-    const rawHooks = existing.hooks;
+    const source = existing as Record<string, unknown>;
+    const result = { ...source } as CodexHooksDocument;
+    const rawHooks = source.hooks;
     if (!rawHooks || typeof rawHooks !== "object") {
       return result;
     }
 
-    const normalizedHooks: Record<string, unknown[]> = {};
+    const normalizedHooks: Record<string, CodexMatcherGroup[]> = {};
     for (const [eventName, matcherGroups] of Object.entries(rawHooks)) {
       if (!Array.isArray(matcherGroups)) {
         continue;
@@ -149,7 +174,7 @@ export class CodexConfigurer implements IConfigurer {
 
       const normalizedGroups = matcherGroups
         .map((matcherGroup) => this.removeStaleJumboHooksFromMatcher(matcherGroup))
-        .filter((matcherGroup): matcherGroup is Record<string, unknown> => matcherGroup !== null);
+        .filter((matcherGroup): matcherGroup is CodexMatcherGroup => matcherGroup !== null);
 
       if (normalizedGroups.length > 0) {
         normalizedHooks[eventName] = normalizedGroups;
@@ -160,13 +185,13 @@ export class CodexConfigurer implements IConfigurer {
     return result;
   }
 
-  private removeStaleJumboHooksFromMatcher(matcherGroup: unknown): Record<string, unknown> | null {
+  private removeStaleJumboHooksFromMatcher(matcherGroup: unknown): CodexMatcherGroup | null {
     if (!matcherGroup || typeof matcherGroup !== "object") {
       return null;
     }
 
     const candidate = matcherGroup as Record<string, unknown>;
-    const hooks = Array.isArray(candidate.hooks) ? candidate.hooks : [];
+    const hooks: CodexHookCommand[] = Array.isArray(candidate.hooks) ? candidate.hooks : [];
     const nonJumboHooks = hooks.filter((hook) => !this.isJumboLifecycleHook(hook));
 
     if (nonJumboHooks.length === 0) {
@@ -176,7 +201,7 @@ export class CodexConfigurer implements IConfigurer {
     return {
       ...candidate,
       hooks: nonJumboHooks,
-    };
+    } as CodexMatcherGroup;
   }
 
   private isJumboLifecycleHook(hook: unknown): boolean {

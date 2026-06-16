@@ -15,6 +15,7 @@ import { SqliteGoalClaimStore } from "../../../src/infrastructure/context/goals/
 import { GoalClaimPolicy } from "../../../src/application/context/goals/claims/GoalClaimPolicy";
 import { CommitGoalCommandHandler } from "../../../src/application/context/goals/commit/CommitGoalCommandHandler";
 import { SqliteGoalCommittedProjector } from "../../../src/infrastructure/context/goals/commit/SqliteGoalCommittedProjector";
+import { GoalContextQueryHandler } from "../../../src/application/context/goals/get/GoalContextQueryHandler";
 import { jest } from "@jest/globals";
 import os from "os";
 
@@ -184,7 +185,7 @@ describe("LocalDatabaseRebuildService", () => {
           guidelines: [],
         },
       }),
-    } as any;
+    } as unknown as GoalContextQueryHandler;
 
     const handler = new CommitGoalCommandHandler(
       eventStore,

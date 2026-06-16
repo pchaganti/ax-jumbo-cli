@@ -4,7 +4,7 @@
  */
 
 import { DecisionReversedEvent } from "../../../../domain/decisions/reverse/DecisionReversedEvent.js";
-import { BaseEvent } from "../../../../domain/BaseEvent.js";
+import { DecisionEvent } from "../../../../domain/decisions/EventIndex.js";
 import { AppendResult } from "../../../persistence/IEventStore.js";
 
 export interface IDecisionReversedEventWriter {
@@ -16,5 +16,5 @@ export interface IDecisionReversedEventWriter {
   /**
    * Reads all events for a decision aggregate.
    */
-  readStream(aggregateId: string): Promise<BaseEvent[]>;
+  readStream(aggregateId: string): Promise<DecisionEvent[]>;
 }

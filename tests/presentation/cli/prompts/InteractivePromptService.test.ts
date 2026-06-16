@@ -182,7 +182,7 @@ describe("InteractivePromptService", () => {
       });
 
       // Verify prompt was called with a validate function
-      const promptCall = inputMock.mock.calls[0][0] as any;
+      const promptCall = inputMock.mock.calls[0][0] as { validate?: unknown };
       expect(promptCall.validate).toBeDefined();
     });
   });
@@ -255,7 +255,11 @@ describe("InteractivePromptService", () => {
     });
 
     it("should not display anything for empty items", () => {
-      service.displayInfo("Empty:", [], (item: any) => item.text);
+      service.displayInfo(
+        "Empty:",
+        [] as { text: string }[],
+        (item) => item.text,
+      );
 
       expect(consoleSpy).not.toHaveBeenCalled();
     });

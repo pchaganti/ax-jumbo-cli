@@ -33,7 +33,7 @@ describe("SqliteSearchIndexStore", () => {
       facets: { status: ComponentStatus.ACTIVE },
     });
     expect(hits[0].snippet).toContain("SQLite projection");
-    expect((hits[0] as any).content).toBeUndefined();
+    expect((hits[0] as unknown as { content?: unknown }).content).toBeUndefined();
   });
 
   it("finds current documents by source for partial event projection", async () => {

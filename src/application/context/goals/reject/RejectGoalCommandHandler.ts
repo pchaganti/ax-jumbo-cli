@@ -49,7 +49,7 @@ export class RejectGoalCommandHandler {
 
     // 3. Rehydrate aggregate from event history (event sourcing)
     const history = await this.eventReader.readStream(command.goalId);
-    const goal = Goal.rehydrate(command.goalId, history as any);
+    const goal = Goal.rehydrate(command.goalId, history);
 
     // 4. Domain logic produces event (validates state and review issues)
     const event = goal.reject(command.reviewIssues);

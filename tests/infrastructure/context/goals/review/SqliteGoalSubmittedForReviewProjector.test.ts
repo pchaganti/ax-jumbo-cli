@@ -94,7 +94,7 @@ describe("SqliteGoalSubmittedForReviewProjector", () => {
 
       await projector.applyGoalSubmittedForReview(event);
 
-      const row = db.prepare("SELECT status FROM goal_views WHERE goalId = ?").get("goal_test-1") as any;
+      const row = db.prepare("SELECT status FROM goal_views WHERE goalId = ?").get("goal_test-1") as { status: string };
       expect(row.status).toBe(GoalStatus.INREVIEW);
     });
 
@@ -115,7 +115,7 @@ describe("SqliteGoalSubmittedForReviewProjector", () => {
 
       await projector.applyGoalSubmittedForReview(event);
 
-      const row = db.prepare("SELECT claimedBy, claimedAt, claimExpiresAt FROM goal_views WHERE goalId = ?").get("goal_test-1") as any;
+      const row = db.prepare("SELECT claimedBy, claimedAt, claimExpiresAt FROM goal_views WHERE goalId = ?").get("goal_test-1") as { claimedBy: string | null; claimedAt: string | null; claimExpiresAt: string | null };
       expect(row.claimedBy).toBe("reviewer_456");
       expect(row.claimedAt).toBe("2026-02-02T10:00:00.000Z");
       expect(row.claimExpiresAt).toBe("2026-02-02T12:00:00.000Z");
@@ -135,7 +135,7 @@ describe("SqliteGoalSubmittedForReviewProjector", () => {
 
       await projector.applyGoalSubmittedForReview(event);
 
-      const row = db.prepare("SELECT claimedBy, claimedAt, claimExpiresAt FROM goal_views WHERE goalId = ?").get("goal_test-1") as any;
+      const row = db.prepare("SELECT claimedBy, claimedAt, claimExpiresAt FROM goal_views WHERE goalId = ?").get("goal_test-1") as { claimedBy: string | null; claimedAt: string | null; claimExpiresAt: string | null };
       expect(row.claimedBy).toBeNull();
       expect(row.claimedAt).toBeNull();
       expect(row.claimExpiresAt).toBeNull();
@@ -155,7 +155,7 @@ describe("SqliteGoalSubmittedForReviewProjector", () => {
 
       await projector.applyGoalSubmittedForReview(event);
 
-      const row = db.prepare("SELECT version FROM goal_views WHERE goalId = ?").get("goal_test-1") as any;
+      const row = db.prepare("SELECT version FROM goal_views WHERE goalId = ?").get("goal_test-1") as { version: number };
       expect(row.version).toBe(5);
     });
 
@@ -173,7 +173,7 @@ describe("SqliteGoalSubmittedForReviewProjector", () => {
 
       await projector.applyGoalSubmittedForReview(event);
 
-      const row = db.prepare("SELECT updatedAt FROM goal_views WHERE goalId = ?").get("goal_test-1") as any;
+      const row = db.prepare("SELECT updatedAt FROM goal_views WHERE goalId = ?").get("goal_test-1") as { updatedAt: string };
       expect(row.updatedAt).toBe("2026-02-02T15:30:00.000Z");
     });
   });

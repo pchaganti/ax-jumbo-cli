@@ -39,7 +39,7 @@ describe("LocalStartGoalGateway", () => {
       execute: jest.fn<StartGoalCommandHandler["execute"]>(),
     };
     gateway = new LocalStartGoalGateway(
-      mockCommandHandler as any
+      mockCommandHandler as unknown as StartGoalCommandHandler
     );
   });
 

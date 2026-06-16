@@ -4,7 +4,7 @@
  */
 
 import { ProjectUpdatedEvent } from "../../../../domain/project/update/ProjectUpdatedEvent.js";
-import { BaseEvent } from "../../../../domain/BaseEvent.js";
+import { ProjectEvent } from "../../../../domain/project/EventIndex.js";
 import { AppendResult } from "../../../persistence/IEventStore.js";
 
 export interface IProjectUpdatedEventWriter {
@@ -16,5 +16,5 @@ export interface IProjectUpdatedEventWriter {
   /**
    * Reads all events for a project aggregate.
    */
-  readStream(aggregateId: string): Promise<BaseEvent[]>;
+  readStream(aggregateId: string): Promise<ProjectEvent[]>;
 }

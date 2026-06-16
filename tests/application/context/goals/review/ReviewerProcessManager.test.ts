@@ -1,6 +1,10 @@
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
 import { ReviewerProcessManager } from "../../../../../src/application/context/goals/review/ReviewerProcessManager";
 import { GoalStatus } from "../../../../../src/domain/goals/Constants";
+import { GoalView } from "../../../../../src/application/context/goals/GoalView";
+import { GoalClaimPolicy } from "../../../../../src/application/context/goals/claims/GoalClaimPolicy";
+import { ReviewGoalController } from "../../../../../src/application/context/goals/review/ReviewGoalController";
+import { ProcessManagerEvent } from "../../../../../src/application/daemons/IProcessManager";
 
 describe("ReviewerProcessManager", () => {
   const goal = {
@@ -8,7 +12,7 @@ describe("ReviewerProcessManager", () => {
     objective: "Review objective",
     createdAt: "2026-01-01T00:00:00.000Z",
     status: GoalStatus.SUBMITTED,
-  } as any;
+  } as unknown as GoalView;
   let goalStatusReader: { findByStatus: jest.Mock; findAll: jest.Mock };
   let goalReader: { findById: jest.Mock };
   let claimPolicy: { canClaim: jest.Mock };
@@ -29,9 +33,9 @@ describe("ReviewerProcessManager", () => {
     const manager = new ReviewerProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       { workerId: "worker_1" },
-      reviewGoalController as any,
+      reviewGoalController as unknown as ReviewGoalController,
       agentGateway,
       telemetryClient,
     );
@@ -55,9 +59,9 @@ describe("ReviewerProcessManager", () => {
     const manager = new ReviewerProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       { workerId: "worker_1" },
-      reviewGoalController as any,
+      reviewGoalController as unknown as ReviewGoalController,
       agentGateway,
       telemetryClient,
     );
@@ -85,9 +89,9 @@ describe("ReviewerProcessManager", () => {
     const manager = new ReviewerProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       { workerId: "worker_1" },
-      reviewGoalController as any,
+      reviewGoalController as unknown as ReviewGoalController,
       agentGateway,
       telemetryClient,
     );
@@ -119,9 +123,9 @@ describe("ReviewerProcessManager", () => {
     const manager = new ReviewerProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       { workerId: "worker_1" },
-      reviewGoalController as any,
+      reviewGoalController as unknown as ReviewGoalController,
       agentGateway,
       telemetryClient,
     );
@@ -174,7 +178,7 @@ describe("ReviewerProcessManager", () => {
   });
 
   it("caps reviewer model-output event messages from oversized agent stdout", async () => {
-    const emittedEvents: any[] = [];
+    const emittedEvents: ProcessManagerEvent[] = [];
     agentGateway.invoke.mockResolvedValue({
       exitCode: 0,
       stdout: `${"x".repeat(20_000)}review tail\n`,
@@ -182,9 +186,9 @@ describe("ReviewerProcessManager", () => {
     const manager = new ReviewerProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       { workerId: "worker_1" },
-      reviewGoalController as any,
+      reviewGoalController as unknown as ReviewGoalController,
       agentGateway,
       telemetryClient,
     );

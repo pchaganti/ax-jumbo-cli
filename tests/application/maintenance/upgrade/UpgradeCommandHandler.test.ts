@@ -137,7 +137,7 @@ function makeGoalView(goalId: string, status: string): GoalView {
     successCriteria: [],
     scopeIn: [],
     scopeOut: [],
-    status: status as any,
+    status: status as unknown as GoalView["status"],
     version: 1,
     createdAt: "2025-01-01T00:00:00Z",
     updatedAt: "2025-01-01T00:00:00Z",

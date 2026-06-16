@@ -25,7 +25,7 @@ export class LocalUpdateArchitectureGateway implements IUpdateArchitectureGatewa
     }
 
     // 2. Rehydrate aggregate
-    const architecture = Architecture.rehydrate(architectureId, history as any);
+    const architecture = Architecture.rehydrate(architectureId, history);
 
     // 3. Parse data stores from string format
     let dataStores: DataStore[] | undefined;

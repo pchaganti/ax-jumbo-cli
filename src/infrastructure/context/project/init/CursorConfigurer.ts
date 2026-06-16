@@ -15,6 +15,21 @@ import { AgentFileAssetContent } from "../../../../domain/project/AgentFileAsset
 import { IConfigurer } from "./IConfigurer.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 
+/**
+ * Minimal shapes for the Cursor hooks document. Jumbo's own fragment matches
+ * these exactly; external (user-authored) hook files are validated with runtime
+ * guards and narrowed to these shapes once, at the parse boundary.
+ */
+interface CursorHook {
+  command?: string;
+  timeout?: number;
+}
+
+interface CursorHooksDocument {
+  version?: number;
+  hooks?: Record<string, CursorHook[]>;
+}
+
 export class CursorConfigurer implements IConfigurer {
   readonly agent = {
     id: "cursor",
@@ -71,7 +86,7 @@ export class CursorConfigurer implements IConfigurer {
 
       await fs.ensureDir(path.join(projectRoot, ".cursor"));
 
-      const jumboHooks = AgentFileAssetContent.readJson("cursor-hooks.fragment.json");
+      const jumboHooks = AgentFileAssetContent.readJson<CursorHooksDocument>("cursor-hooks.fragment.json");
 
       const exists = await fs.pathExists(hooksPath);
 
@@ -105,22 +120,24 @@ export class CursorConfigurer implements IConfigurer {
   /**
    * Merge hooks, preserving existing content and adding missing Jumbo hooks
    */
-  private mergeHooks(existing: any, jumbo: any): any {
-    const result = { ...existing };
+  private mergeHooks(existing: CursorHooksDocument, jumbo: CursorHooksDocument): CursorHooksDocument {
+    const result: CursorHooksDocument = { ...existing };
 
     if (jumbo.version !== undefined) {
       result.version = jumbo.version;
     }
 
     if (jumbo.hooks) {
-      result.hooks = result.hooks ?? {};
+      const mergedHooks: Record<string, CursorHook[]> = { ...(result.hooks ?? {}) };
 
       for (const [hookType, hooks] of Object.entries(jumbo.hooks)) {
         if (hooks && Array.isArray(hooks)) {
-          const existingHooks = Array.isArray(result.hooks[hookType]) ? result.hooks[hookType] : [];
-          result.hooks[hookType] = this.mergeHookArray(existingHooks, hooks);
+          const existingHooks = mergedHooks[hookType] ?? [];
+          mergedHooks[hookType] = this.mergeHookArray(existingHooks, hooks);
         }
       }
+
+      result.hooks = mergedHooks;
     }
 
     return result;
@@ -129,7 +146,7 @@ export class CursorConfigurer implements IConfigurer {
   /**
    * Merge hook arrays, deduplicating by command content
    */
-  private mergeHookArray(existing: any[], additions: any[]): any[] {
+  private mergeHookArray(existing: CursorHook[], additions: CursorHook[]): CursorHook[] {
     const merged = [...existing];
     const existingCommands = new Set(existing.map((h) => JSON.stringify(h)));
 
@@ -148,18 +165,19 @@ export class CursorConfigurer implements IConfigurer {
    * Normalize existing hook entries to Cursor's schema and remove stale
    * Jumbo preCompact hooks when no resume trigger exists in Cursor.
    */
-  private normalizeExistingHooks(existing: any): any {
+  private normalizeExistingHooks(existing: unknown): CursorHooksDocument {
     if (!existing || typeof existing !== "object") {
       return {};
     }
 
-    const result = { ...existing };
-    const rawHooks = existing.hooks;
+    const source = existing as Record<string, unknown>;
+    const result = { ...source } as CursorHooksDocument;
+    const rawHooks = source.hooks;
     if (!rawHooks || typeof rawHooks !== "object") {
       return result;
     }
 
-    const normalizedHooks: Record<string, unknown[]> = {};
+    const normalizedHooks: Record<string, CursorHook[]> = {};
     for (const [hookType, hookEntries] of Object.entries(rawHooks)) {
       if (!Array.isArray(hookEntries)) {
         continue;
@@ -167,7 +185,7 @@ export class CursorConfigurer implements IConfigurer {
 
       const normalizedEntries = hookEntries
         .map((entry) => this.normalizeHookEntry(entry))
-        .filter((entry): entry is Record<string, unknown> => entry !== null)
+        .filter((entry): entry is CursorHook => entry !== null)
         .filter((entry) => !(hookType === "preCompact" && this.isJumboPauseHook(entry)));
 
       if (normalizedEntries.length > 0) {
@@ -179,7 +197,7 @@ export class CursorConfigurer implements IConfigurer {
     return result;
   }
 
-  private normalizeHookEntry(entry: unknown): Record<string, unknown> | null {
+  private normalizeHookEntry(entry: unknown): CursorHook | null {
     if (!entry || typeof entry !== "object") {
       return null;
     }
@@ -187,11 +205,11 @@ export class CursorConfigurer implements IConfigurer {
     const candidate = entry as Record<string, unknown>;
 
     if (typeof candidate.command === "string" && candidate.command.length > 0) {
-      return candidate;
+      return candidate as CursorHook;
     }
 
     if (typeof candidate.bash === "string" && candidate.bash.length > 0) {
-      const normalized: Record<string, unknown> = { command: candidate.bash };
+      const normalized: CursorHook = { command: candidate.bash };
       if (typeof candidate.timeoutSec === "number") {
         normalized.timeout = candidate.timeoutSec;
       }
@@ -201,7 +219,7 @@ export class CursorConfigurer implements IConfigurer {
     return null;
   }
 
-  private isJumboPauseHook(entry: Record<string, unknown>): boolean {
+  private isJumboPauseHook(entry: CursorHook): boolean {
     return entry.command === "jumbo work pause";
   }
 

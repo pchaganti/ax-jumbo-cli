@@ -4,6 +4,7 @@
 
 import { Goal } from "../../../src/domain/goals/Goal";
 import { GoalEventType, GoalStatus } from "../../../src/domain/goals/Constants";
+import type { GoalEvent } from "../../../src/domain/goals/EventIndex";
 
 describe("Goal Aggregate", () => {
   describe("define()", () => {
@@ -400,7 +401,7 @@ describe("Goal Aggregate", () => {
 
     it("should throw error when starting completed goal", () => {
       // Arrange - rehydrate a goal that is completed
-      const history = [
+      const history: GoalEvent[] = [
         {
           type: GoalEventType.ADDED,
           aggregateId: "goal_123",
@@ -465,7 +466,7 @@ describe("Goal Aggregate", () => {
           },
         },
       ];
-      const goal = Goal.rehydrate("goal_123", history as any);
+      const goal = Goal.rehydrate("goal_123", history);
 
       // Act & Assert
       expect(() => goal.start()).toThrow("Cannot start a done goal.");
@@ -915,7 +916,7 @@ describe("Goal Aggregate", () => {
   describe("complete()", () => {
     it("should create GoalCompletedEvent event from qualified status", () => {
       // Arrange - rehydrate a goal in qualified status
-      const history = [
+      const history: GoalEvent[] = [
         {
           type: GoalEventType.ADDED,
           aggregateId: "goal_123",
@@ -971,7 +972,7 @@ describe("Goal Aggregate", () => {
           },
         },
       ];
-      const goal = Goal.rehydrate("goal_123", history as any);
+      const goal = Goal.rehydrate("goal_123", history);
 
       // Act
       const event = goal.complete();
@@ -1034,7 +1035,7 @@ describe("Goal Aggregate", () => {
 
     it("should throw error if goal is already completed", () => {
       // Arrange - rehydrate a goal that is already completed
-      const history = [
+      const history: GoalEvent[] = [
         {
           type: GoalEventType.ADDED,
           aggregateId: "goal_123",
@@ -1099,7 +1100,7 @@ describe("Goal Aggregate", () => {
           },
         },
       ];
-      const goal = Goal.rehydrate("goal_123", history as any);
+      const goal = Goal.rehydrate("goal_123", history);
 
       // Act & Assert
       expect(() => goal.complete()).toThrow(
@@ -1109,7 +1110,7 @@ describe("Goal Aggregate", () => {
 
     it("should transition goal to completed status", () => {
       // Arrange - rehydrate a goal in qualified status
-      const history = [
+      const history: GoalEvent[] = [
         {
           type: GoalEventType.ADDED,
           aggregateId: "goal_123",
@@ -1165,7 +1166,7 @@ describe("Goal Aggregate", () => {
           },
         },
       ];
-      const goal = Goal.rehydrate("goal_123", history as any);
+      const goal = Goal.rehydrate("goal_123", history);
 
       // Act
       goal.complete();
@@ -1602,7 +1603,7 @@ describe("Goal Aggregate", () => {
 
     it("should throw error if goal is in qualified status", () => {
       // Arrange - rehydrate a goal in qualified status
-      const history = [
+      const history: GoalEvent[] = [
         {
           type: GoalEventType.ADDED,
           aggregateId: "goal_123",
@@ -1658,7 +1659,7 @@ describe("Goal Aggregate", () => {
           },
         },
       ];
-      const goal = Goal.rehydrate("goal_123", history as any);
+      const goal = Goal.rehydrate("goal_123", history);
 
       // Act & Assert
       expect(() => goal.submitForReview()).toThrow(
@@ -1668,7 +1669,7 @@ describe("Goal Aggregate", () => {
 
     it("should throw error if goal is completed", () => {
       // Arrange - rehydrate a goal in completed status
-      const history = [
+      const history: GoalEvent[] = [
         {
           type: GoalEventType.ADDED,
           aggregateId: "goal_123",
@@ -1733,7 +1734,7 @@ describe("Goal Aggregate", () => {
           },
         },
       ];
-      const goal = Goal.rehydrate("goal_123", history as any);
+      const goal = Goal.rehydrate("goal_123", history);
 
       // Act & Assert
       expect(() => goal.submitForReview()).toThrow(
@@ -1882,7 +1883,7 @@ describe("Goal Aggregate", () => {
 
     it("should throw error if goal is completed", () => {
       // Arrange - rehydrate a goal in completed status
-      const history = [
+      const history: GoalEvent[] = [
         {
           type: GoalEventType.ADDED,
           aggregateId: "goal_123",
@@ -1947,7 +1948,7 @@ describe("Goal Aggregate", () => {
           },
         },
       ];
-      const goal = Goal.rehydrate("goal_123", history as any);
+      const goal = Goal.rehydrate("goal_123", history);
 
       // Act & Assert
       expect(() => goal.qualify()).toThrow(

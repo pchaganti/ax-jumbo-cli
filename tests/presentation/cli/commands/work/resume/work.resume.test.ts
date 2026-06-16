@@ -53,7 +53,7 @@ describe("work.resume command", () => {
     mockContainer = {
       resumeWorkController: {
         handle: jest.fn().mockResolvedValue(mockResumeResponse),
-      } as any,
+      } as unknown as IApplicationContainer["resumeWorkController"],
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

@@ -84,7 +84,7 @@ describe("SqliteGoalClosedProjector", () => {
 
       await projector.applyGoalClosed(event);
 
-      const row = db.prepare("SELECT status FROM goal_views WHERE goalId = ?").get("goal_test-1") as any;
+      const row = db.prepare("SELECT status FROM goal_views WHERE goalId = ?").get("goal_test-1") as { status: string };
       expect(row.status).toBe(GoalStatus.DONE);
     });
 
@@ -102,7 +102,7 @@ describe("SqliteGoalClosedProjector", () => {
 
       await projector.applyGoalClosed(event);
 
-      const row = db.prepare("SELECT claimedBy, claimedAt, claimExpiresAt FROM goal_views WHERE goalId = ?").get("goal_test-1") as any;
+      const row = db.prepare("SELECT claimedBy, claimedAt, claimExpiresAt FROM goal_views WHERE goalId = ?").get("goal_test-1") as { claimedBy: string | null; claimedAt: string | null; claimExpiresAt: string | null };
       expect(row.claimedBy).toBeNull();
       expect(row.claimedAt).toBeNull();
       expect(row.claimExpiresAt).toBeNull();
@@ -122,7 +122,7 @@ describe("SqliteGoalClosedProjector", () => {
 
       await projector.applyGoalClosed(event);
 
-      const row = db.prepare("SELECT version FROM goal_views WHERE goalId = ?").get("goal_test-1") as any;
+      const row = db.prepare("SELECT version FROM goal_views WHERE goalId = ?").get("goal_test-1") as { version: number };
       expect(row.version).toBe(9);
     });
 
@@ -140,7 +140,7 @@ describe("SqliteGoalClosedProjector", () => {
 
       await projector.applyGoalClosed(event);
 
-      const row = db.prepare("SELECT updatedAt FROM goal_views WHERE goalId = ?").get("goal_test-1") as any;
+      const row = db.prepare("SELECT updatedAt FROM goal_views WHERE goalId = ?").get("goal_test-1") as { updatedAt: string };
       expect(row.updatedAt).toBe("2026-02-02T15:30:00.000Z");
     });
   });

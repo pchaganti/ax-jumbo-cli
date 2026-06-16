@@ -14,7 +14,7 @@ describe("LocalRejectGoalGateway", () => {
   beforeEach(() => {
     commandHandler = {
       execute: jest.fn(),
-    } as any;
+    } as unknown as RejectGoalCommandHandler;
 
     gateway = new LocalRejectGoalGateway(commandHandler);
   });

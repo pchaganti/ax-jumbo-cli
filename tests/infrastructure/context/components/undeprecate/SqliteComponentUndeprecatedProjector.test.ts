@@ -65,7 +65,7 @@ describe("SqliteComponentUndeprecatedProjector", () => {
 
     await projector.applyComponentUndeprecated(event);
 
-    const row = db.prepare("SELECT status, deprecationReason, version FROM component_views WHERE componentId = ?").get("comp_123") as any;
+    const row = db.prepare("SELECT status, deprecationReason, version FROM component_views WHERE componentId = ?").get("comp_123") as { status: string; deprecationReason: string | null; version: number };
     expect(row.status).toBe("active");
     expect(row.deprecationReason).toBeNull();
     expect(row.version).toBe(3);

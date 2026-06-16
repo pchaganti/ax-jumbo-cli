@@ -99,7 +99,7 @@ describe("SubmitGoalForReviewCommandHandler", () => {
           guidelines: [],
         },
       })),
-    } as any;
+    } as unknown as GoalContextQueryHandler;
 
     handler = new SubmitGoalForReviewCommandHandler(
       eventWriter,

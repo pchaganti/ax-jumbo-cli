@@ -1,7 +1,7 @@
 import { BaseEvent } from "../../domain/BaseEvent.js";
 
 export interface IEventStore {
-  append(event: BaseEvent & Record<string, any>): Promise<AppendResult>;
+  append(event: BaseEvent): Promise<AppendResult>;
   readStream(streamId: string): Promise<BaseEvent[]>;
   getAllEvents(): Promise<BaseEvent[]>;
 }

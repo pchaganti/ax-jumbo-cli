@@ -4,6 +4,7 @@
 
 import { Architecture } from "../../../../src/domain/architecture/Architecture.js";
 import { ArchitectureEventType } from "../../../../src/domain/architecture/Constants.js";
+import type { ArchitectureState } from "../../../../src/domain/architecture/Architecture.js";
 import { DataStore } from "../../../../src/domain/architecture/EventIndex.js";
 
 describe("Architecture aggregate", () => {
@@ -66,7 +67,7 @@ describe("Architecture aggregate", () => {
       architecture.define("Test architecture", "Hexagonal");
 
       // Assert
-      const state = (architecture as any).state;
+      const state = (architecture as unknown as { state: ArchitectureState }).state;
       expect(state.description).toBe("Test architecture");
       expect(state.organization).toBe("Hexagonal");
       expect(state.version).toBe(1);
@@ -251,7 +252,7 @@ describe("Architecture aggregate", () => {
       architecture.update({ description: "Updated" });
 
       // Assert
-      const state = (architecture as any).state;
+      const state = (architecture as unknown as { state: ArchitectureState }).state;
       expect(state.description).toBe("Updated");
       expect(state.organization).toBe("Clean");
       expect(state.version).toBe(2);
@@ -397,7 +398,7 @@ describe("Architecture aggregate", () => {
       const architecture2 = Architecture.rehydrate("architecture", [event]);
 
       // Assert
-      const state = (architecture2 as any).state;
+      const state = (architecture2 as unknown as { state: ArchitectureState }).state;
       expect(state.description).toBe("Test architecture");
       expect(state.organization).toBe("Clean Architecture");
       expect(state.patterns).toEqual(["DDD"]);
@@ -412,7 +413,7 @@ describe("Architecture aggregate", () => {
       const architecture = Architecture.rehydrate("architecture", []);
 
       // Assert
-      const state = (architecture as any).state;
+      const state = (architecture as unknown as { state: ArchitectureState }).state;
       expect(state.version).toBe(0);
       expect(state.description).toBe("");
     });
@@ -427,7 +428,7 @@ describe("Architecture aggregate", () => {
       const architecture2 = Architecture.rehydrate("architecture", [definedEvent, updatedEvent]);
 
       // Assert
-      const state = (architecture2 as any).state;
+      const state = (architecture2 as unknown as { state: ArchitectureState }).state;
       expect(state.description).toBe("Updated");
       expect(state.organization).toBe("Clean");
       expect(state.patterns).toEqual(["CQRS"]);

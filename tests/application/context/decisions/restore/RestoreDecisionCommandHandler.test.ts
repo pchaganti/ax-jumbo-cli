@@ -15,8 +15,8 @@ describe("RestoreDecisionCommandHandler", () => {
 
   beforeEach(() => {
     mockEventWriter = {
-      append: jest.fn<any>().mockResolvedValue({ success: true }),
-      readStream: jest.fn<any>().mockResolvedValue([
+      append: jest.fn<IDecisionRestoredEventWriter["append"]>().mockResolvedValue({ nextSeq: 1 }),
+      readStream: jest.fn<IDecisionRestoredEventWriter["readStream"]>().mockResolvedValue([
         {
           type: DecisionEventType.ADDED,
           aggregateId: decisionId,
@@ -44,12 +44,12 @@ describe("RestoreDecisionCommandHandler", () => {
     } as jest.Mocked<IDecisionRestoredEventWriter>;
 
     mockEventBus = {
-      publish: jest.fn<any>().mockResolvedValue(undefined),
+      publish: jest.fn<IEventBus["publish"]>().mockResolvedValue(undefined),
       subscribe: jest.fn(),
     } as jest.Mocked<IEventBus>;
 
     mockReader = {
-      findById: jest.fn<any>().mockResolvedValue({
+      findById: jest.fn<IDecisionRestoreReader["findById"]>().mockResolvedValue({
         decisionId,
         title: "Use SQLite",
         context: "Need local DB",

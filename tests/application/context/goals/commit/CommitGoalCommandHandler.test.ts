@@ -77,7 +77,7 @@ describe("CommitGoalCommandHandler", () => {
     // Mock goal context query handler
     goalContextQueryHandler = {
       execute: jest.fn(),
-    } as any;
+    } as unknown as GoalContextQueryHandler;
 
     handler = new CommitGoalCommandHandler(
       eventWriter,

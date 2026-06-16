@@ -42,7 +42,7 @@ describe("DaemonDisplay", () => {
     display = new DaemonDisplay(displayConfig, runtimeConfig);
 
     // Override write to capture output
-    (display as any).write = (s: string) => { captured += s; };
+    (display as unknown as { write: (s: string) => void }).write = (s: string) => { captured += s; };
   });
 
   describe("renderHeader", () => {

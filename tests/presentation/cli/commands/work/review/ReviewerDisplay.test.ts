@@ -32,7 +32,7 @@ describe("ReviewerDisplay", () => {
     mockStartBrailleSpinner.mockReturnValue({ stop: jest.fn() });
 
     display = new ReviewerDisplay(runtimeConfig);
-    (display as any).write = (s: string) => { captured += s; };
+    (display as unknown as { write: (s: string) => void }).write = (s: string) => { captured += s; };
   });
 
   describe("renderHeader", () => {

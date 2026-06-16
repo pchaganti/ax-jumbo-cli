@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { IApplicationContainer } from "../../src/application/host/IApplicationContainer.js";
+import type { GetTelemetryStatusController } from "../../src/application/context/telemetry/get/GetTelemetryStatusController.js";
 import { AppRunner } from "../../src/presentation/cli/AppRunner.js";
 import { Renderer } from "../../src/presentation/cli/rendering/Renderer.js";
 
@@ -39,7 +40,7 @@ describe("CLI telemetry integration", () => {
           disabledByCi: false,
           disabledByEnvironment: false,
         }),
-      } as any,
+      } as unknown as GetTelemetryStatusController,
     };
 
     process.argv = ["node", "jumbo", "telemetry", "status"];
