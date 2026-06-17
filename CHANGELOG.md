@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`goal show` output**: `jumbo goal show` now includes recorded goal progress entries in both structured JSON output and the human-readable details view.
+
 ## [3.9.2] - 2026-06-16
 
 ### Added
