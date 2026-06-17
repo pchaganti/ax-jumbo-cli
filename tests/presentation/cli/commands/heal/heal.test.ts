@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals
 import { IApplicationContainer } from "../../../../../src/application/host/IApplicationContainer.js";
 import { heal } from "../../../../../src/presentation/cli/commands/heal/heal.js";
 import { Renderer } from "../../../../../src/presentation/cli/rendering/Renderer.js";
+import { RebuildDatabaseController } from "../../../../../src/application/maintenance/db/rebuild/RebuildDatabaseController.js";
 
 describe("heal command", () => {
   let mockContainer: Partial<IApplicationContainer>;
@@ -15,7 +16,7 @@ describe("heal command", () => {
           success: true,
           eventsReplayed: 123,
         }),
-      } as any,
+      } as unknown as RebuildDatabaseController,
       logger: {
         error: jest.fn(),
         warn: jest.fn(),

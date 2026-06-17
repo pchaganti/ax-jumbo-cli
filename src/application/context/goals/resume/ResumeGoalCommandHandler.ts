@@ -52,7 +52,7 @@ export class ResumeGoalCommandHandler {
 
     // 3. Rehydrate aggregate from event history (event sourcing)
     const history = await this.eventReader.readStream(command.goalId);
-    const goal = Goal.rehydrate(command.goalId, history as any);
+    const goal = Goal.rehydrate(command.goalId, history);
 
     // 4. Prepare claim data before creating event (for embedding in event payload)
     const settings = await this.settingsReader.read();

@@ -27,7 +27,7 @@ export class UpdateDependencyCommandHandler {
 
     // 2. Rehydrate aggregate from event store
     const history = await this.eventReader.readStream(command.id);
-    const dependency = Dependency.rehydrate(command.id, history as any);
+    const dependency = Dependency.rehydrate(command.id, history);
 
     // 3. Domain logic produces event
     const event = dependency.update(

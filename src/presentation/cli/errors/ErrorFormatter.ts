@@ -49,7 +49,7 @@ export function formatError(error: Error | string | unknown): FormattedError {
  */
 export function isNotFoundError(error: Error | unknown): boolean {
   if (error instanceof Error) {
-    const code = (error as any).code;
+    const code = (error as { code?: unknown }).code;
     return code === "ENOENT" || code === "NOT_FOUND";
   }
   return false;
@@ -70,7 +70,7 @@ export function isValidationError(error: Error | unknown): boolean {
  */
 export function isPermissionError(error: Error | unknown): boolean {
   if (error instanceof Error) {
-    const code = (error as any).code;
+    const code = (error as { code?: unknown }).code;
     return code === "EACCES" || code === "EPERM" || code === "FORBIDDEN";
   }
   return false;

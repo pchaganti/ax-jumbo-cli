@@ -1,11 +1,12 @@
 import { Goal } from "../../../src/domain/goals/Goal";
 import { GoalEventType, GoalStatus } from "../../../src/domain/goals/Constants";
 import { createWorkerId } from "../../../src/application/host/workers/WorkerId";
+import type { GoalEvent } from "../../../src/domain/goals/EventIndex";
 
 describe("Goal.codify", () => {
   const testWorkerId = createWorkerId("test-worker-id");
 
-  const buildQualifiedHistory = (goalId: string) => [
+  const buildQualifiedHistory = (goalId: string): GoalEvent[] => [
     {
       type: GoalEventType.ADDED,
       aggregateId: goalId,
@@ -92,7 +93,7 @@ describe("Goal.codify", () => {
 
   it("should produce GoalCodifyingStartedEvent from QUALIFIED status", () => {
     const goalId = "goal_123";
-    const goal = Goal.rehydrate(goalId, buildQualifiedHistory(goalId) as any);
+    const goal = Goal.rehydrate(goalId, buildQualifiedHistory(goalId));
 
     const claimInfo = {
       claimedBy: testWorkerId,
@@ -114,7 +115,7 @@ describe("Goal.codify", () => {
 
   it("should throw when codifying from non-QUALIFIED status (TODO)", () => {
     const goalId = "goal_456";
-    const history = [
+    const history: GoalEvent[] = [
       {
         type: GoalEventType.ADDED,
         aggregateId: goalId,
@@ -131,7 +132,7 @@ describe("Goal.codify", () => {
       },
     ];
 
-    const goal = Goal.rehydrate(goalId, history as any);
+    const goal = Goal.rehydrate(goalId, history);
 
     expect(() =>
       goal.codify({

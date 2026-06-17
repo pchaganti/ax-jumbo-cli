@@ -1,6 +1,10 @@
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
 import { RefinerProcessManager } from "../../../../../src/application/context/goals/refine/RefinerProcessManager";
 import { GoalStatus } from "../../../../../src/domain/goals/Constants";
+import { GoalView } from "../../../../../src/application/context/goals/GoalView";
+import { GoalClaimPolicy } from "../../../../../src/application/context/goals/claims/GoalClaimPolicy";
+import { RefineGoalController } from "../../../../../src/application/context/goals/refine/RefineGoalController";
+import { ProcessManagerEvent } from "../../../../../src/application/daemons/IProcessManager";
 
 describe("RefinerProcessManager", () => {
   const goal = {
@@ -8,7 +12,7 @@ describe("RefinerProcessManager", () => {
     objective: "Refine objective",
     createdAt: "2026-01-01T00:00:00.000Z",
     status: GoalStatus.TODO,
-  } as any;
+  } as unknown as GoalView;
   let goalStatusReader: { findByStatus: jest.Mock; findAll: jest.Mock };
   let goalReader: { findById: jest.Mock };
   let claimPolicy: { canClaim: jest.Mock };
@@ -29,9 +33,9 @@ describe("RefinerProcessManager", () => {
     const manager = new RefinerProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       { workerId: "worker_1" },
-      refineGoalController as any,
+      refineGoalController as unknown as RefineGoalController,
       agentGateway,
       telemetryClient,
     );
@@ -55,9 +59,9 @@ describe("RefinerProcessManager", () => {
     const manager = new RefinerProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       { workerId: "worker_1" },
-      refineGoalController as any,
+      refineGoalController as unknown as RefineGoalController,
       agentGateway,
       telemetryClient,
     );
@@ -85,9 +89,9 @@ describe("RefinerProcessManager", () => {
     const manager = new RefinerProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       { workerId: "worker_1" },
-      refineGoalController as any,
+      refineGoalController as unknown as RefineGoalController,
       agentGateway,
       telemetryClient,
     );
@@ -116,13 +120,13 @@ describe("RefinerProcessManager", () => {
       exitCode: 1,
       stderr: "Error loading configuration: config profile `prompt` not found\n",
     });
-    const events: any[] = [];
+    const events: ProcessManagerEvent[] = [];
     const manager = new RefinerProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       { workerId: "worker_1" },
-      refineGoalController as any,
+      refineGoalController as unknown as RefineGoalController,
       agentGateway,
       telemetryClient,
     );
@@ -177,13 +181,13 @@ describe("RefinerProcessManager", () => {
       exitCode: 1,
       stderr: `${"x".repeat(20_000)}refiner tail\n`,
     });
-    const events: any[] = [];
+    const events: ProcessManagerEvent[] = [];
     const manager = new RefinerProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       { workerId: "worker_1" },
-      refineGoalController as any,
+      refineGoalController as unknown as RefineGoalController,
       agentGateway,
       telemetryClient,
     );

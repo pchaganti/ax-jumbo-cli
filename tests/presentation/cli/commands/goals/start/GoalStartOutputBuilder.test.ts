@@ -13,6 +13,9 @@ import { GoalStartOutputBuilder } from "../../../../../../src/presentation/cli/c
 import { ContextualGoalView } from "../../../../../../src/application/context/goals/get/ContextualGoalView.js";
 import { GoalView } from "../../../../../../src/application/context/goals/GoalView.js";
 import { GoalContext } from "../../../../../../src/application/context/goals/get/GoalContext.js";
+import { ComponentView } from "../../../../../../src/application/context/components/ComponentView.js";
+import { DecisionView } from "../../../../../../src/application/context/decisions/DecisionView.js";
+import { InvariantView } from "../../../../../../src/application/context/invariants/InvariantView.js";
 
 describe("GoalStartOutputBuilder", () => {
   let builder: GoalStartOutputBuilder;
@@ -204,7 +207,7 @@ describe("GoalStartOutputBuilder", () => {
     it("should render components when present", () => {
       const view = makeView({}, {
         components: [
-          { entity: { name: "AuthService", description: "Handles authentication" } as any, relationType: "involves", relationDescription: "" },
+          { entity: { name: "AuthService", description: "Handles authentication" } as unknown as ComponentView, relationType: "involves", relationDescription: "" },
         ],
       });
       const output = builder.build(view);
@@ -220,7 +223,7 @@ describe("GoalStartOutputBuilder", () => {
     it("should render decisions when present", () => {
       const view = makeView({}, {
         decisions: [
-          { entity: { title: "Use REST", rationale: "Simpler than GraphQL" } as any, relationType: "implements", relationDescription: "" },
+          { entity: { title: "Use REST", rationale: "Simpler than GraphQL" } as unknown as DecisionView, relationType: "implements", relationDescription: "" },
         ],
       });
       const output = builder.build(view);
@@ -236,7 +239,7 @@ describe("GoalStartOutputBuilder", () => {
     it("should render invariants when present", () => {
       const view = makeView({}, {
         invariants: [
-          { entity: { title: "No raw SQL", description: "Always use query builder" } as any, relationType: "must-respect", relationDescription: "" },
+          { entity: { title: "No raw SQL", description: "Always use query builder" } as unknown as InvariantView, relationType: "must-respect", relationDescription: "" },
         ],
       });
       const output = builder.build(view);

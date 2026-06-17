@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import { architectureUpdate } from "../../../../../../src/presentation/cli/commands/architecture/update/architecture.update.js";
 import { IApplicationContainer } from "../../../../../../src/application/host/IApplicationContainer.js";
+import { UpdateArchitectureController } from "../../../../../../src/application/context/architecture/update/UpdateArchitectureController.js";
 import { Renderer } from "../../../../../../src/presentation/cli/rendering/Renderer.js";
 import { ArchitectureErrorMessages } from "../../../../../../src/domain/architecture/Constants.js";
 import { ARCHITECTURE_DEPRECATION_NOTICE } from "../../../../../../src/application/context/architecture/ArchitectureDeprecationConstants.js";
@@ -16,13 +17,14 @@ describe("architecture.update command", () => {
     Renderer.configure({ format: "text", verbosity: "normal" });
 
     mockUpdateController = {
-      handle: jest.fn<() => Promise<any>>().mockResolvedValue({
+      handle: jest.fn<() => Promise<unknown>>().mockResolvedValue({
         architectureId: "architecture",
       }),
     };
 
     mockContainer = {
-      updateArchitectureController: mockUpdateController as any,
+      updateArchitectureController:
+        mockUpdateController as unknown as UpdateArchitectureController,
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

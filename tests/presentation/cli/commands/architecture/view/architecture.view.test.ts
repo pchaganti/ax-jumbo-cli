@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import { architectureView } from "../../../../../../src/presentation/cli/commands/architecture/view/architecture.view.js";
 import { IApplicationContainer } from "../../../../../../src/application/host/IApplicationContainer.js";
+import { GetArchitectureController } from "../../../../../../src/application/context/architecture/get/GetArchitectureController.js";
 import { Renderer } from "../../../../../../src/presentation/cli/rendering/Renderer.js";
 import {
   ARCHITECTURE_DEPRECATION_NOTICE,
@@ -31,13 +32,14 @@ describe("architecture.view command", () => {
     Renderer.configure({ format: "text", verbosity: "normal" });
 
     mockGetController = {
-      handle: jest.fn<() => Promise<any>>().mockResolvedValue({
+      handle: jest.fn<() => Promise<unknown>>().mockResolvedValue({
         architecture: mockArchitecture,
       }),
     };
 
     mockContainer = {
-      getArchitectureController: mockGetController as any,
+      getArchitectureController:
+        mockGetController as unknown as GetArchitectureController,
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

@@ -32,6 +32,7 @@ const { runDaemonLoop } = await import("../../../../../../src/presentation/cli/c
 const { queryGoalStatus } = await import("../../../../../../src/presentation/cli/commands/work/shared/GoalStatusQuery.js");
 const { spawnAgent } = await import("../../../../../../src/presentation/cli/commands/work/shared/AgentSpawner.js");
 import type { DaemonCallbacks } from "../../../../../../src/presentation/cli/commands/work/shared/DaemonLoop.js";
+import type { IApplicationContainer } from "../../../../../../src/application/host/IApplicationContainer.js";
 
 const mockExecSync = execSync as jest.MockedFunction<typeof execSync>;
 const mockRunDaemonLoop = runDaemonLoop as jest.MockedFunction<typeof runDaemonLoop>;
@@ -39,7 +40,7 @@ const mockQueryGoalStatus = queryGoalStatus as jest.MockedFunction<typeof queryG
 const mockSpawnAgent = spawnAgent as jest.MockedFunction<typeof spawnAgent>;
 
 describe("work.review", () => {
-  const mockContainer = {} as any;
+  const mockContainer = {} as unknown as IApplicationContainer;
 
   beforeEach(() => {
     jest.clearAllMocks();

@@ -1,8 +1,8 @@
 import { DecisionRestoredEvent } from "../../../../domain/decisions/restore/DecisionRestoredEvent.js";
-import { BaseEvent } from "../../../../domain/BaseEvent.js";
+import { DecisionEvent } from "../../../../domain/decisions/EventIndex.js";
 import { AppendResult } from "../../../persistence/IEventStore.js";
 
 export interface IDecisionRestoredEventWriter {
   append(event: DecisionRestoredEvent): Promise<AppendResult>;
-  readStream(aggregateId: string): Promise<BaseEvent[]>;
+  readStream(aggregateId: string): Promise<DecisionEvent[]>;
 }

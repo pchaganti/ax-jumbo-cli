@@ -39,7 +39,7 @@ describe("LocalCodifyGoalGateway", () => {
       execute: jest.fn<CodifyGoalCommandHandler["execute"]>(),
     };
     gateway = new LocalCodifyGoalGateway(
-      mockCommandHandler as any
+      mockCommandHandler as unknown as CodifyGoalCommandHandler
     );
   });
 

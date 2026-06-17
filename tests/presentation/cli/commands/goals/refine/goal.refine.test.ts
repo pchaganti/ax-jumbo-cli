@@ -55,7 +55,7 @@ describe("goal.refine command", () => {
     // Create mock instances
     mockGoalContextReader = new MockGoalContextReader();
     mockRefineGoalController = {
-      handle: jest.fn<() => Promise<any>>().mockResolvedValue({
+      handle: jest.fn<() => Promise<unknown>>().mockResolvedValue({
         goalId: "goal_123",
         status: GoalStatus.IN_REFINEMENT,
       }),
@@ -64,7 +64,7 @@ describe("goal.refine command", () => {
     // Create mock container
     mockContainer = {
       goalContextReader: mockGoalContextReader,
-      refineGoalController: mockRefineGoalController as any,
+      refineGoalController: mockRefineGoalController as unknown as IApplicationContainer["refineGoalController"],
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

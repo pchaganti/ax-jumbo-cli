@@ -12,6 +12,7 @@ import { GuidelineEventType } from "../../../src/domain/guidelines/Constants";
 import { InvariantEventType } from "../../../src/domain/invariants/Constants";
 import { EntityType, RelationEventType, RelationStatus } from "../../../src/domain/relations/Constants";
 import os from "os";
+import { BaseEvent } from "../../../src/domain/BaseEvent";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,7 +55,7 @@ describe("ProjectionBusFactory", () => {
         path: "",
         status: ComponentStatus.ACTIVE,
       },
-    } as any);
+    } as BaseEvent);
 
     // Deprecate it — should project without cascade errors
     await bus.publish({
@@ -67,11 +68,11 @@ describe("ProjectionBusFactory", () => {
         reason: "No longer needed",
         deprecatedAt: "2026-01-01T01:00:00.000Z",
       },
-    } as any);
+    } as BaseEvent);
 
     const rows = db.prepare("SELECT * FROM component_views").all();
     expect(rows).toHaveLength(1);
-    const row = rows[0] as any;
+    const row = rows[0] as { status: string };
     expect(row.status).toBe(ComponentStatus.DEPRECATED);
   });
 
@@ -92,7 +93,7 @@ describe("ProjectionBusFactory", () => {
         path: "src/search",
         status: ComponentStatus.ACTIVE,
       },
-    } as any);
+    } as BaseEvent);
 
     await bus.publish({
       type: GuidelineEventType.ADDED,
@@ -106,7 +107,7 @@ describe("ProjectionBusFactory", () => {
         rationale: "Rebuild must be deterministic",
         examples: ["ProjectionBusFactory replay"],
       },
-    } as any);
+    } as BaseEvent);
 
     await bus.publish({
       type: InvariantEventType.ADDED,
@@ -118,11 +119,11 @@ describe("ProjectionBusFactory", () => {
         description: "Keep source files organized by domain concept",
         rationale: "Search rebuild must include invariant memory",
       },
-    } as any);
+    } as BaseEvent);
 
     const rows = db
       .prepare("SELECT sourceType, sourceId, category, title FROM search_index_entries ORDER BY category")
-      .all() as any[];
+      .all() as Array<{ sourceType: string; sourceId: string; category: string; title: string }>;
 
     expect(rows).toEqual([
       {
@@ -165,7 +166,7 @@ describe("ProjectionBusFactory", () => {
         strength: null,
         description: "Test relation",
       },
-    } as any);
+    } as BaseEvent);
 
     // Deactivate it directly (as persisted by original cascade)
     await bus.publish({
@@ -177,9 +178,9 @@ describe("ProjectionBusFactory", () => {
         reason: "Component deprecated",
         deactivatedAt: "2026-01-01T01:00:00.000Z",
       },
-    } as any);
+    } as BaseEvent);
 
-    const row = db.prepare("SELECT status FROM relation_views WHERE relationId = ?").get("rel-1") as any;
+    const row = db.prepare("SELECT status FROM relation_views WHERE relationId = ?").get("rel-1") as { status: string };
     expect(row.status).toBe(RelationStatus.DEACTIVATED);
   });
 
@@ -199,7 +200,7 @@ describe("ProjectionBusFactory", () => {
         alternatives: [],
         consequences: null,
       },
-    } as any);
+    } as BaseEvent);
 
     await bus.publish({
       type: DecisionEventType.SUPERSEDED,
@@ -210,9 +211,9 @@ describe("ProjectionBusFactory", () => {
         supersededBy: "dec-2",
         supersededAt: "2026-01-01T01:00:00.000Z",
       },
-    } as any);
+    } as BaseEvent);
 
-    const row = db.prepare("SELECT status FROM decision_views WHERE decisionId = ?").get("dec-1") as any;
+    const row = db.prepare("SELECT status FROM decision_views WHERE decisionId = ?").get("dec-1") as { status: string };
     expect(row.status).toBe(DecisionStatus.SUPERSEDED);
   });
 });

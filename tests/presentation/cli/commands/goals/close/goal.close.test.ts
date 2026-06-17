@@ -20,7 +20,7 @@ describe("goal.close command", () => {
 
     // Create mock instances
     mockCloseGoalController = {
-      handle: jest.fn<() => Promise<any>>().mockResolvedValue({
+      handle: jest.fn<() => Promise<unknown>>().mockResolvedValue({
         goalId: "goal_123",
         status: "done",
         objective: "Implement authentication",
@@ -29,7 +29,7 @@ describe("goal.close command", () => {
 
     // Create mock container
     mockContainer = {
-      closeGoalController: mockCloseGoalController as any,
+      closeGoalController: mockCloseGoalController as unknown as IApplicationContainer["closeGoalController"],
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

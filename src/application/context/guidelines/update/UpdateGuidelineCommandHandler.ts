@@ -41,7 +41,7 @@ export class UpdateGuidelineCommandHandler {
     const history = await this.eventReader.readStream(command.id);
     const guideline = Guideline.rehydrate(
       command.id,
-      history as any
+      history
     );
 
     // 3. Domain logic produces update event - only pass defined fields

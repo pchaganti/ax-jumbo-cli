@@ -1,5 +1,7 @@
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
-import { CodifierProcessManager } from "../../../../../src/application/context/goals/codify/CodifierProcessManager";
+import { CodifierProcessManager, CodifierProcessEvent } from "../../../../../src/application/context/goals/codify/CodifierProcessManager";
+import { GoalClaimPolicy } from "../../../../../src/application/context/goals/claims/GoalClaimPolicy";
+import { CodifyGoalController } from "../../../../../src/application/context/goals/codify/CodifyGoalController";
 import { GoalStatus } from "../../../../../src/domain/goals/Constants";
 import { GoalView } from "../../../../../src/application/context/goals/GoalView";
 
@@ -33,9 +35,9 @@ describe("CodifierProcessManager", () => {
     return new CodifierProcessManager(
       goalStatusReader,
       goalReader,
-      claimPolicy as any,
+      claimPolicy as unknown as GoalClaimPolicy,
       workerIdentityReader,
-      codifyGoalController as any,
+      codifyGoalController as unknown as CodifyGoalController,
       agentGateway,
       telemetryClient,
     );
@@ -227,7 +229,7 @@ describe("CodifierProcessManager", () => {
   it("caps codifier failure event and telemetry error messages", async () => {
     goalStatusReader.findByStatus.mockResolvedValue([goal()]);
     codifyGoalController.handle.mockRejectedValue(new Error(`${"x".repeat(20_000)}codifier tail`));
-    const events: any[] = [];
+    const events: CodifierProcessEvent[] = [];
 
     await manager().processNext({
       agentId: "codex",

@@ -15,7 +15,7 @@ class MockSessionEventWriter implements ISessionStartedEventWriter {
   events: SessionEvent[] = [];
 
   async append(
-    event: BaseEvent & Record<string, any>
+    event: BaseEvent
   ): Promise<AppendResult> {
     this.events.push(event as SessionEvent);
     return { nextSeq: this.events.length };
@@ -77,7 +77,7 @@ describe("StartSessionCommandHandler", () => {
     // Assert
     expect(eventWriter.events).toHaveLength(1);
     expect(eventWriter.events[0].type).toBe("SessionStartedEvent");
-    const event = eventWriter.events[0] as any;
+    const event = eventWriter.events[0];
     expect(event.payload).toEqual({});
   });
 

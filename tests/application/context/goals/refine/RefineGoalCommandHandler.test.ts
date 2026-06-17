@@ -11,6 +11,9 @@ import { IEventBus } from "../../../../../src/application/messaging/IEventBus";
 import { GoalEventType, GoalStatus } from "../../../../../src/domain/goals/Constants";
 import { GoalView } from "../../../../../src/application/context/goals/GoalView";
 import { GoalContextQueryHandler } from "../../../../../src/application/context/goals/get/GoalContextQueryHandler";
+import { GoalClaimPolicy } from "../../../../../src/application/context/goals/claims/GoalClaimPolicy";
+import { IWorkerIdentityReader } from "../../../../../src/application/host/workers/IWorkerIdentityReader";
+import { ISettingsReader } from "../../../../../src/application/settings/ISettingsReader";
 import { jest } from "@jest/globals";
 
 describe("RefineGoalCommandHandler", () => {
@@ -104,16 +107,16 @@ describe("RefineGoalCommandHandler", () => {
           guidelines: [],
         },
       })),
-    } as any;
+    } as unknown as GoalContextQueryHandler;
 
     handler = new RefineGoalCommandHandler(
       eventWriter,
       eventReader,
       goalReader,
       eventBus,
-      claimPolicy as any,
-      workerIdentityReader as any,
-      settingsReader as any,
+      claimPolicy as unknown as GoalClaimPolicy,
+      workerIdentityReader as unknown as IWorkerIdentityReader,
+      settingsReader as unknown as ISettingsReader,
       goalContextQueryHandler
     );
   });

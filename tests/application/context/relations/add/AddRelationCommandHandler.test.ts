@@ -162,7 +162,7 @@ describe("AddRelationCommandHandler", () => {
   it("should throw error if validation fails (invalid entity type)", async () => {
     // Arrange
     const command: AddRelationCommand = {
-      fromEntityType: "invalid-type" as any,
+      fromEntityType: "invalid-type" as unknown as EntityType,
       fromEntityId: "id-1",
       toEntityType: EntityType.COMPONENT,
       toEntityId: "id-2",

@@ -20,7 +20,7 @@ describe("goal.codify command", () => {
 
     // Create mock instances
     mockCodifyGoalController = {
-      handle: jest.fn<() => Promise<any>>().mockResolvedValue({
+      handle: jest.fn<() => Promise<unknown>>().mockResolvedValue({
         goalContextView: {
           goal: {
             goalId: "goal_123",
@@ -47,7 +47,7 @@ describe("goal.codify command", () => {
 
     // Create mock container
     mockContainer = {
-      codifyGoalController: mockCodifyGoalController as any,
+      codifyGoalController: mockCodifyGoalController as unknown as IApplicationContainer["codifyGoalController"],
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

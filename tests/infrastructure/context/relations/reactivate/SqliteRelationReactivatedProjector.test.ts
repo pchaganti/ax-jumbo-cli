@@ -76,7 +76,7 @@ describe("SqliteRelationReactivatedProjector", () => {
 
     await projector.applyRelationReactivated(event);
 
-    const row = db.prepare("SELECT status, version, updatedAt FROM relation_views WHERE relationId = ?").get("relation_123") as any;
+    const row = db.prepare("SELECT status, version, updatedAt FROM relation_views WHERE relationId = ?").get("relation_123") as { status: string; version: number; updatedAt: string };
     expect(row.status).toBe("active");
     expect(row.version).toBe(3);
     expect(row.updatedAt).toBe("2026-03-01T11:00:00.000Z");

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals
 import { telemetryDisable } from "../../../../../../src/presentation/cli/commands/telemetry/disable/telemetry.disable.js";
 import { IApplicationContainer } from "../../../../../../src/application/host/IApplicationContainer.js";
 import { Renderer } from "../../../../../../src/presentation/cli/rendering/Renderer.js";
+import { UpdateTelemetryConsentController } from "../../../../../../src/application/context/telemetry/update/UpdateTelemetryConsentController.js";
 
 describe("telemetry.disable command", () => {
   let mockContainer: Partial<IApplicationContainer>;
@@ -18,7 +19,7 @@ describe("telemetry.disable command", () => {
           disabledByEnvironment: false,
           generatedAnonymousId: false,
         }),
-      } as any,
+      } as unknown as UpdateTelemetryConsentController,
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

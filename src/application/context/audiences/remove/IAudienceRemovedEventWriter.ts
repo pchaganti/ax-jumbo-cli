@@ -6,6 +6,6 @@ import { AppendResult } from "../../../persistence/IEventStore.js";
  * Used by RemoveAudienceCommandHandler to persist domain events.
  */
 export interface IAudienceRemovedEventWriter {
-  append(event: BaseEvent & Record<string, any>): Promise<AppendResult>;
+  append(event: BaseEvent): Promise<AppendResult>;
   readStream(aggregateId: string): Promise<BaseEvent[]>;
 }

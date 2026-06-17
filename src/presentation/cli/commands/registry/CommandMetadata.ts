@@ -8,6 +8,8 @@
  * - Build-time command discovery
  */
 
+import type { IApplicationContainer } from "../../../../application/host/IApplicationContainer.js";
+
 /**
  * Command option definition
  */
@@ -77,6 +79,21 @@ export const CONTINUE_OPTION: CommandOption = {
 };
 
 /**
+ * A registered command's handler.
+ *
+ * Commander parses the CLI flags into the `options` object whose concrete shape
+ * each individual handler declares for itself. Because the registry stores
+ * handlers with many different option shapes, the `options` parameter is typed
+ * `never` here — the only type assignable to every concrete handler's options
+ * parameter (function parameters are checked contravariantly). Each handler
+ * narrows `options` to its own declared shape; the container is always supplied.
+ */
+export type CommandHandler = (
+  options: never,
+  container: IApplicationContainer
+) => Promise<void>;
+
+/**
  * Registered command with handler
  * Generated at build time by scanning command files
  */
@@ -86,7 +103,7 @@ export interface RegisteredCommand {
   /** Command metadata */
   metadata: CommandMetadata;
   /** Command handler function */
-  handler: (...args: any[]) => Promise<void>;
+  handler: CommandHandler;
 }
 
 /**

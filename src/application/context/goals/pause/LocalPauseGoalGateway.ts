@@ -14,7 +14,7 @@ export class LocalPauseGoalGateway implements IPauseGoalGateway {
   async pauseGoal(request: PauseGoalRequest): Promise<PauseGoalResponse> {
     // Validate reason
     const validReasons = Object.values(GoalPausedReasons);
-    if (!validReasons.includes(request.reason as any)) {
+    if (!(validReasons as readonly string[]).includes(request.reason)) {
       throw new Error(
         `Invalid reason: ${request.reason}. Valid reasons: ${validReasons.join(", ")}`
       );

@@ -1,9 +1,9 @@
-import { BaseEvent } from "../../../../domain/BaseEvent.js";
+import { DependencyEvent } from "../../../../domain/dependencies/EventIndex.js";
 
 /**
  * Port interface for reading dependency events to rehydrate aggregate.
  * Used by RemoveDependencyCommandHandler to load event history.
  */
 export interface IDependencyRemovedEventReader {
-  readStream(streamId: string): Promise<BaseEvent[]>;
+  readStream(streamId: string): Promise<DependencyEvent[]>;
 }

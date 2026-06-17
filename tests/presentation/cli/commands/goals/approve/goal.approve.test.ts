@@ -20,7 +20,7 @@ describe("goal.approve command", () => {
 
     // Create mock instances
     mockQualifyGoalController = {
-      handle: jest.fn<() => Promise<any>>().mockResolvedValue({
+      handle: jest.fn<() => Promise<unknown>>().mockResolvedValue({
         goalId: "goal_123",
         status: "approved",
         objective: "Implement authentication",
@@ -29,7 +29,7 @@ describe("goal.approve command", () => {
 
     // Create mock container
     mockContainer = {
-      qualifyGoalController: mockQualifyGoalController as any,
+      qualifyGoalController: mockQualifyGoalController as unknown as IApplicationContainer["qualifyGoalController"],
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

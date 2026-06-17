@@ -68,7 +68,7 @@ describe("RejectGoalCommandHandler", () => {
 
     goalContextQueryHandler = {
       execute: jest.fn(),
-    } as any;
+    } as unknown as GoalContextQueryHandler;
 
     handler = new RejectGoalCommandHandler(
       eventWriter,

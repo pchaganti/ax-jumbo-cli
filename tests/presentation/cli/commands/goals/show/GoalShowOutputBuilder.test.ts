@@ -18,6 +18,10 @@ import { GoalShowOutputBuilder } from "../../../../../../src/presentation/cli/co
 import { ContextualGoalView } from "../../../../../../src/application/context/goals/get/ContextualGoalView.js";
 import { GoalView } from "../../../../../../src/application/context/goals/GoalView.js";
 import { GoalContext } from "../../../../../../src/application/context/goals/get/GoalContext.js";
+import { ComponentView } from "../../../../../../src/application/context/components/ComponentView.js";
+import { DecisionView } from "../../../../../../src/application/context/decisions/DecisionView.js";
+import { InvariantView } from "../../../../../../src/application/context/invariants/InvariantView.js";
+import { GuidelineView } from "../../../../../../src/application/context/guidelines/GuidelineView.js";
 import { stripAnsi, Symbols } from "../../../../../../src/presentation/cli/rendering/StyleConfig.js";
 
 describe("GoalShowOutputBuilder", () => {
@@ -159,7 +163,7 @@ describe("GoalShowOutputBuilder", () => {
     it("should render three dividers when related context exists: metadata, band 2, footer", () => {
       const view = makeContextualView({}, {
         components: [{
-          entity: { componentId: "c1", name: "Svc", type: "service", description: "desc" } as any,
+          entity: { componentId: "c1", name: "Svc", type: "service", description: "desc" } as unknown as ComponentView,
           relationType: "involves",
           relationDescription: "",
         }],
@@ -250,7 +254,7 @@ describe("GoalShowOutputBuilder", () => {
     it("should render related components with name and description", () => {
       const view = makeContextualView({}, {
         components: [{
-          entity: { componentId: "comp_1", name: "AuthService", type: "service", description: "Handles authentication" } as any,
+          entity: { componentId: "comp_1", name: "AuthService", type: "service", description: "Handles authentication" } as unknown as ComponentView,
           relationType: "involves",
           relationDescription: "Modified during implementation",
         }],
@@ -265,7 +269,7 @@ describe("GoalShowOutputBuilder", () => {
     it("should render related decisions with title and rationale", () => {
       const view = makeContextualView({}, {
         decisions: [{
-          entity: { decisionId: "dec_1", title: "Use REST over gRPC", rationale: "Simpler client integration" } as any,
+          entity: { decisionId: "dec_1", title: "Use REST over gRPC", rationale: "Simpler client integration" } as unknown as DecisionView,
           relationType: "must-respect",
           relationDescription: "Architecture constraint",
         }],
@@ -280,7 +284,7 @@ describe("GoalShowOutputBuilder", () => {
     it("should render invariants with title and description", () => {
       const view = makeContextualView({}, {
         invariants: [{
-          entity: { invariantId: "inv_1", title: "No magic strings", description: "Use constants" } as any,
+          entity: { invariantId: "inv_1", title: "No magic strings", description: "Use constants" } as unknown as InvariantView,
           relationType: "must-respect",
           relationDescription: "Constraint",
         }],
@@ -295,7 +299,7 @@ describe("GoalShowOutputBuilder", () => {
     it("should render guidelines with category badge and description", () => {
       const view = makeContextualView({}, {
         guidelines: [{
-          entity: { guidelineId: "guide_1", category: "testing", description: "All rules must be tested" } as any,
+          entity: { guidelineId: "guide_1", category: "testing", description: "All rules must be tested" } as unknown as GuidelineView,
           relationType: "follows",
           relationDescription: "Practice",
         }],
@@ -363,7 +367,7 @@ describe("GoalShowOutputBuilder", () => {
       });
       const output = builder.buildStructuredOutput(view);
       const sections = output.getSections();
-      const data = sections.find(s => s.type === "data")!.content as Record<string, any>;
+      const data = sections.find(s => s.type === "data")!.content as { goal: GoalView } & GoalContext;
 
       expect(data.goal.goalId).toBe("goal_show_123");
       expect(data.goal.title).toBe("Test Goal Title");
@@ -379,14 +383,14 @@ describe("GoalShowOutputBuilder", () => {
     it("should include context arrays in structured output", () => {
       const view = makeContextualView({}, {
         components: [{
-          entity: { componentId: "comp_1", name: "Svc", type: "service", description: "A service" } as any,
+          entity: { componentId: "comp_1", name: "Svc", type: "service", description: "A service" } as unknown as ComponentView,
           relationType: "involves",
           relationDescription: "Test",
         }],
       });
       const output = builder.buildStructuredOutput(view);
       const sections = output.getSections();
-      const data = sections.find(s => s.type === "data")!.content as Record<string, any>;
+      const data = sections.find(s => s.type === "data")!.content as { goal: GoalView } & GoalContext;
 
       expect(data.components).toHaveLength(1);
       expect(data.components[0].entity.name).toBe("Svc");

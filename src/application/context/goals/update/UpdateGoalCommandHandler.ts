@@ -31,7 +31,7 @@ export class UpdateGoalCommandHandler {
 
     // 2. Rehydrate aggregate from event history
     const history = await this.eventReader.readStream(command.goalId);
-    const goal = Goal.rehydrate(command.goalId, history as any);
+    const goal = Goal.rehydrate(command.goalId, history);
 
     // 3. Domain logic produces event
     const event = goal.update(

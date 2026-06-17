@@ -6,5 +6,5 @@ import { AppendResult } from "../../../persistence/IEventStore.js";
  * Used by AddDependencyCommandHandler to persist domain events.
  */
 export interface IDependencyAddedEventWriter {
-  append(event: BaseEvent & Record<string, any>): Promise<AppendResult>;
+  append(event: BaseEvent): Promise<AppendResult>;
 }

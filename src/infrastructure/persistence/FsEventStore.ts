@@ -21,7 +21,7 @@ export class FsEventStore implements IEventStore {
     private readonly logger: ILogger
   ) {}
 
-  async append(e: BaseEvent & Record<string, any>): Promise<AppendResult> {
+  async append(e: BaseEvent): Promise<AppendResult> {
     const streamDir = this.streamDir(e.aggregateId);
     await fs.ensureDir(streamDir);
 
@@ -41,7 +41,7 @@ export class FsEventStore implements IEventStore {
     return { nextSeq };
   }
 
-  async readStream(streamId: string): Promise<BaseEvent[]> {
+  async readStream<T extends BaseEvent = BaseEvent>(streamId: string): Promise<T[]> {
     const streamDir = this.streamDir(streamId);
 
     if (!(await fs.pathExists(streamDir))) {
@@ -49,7 +49,7 @@ export class FsEventStore implements IEventStore {
     }
 
     const files = await fs.readdir(streamDir);
-    const events: BaseEvent[] = [];
+    const events: T[] = [];
 
     for (const file of files.sort()) {
       const filepath = path.join(streamDir, file);
@@ -60,9 +60,11 @@ export class FsEventStore implements IEventStore {
           continue;
         }
         const storedEvent: StoredEvent = JSON.parse(content);
-        // Strip infrastructure metadata before returning domain event
+        // Strip infrastructure metadata before returning domain event.
+        // This deserialization seam is the single point where persisted
+        // events are narrowed to the caller's requested event type.
         const { seq: _seq, ...domainEvent } = storedEvent;
-        events.push(domainEvent as BaseEvent);
+        events.push(domainEvent as T);
       } catch (error) {
         this.logger.error(`${this.tag} Skipping corrupt event file`, error instanceof Error ? error : undefined, { filepath });
         continue;

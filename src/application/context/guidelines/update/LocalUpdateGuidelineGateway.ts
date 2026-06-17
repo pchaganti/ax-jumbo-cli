@@ -34,7 +34,7 @@ export class LocalUpdateGuidelineGateway implements IUpdateGuidelineGateway {
     const history = await this.eventReader.readStream(request.id);
     const guideline = Guideline.rehydrate(
       request.id,
-      history as any
+      history
     );
 
     // 3. Domain logic produces update event - only pass defined fields

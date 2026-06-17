@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach, jest } from "@jest/globals";
 import { LocalShowProjectGateway } from "../../../../../src/application/context/project/show/LocalShowProjectGateway.js";
 import { IProjectContextReader } from "../../../../../src/application/context/project/query/IProjectContextReader.js";
+import { ProjectView } from "../../../../../src/application/context/project/ProjectView.js";
 import { IAudienceContextReader } from "../../../../../src/application/context/audiences/query/IAudienceContextReader.js";
 import { IAudiencePainContextReader } from "../../../../../src/application/context/audience-pains/query/IAudiencePainContextReader.js";
 import { IValuePropositionContextReader } from "../../../../../src/application/context/value-propositions/query/IValuePropositionContextReader.js";
@@ -19,7 +20,7 @@ describe("LocalShowProjectGateway", () => {
     version: 1,
     createdAt: "2025-01-01T00:00:00Z",
     updatedAt: "2025-01-01T00:00:00Z",
-  } as any;
+  } as ProjectView;
 
   beforeEach(() => {
     projectContextReader = {

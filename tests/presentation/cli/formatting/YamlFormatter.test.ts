@@ -88,7 +88,7 @@ describe("YamlFormatter", () => {
     });
 
     it("should handle empty array", () => {
-      const data: any[] = [];
+      const data: unknown[] = [];
 
       const result = formatter.toYaml(data);
 

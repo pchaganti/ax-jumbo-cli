@@ -29,7 +29,7 @@ export class RemoveGoalCommandHandler {
 
     // 2. Rehydrate aggregate from event history (event sourcing)
     const history = await this.eventReader.readStream(command.goalId);
-    const goal = Goal.rehydrate(command.goalId, history as any);
+    const goal = Goal.rehydrate(command.goalId, history);
 
     // 3. Domain logic produces event (validates state)
     const event = goal.remove();

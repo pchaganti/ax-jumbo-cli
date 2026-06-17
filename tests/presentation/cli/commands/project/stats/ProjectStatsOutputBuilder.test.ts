@@ -59,7 +59,9 @@ describe("ProjectStatsOutputBuilder", () => {
 
   it("builds structured stats without deprecated Architecture surface", () => {
     const output = builder.buildStructured(snapshot);
-    const data = output.getSections()[0].content as Record<string, any>;
+    const data = output.getSections()[0].content as {
+      projectStats: ProjectStatsSnapshotView;
+    };
 
     expect(data.projectStats.project.audiences.totalAudiences).toBe(3);
     expect(data.projectStats.work.goals.refinedGoalsCount).toBe(2);

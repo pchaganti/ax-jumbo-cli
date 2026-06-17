@@ -15,6 +15,23 @@ import { AgentFileAssetContent } from "../../../../domain/project/AgentFileAsset
 import { IConfigurer } from "./IConfigurer.js";
 import { PlannedFileChange } from "../../../../application/context/project/init/PlannedFileChange.js";
 
+/**
+ * Minimal shapes for the GitHub hooks document. Jumbo's own fragment matches
+ * these exactly; external (user-authored) hook files are merged structurally
+ * after being narrowed to these shapes at the parse boundary.
+ */
+interface CopilotHook {
+  type?: string;
+  bash?: string;
+  cwd?: string;
+  timeoutSec?: number;
+}
+
+interface CopilotHooksDocument {
+  version?: number;
+  hooks?: Record<string, CopilotHook[]>;
+}
+
 export class CopilotConfigurer implements IConfigurer {
   readonly agent = {
     id: "copilot",
@@ -86,7 +103,7 @@ export class CopilotConfigurer implements IConfigurer {
       // Ensure .github/hooks directory exists
       await fs.ensureDir(path.join(projectRoot, ".github", "hooks"));
 
-      const jumboHooks = AgentFileAssetContent.readJson("copilot-hooks.fragment.json");
+      const jumboHooks = AgentFileAssetContent.readJson<CopilotHooksDocument>("copilot-hooks.fragment.json");
 
       // Check if file exists
       const exists = await fs.pathExists(hooksPath);
@@ -127,8 +144,8 @@ export class CopilotConfigurer implements IConfigurer {
   /**
    * Merge hooks, preserving existing content and adding missing Jumbo hooks
    */
-  private mergeHooks(existing: any, jumbo: any): any {
-    const result = { ...existing };
+  private mergeHooks(existing: CopilotHooksDocument, jumbo: CopilotHooksDocument): CopilotHooksDocument {
+    const result: CopilotHooksDocument = { ...existing };
 
     // Ensure version is set
     if (jumbo.version !== undefined) {
@@ -137,14 +154,16 @@ export class CopilotConfigurer implements IConfigurer {
 
     // Merge hooks
     if (jumbo.hooks) {
-      result.hooks = result.hooks ?? {};
+      const mergedHooks: Record<string, CopilotHook[]> = { ...(result.hooks ?? {}) };
 
       for (const [hookType, hooks] of Object.entries(jumbo.hooks)) {
         if (hooks && Array.isArray(hooks)) {
-          const existingHooks = Array.isArray(result.hooks[hookType]) ? result.hooks[hookType] : [];
-          result.hooks[hookType] = this.mergeHookArray(existingHooks, hooks);
+          const existingHooks = mergedHooks[hookType] ?? [];
+          mergedHooks[hookType] = this.mergeHookArray(existingHooks, hooks);
         }
       }
+
+      result.hooks = mergedHooks;
     }
 
     return result;
@@ -153,7 +172,7 @@ export class CopilotConfigurer implements IConfigurer {
   /**
    * Merge hook arrays, deduplicating by command content
    */
-  private mergeHookArray(existing: any[], additions: any[]): any[] {
+  private mergeHookArray(existing: CopilotHook[], additions: CopilotHook[]): CopilotHook[] {
     const merged = [...existing];
     const existingCommands = new Set(existing.map(h => JSON.stringify(h)));
 

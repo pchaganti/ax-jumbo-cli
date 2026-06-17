@@ -22,7 +22,7 @@ describe("ProjectShowOutputBuilder", () => {
 
   it("should return only core ProjectView fields by default", () => {
     const output = builder.buildStructuredProject(project);
-    const data = output.getSections()[0].content as Record<string, any>;
+    const data = output.getSections()[0].content as Record<string, unknown>;
 
     expect(data.project).toEqual(project);
     expect(data).not.toHaveProperty("audiences");
@@ -50,7 +50,7 @@ describe("ProjectShowOutputBuilder", () => {
     };
 
     const output = builder.buildStructuredNorthStar(northStar);
-    const data = output.getSections()[0].content as Record<string, any>;
+    const data = output.getSections()[0].content as Record<string, unknown>;
 
     expect(data.project).toEqual(project);
     expect(data.audiences).toHaveLength(1);

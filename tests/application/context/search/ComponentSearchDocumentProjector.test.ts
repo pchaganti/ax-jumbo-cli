@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import { ComponentEventType, ComponentStatus } from "../../../../src/domain/components/Constants.js";
 import { ComponentSearchDocumentProjector } from "../../../../src/application/context/search/projectors/ComponentSearchDocumentProjector.js";
 import { SearchCategory } from "../../../../src/application/context/search/SearchCategory.js";
+import type { ComponentEvent } from "../../../../src/domain/components/EventIndex.js";
 
 describe("ComponentSearchDocumentProjector", () => {
   it("maps component events to document-agnostic search documents", () => {
@@ -21,7 +22,7 @@ describe("ComponentSearchDocumentProjector", () => {
           path: "src/search",
           status: ComponentStatus.ACTIVE,
         },
-      } as any,
+      } as ComponentEvent,
       null
     );
 
@@ -52,7 +53,7 @@ describe("ComponentSearchDocumentProjector", () => {
           path: "src/search",
           status: ComponentStatus.ACTIVE,
         },
-      } as any,
+      } as ComponentEvent,
       null
     );
 
@@ -65,7 +66,7 @@ describe("ComponentSearchDocumentProjector", () => {
         version: 2,
         timestamp: "2026-01-02T00:00:00.000Z",
         payload: { description: "Updated summary" },
-      } as any,
+      } as ComponentEvent,
       added.document
     );
 

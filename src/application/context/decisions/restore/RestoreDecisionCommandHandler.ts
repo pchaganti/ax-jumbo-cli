@@ -21,7 +21,7 @@ export class RestoreDecisionCommandHandler {
     }
 
     const history = await this.eventWriter.readStream(command.decisionId);
-    const decision = Decision.rehydrate(command.decisionId, history as any);
+    const decision = Decision.rehydrate(command.decisionId, history);
     const event = decision.restore(command.reason);
 
     await this.eventWriter.append(event);

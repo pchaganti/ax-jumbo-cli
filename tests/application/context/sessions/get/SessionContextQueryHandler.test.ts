@@ -7,6 +7,8 @@ import { IProjectContextReader } from "../../../../../src/application/context/pr
 import { GoalStatus } from "../../../../../src/domain/goals/Constants.js";
 import { GoalView } from "../../../../../src/application/context/goals/GoalView.js";
 import { SessionView } from "../../../../../src/application/context/sessions/SessionView.js";
+import { ProjectView } from "../../../../../src/application/context/project/ProjectView.js";
+import { DecisionView } from "../../../../../src/application/context/decisions/DecisionView.js";
 
 describe("SessionContextQueryHandler", () => {
   let sessionViewReader: jest.Mocked<ISessionViewReader>;
@@ -90,7 +92,7 @@ describe("SessionContextQueryHandler", () => {
       purpose: "Testing",
     };
 
-    projectContextReader.getProject.mockResolvedValue(project as any);
+    projectContextReader.getProject.mockResolvedValue(project as unknown as ProjectView);
 
     const handler = createHandler();
     const result = await handler.execute();
@@ -157,7 +159,7 @@ describe("SessionContextQueryHandler", () => {
       { decisionId: "d1", title: "Decision 1", createdAt: "2025-01-02T00:00:00Z" },
       { decisionId: "d2", title: "Decision 2", createdAt: "2025-01-01T00:00:00Z" },
     ];
-    decisionViewReader.findAll.mockResolvedValue(decisions as any);
+    decisionViewReader.findAll.mockResolvedValue(decisions as unknown as DecisionView[]);
 
     const handler = createHandler();
     const result = await handler.execute();
@@ -173,7 +175,7 @@ describe("SessionContextQueryHandler", () => {
       title: `Decision ${i}`,
       createdAt: `2025-01-${String(i + 1).padStart(2, "0")}T00:00:00Z`,
     }));
-    decisionViewReader.findAll.mockResolvedValue(decisions as any);
+    decisionViewReader.findAll.mockResolvedValue(decisions as unknown as DecisionView[]);
 
     const handler = createHandler();
     const result = await handler.execute();

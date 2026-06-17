@@ -99,7 +99,7 @@ describe("ResumeGoalCommandHandler", () => {
           guidelines: [],
         },
       })),
-    } as any;
+    } as unknown as GoalContextQueryHandler;
 
     handler = new ResumeGoalCommandHandler(
       eventWriter,

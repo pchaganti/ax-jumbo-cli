@@ -21,7 +21,7 @@ describe("goal.commit command", () => {
 
     // Create mock instances
     mockCommitGoalController = {
-      handle: jest.fn<() => Promise<any>>().mockResolvedValue({
+      handle: jest.fn<() => Promise<unknown>>().mockResolvedValue({
         goalId: "goal_123",
         status: GoalStatus.REFINED,
       }),
@@ -29,7 +29,7 @@ describe("goal.commit command", () => {
 
     // Create mock container
     mockContainer = {
-      commitGoalController: mockCommitGoalController as any,
+      commitGoalController: mockCommitGoalController as unknown as IApplicationContainer["commitGoalController"],
     };
 
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

@@ -260,7 +260,7 @@ describe("UpdateDependencyCommandHandler", () => {
 
     const command: UpdateDependencyCommand = {
       id: "dep_999",
-      status: "invalid" as any,
+      status: "invalid" as unknown as UpdateDependencyCommand["status"],
     };
 
     // Act & Assert

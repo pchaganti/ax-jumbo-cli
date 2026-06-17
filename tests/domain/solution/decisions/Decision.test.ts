@@ -4,6 +4,8 @@
 
 import { Decision } from "../../../../src/domain/decisions/Decision.js";
 import { DecisionEventType, DecisionStatus } from "../../../../src/domain/decisions/Constants.js";
+import type { DecisionState } from "../../../../src/domain/decisions/Decision.js";
+import type { DecisionEvent } from "../../../../src/domain/decisions/EventIndex.js";
 
 describe("Decision aggregate", () => {
   describe("reverse()", () => {
@@ -93,7 +95,7 @@ describe("Decision aggregate", () => {
       decision.reverse("Requirements changed");
 
       // Assert
-      const state = (decision as any).state; // Access private state for testing
+      const state = (decision as unknown as { state: DecisionState }).state; // Access private state for testing
       expect(state.status).toBe(DecisionStatus.REVERSED);
       expect(state.reversalReason).toBe("Requirements changed");
       expect(state.reversedAt).toBeDefined();
@@ -115,7 +117,7 @@ describe("Decision aggregate", () => {
       decision.reverse("Requirements changed");
 
       // Assert
-      const state = (decision as any).state;
+      const state = (decision as unknown as { state: DecisionState }).state;
       expect(state.title).toBe("Use REST API");
       expect(state.context).toBe("Need an API layer");
       expect(state.rationale).toBe("REST is well-supported");
@@ -127,7 +129,7 @@ describe("Decision aggregate", () => {
   describe("rehydrate() with reverse events", () => {
     it("should rebuild state correctly from event history including reversal", () => {
       // Arrange
-      const events = [
+      const events: DecisionEvent[] = [
         {
           type: DecisionEventType.ADDED,
           aggregateId: "dec_123",
@@ -154,10 +156,10 @@ describe("Decision aggregate", () => {
       ];
 
       // Act
-      const decision = Decision.rehydrate("dec_123", events as any);
+      const decision = Decision.rehydrate("dec_123", events);
 
       // Assert
-      const state = (decision as any).state;
+      const state = (decision as unknown as { state: DecisionState }).state;
       expect(state.status).toBe(DecisionStatus.REVERSED);
       expect(state.reversalReason).toBe("Requirements changed");
       expect(state.reversedAt).toBe("2025-11-09T11:00:00Z");
@@ -229,7 +231,7 @@ describe("Decision aggregate", () => {
       decision.supersede("dec_456");
 
       // Assert
-      const state = (decision as any).state;
+      const state = (decision as unknown as { state: DecisionState }).state;
       expect(state.status).toBe(DecisionStatus.SUPERSEDED);
       expect(state.supersededBy).toBe("dec_456");
       expect(state.version).toBe(2);
@@ -250,7 +252,7 @@ describe("Decision aggregate", () => {
       decision.supersede("dec_456");
 
       // Assert
-      const state = (decision as any).state;
+      const state = (decision as unknown as { state: DecisionState }).state;
       expect(state.title).toBe("Use JWT");
       expect(state.context).toBe("Need authentication");
       expect(state.rationale).toBe("JWT is well-supported");
@@ -262,7 +264,7 @@ describe("Decision aggregate", () => {
   describe("rehydrate() with supersede events", () => {
     it("should rebuild state correctly from event history including supersede", () => {
       // Arrange
-      const events = [
+      const events: DecisionEvent[] = [
         {
           type: DecisionEventType.ADDED,
           aggregateId: "dec_123",
@@ -288,10 +290,10 @@ describe("Decision aggregate", () => {
       ];
 
       // Act
-      const decision = Decision.rehydrate("dec_123", events as any);
+      const decision = Decision.rehydrate("dec_123", events);
 
       // Assert
-      const state = (decision as any).state;
+      const state = (decision as unknown as { state: DecisionState }).state;
       expect(state.status).toBe(DecisionStatus.SUPERSEDED);
       expect(state.supersededBy).toBe("dec_456");
       expect(state.version).toBe(2);
@@ -338,7 +340,7 @@ describe("Decision aggregate", () => {
       decision.reverse("No longer needed");
       decision.restore("Still valid");
 
-      const state = (decision as any).state;
+      const state = (decision as unknown as { state: DecisionState }).state;
       expect(state.status).toBe(DecisionStatus.ACTIVE);
       expect(state.reversalReason).toBeNull();
       expect(state.reversedAt).toBeNull();

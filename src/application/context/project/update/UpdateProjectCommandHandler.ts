@@ -42,7 +42,7 @@ export class UpdateProjectCommandHandler {
         (await this.eventWriter.readStream(candidateProjectId)).length > 0,
     );
     const history = await this.eventWriter.readStream(projectId);
-    const project = Project.rehydrate(projectId, history as any);
+    const project = Project.rehydrate(projectId, history);
 
     // 3. Domain logic produces event (or null if no changes)
     const event = project.update(

@@ -4,7 +4,7 @@
  */
 
 import { ValuePropositionRemovedEvent } from "../../../../domain/value-propositions/remove/ValuePropositionRemovedEvent.js";
-import { BaseEvent } from "../../../../domain/BaseEvent.js";
+import { ValuePropositionEvent } from "../../../../domain/value-propositions/EventIndex.js";
 import { AppendResult } from "../../../persistence/IEventStore.js";
 
 export interface IValuePropositionRemovedEventWriter {
@@ -16,5 +16,5 @@ export interface IValuePropositionRemovedEventWriter {
   /**
    * Reads all events for a value proposition aggregate.
    */
-  readStream(aggregateId: string): Promise<BaseEvent[]>;
+  readStream(aggregateId: string): Promise<ValuePropositionEvent[]>;
 }
