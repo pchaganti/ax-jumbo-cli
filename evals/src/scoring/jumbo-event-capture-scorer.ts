@@ -16,11 +16,34 @@ import type {
 const DIMENSION = 'jumbo-event-capture';
 
 /**
- * Maps a memory kind to the Jumbo event type its registration emits, e.g.
- * 'decision' -> 'DecisionAddedEvent', 'component' -> 'ComponentAddedEvent'.
+ * Explicit, exhaustive registry from a memory kind to the Jumbo domain event
+ * its registration emits. `satisfies Record<JumboMemoryKind, string>` makes the
+ * compiler reject a new JumboMemoryKind until it is mapped here, and pins the
+ * exact event-type spelling rather than deriving it from a naming convention.
+ *
+ * These literals mirror Jumbo's domain event-type constants
+ * (DecisionEventType.ADDED, ComponentEventType.ADDED, …). evals is a separate
+ * package and cannot import those constants at compile time, so the
+ * jumbo-contract-smoke validates this map against the real CLI at CI time — if
+ * Jumbo renames an event type, the smoke fails loudly instead of the scorer
+ * silently under-counting.
  */
-export function eventTypeForKind(kind: JumboMemoryKind): string {
-  return `${kind.charAt(0).toUpperCase()}${kind.slice(1)}AddedEvent`;
+export const addedEventTypeByKind = {
+  decision: 'DecisionAddedEvent',
+  guideline: 'GuidelineAddedEvent',
+  invariant: 'InvariantAddedEvent',
+  component: 'ComponentAddedEvent',
+  relation: 'RelationAddedEvent',
+  dependency: 'DependencyAddedEvent',
+} as const satisfies Record<JumboMemoryKind, string>;
+
+/**
+ * Resolves the *Added*-event type for a memory kind, e.g. 'decision' ->
+ * 'DecisionAddedEvent'. This scorer confirms initial registration (capture),
+ * so it maps only to the Added event — not Updated/Removed/Reversed/etc.
+ */
+export function resolveAddedEventTypeForKind(kind: JumboMemoryKind): string {
+  return addedEventTypeByKind[kind];
 }
 
 /** The event-type counts from the latest session that carries an event-log summary. */
@@ -57,7 +80,7 @@ export function scoreJumboEventCapture(
   const present: string[] = [];
   const missing: string[] = [];
   for (const kind of expectedKinds) {
-    const eventType = eventTypeForKind(kind);
+    const eventType = resolveAddedEventTypeForKind(kind);
     if ((counts[eventType] ?? 0) >= 1) present.push(eventType);
     else missing.push(eventType);
   }

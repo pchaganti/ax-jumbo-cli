@@ -3,6 +3,8 @@ import {
   scoreJumboEventCapture,
   baselineJumboEventCaptureScore,
   scoreJumboEventCaptureTimeline,
+  resolveAddedEventTypeForKind,
+  addedEventTypeByKind,
 } from '../../src/scoring/jumbo-event-capture-scorer.js';
 import { createSessionRecord } from '../../src/domain/index.js';
 import type { ExpectedJumboMemoryCapture, SessionRecord } from '../../src/domain/index.js';
@@ -80,6 +82,23 @@ describe('scoreJumboEventCapture', () => {
     ];
     const records = [record(1, { DecisionAddedEvent: 1 })];
     expect(scoreJumboEventCapture(records, twoDecisions).score).toBe(1);
+  });
+});
+
+describe('resolveAddedEventTypeForKind', () => {
+  it('maps every memory kind to its explicit Added-event type', () => {
+    expect(resolveAddedEventTypeForKind('decision')).toBe('DecisionAddedEvent');
+    expect(resolveAddedEventTypeForKind('guideline')).toBe('GuidelineAddedEvent');
+    expect(resolveAddedEventTypeForKind('invariant')).toBe('InvariantAddedEvent');
+    expect(resolveAddedEventTypeForKind('component')).toBe('ComponentAddedEvent');
+    expect(resolveAddedEventTypeForKind('relation')).toBe('RelationAddedEvent');
+    expect(resolveAddedEventTypeForKind('dependency')).toBe('DependencyAddedEvent');
+  });
+
+  it('covers exactly the six memory kinds (registry is exhaustive)', () => {
+    expect(Object.keys(addedEventTypeByKind).sort()).toEqual(
+      ['component', 'decision', 'dependency', 'guideline', 'invariant', 'relation'],
+    );
   });
 });
 
