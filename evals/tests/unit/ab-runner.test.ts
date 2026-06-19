@@ -275,6 +275,77 @@ describe('runABComparison', () => {
     expect(result.baselineTimeline?.some((ps) => dims(ps.scores).includes('structural-retention'))).toBe(true);
   });
 
+  it('reports token-efficiency as N/A when the two arms are not output-equivalent', async () => {
+    // A structural assertion neither arm can satisfy (mock snapshots are empty)
+    // drives both structural scores below the 0.8 equivalence threshold.
+    const scenario = createTestScenario({
+      id: 'scenario-not-equivalent',
+      name: 'Not equivalent',
+      initialPrompt: 'Build',
+      sessionCount: 1,
+      structuralAssertions: [
+        { id: 'needs-file', file: 'src/needed.ts', sessionNumber: 1, matcher: { kind: 'fileExists' } },
+      ],
+    });
+    const result = await runABComparison({
+      scenario,
+      adapter: createMockAdapter(),
+      executor: createMockExecutor(),
+      store: createMockStore(),
+    });
+    const te = result.jumboScores.find((s) => s.dimension === 'token-efficiency');
+    expect(te?.maxScore).toBe(0);
+    expect(te?.details).toContain('N/A');
+    expect(te?.details).toContain('not equivalent');
+  });
+
+  it('reports token-efficiency (not N/A) when both arms are output-equivalent', async () => {
+    const scenario = createTestScenario({
+      id: 'scenario-equivalent',
+      name: 'Equivalent',
+      initialPrompt: 'Build',
+      sessionCount: 1,
+      structuralAssertions: [
+        { id: 'index-exists', file: 'src/index.ts', sessionNumber: 1, matcher: { kind: 'fileExists' } },
+      ],
+    });
+    const baseExec = createMockExecutor();
+    const executor = {
+      ...baseExec,
+      captureWorkspaceSnapshot: async () => ({
+        capturedAt: new Date().toISOString(),
+        files: [{ path: 'src/index.ts', content: 'export const x = 1;' }],
+      }),
+    } as typeof baseExec;
+    const result = await runABComparison({
+      scenario,
+      adapter: createMockAdapter(),
+      executor,
+      store: createMockStore(),
+    });
+    const te = result.jumboScores.find((s) => s.dimension === 'token-efficiency');
+    expect(te?.maxScore).toBe(1);
+    expect(te?.details ?? '').not.toContain('not equivalent');
+  });
+
+  it('surfaces the Jumbo adherence rate in the protocol-adherence details', async () => {
+    const scenario = createTestScenario({
+      id: 'scenario-adherence-rate',
+      name: 'Adherence rate',
+      initialPrompt: 'Build',
+      sessionCount: 1,
+    });
+    const result = await runABComparison({
+      scenario,
+      adapter: createMockAdapter(),
+      executor: createMockExecutor(),
+      store: createMockStore(),
+    });
+    const pa = result.jumboScores.find((s) => s.dimension === 'protocol-adherence');
+    expect(pa?.details).toContain('adherence-rate=');
+    expect(pa?.details).toContain('threshold=0.5');
+  });
+
   it('uses identical scenario prompts for both runs before variant wrapping', async () => {
     // Without a jumboPlan, the Jumbo arm has no active goal-id, so its
     // prompt is the bare scenario prompt — byte-identical to baseline.

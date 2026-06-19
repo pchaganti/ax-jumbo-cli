@@ -8,13 +8,13 @@ import { buildHeartbeatUpdate } from './infrastructure/heartbeat-writer.js';
 import type { ExecResult } from './infrastructure/container-manager.js';
 import type { HarnessAdapter } from './harness/harness-adapter.js';
 import { runSession } from './run-session.js';
-import { scoreFileAccuracy } from './scoring/file-accuracy-scorer.js';
+import { scoreFileAccuracy, producedAllExpectedFiles } from './scoring/file-accuracy-scorer.js';
 import { scoreKnowledgeRetention, scoreKnowledgeRetentionTimeline } from './scoring/knowledge-retention-scorer.js';
 import { scoreStructuralAssertions, scoreStructuralAssertionsTimeline } from './scoring/structural-assertion-scorer.js';
 import { scoreDisruptionRecovery, scoreDisruptionRecoveryTimeline } from './scoring/disruption-recovery-scorer.js';
 import { baselineJumboMemoryCaptureScore, scoreJumboMemoryCapture, scoreJumboMemoryCaptureTimeline } from './scoring/jumbo-memory-capture-scorer.js';
 import { baselineJumboEventCaptureScore, scoreJumboEventCapture, scoreJumboEventCaptureTimeline } from './scoring/jumbo-event-capture-scorer.js';
-import { baselineProtocolAdherenceScore, scoreProtocolAdherence, scoreProtocolAdherenceTimeline } from './scoring/protocol-adherence-scorer.js';
+import { adherenceForSession, baselineProtocolAdherenceScore, scoreProtocolAdherence, scoreProtocolAdherenceTimeline } from './scoring/protocol-adherence-scorer.js';
 import { compareTokenEfficiency, tokenUsageTimeline } from './scoring/token-efficiency-scorer.js';
 import type { JudgeConfig, JudgeFn } from './scoring/llm-judge-scorer.js';
 import { scoreAllJudgeDimensions } from './scoring/llm-judge-scorer.js';
@@ -1195,13 +1195,35 @@ export async function runABComparison(config: ABRunConfig): Promise<ComparisonRe
     const jumboCleanRecords = jumboRecords.filter((r) => !r.tampered);
     const baselineCleanRecords = baselineRecords.filter((r) => !r.tampered);
 
+    // Adherence-gating (GOAL.md Outcome 4 + Scoring "Adherence Rate"): the
+    // Jumbo arm's lifecycle adherence is computed and reported SEPARATELY from
+    // quality scores, "not averaged into the lift". A per-session record filter
+    // was rejected: scoring a quality dimension over only the adherent subset of
+    // Jumbo sessions (while baseline uses all sessions) is asymmetric and
+    // fabricates lift — e.g. an empty adherent set makes knowledge-retention
+    // return its trivially-satisfied 1.0, inventing a +1 delta against a
+    // baseline that did nothing. So quality scores stay symmetric across arms,
+    // and the adherence rate is surfaced as the diagnostic that explains a low
+    // lift (non-adherence) vs. a real null result (memory didn't help).
+    const MIN_SESSION_ADHERENCE = 0.5;
+    const jumboAdherentSessions = jumboCleanRecords.filter(
+      (r) => adherenceForSession(r).score >= MIN_SESSION_ADHERENCE,
+    ).length;
+    const jumboAdherenceRate = jumboCleanRecords.length === 0
+      ? 0
+      : jumboAdherentSessions / jumboCleanRecords.length;
+
     const jumboFileScore = scoreFileAccuracy(jumboCleanRecords, expectedFiles);
     const jumboRetentionScore = scoreKnowledgeRetention(jumboCleanRecords, retentionPatterns);
     const jumboStructuralScore = scoreStructuralAssertions(jumboCleanRecords, structuralAssertions);
     const jumboDisruptionScore = scoreDisruptionRecovery(jumboCleanRecords, disruptions);
     const jumboMemoryScore = scoreJumboMemoryCapture(jumboCleanRecords, expectedJumboMemoryCaptures);
     const jumboEventCaptureScore = scoreJumboEventCapture(jumboCleanRecords, expectedJumboMemoryCaptures);
-    const jumboProtocolScore = scoreProtocolAdherence(jumboCleanRecords);
+    const baseProtocolScore = scoreProtocolAdherence(jumboCleanRecords);
+    const jumboProtocolScore = {
+      ...baseProtocolScore,
+      details: `${baseProtocolScore.details}; adherence-rate=${jumboAdherenceRate.toFixed(2)} (adherent-sessions=${jumboAdherentSessions}/${jumboCleanRecords.length}, threshold=${MIN_SESSION_ADHERENCE})`,
+    };
 
     const baselineFileScore = scoreFileAccuracy(baselineCleanRecords, expectedFiles);
     const baselineRetentionScore = scoreKnowledgeRetention(baselineCleanRecords, retentionPatterns);
@@ -1211,19 +1233,28 @@ export async function runABComparison(config: ABRunConfig): Promise<ComparisonRe
     const baselineEventCaptureScore = baselineJumboEventCaptureScore(expectedJumboMemoryCaptures);
     const baselineProtocolScore = baselineProtocolAdherenceScore();
 
-    // Token efficiency: tokens-per-quality-point. When the scenario declares
-    // structural assertions, retention is measured on artefacts, so the
-    // structural-retention score is the quality denominator (GOAL.md
-    // "Comparing token usage fairly"). Otherwise fall back to the
-    // file+keyword-retention average.
-    const hasStructuralAssertions = structuralAssertions.length > 0;
-    const jumboAvgQuality = hasStructuralAssertions
-      ? jumboStructuralScore.score
-      : (jumboFileScore.score + jumboRetentionScore.score) / 2;
-    const baselineAvgQuality = hasStructuralAssertions
-      ? baselineStructuralScore.score
-      : (baselineFileScore.score + baselineRetentionScore.score) / 2;
-    const tokenEfficiencyScore = compareTokenEfficiency(jumboCleanRecords, baselineCleanRecords, jumboAvgQuality, baselineAvgQuality);
+    // Token efficiency is normalised by the structural-assertion score (GOAL.md
+    // Scoring) and only reported when both arms produced functionally
+    // EQUIVALENT outputs — both produced every expected file AND both reached
+    // >=0.8 structural-assertion score. Otherwise the ratio compares the cost of
+    // producing different things, so it is reported as N/A. Equivalence uses
+    // ungated artefacts (independent of adherence).
+    const MIN_STRUCTURAL_FOR_EQUIVALENCE = 0.8;
+    const jumboProducedAll = producedAllExpectedFiles(jumboCleanRecords, expectedFiles);
+    const baselineProducedAll = producedAllExpectedFiles(baselineCleanRecords, expectedFiles);
+    const outputsEquivalent =
+      jumboProducedAll &&
+      baselineProducedAll &&
+      jumboStructuralScore.score >= MIN_STRUCTURAL_FOR_EQUIVALENCE &&
+      baselineStructuralScore.score >= MIN_STRUCTURAL_FOR_EQUIVALENCE;
+    const tokenEfficiencyScore = outputsEquivalent
+      ? compareTokenEfficiency(jumboCleanRecords, baselineCleanRecords, jumboStructuralScore.score, baselineStructuralScore.score)
+      : {
+          dimension: 'token-efficiency',
+          score: 0,
+          maxScore: 0,
+          details: `N/A: outputs not equivalent — token efficiency would compare the cost of producing different things (structural: jumbo=${jumboStructuralScore.score.toFixed(2)}, baseline=${baselineStructuralScore.score.toFixed(2)}, >=${MIN_STRUCTURAL_FOR_EQUIVALENCE} required; all expected files produced: jumbo=${jumboProducedAll}, baseline=${baselineProducedAll}).`,
+        };
 
     const jumboScores = [jumboFileScore, jumboRetentionScore, jumboStructuralScore, jumboDisruptionScore, jumboMemoryScore, jumboEventCaptureScore, jumboProtocolScore, tokenEfficiencyScore];
     const baselineScores = [baselineFileScore, baselineRetentionScore, baselineStructuralScore, baselineDisruptionScore, baselineMemoryScore, baselineEventCaptureScore, baselineProtocolScore, tokenEfficiencyScore];
