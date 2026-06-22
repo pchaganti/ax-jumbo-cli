@@ -1,4 +1,4 @@
-export { scoreFileAccuracy } from './file-accuracy-scorer.js';
+export { scoreFileAccuracy, producedAllExpectedFiles } from './file-accuracy-scorer.js';
 export { scoreKnowledgeRetention, scoreKnowledgeRetentionTimeline } from './knowledge-retention-scorer.js';
 export { scoreStructuralAssertions, scoreStructuralAssertionsTimeline } from './structural-assertion-scorer.js';
 export { scoreDisruptionRecovery, scoreDisruptionRecoveryTimeline } from './disruption-recovery-scorer.js';
