@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **TUI Mega Menu**: Restored the `m` / `M` footer shortcut and overlay navigation menu, with goal-status menu entries that route directly into filtered Goals views and a Settings placeholder route.
+- **TUI Goals browser**: Remodeled the Goals screen into a single-goal browser — up/down arrows move between goals in the active state filter, left/right arrows page through every goal-show section (metadata, objective, note, review issues, success criteria, progress, scope, and related components, dependencies, decisions, invariants, and guidelines). Related-entity sections render each entry as a highlighted name with its description, truncated and paginated to stay within the viewport; related decisions show labeled Context and Rationale fields in full at two per page. The CLI `goal show` output now renders those same labeled decision fields.
 
 ### Fixed
 

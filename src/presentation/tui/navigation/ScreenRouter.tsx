@@ -106,7 +106,12 @@ export function ScreenRouter({
   }
 
   if (definition?.key === "goals") {
-    return <GoalsScreen statusFilter={goalStatusFilter} />;
+    return (
+      <GoalsScreen
+        statusFilter={goalStatusFilter}
+        terminalWidth={terminalWidth}
+      />
+    );
   }
 
   return <ScreenComponent />;
