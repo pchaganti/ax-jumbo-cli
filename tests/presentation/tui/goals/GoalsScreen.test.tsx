@@ -1,5 +1,5 @@
 import React from "react";
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, jest } from "@jest/globals";
 import { render } from "ink-testing-library";
 import stripAnsi from "strip-ansi";
 import { GoalsScreen } from "../../../../src/presentation/tui/goals/GoalsScreen.js";
@@ -57,6 +57,8 @@ function renderGoalsScreen(
     readonly contexts?: ReadonlyMap<string, GoalContext>;
     readonly handledRequests?: GetGoalsRequest[];
     readonly terminalWidth?: number;
+    readonly shortcutsEnabled?: boolean;
+    readonly onModalOpenChange?: (isOpen: boolean) => void;
   } = {},
 ): ReturnType<typeof render> {
   const goals = options.goals ?? [createGoal()];
@@ -100,6 +102,8 @@ function renderGoalsScreen(
       <GoalsScreen
         statusFilter={options.statusFilter}
         terminalWidth={options.terminalWidth}
+        shortcutsEnabled={options.shortcutsEnabled}
+        onModalOpenChange={options.onModalOpenChange}
       />
     </StateReaderProvider>,
   );
@@ -466,6 +470,87 @@ describe("GoalsScreen", () => {
 
     expect(lastFrame()).toContain("Author Goal");
     expect(lastFrame()).toContain("Objective");
+    unmount();
+  });
+
+  it("ignores its hotkeys when shortcutsEnabled is false", async () => {
+    const handledRequests: GetGoalsRequest[] = [];
+    const goals = [
+      createGoal({ goalId: "goal_first", title: "First goal" }),
+      createGoal({ goalId: "goal_second", title: "Second goal" }),
+    ];
+    const { lastFrame, stdin, unmount } = renderGoalsScreen({
+      goals,
+      handledRequests,
+      shortcutsEnabled: false,
+    });
+
+    await waitForFrame(lastFrame, "First goal");
+    stdin.write("n");
+    await settleInput();
+    stdin.write(DOWN_ARROW);
+    await settleInput();
+    stdin.write(SPACE);
+    await settleInput();
+
+    expect(lastFrame()).not.toContain("Author Goal");
+    expect(lastFrame()).toContain("1/2");
+    expect(handledRequests).toContainEqual({});
+    expect(handledRequests).not.toContainEqual(
+      expect.objectContaining({ statuses: expect.anything() }),
+    );
+    unmount();
+  });
+
+  it("reports modal open state while the authoring flow opens and closes", async () => {
+    const onModalOpenChange = jest.fn();
+    const { lastFrame, stdin, unmount } = renderGoalsScreen({
+      onModalOpenChange,
+    });
+
+    await waitForFrame(lastFrame, "Real goal");
+    stdin.write("n");
+    await waitForFrame(lastFrame, "Author Goal");
+
+    expect(onModalOpenChange).toHaveBeenLastCalledWith(true);
+
+    stdin.write("\x1b");
+    await waitForFrame(lastFrame, "Real goal");
+
+    expect(onModalOpenChange).toHaveBeenLastCalledWith(false);
+    expect(lastFrame()).not.toContain("Author Goal");
+    unmount();
+  });
+
+  it("keeps the authoring flow open and modal-reported while shell hotkeys are typed", async () => {
+    const onModalOpenChange = jest.fn();
+    const handledRequests: GetGoalsRequest[] = [];
+    const { lastFrame, stdin, unmount } = renderGoalsScreen({
+      onModalOpenChange,
+      handledRequests,
+    });
+
+    await waitForFrame(lastFrame, "Real goal");
+    stdin.write("n");
+    await waitForFrame(lastFrame, "Author Goal");
+    onModalOpenChange.mockClear();
+
+    stdin.write("m");
+    await settleInput();
+    stdin.write("/");
+    await settleInput();
+    stdin.write("i");
+    await settleInput();
+    stdin.write("q");
+    await settleInput();
+    stdin.write(SPACE);
+    await settleInput();
+
+    expect(lastFrame()).toContain("Author Goal");
+    expect(onModalOpenChange).not.toHaveBeenCalled();
+    expect(handledRequests).not.toContainEqual(
+      expect.objectContaining({ statuses: expect.anything() }),
+    );
     unmount();
   });
 });

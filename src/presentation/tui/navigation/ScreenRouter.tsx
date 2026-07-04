@@ -25,6 +25,7 @@ interface ScreenRouterProps {
   bannerAnimationComplete?: boolean;
   billboardAnimationComplete?: boolean;
   goalStatusFilter?: readonly GoalStatusType[];
+  onModalOpenChange?: (isOpen: boolean) => void;
   onBannerAnimationComplete?: () => void;
   onBillboardAnimationComplete?: () => void;
   settingsReader?: Pick<ISettingsReader, "read" | "write">;
@@ -62,6 +63,7 @@ export function ScreenRouter({
   bannerAnimationComplete,
   billboardAnimationComplete,
   goalStatusFilter,
+  onModalOpenChange,
   onBannerAnimationComplete,
   onBillboardAnimationComplete,
   settingsReader,
@@ -110,6 +112,8 @@ export function ScreenRouter({
       <GoalsScreen
         statusFilter={goalStatusFilter}
         terminalWidth={terminalWidth}
+        shortcutsEnabled={shortcutsEnabled}
+        onModalOpenChange={onModalOpenChange}
       />
     );
   }

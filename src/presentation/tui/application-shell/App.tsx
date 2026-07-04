@@ -194,6 +194,7 @@ function AppFrame({
   const [searchOpen, setSearchOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
+  const [screenModalOpen, setScreenModalOpen] = useState(false);
   const [goalStatusFilter, setGoalStatusFilter] =
     useState<readonly GoalStatusType[] | undefined>(undefined);
   const [goalAuthoringError, setGoalAuthoringError] = useState<string | null>(null);
@@ -226,10 +227,12 @@ function AppFrame({
   const initShortcutEnabled =
     !projectContext.loading &&
     projectLifecycleState === ProjectLifecycle.UNINITIALIZED;
-  const footerShortcutsEnabled =
+  const shellOverlaysClosed =
     !initFlowOpen && !goalAuthoringOpen && !searchOpen && !megaMenuOpen;
+  const footerShortcutsEnabled =
+    shellOverlaysClosed && !screenModalOpen && !initShortcutEnabled;
   const contentShortcutsEnabled =
-    footerShortcutsEnabled && !notificationDrawerOpen;
+    shellOverlaysClosed && !screenModalOpen && !notificationDrawerOpen;
   const cockpitLaunchpadVisible =
     !initFlowOpen &&
     !goalAuthoringOpen &&
@@ -484,6 +487,7 @@ function AppFrame({
             terminalWidth={columns}
             terminalHeight={Math.max(1, rows - FRAME_CHROME_ROWS)}
             goalStatusFilter={goalStatusFilter}
+            onModalOpenChange={setScreenModalOpen}
             settingsReader={settingsReader}
             launchAnimationEnabled={launchAnimationEnabled}
             bannerAnimationComplete={bannerAnimationComplete}

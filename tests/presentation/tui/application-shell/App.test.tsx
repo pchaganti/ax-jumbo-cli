@@ -382,7 +382,7 @@ describe("App", () => {
 
     stdin.write("m");
     await tick();
-    stdin.write("n");
+    stdin.write("i");
     await tick();
 
     expect(lastFrame()).toContain("Author Goal");
@@ -425,10 +425,16 @@ describe("App", () => {
 
   it("does not open the MegaMenu while the notification drawer owns input", async () => {
     const { stdin, lastFrame, unmount } = render(
-      <App settingsReader={hiddenLaunchpadWelcomeSettingsReader()} />,
+      <App
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
+        stateReaderControllers={{
+          getProjectSummaryQueryHandler: projectSummaryController("primed"),
+        }}
+      />,
     );
 
-    stdin.write("n");
+    await waitForFrame(lastFrame, (frame) => frame.includes("Test Project"));
+    stdin.write("i");
     await waitForFrame(lastFrame, (frame) => frame.includes("Notifications"));
 
     stdin.write("M");
@@ -455,6 +461,9 @@ describe("App", () => {
       <App
         version="1.0.0"
         settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
+        stateReaderControllers={{
+          getProjectSummaryQueryHandler: projectSummaryController("primed"),
+        }}
         cliUpdateController={{
           check: jest.fn(async () => ({
             status: "update-available",
@@ -474,7 +483,7 @@ describe("App", () => {
     await waitForFrame(lastFrame, (frame) =>
       frame.includes("notifications (1)"),
     );
-    stdin.write("n");
+    stdin.write("i");
     await waitForFrame(lastFrame, (frame) =>
       frame.includes("New version of Jumbo available"),
     );
@@ -502,6 +511,9 @@ describe("App", () => {
       <App
         version="1.0.0"
         settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
+        stateReaderControllers={{
+          getProjectSummaryQueryHandler: projectSummaryController("primed"),
+        }}
         cliUpdateController={{
           check: jest.fn(async () => ({
             status: "update-available",
@@ -521,7 +533,7 @@ describe("App", () => {
     await waitForFrame(lastFrame, (frame) =>
       frame.includes("notifications (1)"),
     );
-    stdin.write("n");
+    stdin.write("i");
     await waitForFrame(lastFrame, (frame) =>
       frame.includes("Run npm install -g jumbo-cli@latest"),
     );
@@ -761,6 +773,88 @@ describe("App", () => {
     } finally {
       unmount();
     }
+  }, 10000);
+
+  it("opens only the InitFlow when pressing i while the init shortcut is enabled", async () => {
+    const { stdin, lastFrame, unmount } = render(
+      <App
+        version="1.0.0"
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
+        stateReaderControllers={{
+          getProjectSummaryQueryHandler:
+            projectSummaryController("uninitialized"),
+        }}
+        cliUpdateController={{
+          check: jest.fn(async () => ({
+            status: "update-available",
+            localVersion: "1.0.0",
+            latestVersion: "1.1.0",
+            feasibility: {
+              feasible: false,
+              reason: "self-upgrade-unavailable",
+              guidance: "Run npm install -g jumbo-cli@latest",
+            },
+          })),
+          upgrade: jest.fn(),
+        }}
+      />,
+    );
+
+    await waitForFrame(lastFrame, (frame) =>
+      frame.includes("notifications (1)"),
+    );
+    stdin.write("i");
+    await waitForFrame(lastFrame, (frame) =>
+      frame.includes("Initialize Project"),
+    );
+
+    expect(lastFrame()).toContain("Initialize Project");
+    expect(lastFrame()).not.toContain("Notifications");
+    unmount();
+  }, 10000);
+
+  it("suppresses shell shortcuts while the Goals screen authoring flow is open", async () => {
+    const { stdin, lastFrame, unmount } = render(
+      <App
+        settingsReader={hiddenLaunchpadWelcomeSettingsReader()}
+        stateReaderControllers={{
+          getProjectSummaryQueryHandler: projectSummaryController("primed"),
+        }}
+      />,
+    );
+
+    await waitForFrame(lastFrame, (frame) => frame.includes("Test Project"));
+    stdin.write("m");
+    await waitForFrame(lastFrame, (frame) => frame.includes("Navigate"));
+    stdin.write("\u001B[B");
+    await tick();
+    stdin.write("\r");
+    await waitForFrame(lastFrame, (frame) => frame.includes("GOALS//"));
+
+    stdin.write("n");
+    await waitForFrame(lastFrame, (frame) => frame.includes("Author Goal"));
+
+    stdin.write("q");
+    await tick();
+    stdin.write("m");
+    await tick();
+    stdin.write("/");
+    await tick();
+    stdin.write("i");
+    await tick();
+
+    expect(lastFrame()).toContain("Author Goal");
+    expect(lastFrame()).not.toContain("Navigate");
+    expect(lastFrame()).not.toContain("Notifications");
+    expect(lastFrame()).not.toContain("search memory");
+
+    stdin.write("\x1b");
+    await waitForFrame(lastFrame, (frame) => frame.includes("GOALS//"));
+    stdin.write("m");
+    await waitForFrame(lastFrame, (frame) => frame.includes("Navigate"));
+
+    expect(lastFrame()).toContain("Navigate");
+    unmount();
   }, 10000);
 
 });

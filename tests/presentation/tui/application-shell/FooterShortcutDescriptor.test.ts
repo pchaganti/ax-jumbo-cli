@@ -10,7 +10,7 @@ describe("FooterShortcutDescriptor", () => {
   });
 
   it("defines the notification drawer shortcut descriptor", () => {
-    expect(FooterShortcut.NOTIFICATIONS).toEqual({ char: "n" });
+    expect(FooterShortcut.NOTIFICATIONS).toEqual({ char: "i" });
   });
 
   it("defines the MegaMenu shortcut descriptor", () => {

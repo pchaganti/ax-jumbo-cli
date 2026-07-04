@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import {
   BaseColors,
@@ -87,6 +87,8 @@ interface GoalSectionPage {
 interface GoalsScreenProps {
   readonly statusFilter?: readonly GoalStatusType[];
   readonly terminalWidth?: number;
+  readonly shortcutsEnabled?: boolean;
+  readonly onModalOpenChange?: (isOpen: boolean) => void;
 }
 
 const STATUS_COLORS: Record<GoalStatusType, string> = {
@@ -116,6 +118,8 @@ const EMPTY_GOAL_CONTEXT: GoalContext = {
 export function GoalsScreen({
   statusFilter,
   terminalWidth,
+  shortcutsEnabled = true,
+  onModalOpenChange,
 }: GoalsScreenProps = {}): React.ReactElement {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [sectionPageFlowIndex, setSectionPageFlowIndex] = useState(0);
@@ -192,13 +196,28 @@ export function GoalsScreen({
     });
   }, [visibleGoals.length]);
 
+  const updateAuthoringOpen = useCallback(
+    (isOpen: boolean) => {
+      setAuthoringOpen(isOpen);
+      onModalOpenChange?.(isOpen);
+    },
+    [onModalOpenChange],
+  );
+
+  useEffect(
+    () => () => {
+      onModalOpenChange?.(false);
+    },
+    [onModalOpenChange],
+  );
+
   useInput((input, key) => {
-    if (authoringOpen) {
+    if (!shortcutsEnabled || authoringOpen) {
       return;
     }
 
     if (input === "n" || input === "N" || input === "a" || input === "A") {
-      setAuthoringOpen(true);
+      updateAuthoringOpen(true);
       return;
     }
 
@@ -238,11 +257,11 @@ export function GoalsScreen({
   });
 
   const handleAuthoringComplete = (_values: GoalAuthoringValues) => {
-    setAuthoringOpen(false);
+    updateAuthoringOpen(false);
   };
 
   const handleAuthoringCancel = () => {
-    setAuthoringOpen(false);
+    updateAuthoringOpen(false);
   };
 
   if (authoringOpen) {
