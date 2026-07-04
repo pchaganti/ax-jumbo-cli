@@ -30,6 +30,8 @@ export const GoalsScreenCopy = {
   emptyFieldValue: "None",
   showingLabel: "Showing:",
   stateLineLabel: "State:",
+  authoringUnavailable:
+    "Goal registration is unavailable. Restart Jumbo and try again.",
   details: {
     id: "Id........",
     title: "Title.....",

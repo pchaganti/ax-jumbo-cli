@@ -14,6 +14,9 @@ import type { GoalView } from "../../../../src/application/context/goals/GoalVie
 import type { GoalContext } from "../../../../src/application/context/goals/get/GoalContext.js";
 import type { GetGoalsRequest } from "../../../../src/application/context/goals/get/GetGoalsRequest.js";
 import type { ShowGoalRequest } from "../../../../src/application/context/goals/get/ShowGoalRequest.js";
+import type { AddGoalRequest } from "../../../../src/application/context/goals/add/AddGoalRequest.js";
+import type { AddGoalResponse } from "../../../../src/application/context/goals/add/AddGoalResponse.js";
+import type { RequestController } from "../../../../src/presentation/tui/action-dispatch/RequestController.js";
 
 const DOWN_ARROW = "\u001B[B";
 const RIGHT_ARROW = "\u001B[C";
@@ -30,6 +33,55 @@ async function waitForFrame(readFrame: () => string | undefined, text: string) {
 
 async function settleInput(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 30));
+}
+
+async function waitUntil(condition: () => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (condition()) return;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+}
+
+async function submitAuthoringFlow(
+  stdin: ReturnType<typeof render>["stdin"],
+  readFrame: () => string | undefined,
+  values: { readonly title: string; readonly objective: string; readonly criterion: string },
+): Promise<void> {
+  stdin.write("n");
+  await waitForFrame(readFrame, "Author Goal");
+
+  stdin.write(values.title);
+  await settleInput();
+  stdin.write("\r");
+  await settleInput();
+  stdin.write(values.objective);
+  await settleInput();
+  stdin.write("\r");
+  await waitForFrame(readFrame, "Success criterion");
+
+  stdin.write(values.criterion);
+  await settleInput();
+  stdin.write("\r");
+  await settleInput();
+  stdin.write("\r");
+  await waitForFrame(readFrame, "Scope in");
+
+  stdin.write("\r");
+  await settleInput();
+  stdin.write("\r");
+  await waitForFrame(readFrame, "Previous goal");
+
+  stdin.write("\r");
+  await settleInput();
+  stdin.write("\r");
+  await settleInput();
+  stdin.write("\r");
+  await waitForFrame(readFrame, "Branch");
+
+  stdin.write("\r");
+  await settleInput();
+  stdin.write("\r");
+  await settleInput();
 }
 
 async function navigateRightUntil(
@@ -58,6 +110,7 @@ function renderGoalsScreen(
     readonly handledRequests?: GetGoalsRequest[];
     readonly terminalWidth?: number;
     readonly shortcutsEnabled?: boolean;
+    readonly addGoalController?: RequestController<AddGoalRequest, AddGoalResponse>;
     readonly onModalOpenChange?: (isOpen: boolean) => void;
   } = {},
 ): ReturnType<typeof render> {
@@ -103,6 +156,7 @@ function renderGoalsScreen(
         statusFilter={options.statusFilter}
         terminalWidth={options.terminalWidth}
         shortcutsEnabled={options.shortcutsEnabled}
+        addGoalController={options.addGoalController}
         onModalOpenChange={options.onModalOpenChange}
       />
     </StateReaderProvider>,
@@ -551,6 +605,121 @@ describe("GoalsScreen", () => {
     expect(handledRequests).not.toContainEqual(
       expect.objectContaining({ statuses: expect.anything() }),
     );
+    unmount();
+  });
+
+  it("dispatches an AddGoalRequest assembled from the entered authoring values", async () => {
+    const dispatchedRequests: AddGoalRequest[] = [];
+    const goals: GoalView[] = [createGoal()];
+    const { lastFrame, stdin, unmount } = renderGoalsScreen({
+      goals,
+      addGoalController: {
+        handle: async (request: AddGoalRequest) => {
+          dispatchedRequests.push(request);
+          return { goalId: "goal_created" };
+        },
+      },
+    });
+
+    await waitForFrame(lastFrame, "Real goal");
+    await submitAuthoringFlow(stdin, lastFrame, {
+      title: "Created goal",
+      objective: "Dispatch the authored goal",
+      criterion: "Goal is persisted",
+    });
+    await waitUntil(() => dispatchedRequests.length > 0);
+
+    expect(dispatchedRequests).toHaveLength(1);
+    expect(dispatchedRequests[0]).toEqual({
+      title: "Created goal",
+      objective: "Dispatch the authored goal",
+      successCriteria: ["Goal is persisted"],
+    });
+    unmount();
+  });
+
+  it("closes the flow and renders the refreshed list with the created goal on success", async () => {
+    const onModalOpenChange = jest.fn();
+    const goals: GoalView[] = [];
+    const { lastFrame, stdin, unmount } = renderGoalsScreen({
+      goals,
+      onModalOpenChange,
+      addGoalController: {
+        handle: async (request: AddGoalRequest) => {
+          goals.push(
+            createGoal({
+              goalId: "goal_created",
+              title: request.title,
+              objective: request.objective,
+              successCriteria: request.successCriteria,
+            }),
+          );
+          return { goalId: "goal_created" };
+        },
+      },
+    });
+
+    await submitAuthoringFlow(stdin, lastFrame, {
+      title: "Created goal",
+      objective: "Dispatch the authored goal",
+      criterion: "Goal is persisted",
+    });
+
+    const frame = await waitForFrame(lastFrame, "Created goal");
+    expect(frame).toContain("Created goal");
+    expect(frame).toContain("1/1");
+    expect(onModalOpenChange).toHaveBeenLastCalledWith(false);
+    unmount();
+  });
+
+  it("keeps the flow open and interactive when the dispatch fails", async () => {
+    const onModalOpenChange = jest.fn();
+    const dispatched = jest.fn(async (_request: AddGoalRequest) => {
+      throw new Error("dispatch failed");
+    });
+    const { lastFrame, stdin, unmount } = renderGoalsScreen({
+      onModalOpenChange,
+      addGoalController: { handle: dispatched },
+    });
+
+    await waitForFrame(lastFrame, "Real goal");
+    await submitAuthoringFlow(stdin, lastFrame, {
+      title: "Created goal",
+      objective: "Dispatch the authored goal",
+      criterion: "Goal is persisted",
+    });
+    await waitUntil(() => dispatched.mock.calls.length > 0);
+    onModalOpenChange.mockClear();
+    await settleInput();
+
+    expect(onModalOpenChange).not.toHaveBeenCalledWith(false);
+
+    stdin.write("\x1b");
+    await waitForFrame(lastFrame, "Real goal");
+    expect(onModalOpenChange).toHaveBeenLastCalledWith(false);
+    unmount();
+  });
+
+  it("keeps the flow open when no add-goal controller is available", async () => {
+    const onModalOpenChange = jest.fn();
+    const { lastFrame, stdin, unmount } = renderGoalsScreen({
+      onModalOpenChange,
+    });
+
+    await waitForFrame(lastFrame, "Real goal");
+    await submitAuthoringFlow(stdin, lastFrame, {
+      title: "Created goal",
+      objective: "Dispatch the authored goal",
+      criterion: "Goal is persisted",
+    });
+    onModalOpenChange.mockClear();
+    await settleInput();
+
+    expect(onModalOpenChange).not.toHaveBeenCalledWith(false);
+
+    stdin.write("\x1b");
+    await waitForFrame(lastFrame, "Real goal");
+    expect(onModalOpenChange).toHaveBeenLastCalledWith(false);
     unmount();
   });
 });

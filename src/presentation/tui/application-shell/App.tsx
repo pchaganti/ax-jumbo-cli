@@ -10,6 +10,7 @@ import { InitFlow } from "../project-initialization/InitFlow.js";
 import type { InitFlowActionControllers } from "../project-initialization/InitFlow.js";
 import { GoalAuthoringFlow } from "../goals/GoalAuthoringFlow.js";
 import type { GoalAuthoringValues } from "../goals/GoalAuthoringFlow.js";
+import { AddGoalRequestFactory } from "../goals/AddGoalRequestFactory.js";
 import { DEFAULT_SCREEN_INDEX } from "../navigation/ScreenDefinitions.js";
 import { ActionDispatcher } from "../action-dispatch/ActionDispatcher.js";
 import type { RequestController } from "../action-dispatch/RequestController.js";
@@ -403,7 +404,7 @@ function AppFrame({
       setGoalAuthoringError(null);
       const result = await ActionDispatcher.dispatch(
         addGoalController,
-        toAddGoalRequest(values),
+        AddGoalRequestFactory.create(values),
       );
       setGoalAuthoringWorking(false);
 
@@ -487,6 +488,7 @@ function AppFrame({
             terminalWidth={columns}
             terminalHeight={Math.max(1, rows - FRAME_CHROME_ROWS)}
             goalStatusFilter={goalStatusFilter}
+            addGoalController={actionControllers?.addGoalController}
             onModalOpenChange={setScreenModalOpen}
             settingsReader={settingsReader}
             launchAnimationEnabled={launchAnimationEnabled}
@@ -579,35 +581,6 @@ function AppFrame({
       </Box>
     </Box>
   );
-}
-
-function toAddGoalRequest(values: GoalAuthoringValues): AddGoalRequest {
-  return {
-    title: values.title,
-    objective: values.objective,
-    successCriteria: [...values.successCriteria],
-    scopeIn: optionalList(values.scopeIn),
-    scopeOut: optionalList(values.scopeOut),
-    nextGoalId: optionalText(values.nextGoal),
-    previousGoalId: optionalText(values.previousGoal),
-    prerequisiteGoals: optionalList(values.prerequisiteGoals),
-    branch: optionalText(values.branch),
-    worktree: optionalText(values.worktree),
-  };
-}
-
-function optionalText(value: string): string | undefined {
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function optionalList(value: string): string[] | undefined {
-  const values = value
-    .split(/[\s,]+/)
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-
-  return values.length > 0 ? values : undefined;
 }
 
 function buildDaemonFailureNotifications(

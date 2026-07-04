@@ -7,6 +7,8 @@ import {
 } from "../../shared/DesignTokens.js";
 import { GoalStatus, type GoalStatusType } from "../../../domain/goals/Constants.js";
 import type { GoalView } from "../../../application/context/goals/GoalView.js";
+import type { AddGoalRequest } from "../../../application/context/goals/add/AddGoalRequest.js";
+import type { AddGoalResponse } from "../../../application/context/goals/add/AddGoalResponse.js";
 import type { GoalContext } from "../../../application/context/goals/get/GoalContext.js";
 import type { RelatedContext } from "../../../application/context/goals/get/RelatedContext.js";
 import type { ComponentView } from "../../../application/context/components/ComponentView.js";
@@ -18,6 +20,9 @@ import { KeyBadge } from "../ui-primitives/KeyBadge.js";
 import { HorizontalRule } from "../ui-primitives/HorizontalRule.js";
 import { GoalAuthoringFlow } from "./GoalAuthoringFlow.js";
 import type { GoalAuthoringValues } from "./GoalAuthoringFlow.js";
+import { AddGoalRequestFactory } from "./AddGoalRequestFactory.js";
+import { ActionDispatcher } from "../action-dispatch/ActionDispatcher.js";
+import type { RequestController } from "../action-dispatch/RequestController.js";
 import { useGoalContext } from "../state-reading/useGoalContext.js";
 import { useGoalsList } from "../state-reading/useGoalsList.js";
 import {
@@ -88,6 +93,10 @@ interface GoalsScreenProps {
   readonly statusFilter?: readonly GoalStatusType[];
   readonly terminalWidth?: number;
   readonly shortcutsEnabled?: boolean;
+  readonly addGoalController?: RequestController<
+    AddGoalRequest,
+    AddGoalResponse
+  >;
   readonly onModalOpenChange?: (isOpen: boolean) => void;
 }
 
@@ -119,12 +128,15 @@ export function GoalsScreen({
   statusFilter,
   terminalWidth,
   shortcutsEnabled = true,
+  addGoalController,
   onModalOpenChange,
 }: GoalsScreenProps = {}): React.ReactElement {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [sectionPageFlowIndex, setSectionPageFlowIndex] = useState(0);
   const [filterIndex, setFilterIndex] = useState(0);
   const [authoringOpen, setAuthoringOpen] = useState(false);
+  const [authoringError, setAuthoringError] = useState<string | null>(null);
+  const [authoringWorking, setAuthoringWorking] = useState(false);
   const activeFilter = GOAL_STATUS_FILTERS[filterIndex];
   const requestedStatusFilter = useMemo(
     () =>
@@ -217,6 +229,7 @@ export function GoalsScreen({
     }
 
     if (input === "n" || input === "N" || input === "a" || input === "A") {
+      setAuthoringError(null);
       updateAuthoringOpen(true);
       return;
     }
@@ -256,11 +269,31 @@ export function GoalsScreen({
     }
   });
 
-  const handleAuthoringComplete = (_values: GoalAuthoringValues) => {
+  const handleAuthoringComplete = async (values: GoalAuthoringValues) => {
+    if (addGoalController === undefined) {
+      setAuthoringError(GoalsScreenCopy.authoringUnavailable);
+      return;
+    }
+
+    setAuthoringWorking(true);
+    setAuthoringError(null);
+    const result = await ActionDispatcher.dispatch(
+      addGoalController,
+      AddGoalRequestFactory.create(values),
+    );
+    setAuthoringWorking(false);
+
+    if (!result.ok) {
+      setAuthoringError(result.error.message);
+      return;
+    }
+
     updateAuthoringOpen(false);
+    await goalsList.refresh();
   };
 
   const handleAuthoringCancel = () => {
+    setAuthoringError(null);
     updateAuthoringOpen(false);
   };
 
@@ -269,6 +302,8 @@ export function GoalsScreen({
       <GoalAuthoringFlow
         onComplete={handleAuthoringComplete}
         onCancel={handleAuthoringCancel}
+        dispatchError={authoringError}
+        disabled={authoringWorking}
       />
     );
   }

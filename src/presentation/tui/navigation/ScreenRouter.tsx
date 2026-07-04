@@ -11,9 +11,12 @@ import { GoalsScreen } from "../goals/GoalsScreen.js";
 import { GuidelinesScreen } from "../memory/guidelines/GuidelinesScreen.js";
 import { InvariantsScreen } from "../memory/invariants/InvariantsScreen.js";
 import { SettingsScreen } from "../settings/SettingsScreen.js";
+import type { AddGoalRequest } from "../../../application/context/goals/add/AddGoalRequest.js";
+import type { AddGoalResponse } from "../../../application/context/goals/add/AddGoalResponse.js";
 import type { ProjectLifecycleState } from "../../../application/context/project/ProjectLifecycleState.js";
 import type { ISettingsReader } from "../../../application/settings/ISettingsReader.js";
 import type { GoalStatusType } from "../../../domain/goals/Constants.js";
+import type { RequestController } from "../action-dispatch/RequestController.js";
 
 interface ScreenRouterProps {
   activeScreenIndex: number;
@@ -25,6 +28,7 @@ interface ScreenRouterProps {
   bannerAnimationComplete?: boolean;
   billboardAnimationComplete?: boolean;
   goalStatusFilter?: readonly GoalStatusType[];
+  addGoalController?: RequestController<AddGoalRequest, AddGoalResponse>;
   onModalOpenChange?: (isOpen: boolean) => void;
   onBannerAnimationComplete?: () => void;
   onBillboardAnimationComplete?: () => void;
@@ -63,6 +67,7 @@ export function ScreenRouter({
   bannerAnimationComplete,
   billboardAnimationComplete,
   goalStatusFilter,
+  addGoalController,
   onModalOpenChange,
   onBannerAnimationComplete,
   onBillboardAnimationComplete,
@@ -113,6 +118,7 @@ export function ScreenRouter({
         statusFilter={goalStatusFilter}
         terminalWidth={terminalWidth}
         shortcutsEnabled={shortcutsEnabled}
+        addGoalController={addGoalController}
         onModalOpenChange={onModalOpenChange}
       />
     );

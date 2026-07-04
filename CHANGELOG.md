@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **TUI shortcut ownership**: The restored Mega Menu shortcut now stays disabled while another overlay, drawer, wizard, or text-entry flow owns input.
 - **TUI hotkey collisions**: The footer notification drawer moved from `n` to `i`, so `n` on the Goals screen opens only the new-goal authoring flow. While a screen-local form such as the Goals authoring flow is capturing text, all shell-level hotkeys (quit, search, Mega Menu, notification drawer) are suppressed so typed characters never trigger navigation; on an uninitialized project, `i` opens only the init flow.
+- **TUI Goals screen authoring**: Submitting the goal authoring flow opened with `n`/`a` on the Goals screen now actually creates the goal — the entered values are dispatched to the add-goal controller and the goals list refreshes so the new goal appears immediately. Failed submissions keep the flow open with the error shown, instead of closing silently.
 
 ## [3.11.0] - 2026-06-24
 
