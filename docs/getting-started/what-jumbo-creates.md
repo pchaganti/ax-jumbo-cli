@@ -106,6 +106,7 @@ The `.jumbo/` directory is **local project memory**. It is not yet designed for 
 ## Configuration
 
 Jumbo stores project-level settings in `.jumbo/settings.jsonc`. The file supports comments (JSONC format).
+When `jumbo evolve --yes` or settings persistence updates this file, Jumbo preserves explicit values and unknown entries while adding any missing defaults.
 
 Default contents:
 

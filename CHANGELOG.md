@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Settings preservation during evolve**: `jumbo evolve --yes` now additively inserts missing `.jumbo/settings.jsonc` defaults without overwriting customized known values or unknown user settings, and invalid JSONC settings files fail clearly instead of being partially rewritten.
+
 ## [3.12.0] - 2026-07-04
 
 ### Added
