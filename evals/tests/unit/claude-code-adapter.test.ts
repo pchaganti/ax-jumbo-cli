@@ -13,7 +13,7 @@ describe('ClaudeCodeAdapter', () => {
 
   it('builds a claude -p command without a positional prompt (prompt goes via stdin)', () => {
     const command = adapter.buildCommand();
-    expect(command).toEqual(['claude', '-p', '--output-format', 'json']);
+    expect(command).toEqual(['claude', '-p', '--output-format', 'json', '--dangerously-skip-permissions']);
   });
 
   it('parses JSON output with result field', () => {

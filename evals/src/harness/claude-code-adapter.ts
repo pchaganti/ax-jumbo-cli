@@ -14,7 +14,14 @@ export class ClaudeCodeAdapter implements HarnessAdapter {
   readonly name = 'claude-code';
 
   buildCommand(): string[] {
-    return ['claude', '-p', '--output-format', 'json'];
+    // --dangerously-skip-permissions: in headless -p mode no human can approve
+    // tool use, so without it the agent cannot write files or run commands —
+    // the first smoke run showed both arms paralyzed ("unable to write files
+    // without permission approval"). Each eval session runs in an isolated
+    // throwaway temp workdir, which is the setting this flag exists for. It
+    // also makes tool access independent of .claude/settings.json, which
+    // `jumbo init` (>=3.12) overwrites, discarding the seeded allowlist.
+    return ['claude', '-p', '--output-format', 'json', '--dangerously-skip-permissions'];
   }
 
   /**

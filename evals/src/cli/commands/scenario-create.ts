@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import { createTestScenario } from '../../domain/types.js';
 import type { ResultStore } from '../../storage/result-store.js';
-import type { Disruption, ExpectedJumboMemoryCapture, JumboPlan, TestScenario } from '../../domain/types.js';
+import type { Disruption, ExpectedJumboMemoryCapture, JumboPlan, StructuralAssertion, TestScenario } from '../../domain/types.js';
 
 export interface ScenarioCreateDeps {
   readonly storeProvider: () => Promise<ResultStore>;
@@ -16,6 +16,7 @@ interface ScenarioTemplate {
   sessionCount: number;
   expectedFiles?: string[];
   retentionPatterns?: string[];
+  structuralAssertions?: StructuralAssertion[];
   disruptions?: Disruption[];
   expectedJumboMemoryCaptures?: ExpectedJumboMemoryCapture[];
   jumboPlan?: JumboPlan;
@@ -91,6 +92,7 @@ export function handleScenarioCreate(
     sessionCount: overrides?.sessions ?? template.sessionCount,
     expectedFiles: template.expectedFiles,
     retentionPatterns: template.retentionPatterns,
+    structuralAssertions: template.structuralAssertions,
     disruptions: template.disruptions,
     expectedJumboMemoryCaptures: template.expectedJumboMemoryCaptures,
     jumboPlan: template.jumboPlan,
