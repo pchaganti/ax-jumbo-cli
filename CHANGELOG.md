@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.13.0] - 2026-07-07
+
 ### Removed
 
 - **Deprecated goal qualification command**: Removed the `jumbo goal qualify` command surface. Use `jumbo goal approve` for successful QA review approvals.
