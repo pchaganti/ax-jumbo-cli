@@ -59,6 +59,21 @@ describe('handleScenarioCreate', () => {
     expect(scenario.id).toBeTruthy();
   });
 
+  it('preserves structuralAssertions from the template (regression: first smoke run silently dropped them)', () => {
+    const scenario = handleScenarioCreate({
+      name: 'With assertions',
+      initialPrompt: 'Build',
+      sessionCount: 2,
+      structuralAssertions: [
+        { id: 'a1', file: 'src/a.ts', sessionNumber: 1, matcher: { kind: 'fileExists' } },
+        { id: 'a2', file: 'src/b.ts', sessionNumber: 2, matcher: { kind: 'containsAll', substrings: ['x'] } },
+      ],
+    });
+
+    expect(scenario.structuralAssertions).toHaveLength(2);
+    expect(scenario.structuralAssertions?.[0].id).toBe('a1');
+  });
+
   it('applies name override', () => {
     const scenario = handleScenarioCreate(
       { name: 'Original', initialPrompt: 'prompt', sessionCount: 2 },
