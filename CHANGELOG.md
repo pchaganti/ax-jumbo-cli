@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.14.0] - 2026-07-08
+
+### Added
+
+- **Evals validity scenarios**: Added the `null-hypothesis-rate-limiter` and `file-reconstruction-expense-tracker` scenarios to validate the eval harness itself, and `eval scenario create` templates now carry structural assertions through to the created scenario.
+
 ### Changed
 
 - **Codex initialization**: `jumbo init`, repair, and `jumbo evolve --yes` now install Codex-managed skills to the documented repository skill location `.agents/skills` while keeping `.codex` limited to Codex hooks/configuration.
@@ -14,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Codex managed artifact preservation**: Obsolete Jumbo-managed Codex skill copies under `.codex/skills` are removed only when byte-identical to the current managed templates, preserving customized skill content, user files, hook comments, unknown hook settings, and unrelated `.codex` configuration.
+- **Evals headless permissions**: The Claude Code eval harness adapter now runs sessions with `--dangerously-skip-permissions`, since headless `-p` runs in isolated temp workdirs have no human to approve tool use and were leaving both A/B arms unable to write files.
 
 ## [3.13.0] - 2026-07-07
 
