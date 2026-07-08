@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Codex initialization**: `jumbo init`, repair, and `jumbo evolve --yes` now install Codex-managed skills to the documented repository skill location `.agents/skills` while keeping `.codex` limited to Codex hooks/configuration.
+
+### Fixed
+
+- **Codex managed artifact preservation**: Obsolete Jumbo-managed Codex skill copies under `.codex/skills` are removed only when byte-identical to the current managed templates, preserving customized skill content, user files, hook comments, unknown hook settings, and unrelated `.codex` configuration.
+
 ## [3.13.0] - 2026-07-07
 
 ### Removed

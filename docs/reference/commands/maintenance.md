@@ -76,7 +76,7 @@ Runs the complete installation update workflow in sequence:
 7. Refresh managed harness and hook configuration
 8. Rebuild database projections from the event store
 
-The command is designed to be idempotent. Re-running it after a successful evolve should not create duplicate events or duplicate relations. Existing `.jumbo/settings.jsonc` files are upgraded additively: missing defaults are inserted, explicit values and unknown entries are preserved, and invalid JSONC fails instead of being partially rewritten.
+The command is designed to be idempotent. Re-running it after a successful evolve should not create duplicate events or duplicate relations. Existing `.jumbo/settings.jsonc` files are upgraded additively: missing defaults are inserted, explicit values and unknown entries are preserved, and invalid JSONC fails instead of being partially rewritten. Codex skills are refreshed in `.agents/skills`; obsolete Jumbo-managed copies under `.codex/skills` are removed only when they exactly match the current managed templates.
 
 ### Examples
 
